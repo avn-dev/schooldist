@@ -1,0 +1,82 @@
+hash: 1edd875a6af338c271484ff271f14b91
+class:
+  wdbasic: Ext_TC_Frontend_Template
+  data: Ext_TC_Frontend_Template_Gui2_Data
+  js: FrontendTemplatesGUI
+js:
+  - [gui2/gui2.js, tc]
+  - [admin/js/frontend_templates.js, tc]
+  - [admin/js/frontend_templates/field.js, tc]
+css:
+  - /assets/ts/css/gui2.css
+access: core_frontend_templates
+orderby:
+  - Ext_TC_Frontend_Template_Gui2_Data
+  - getOrderby
+limit: 30
+limit_selection: false
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+          - key
+        id: search
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Verwendung
+        label_as_item: true
+        column:
+          - usage
+        entries:
+          - Ext_TC_Frontend_Template_Gui2_Data
+          - getSelectOptionsUsageFilter
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Frontend_Template_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Frontend_Template_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    title: Verwendung
+    column: usage
+    width: name
+    resize: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_TC_Frontend_Template_Gui2_Data, getSelectOptionsUsageFilter]
+  -
+    title: Letzte Verwendung
+    column: last_use
+    alias: ''
+    width: date_time
+    resize: false
+    small: true
+    format: Ext_TC_Gui2_Format_Date_Time
+  -
+    title: Schlüssel
+    column: key
+    width: 170
+    resize: false

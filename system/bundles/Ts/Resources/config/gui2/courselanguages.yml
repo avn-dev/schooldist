@@ -1,0 +1,59 @@
+
+hash: 9d00168f2712205a0a9623a402d0d06a
+class:
+  wdbasic: Ext_Thebing_Tuition_LevelGroup
+  data: Ext_Thebing_Tuition_Gui2_Courselanguages_Gui2
+  icon_status: \TsTuition\Gui2\Icon\CourseLanguages
+access: thebing_tuition_resource_levelgroup
+sortable: true
+only_pagecount: true
+designer: 
+  flex: tuition_course_languages  
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: 
+          - ktlg
+          - ktlg
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Tuition_Gui2_Courselanguages_Gui2
+          - manipulateSearchFilter
+  -        
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Tuition_Gui2_Courselanguages_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Tuition_Gui2_Courselanguages_Gui2
+          - getDialog
+     -
+        element: icon_delete
+     - 
+        element: icon_file_manager 
+columns:
+  -
+    title: ID
+    column: id
+    width: id
+    default: false
+  - 
+    title: Name
+    column: name
+    resize: true
+    i18n:
+      pass_language: true
+      show_flag: true
+  -
+    title: Sprache
+    column: language_iso
+    format: Ext_Thebing_Gui2_Format_Language

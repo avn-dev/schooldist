@@ -1,0 +1,87 @@
+<?
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+
+Access_Backend::checkAccess("link_checker");
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?> &raquo; <?=L10N::t('Linkprüfung')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+			<p id="table1">
+			<table cellpadding="0" cellspacing="0" border="0" style="height:10px;width:200px;border:1px solid #29527A;table-layout:fixed;">
+				<tr>
+					<td id="td1" style="width:1px;background-color:#dededf;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+					<td id="td2" style="width:199px;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+				</tr>
+			</table>
+			</p>
+		</td>
+	</tr>
+</table>
+ 
+<?
+flush();
+
+$res = db_query("SELECT * FROM cms_pages WHERE element = 'page' AND file != 'index' AND active != 2");
+
+$count = count_rows($res);
+$factor = 200/$count;
+$i=0;
+$output = "<ul>";
+$iErrors = 0;
+
+$system_data['domain'] = str_replace("https://","http://",$system_data['domain']);
+
+while($my = get_data($res)) {
+	
+	$sUrl = getPageUrl($my['id']);
+
+	$mLines = file($sUrl);
+	if($mLines) {
+		$arr = implode ('', $mLines);
+		$path = "/".$my['language']."/".$my['path'];
+		$error = linkchecker($arr,$path);
+		if($error) {
+			$output .= "<li>Auf der Seite: \"<b>".getPageTrack($my['id'])."</b>\" sind ".count($error)." fehlerhafte URLs gefunden worden:<br>";
+			$output .= "<font class=red>";
+			$output .= implode('</font><br><font class="red">', $error);
+			$output .= "</font></li>\n";
+			$iErrors++;
+		}
+	} else {
+		$output .= "<li>Die Seite \"<b>".getPageTrack($my['id'])." (".$sUrl.")</b>\" konnte nicht gefunden werden.</li>\n";
+	}
+	$i++;
+	echo "<script>document.getElementById('td1').style.width='".intval($factor*$i)."';document.getElementById('td2').style.width='".intval(200-($factor*$i))."';</script>\n";
+	flush();
+}
+
+$output .= "</ul>";
+
+if($iErrors==0) {
+	$output = L10N::t('Es wurden keine fehlerhaften Links gefunden', 'Framework');
+}
+
+?>
+<script>
+document.getElementById('table1').style.display='none';
+</script>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<?=$output?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

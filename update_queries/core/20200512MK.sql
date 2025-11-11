@@ -1,0 +1,2 @@
+ALTER TABLE `tc_communication_messages_incoming` CHANGE `uid` `imap_message_id` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
+ALTER TABLE `tc_communication_messages_incoming` ADD `uid` VARCHAR(255) NOT NULL AFTER `imap_message_id`;

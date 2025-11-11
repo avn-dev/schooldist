@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/ts-hubspot",
+  "version": "1.0.1",
+  "require": {
+    "hubspot/api-client": "13.0.*"
+  }
+}

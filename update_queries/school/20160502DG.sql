@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questionaries_processes` ADD `message_id` INT UNSIGNED NOT NULL AFTER `questionary_id`;

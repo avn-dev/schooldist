@@ -1,0 +1,173 @@
+<?php
+
+/**
+ * 
+ */
+include_once(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess('office_contracts');
+
+DB::addField('office_contracts', 'contact_id', "int(11) NOT NULL", 'customer_id');
+DB::executeQuery("CREATE TABLE IF NOT EXISTS `office_contracts_payed` (  `id` int(11) NOT NULL auto_increment,  `created` timestamp NOT NULL default '0000-00-00 00:00:00',  `changed` timestamp NOT NULL,  `active` tinyint(1) NOT NULL default '1',  `contract_id` int(11) NOT NULL default '0',  `editor_id` int(11) NOT NULL default '0',  PRIMARY KEY  (`id`))");
+
+/* ==================================================================================================== */
+
+$aOptions = array();
+$aOptions['additional']  = '<script type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+if(!isset($_VARS['task']) || $_VARS['task'] = false)
+{
+	$aOptions['body'] = ' scroll="no"';
+}
+$aOptions['xhtml'] = false;
+echo Admin_Html::loadAdminHeader($aOptions);
+
+/* ==================================================================================================== */
+
+// Set filter function and input style
+$aConfig['onKeyUp']	= 'preLoadContractsList(this);';
+$aConfig['style']	= 'width: 150px;';
+$aConfig['name']	= 'employee_search';
+$aConfig['id'] 		= 'employee_search';
+$aConfig['value']	= $_SESSION['contract_search'];
+$objSelect			= new GUI_FormText($aConfig);
+$sContractSearch	= $objSelect->generateHTML();
+
+$arrConfig = array();
+$arrConfig['css'] 		= "txt";
+$arrConfig['onChange']	= "preLoadContractsList(document.getElementById('employee_search'));";
+$arrConfig['name']		= "client_id";
+$arrConfig['id'] 		= "client_id";
+$arrConfig['values']	= $aClients;
+$arrConfig['selected']	= \Core\Handler\SessionHandler::getInstance()->get('office_client_id');
+$objClientSelect = new GUI_FormSelect($arrConfig);
+$strClientSelect	= $objClientSelect->generateHTML();
+
+?>
+<script type="text/javascript" src="/admin/extensions/office/js/contracts.js"></script>
+
+<section class="content custom-gui">
+
+	<div class="divHeader">
+
+	<div class="divToolbar">
+		<div class="divToolbarFormItem">
+			Suche <?=$sContractSearch?>
+		</div>
+		<div class="divToolbarFormItem">
+			Mandant: <?=$strClientSelect?>
+		</div>
+		<div class="divToolbarIcon">
+			<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+		</div>
+		<div class="divToolbarIcon">
+			<img src="/admin/media/spacer.gif" style="height:16px; width:1px;" alt="" />
+		</div>
+		<div class="divCleaner"></div>
+	</div>
+
+	<div class="divToolbar divTopLine">
+		<div class="divToolbarLabel">Anlegen:</div>
+		<div class="divToolbarIcon" id="toolbar_new">
+			<img src="/admin/media/page_new.gif" onclick="executeContractAction(0, 'new');" alt="anlegen" title="anlegen" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Bearbeitung:</div>
+		<div class="divToolbarIcon" id="toolbar_edit">
+			<img src="/admin/media/pencil.png" onclick="executeContractAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+		</div>
+		<div class="divToolbarIcon" id="toolbar_delete">
+			<img src="/admin/media/cross.png" onclick="executeContractAction(0, 'delete');" alt="löschen" title="löschen" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Ausführen:</div>
+		<div class="divToolbarFormItem">
+			Tage im Voraus
+		</div>
+		<div class="divToolbarFormItem">
+			<input type="text" class="txt" style="width: 20px;text-align: right;" id="contract_days_inadvance" value="0"/>
+		</div>
+		<div class="divToolbarIcon" id="toolbar_actually">
+			<img src="/admin/media/page_go.png" onclick="executeContractAction(0, 'show_aktually');" alt="fällige Anzeigen" title="fällige Anzeigen" />
+		</div>
+		<div class="divToolbarIcon" id="tmp_toolbar_create_invoices">
+			<img src="/admin/media/page_copy.png" onclick="executeContractAction(0, 'create_invoices');" alt="Rechnungen generieren" title="Rechnungen generieren" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Monatsauswertung:</div>
+		<div class="divToolbarIcon" id="toolbar_stats">
+			<img src="/admin/media/chart_bar.png" onclick="executeContractAction(0, 'display_stats');" alt="Monatsauswertung" title="Monatsauswertung" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Kundenauswertung:</div>
+		<div class="divToolbarIcon" id="toolbar_stats">
+			<img src="/admin/media/chart_bar.png" onclick="executeContractAction(0, 'display_stats_customer');" alt="Kundenauswertung" title="Kundenauswertung" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Abgleich:</div>
+		<div class="divToolbarIcon" id="toolbar_stats">
+			<img src="/admin/extensions/office/images/table_relationship.png" onclick="executeContractAction(0, 'matching');" alt="Abgleich" title="Abgleich" />
+		</div>
+		<div class="divCleaner"></div>
+	</div>
+	
+	<div class="divHeaderBottomGrey"><img src="/admin/media/spacer.gif" height="7" /></div>
+	<div class="divHeaderBottomWhite"><img src="/admin/media/spacer.gif" height="5" /></div>
+
+</div>
+
+<table id="tableContracts" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+	<colgroup>
+		<col style="width:24px;" />
+		<col style="width:80px;" />
+		<col style="width:80px;" />
+		<col />
+		<col style="width:150px;" />
+		<col style="width:200px;" />
+		<col style="width:150px;" />
+		<col style="width:60px;" />
+		<col style="width:60px;" />
+		<col style="width:60px;" />
+		<col style="width:60px;" />
+		<col style="width:60px;" />
+	</colgroup>
+	<thead id="tableContractsHead">
+		<tr>
+			<th style="text-align:center;" id="tableContractsHeadCB">&nbsp;</th>
+			<th><span id="sort_start" onclick="loadContractsList('start');">Startdatum</span></th>
+			<th><span id="sort_end" onclick="loadContractsList('end');">Enddatum</span></th>
+			<th><span id="sort_company" onclick="loadContractsList('company');">Kunde</span></th>
+			<th><span id="sort_contact" onclick="loadContractsList('contact');">Ansprechpartner</span></th>
+			<th><span id="sort_product" onclick="loadContractsList('product');">Produkt</span></th>
+			<th><span id="sort_editor" onclick="loadContractsList('editor');">Bearbeiter</span></th>
+			<th><span id="sort_amount" onclick="loadContractsList('amount');">Anzahl</span></th>
+			<th><span id="sort_interval" onclick="loadContractsList('interval');">Interval</span></th>
+			<th><span id="sort_price" onclick="loadContractsList('price');">Preis</span></th>
+			<th><span id="sort_discount" onclick="loadContractsList('discount');">Rabatt</span></th>
+			<th>Gesamt</th>
+		</tr>
+	</thead>
+	<tbody id="tbl_contracts"></tbody>
+</table>
+
+<div style="overflow: hidden; width:100%;">
+	<div style="height: 20px; overflow: hidden; text-align:center; background: #eee; border-top: 1px solid #ccc; font-size: 10px;">
+		<img src="/admin/media/bullet_green.png" align="absmiddle" alt="Laufend" />= Laufend
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/bullet_red.png" align="absmiddle" alt="Abgelaufen" />= Abgelaufen
+	</div>
+</div>
+
+</section>
+<script type="text/javascript">
+	checkContractsListHeight();
+
+	Event.observe(window, 'load', ScrollableTable.load);
+	Event.observe(window, 'load', function() { loadContractsList(); });
+	Event.observe(window, 'resize', checkContractsListHeight);
+
+	document.body.style.overflow = 'hidden';
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

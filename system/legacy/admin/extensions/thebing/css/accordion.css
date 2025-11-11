@@ -1,0 +1,28 @@
+.accordion_content {
+    margin:0px;
+    padding:0px;
+}
+
+.accordion_top {
+    background-color:#EEEEEE;
+    border:1px solid #CCCCCC;
+    font-size:11px;
+    font-weight:bold;
+    width:100%;
+    background-image: url("/media/up_blue.png");
+    background-position: right; 
+    background-repeat: no-repeat;
+	cursor:pointer;
+	height:20px;
+}
+.accordion_top_up {
+    background-color:#EEEEEE;
+    border:1px solid #CCCCCC;
+    font-size:11px;
+    font-weight:bold;
+    width:100%;
+    background-image: url("/media/down_blue.png");
+    background-position: right; 
+    background-repeat: no-repeat;
+	height:20px;
+}

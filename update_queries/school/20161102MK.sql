@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_documents_index` CHANGE `invoice_list` `invoice_list` VARCHAR(700) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

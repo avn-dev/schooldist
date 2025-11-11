@@ -1,0 +1,1 @@
+INSERT INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES (51, '0000-00-00 00:00:00', '0000-00-00 00:00:00', '1', 'Student Record » Activities', 'student_record_activities', 'student_record');

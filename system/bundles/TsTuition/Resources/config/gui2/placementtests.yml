@@ -1,0 +1,35 @@
+class:
+  wdbasic: TsTuition\Entity\Placementtest
+  data: \TsTuition\Gui2\Data\Placementtest
+access: thebing_tuition_resource_edit_placement_test
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsTuition\Gui2\Data\Placementtest
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsTuition\Gui2\Data\Placementtest
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true

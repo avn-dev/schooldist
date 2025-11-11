@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_accommodations_categories` ADD `cost_center` VARCHAR(255) NOT NULL;
+UPDATE `kolumbus_accommodations_categories`, `wdbasic_attributes` SET `cost_center` = `wdbasic_attributes`.`value` WHERE `wdbasic_attributes`.`key` = 'cost_center' AND `wdbasic_attributes`.`entity` = 'kolumbus_accommodations_categories' AND `wdbasic_attributes`.`entity_id` = `kolumbus_accommodations_categories`.`id`;

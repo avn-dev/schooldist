@@ -1,0 +1,72 @@
+/* 
+    Document   : absence.css
+    Created on : 07.10.2010, 21:26:13
+    Author     : Mark Koopmann
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+/*#tblAbsences td div {
+	background: url(/admin/extensions/thebing/images/highlight_soft.png) repeat-x scroll 50% 50%;
+}*/
+
+.monthDays {
+	cursor: pointer;
+	padding:0 !important;
+}
+
+.guiScrollBody {
+	overflow-x:hidden;
+}
+
+#tblTableHead {
+	border-top: 1px solid #CCC;
+}
+
+.tblAbsences {
+	table-layout: fixed;
+	border-right: 1px solid #CCC;
+}
+.tblAbsences, .tblAbsences tr, .tblAbsences th, .tblAbsences td {
+	border-collapse:		collapse;
+	border-spacing:			0;
+	padding:				0;
+	margin:					0;
+	font-size:				12px;
+}
+.tblAbsences td {
+	padding:				3px 4px;
+	border-left:			1px solid #CCC;
+	border-bottom:			1px solid #CCC;
+}
+.tblAbsences th {
+	padding:				3px 4px;
+	background-color:		#EEE;
+	color:					#333;
+	text-align:				left;
+	border-left:			1px solid #CCC;
+	border-bottom:			1px solid #CCC;
+}
+.tblAbsences thead th {
+	text-align:				center;
+}
+
+td.highlight {
+	background-color:		skyblue !important;
+	border-color:			skyblue !important;
+}
+
+.w16 {
+	width:					16px;
+}
+
+/*.guiScrollBody tr:nth-child(2n) {
+	background-color:#EEEEEE;
+}*/
+
+.guiScrollBody tr:nth-child(2n+1) {
+}
+
+td.entry {
+	
+}

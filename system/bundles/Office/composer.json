@@ -1,0 +1,10 @@
+{
+  "name": "fidelo-bundle/office",
+  "version": "1.0.1",
+  "require": {
+    "kbsali/redmine-api": "2.8.*",
+    "dragonbe/vies": "2.3.*",
+    "stripe/stripe-php": "17.6.*",
+    "mpociot/vat-calculator": "3.23.*"
+  }
+}

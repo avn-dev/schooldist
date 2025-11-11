@@ -1,0 +1,1 @@
+{$sProjectName} - {'Passwort vergessen'|L10N:'Framework'}

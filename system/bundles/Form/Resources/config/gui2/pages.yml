@@ -1,0 +1,56 @@
+class:
+  wdbasic: Form\Entity\Page
+  data: Form\Gui2\Data\Pages
+orderby : 
+  - Form\Gui2\Data\Pages
+  - getOrderBy
+where : 
+  - Form\Gui2\Data\Pages
+  - getWhere
+id:
+  column: id
+  alias: f_p
+title: "Seiten"
+description: "Formulare"
+access: "modules_admin"
+sortable: true
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Form\Gui2\Data\Pages
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Form\Gui2\Data\Pages
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    description: ""
+    resize: true
+    width: name

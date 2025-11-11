@@ -1,0 +1,98 @@
+class:
+  wdbasic: \TsAccounting\Entity\Company
+  gui: Ext_Thebing_Gui2
+  data: \TsAccounting\Gui2\Data\Company
+  date_format: Ext_Thebing_Gui2_Format_Date
+  js: Company
+description: Thebing » Admin » Companies
+access: thebing_companies
+sortable: true
+only_pagecount: true
+title: 
+  - Ext_TS_System_Navigation
+  - t
+id:
+  column: id
+  alias: ts_com
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          filter_part: HAVING
+          column: 
+            - company_name
+            - schools
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \TsAccounting\Gui2\Data\Company
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \TsAccounting\Gui2\Data\Company
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_com
+    width: name
+    resize: true
+  -
+    title: Schule
+    column: schools
+    width: extra_long_description
+    resize: false
+  -
+    title: Inbox
+    column: inboxes
+    width: long_description
+    resize: false
+  -
+    title: Währung
+    column: currency_iso
+    alias: ts_com
+    width: short_name
+    resize: false
+    format: Ext_TC_Gui2_Format_Currency
+default_columns:
+  -
+    title: Ersteller
+    column: creator_id
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    sortable: true
+  -
+    title: Erstellt
+    column: created
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+  -
+    title: Bearbeiter
+    column: editor_id
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    sortable: true
+  -
+    title: Verändert
+    column: changed
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+js:
+  - [company/js/gui2.js, ts]

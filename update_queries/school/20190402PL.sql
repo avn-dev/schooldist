@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_journeys_activities` CHANGE `weeks` `weeks` TINYINT NOT NULL, CHANGE `blocks` `blocks` TINYINT NOT NULL;

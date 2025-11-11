@@ -1,0 +1,169 @@
+
+.GUIDialogMultiColumn {
+}
+
+.GUIDialogMultiColumn .GUIDialogRowInputDiv select,
+.GUIDialogMultiColumn .GUIDialogRowInputDiv input,
+.GUIDialogMultiColumn .GUIDialogRowInputDiv textarea {
+	
+}
+
+.GUIDialogMultiColumn .GUIDialogRowInputDiv .i18nFlag {
+	
+}
+
+.GUIDialogMultiColumn .GUIDialogRowCalendarDiv {
+	
+}
+
+.GUIDialogMultiColumn .GUIDialogRowCalendarDiv input {
+	
+}
+
+.GUIDialogMultiColumn .GUIDialogRowInputDiv input[type=checkbox]{
+	width: auto;
+	margin: 4px 0;
+}
+
+/*.GUIDialogMultiColumn .GUIDialogRowInputDiv .calendar_input{
+	width: 80px;
+}*/
+
+/*.GUIDialogMultiColumn .GUIDialogRowLabelDiv{
+	width: 150px;
+}*/
+
+/*.designDivShadow,
+.designDiv:not(.box) {
+    background: none repeat scroll 0 0 #F7F7F7;
+    border: 1px solid #CCCCCC;
+    border-radius: 3px 3px 3px 3px;
+    margin-bottom: 10px;
+    margin-top: 2px;
+    padding: 10px;
+}*/
+
+.designDivShadow {
+	background: -moz-linear-gradient(center top , #FFFFFF 0%, #F0F0F0 50%, #FFFFFF 100%) repeat scroll 0 0 transparent;
+	box-shadow: 0 0 10px #CCCCCC inset, 0 0 #CCCCCC inset, 0 0 0 #CCCCCC;
+}
+
+/*a.designDiv.box {
+	padding: 10px;
+}*/
+
+.box-body .designDiv  {
+	background: #FFF;
+	border: none;
+	padding: 0;
+}
+
+.positionGroupRow {
+	background:#EEE;
+}
+
+.positionRow tr:nth-child(1) {
+	padding: 0px !important;
+}
+
+.positionRow td {
+	padding: 2px;
+}
+
+.position-table .unchangedPosition,
+#position_table .unchangedPosition {
+	background-color: #C6EFCE; 
+}
+
+.position-table .newPosition,
+#position_table .newPosition {
+	background-color: #FFC7CE;
+}
+
+.position-table .changedPosition,
+#position_table .changedPosition {
+	background-color: #FFEB9C;
+}
+
+.position-table .deletedPosition,
+#position_table .deletedPosition {
+	background-color: #CCEEFF;
+}
+
+.position-table .tempDeletedPosition,
+#position_table .tempDeletedPosition {
+	background-color: #A9C9FC;
+}
+
+#position_table td {
+	padding: 3px;
+}
+
+#position_table td.actions i {
+	cursor: pointer;
+}
+
+#position_table td.actions i:not(:last-child) {
+	margin-right: 5px;
+}
+
+/*.placeholdertable tr.loop td {
+	background: #dedede;
+}
+
+.placeholdertable tr.parent td {
+	background: #eee;
+}
+
+.placeholdertable td.indent {
+	background: #eee;
+}
+
+.placeholderContentScroll {
+	overflow-y: scroll;
+	padding-bottom: 5px;
+}
+.placeholderSearchInput {
+	float: left; 
+	margin: 5px 0 !important;
+}
+
+.placeholderLoadingIndicator {
+	margin: 7px 0 0 10px;
+}*/
+
+/*.tblDocumentPositions td textarea {
+	padding: 1px 0;
+	-webkit-transition: none;
+	-moz-transition: none;
+	transition: none;
+}*/
+
+/*.tblDocumentPositions td {
+	padding: 2px 2px !important;
+	vertical-align: top;
+	font-size: 11px;
+}*/
+
+.tblDocumentPositions td.amount,
+.tblDocumentPositions th.amount{
+	text-align: right;
+}
+
+.tblDocumentPositions td select {
+	width: 100%;
+}
+
+.tblDocumentPositions .jqueryIconSortable {
+	font-size: 10px;
+	margin-left: 0 !important;
+}
+
+#document_partpay_container {
+	clear: both;
+	margin-top: 10px;
+}
+
+.divCleaner {
+	clear: both;
+}

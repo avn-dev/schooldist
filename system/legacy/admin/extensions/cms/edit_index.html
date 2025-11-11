@@ -1,0 +1,141 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("edit");
+
+Admin_Html::loadAdminHeader();
+
+global $objWebDynamicsDAO;
+$objWebDynamicsDAO = new Cms\Helper\Data();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Inhaltspflege')?></h1>		
+</section>
+
+<section class="content">
+	
+	<div class="box box-default">
+		<div class="box-header with-border">
+			<h3 class="box-title"><?=L10N::t('Wichtige Links', 'CMS')?></h3>
+		</div>
+		<!-- /.box-header -->
+		<div class="box-body">
+			
+			<ul class="fa-ul">
+				<li><a href="/admin/extensions/cms/newpage.html"><i class="fa-li fa fa-file-text-o"></i><?=L10N::t('Neue Seite erstellen', 'CMS')?></a></li>
+				<li><a href="/admin/cms/structure/edit"><i class="fa-li fa fa-sitemap"></i><?=L10N::t('Seitenverwaltung', 'CMS')?></a></li>
+				<?
+				if(hasRight("pagetemplates")) {
+				?>
+				<li><a href="/admin/extensions/cms/templates.html"><i class="fa-li fa fa-file-o"></i><?=L10N::t('Seitenvorlagen anzeigen', 'CMS')?></a></li>
+				<?
+				}
+				?>
+				<li><a href="/admin/extensions/cms/sitemap.html?task=overview"><i class="fa-li fa fa-list"></i><?=L10N::t('Seitenübersicht anzeigen', 'CMS')?></a></li>
+			</ul>
+			
+		</div>
+		<!-- /.box-body -->
+	</div>
+	
+	<div class="box box-default">
+		<div class="box-header with-border">
+			<h3 class="box-title"><?=L10N::t('Noch nicht veröffentlichte Seiten', 'CMS') ?></h3>
+		</div>
+		<!-- /.box-header -->
+		<div class="box-body">
+			<?
+			$aPages = Cms\Entity\Page::getNotPublishedPages();
+			foreach((array)$aPages as $my_uptodate) {
+				echo "<a href=\"/admin/cms/page/".$my_uptodate['id']."/".$my_uptodate['language']."/live\">".getPageTrack($my_uptodate['id'], false, 1, true)."</a>";
+				echo "<br>\n";
+			}
+			?>
+		</div>
+		<!-- /.box-body -->
+	</div>
+	
+	<div class="box box-default">
+		<div class="box-header with-border">
+			<h3 class="box-title"><?=L10N::t('Zuletzt bearbeitete Seiten', 'CMS') ?></h3>
+		</div>
+		<!-- /.box-header -->
+		<div class="box-body no-padding">
+			<table class="table table-striped table-hover">
+				<tr>
+					<td width="50%"><strong><?=L10N::t('Pfad', 'CMS') ?></strong></td>
+					<td width="30%"><strong><?=L10N::t('Zeitpunkt', 'CMS') ?></strong></td>
+					<td width="20%"><strong><?=L10N::t('Benutzer', 'CMS') ?></strong></td>
+				</tr>
+		<?
+		$sSql = "
+			SELECT 
+				l.id,
+				p.id page_id,
+				p.path,
+				p.file,
+				p.language,
+				p.title, 
+				MAX(l.created) `created`, 
+				u.firstname , 
+				u.lastname 
+			FROM 
+				system_logs l JOIN
+				cms_pages p ON
+					p.id = l.element_id JOIN
+				system_user u ON
+					l.user_id = u.id 
+			WHERE 
+				l.elementname = '\\\Cms\\\Entity\\\Page'
+			GROUP BY 
+				p.id
+			ORDER BY 
+				l.created DESC 
+			LIMIT 10
+				";
+		$res_uptodate = (array)DB::getQueryRows($sSql);
+		foreach ($res_uptodate as $my_uptodate) {
+			$dCreated = new \Carbon\Carbon($my_uptodate['created']);
+			$dCreated->locale(\System::getInterfaceLanguage());
+
+			$oPage = \Cms\Entity\Page::getInstance($my_uptodate['page_id']);
+
+			echo "<tr>";
+			echo "<td><a href=\"/admin/cms/page/" . $my_uptodate['page_id'] . "/" . $my_uptodate['language'] . "/live\">".getPageTrack($my_uptodate['page_id'], false, 1, true) . "</a></td>";
+			echo "<td>" . $dCreated->isoFormat('L LT') . "</td>";
+			echo "<td>" . $my_uptodate['firstname'] . " " . $my_uptodate['lastname'] . "</td>";
+			echo "</tr>\n";
+		}
+		?>
+			</table>
+		</div>
+		<!-- /.box-body -->
+	</div>
+	
+	<div class="box box-default">
+		<div class="box-header with-border">
+			<h3 class="box-title"><?=L10N::t('Eigene Seiten', 'CMS') ?></h3>
+		</div>
+		<!-- /.box-header -->
+		<div class="box-body">
+			<?
+			$res_uptodate = (array)DB::getQueryRows("SELECT p.id,p.path,p.file,p.language,p.title FROM cms_pages p WHERE p.author = '".$user_data['id']."' AND p.element = 'page' ORDER BY p.path, p.position LIMIT 10");
+			foreach($res_uptodate as $my_uptodate) {
+				echo "<a href=\"/admin/cms/page/".$my_uptodate['id']."/".$my_uptodate['language']."/live\">".getPageTrack($my_uptodate['id'], false, 1, true)."</a>";
+				echo "<br>\n";
+			}
+			?>
+		</div>
+		<!-- /.box-body -->
+	</div>
+	
+</section>
+<?php
+
+$sAdditional = "<script>parent.Page.hideActions();</script>";
+
+Admin_Html::loadAdminFooter($sAdditional);
+?>

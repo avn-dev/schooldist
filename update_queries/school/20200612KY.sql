@@ -1,0 +1,1 @@
+ALTER TABLE `system_user` ADD `fax` VARCHAR(255) NOT NULL DEFAULT '' AFTER `ts_is_sales_person`;

@@ -1,0 +1,1 @@
+ALTER TABLE  `kolumbus_groups` CHANGE  `short`  `short` VARCHAR( 10 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ;

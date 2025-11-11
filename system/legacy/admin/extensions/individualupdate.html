@@ -1,0 +1,268 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oUpdate = new Ext_Individualupdate();
+
+/**
+ * api stuff
+ */
+if($_VARS['mode'] == 'api') {
+
+	$aReturn = array();
+
+	$bCheckPassword = $oUpdate->checkUpdatePassword($_VARS['password']);
+
+	if($bCheckPassword !== true) {
+		die('No access, wrong password!');
+	}
+
+	if($_VARS['task'] == 'check_password') {
+		$aReturn['check'] = (int)$bCheckPassword;
+	}
+	if($_VARS['task'] == 'get_file_list') {
+		$aReturn['files'] = $oUpdate->listFilesOfDir(\Util::getDocumentRoot().$_VARS['dir'], $_VARS['last_update_timestamp']);
+	}
+	if($_VARS['task'] == 'get_file') {
+
+		$sFile = \Util::getDocumentRoot().$_VARS['file'];
+
+		if(is_file($sFile)) {
+			
+			$fp = fopen($sFile, 'rb');
+			echo "###"."START###";
+			fpassthru($fp);
+			echo "###"."END###";
+			fclose($fp);
+			die();
+
+		}
+
+	}
+	if($_VARS['task'] == 'get_table_structure') {
+		$aReturn['structure'] = $oUpdate->getTableStructure($_VARS['table']);
+	}
+	if($_VARS['task'] == 'get_table_description') {
+		$aReturn['description'] = $oUpdate->getTableDescription($_VARS['table']);
+	}
+	if($_VARS['task'] == 'get_table_data') {
+		$aReturn['data'] = $oUpdate->getTableData($_VARS['table']);
+	}
+	
+	echo json_encode($aReturn);
+	die();
+
+}
+
+addSystemRight('individualupdate', 'Individuelles Update', 'individualupdate');
+
+Access_Backend::checkAccess('individualupdate');
+
+Admin_Html::loadAdminHeader();
+
+if($_VARS['task'] == 'update') {
+
+	$aErrors = array();
+	$bSuccess = true;
+
+	$bCheck = $oUpdate->checkUpdateConnection();
+
+	if($bCheck) {
+
+		$bCheck = $oUpdate->setUpdatePassword($_VARS['password']);
+
+		// process updates
+		if($bCheck) {
+
+			if($oUpdate->page_templates) {
+				$bCheck = $oUpdate->updatePageTemplates();
+				if(!$bCheck) {
+					$aErrors[] = L10N::t('Die Seitenvorlagen konnten nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+					$bSuccess = false;
+				}
+			}
+		
+			if($oUpdate->styles) {
+				$bCheck = $oUpdate->updateStyles();
+				if(!$bCheck) {
+					$aErrors[] = L10N::t('Die CSS-Stile konnten nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+					$bSuccess = false;
+				}
+			}
+		
+			if($oUpdate->extensions) {
+				$bCheck = $oUpdate->updateExtensions();
+				if(!$bCheck) {
+					$aErrors[] = L10N::t('Die Erweiterungen konnten nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+					$bSuccess = false;
+				}
+			}
+			
+			if($oUpdate->blocks) {
+				$bCheck = $oUpdate->updateBlocks();
+				if(!$bCheck) {
+					$aErrors[] = L10N::t('Die Blöcke konnten nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+					$bSuccess = false;
+				}
+			}
+			
+			if($oUpdate->imgbuilder) {
+				$bCheck = $oUpdate->updateImgbuilder();
+				if(!$bCheck) {
+					$aErrors[] = L10N::t('Die Sets der Grafikgenerierung konnten nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+					$bSuccess = false;
+				}
+			}
+			
+			$bCheck = $oUpdate->updateDirectories();
+			if(!$bCheck) {
+				$aErrors[] = L10N::t('Die Verzeichnisse konnten nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+				$bSuccess = false;
+			}
+
+			$bCheck = $oUpdate->updateTableStructure();
+			if(!$bCheck) {
+				$aErrors[] = L10N::t('Die Datenbankstruktur konnte nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+				$bSuccess = false;
+			}
+
+			$bCheck = $oUpdate->updateTables();
+			if(!$bCheck) {
+				$aErrors[] = L10N::t('Die Datenbankinhalte konnte nicht abgeglichen werden!', 'Erweiterungen » Individuelles Update');
+				$bSuccess = false;
+			}
+
+		} else {
+
+			$aErrors[] = L10N::t('Das Passwort stimmt nicht überein!', 'Erweiterungen » Individuelles Update');
+			$bSuccess = false;
+
+		}
+
+	} else {
+
+		$aErrors[] = L10N::t('Der Updateserver konnte nicht erreicht werden! ('.$oUpdate->getLastConnectionError().')', 'Erweiterungen » Individuelles Update');
+		$bSuccess = false;
+
+	}
+
+	if($bSuccess) {
+		$oUpdate->setUpdateTimestamp();
+	}
+
+	WDCache::flush();
+	
+	wdmail('ia@p32.de', 'Individual update - Debug', print_r($oUpdate->getDebug(), 1));
+
+}
+
+if($_VARS['task'] == 'save') {
+
+	$oUpdate->type = $_VARS['type'];
+
+	if($oUpdate->type == 'live') {
+		$oUpdate->url				= (string)$_VARS['url'];
+		$oUpdate->page_templates 	= (int)$_VARS['page_templates'];
+		$oUpdate->styles			= (int)$_VARS['styles'];
+		$oUpdate->extensions		= (int)$_VARS['extensions'];
+		$oUpdate->blocks			= (int)$_VARS['blocks'];
+		$oUpdate->imgbuilder		= (int)$_VARS['imgbuilder'];
+		$oUpdate->global_checks		= (int)$_VARS['global_checks'];
+		$oUpdate->directories		= (array)$_VARS['directories'];
+		$oUpdate->db_structure		= (array)$_VARS['db_structure'];
+		$oUpdate->db_data			= (array)$_VARS['db_data'];
+	} else {
+		$oUpdate->password			= (string)$_VARS['password'];
+	}
+
+	$oUpdate->save();
+
+}
+
+$aDirectories = $oUpdate->getDirectories('', '', '.svn');
+$aTables = $oUpdate->getTables('', '__');
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Individuelles Update', 'Erweiterungen » Individuelles Update')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+<?
+			if($oUpdate->type == 'live') {
+
+				if(!empty($aErrors)) {
+					echo '<p class="error">';
+					foreach((array)$aErrors as $sError) {
+						echo $sError.'<br/>';	
+					}
+					echo '</a>';
+				}
+				if($bSuccess) {
+
+					echo '<p>'.L10N::t('Das Update wurde erfolgreich ausgeführt!', 'Erweiterungen » Individuelles Update').'</p>';	
+
+					$aDebug = $oUpdate->getDebug();
+					__out($aDebug);
+
+				}
+
+?>
+
+			<h2><?=L10N::t('Update', 'Erweiterungen » Individuelles Update')?></h2>
+			<form method="post" action="?&">
+			<?printFormHidden('task', 'update')?>
+			<?printTableStart()?>
+				<?printFormText(L10N::t('Passwort', 'Erweiterungen » Individuelles Update'), 'password')?>
+			<?printTableEnd()?>
+			<?printSubmit('Update ausführen', 'Erweiterungen » Individuelles Update')?>
+			</form>
+<?
+			}
+?>
+
+			<h2 onclick="$('divUpdateSettings').toggle();"><?=L10N::t('Einstellungen', 'Erweiterungen » Individuelles Update')?></h2>
+			<div id="divUpdateSettings" style="display: none;">
+			<form method="post" action="?&">
+			<?printFormHidden('task', 'save')?>
+			<?printTableStart()?>
+				<?printFormSelect(L10N::t('Bitte wählen', 'Erweiterungen » Individuelles Update'), 'type', Ext_Individualupdate::getTypes(), $oUpdate->type, 'onchange="this.form.submit();"')?>
+<?
+				if($oUpdate->type == 'live') {
+?>
+
+				<?printFormText(L10N::t('URL', 'Erweiterungen » Individuelles Update'), 'url', $oUpdate->url)?>
+
+				<?printFormCheckbox(L10N::t('Alle Seitenvorlagen vom Testserver abgleichen', 'Erweiterungen » Individuelles Update'), 'page_templates', 1, $oUpdate->page_templates)?>
+				<?printFormCheckbox(L10N::t('Alle CSS-Stile vom Testserver abgleichen', 'Erweiterungen » Individuelles Update'), 'styles', 1, $oUpdate->styles)?>
+				<?printFormCheckbox(L10N::t('Alle Erweiterungen vom Testserver abgleichen', 'Erweiterungen » Individuelles Update'), 'extensions', 1, $oUpdate->extensions)?>
+				<?printFormCheckbox(L10N::t('Alle Blöcke vom Testserver abgleichen', 'Erweiterungen » Individuelles Update'), 'blocks', 1, $oUpdate->blocks)?>
+				<?printFormCheckbox(L10N::t('Alle Sets der Grafikgenerierung vom Testserver abgleichen', 'Erweiterungen » Individuelles Update'), 'imgbuilder', 1, $oUpdate->imgbuilder)?>
+				<?printFormCheckbox(L10N::t('Alle globalen Checks vom Testserver abgleichen', 'Erweiterungen » Individuelles Update'), 'global_checks', 1, $oUpdate->global_checks)?>
+				
+				<?printFormMultiSelect(L10N::t('Verzeichnisse abgleichen', 'Erweiterungen » Individuelles Update'), 'directories[]', $aDirectories, $oUpdate->directories, 'size="10"')?>
+				<?printFormMultiSelect(L10N::t('Datenbankstruktur abgleichen', 'Erweiterungen » Individuelles Update'), 'db_structure[]', $aTables, $oUpdate->db_structure, 'size="10"')?>
+				<?printFormMultiSelect(L10N::t('Datenbankinhalte abgleichen', 'Erweiterungen » Individuelles Update'), 'db_data[]', $aTables, $oUpdate->db_data, 'size="10"')?>
+
+<?
+				} else {
+?>
+				<?printFormText(L10N::t('Passwort', 'Erweiterungen » Individuelles Update'), 'password')?>
+<?	
+				}				 
+?>
+			<?printTableEnd()?>
+			<?printSubmit('Speichern', 'Erweiterungen » Individuelles Update')?>
+			</form>
+			</div>
+
+		</td>
+	</tr>
+</table>
+
+<?
+
+Admin_Html::loadAdminFooter();

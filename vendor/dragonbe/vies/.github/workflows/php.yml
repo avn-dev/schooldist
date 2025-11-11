@@ -1,0 +1,70 @@
+name: PHP Composer
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ViesBuild
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: ['7.4', '8.0', '8.1']
+
+    steps:
+    - name: Set default PHP version ${{ matrix.php-versions }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "${{ matrix.php-versions }}"
+
+    - name: Display current PHP version
+      run: php --version
+
+    - uses: actions/checkout@v2
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v2
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      if: steps.composer-cache.outputs.cache-hit != 'true'
+      run: |
+        composer config --no-plugins allow-plugins.infection/extension-installer true
+        composer install --prefer-dist --no-progress --no-suggest
+      
+    - name: Prepare for Quality
+      run: /bin/sh -c 'mkdir -p ${{ github.workspace }}/build/logs && touch ${{ github.workspace }}/build/logs/checkstyle.xml'
+      
+    - name: Run PHP CodeSniffer
+      run: ${{ github.workspace }}/vendor/bin/phpcs
+
+    - name: Run PHPUnit
+      run: php -dxdebug.mode=coverage ${{ github.workspace }}/vendor/bin/phpunit
+
+    - name: Run PMD-Naming
+      run: ${{ github.workspace }}/vendor/bin/phpmd src xml naming --reportfile build/logs/pmd-naming.xml --strict --ignore-violations-on-exit
+
+    - name: Run PMD-Unused
+      run: ${{ github.workspace }}/vendor/bin/phpmd src xml unusedcode --reportfile build/logs/pmd-unusedcode.xml --strict --ignore-violations-on-exit
+
+    - name: Run PMD-Codesize
+      run: ${{ github.workspace }}/vendor/bin/phpmd src xml codesize --reportfile build/logs/pmd-codesize.xml --strict --ignore-violations-on-exit
+
+    - name: Run PMD-Cleancode
+      run: ${{ github.workspace }}/vendor/bin/phpmd src xml cleancode --reportfile build/logs/pmd-cleancode.xml --strict --ignore-violations-on-exit
+
+    - name: Run PDepend
+      run: ${{ github.workspace }}/vendor/bin/pdepend --jdepend-chart=build/logs/jdepend-chart.svg --jdepend-xml=build/logs/jdepend.xml --overview-pyramid=build/logs/pyramid.svg src
+

@@ -1,0 +1,513 @@
+<?php
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("multi");
+
+getExtensionTranslations('multi');
+
+include_once("./multi.inc.html");
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+global $LANGUAGE_DATA;
+
+$objWebDynamicsDAO = new Cms\Helper\Data;
+
+$arrData = $objWebDynamicsDAO->getWebSiteLanguages(0);
+
+$arrLanguages = array();
+
+foreach((array)$arrData as $arrLanguage) {
+	$arrLanguages[$arrLanguage['code']] = $arrLanguage['name'];		
+}
+
+$arrLanguagesCopy = array('' => '') + $arrLanguages;
+
+$oMulti = Ext_Multi::getInstance((int)$_VARS['multi_id']);
+
+$aCategories = $oMulti->getCategories();
+
+$aCategoriesCopy = array('' => '') + $aCategories;
+
+$aGroups = array();
+
+try {
+	$aTempGroups = (array)CustomerDb\Helper\Functions::getCustomerGroups();
+	$aTempGroups = (array)Ext_Multi_Access::getGroups($aTempGroups);
+
+	foreach($aTempGroups as $iDB_ID => $aCutomerGroups) {
+		foreach((array)$aCutomerGroups as $iGroupID => $sValue) {
+			$aGroups[$iDB_ID . '_' . $iGroupID] = $sValue;
+		}
+	}
+} catch(Throwable $e) {
+}
+
+$aFields = $oMulti->getFields();
+
+/* ==================================================================================================== */
+
+$oGui								= new Ext_Gui2(md5('multidata'), 'Ext_Multi_Entry_Gui2_Data');
+$oGui->gui_description				= $LANGUAGE_DATA['multidata'];
+$oGui->gui_title 					= $LANGUAGE_DATA['multidata'] . ' » ' . sprintf($LANGUAGE_DATA['entries_in'], $oMulti->name);
+
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+
+$oGui->sView = $oMulti->id;
+
+$oGui->setWDBasic('Ext_Multi_Entry');
+$oGui->setTableData('orderby', array('id' => 'DESC'));
+$oGui->setTableData('where', array('multi_id' => $oMulti->id));
+
+if($oMulti->sortable_automatically == 1) {
+	$oGui->setTableData('limit', 30);
+	$oGui->row_sortable = 0;
+} else {
+	$oGui->row_sortable = 1;
+}
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Dialog
+
+$oDialog = $oGui->createDialog($oGui->t('Eintrag bearbeiten'), $oGui->t('Eintrag anlegen'));;
+$oDialog->width	= 1000;
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Titel'),
+		'input',
+		array(
+			'required'			=> true,
+			'db_column'			=> 'name'
+		)
+	)
+);
+
+$oFactory = new Ext_Gui2_Factory('multi_categories');
+$oGuiCategories = $oFactory->createGui();
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Kategorie'),
+		'select',
+		array(
+			'db_column'			=> 'category_id',
+			'select_options'	=> $aCategoriesCopy,
+			'selection_gui'			=> $oGuiCategories,
+			'selection_settings'	=> array(
+				'value_column'		=> 'id', // Die Spalte im GUI Ergebnis für den Wert der Option
+				'text_column'		=> 'name', // Die Spalte im GUI Ergebnis für das Label der Option
+				'dialog_width'		=> 700, // Dialog Breite
+				'dialog_height'		=> 500, // Dialog Höhe
+				'button_label'		=> $oGuiCategories->t('Kategorie hinzufügen')
+			)
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Sprache'),
+		'select',
+		array(
+			'db_column'			=> 'language_code',
+			'select_options'	=> $arrLanguagesCopy
+		)
+	)
+);
+
+$oH2 = $oDialog->create('h2');
+$oH2->setElement($oGui->t('Daten'));
+$oDialog->setElement($oH2);
+
+foreach($aFields as $aField) {
+
+	switch($aField['type']) {
+		case 'text':
+		case 'email':
+		case 'date':
+		case 'int':
+		{
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'input',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id']
+					)
+				)
+			);
+
+			break;
+		}
+		case 'upload': 
+		{
+
+			$sPath = '/storage/public/multidata/'.$oMulti->id;
+			
+			$oUpload = $oGui->createDialogUpload($aField['name'], $oDialog, 'field_' . $aField['field_id'], '', $sPath);
+			$oUpload->bAddColumnData2Filename = 0;
+			$oDialog->setElement($oUpload);
+
+			break;
+		}
+		case 'textarea':
+		{
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'textarea',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id']
+					)
+				)
+			);
+
+			break;
+		}
+		case 'select':
+		{
+			$aOptions = array();
+
+			$aTemp = (array)explode('|', $aField['value']);
+
+			foreach($aTemp as $sOption)
+			{
+				$aOptions[$sOption] = $sOption;
+			}
+
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'select',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id'],
+						'select_options'	=> $aOptions
+					)
+				)
+			);
+
+			break;
+		}
+		case 'image':
+		case 'download':
+		{
+			
+			$sMainPath = Util::getDocumentRoot().'storage/public/';
+			
+			$sPathSuffix = '';
+			if(!empty($aField['value'])) {
+				if(is_dir($sPath.$aField['value'])) {
+					$sPathSuffix = $aField['value'];
+				}
+			}
+			
+			$sPath = $sMainPath.$sPathSuffix;
+
+			if($aField['type'] === 'image') {
+				$aWhitelist = ['png','jpg','gif','svg'];
+			} else {
+				$aWhitelist = null;
+			}
+
+			$aMedia = array('' => '');
+
+			$oFileIterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($sPath, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+			foreach($oFileIterator as $oFile) {
+			
+				if(
+					!$oFile->isFile() ||
+					(
+						$aWhitelist !== null && 
+						!in_array($oFile->getExtension(), $aWhitelist)
+					)
+				) {
+					continue;
+				}
+			
+				$sFilePath = str_replace($sMainPath, '', $oFile->getRealPath());
+			
+				$aMedia[$sFilePath] = $sFilePath; 
+			
+			}
+
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'select',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id'],
+						'select_options'	=> $aMedia
+					)
+				)
+			);
+
+			break;
+		}
+		case 'web':
+		{
+			$aOptions = printPageSelect('', '', array('as_array' => true));
+
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'select',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id'],
+						'select_options'	=> $aOptions
+					)
+				)
+			);
+
+			break;
+		}
+		case 'reference':
+		case 'table':
+		{
+			$oDialog->setElement(
+				$oDialog->createNotification(
+					$oGui->t('Hinweis'),
+					sprintf($oGui->t('Typ "%s" wird nicht unterstützt.'), $aField['type']),
+					'hint'
+				)
+			);
+
+			break;
+		}
+		case 'multiselect':
+		{
+			$aOptions = array();
+
+			$aTemp = (array)explode('|', $aField['value']);
+
+			foreach($aTemp as $sOption)
+			{
+				$aOptions[$sOption] = $sOption;
+			}
+
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'select',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id'],
+						'multiple'			=> 5, 
+						'jquery_multiple'	=> 1,
+						'select_options'	=> $aOptions,
+						'searchable'		=> 1,
+						'style'				=> 'height: 105px;'
+					)
+				)
+			);
+
+			break;
+		}
+		case 'html':
+		{
+			$oDialog->setElement(
+				$oDialog->createRow(
+					$aField['name'],
+					'html',
+					array(
+						'db_column'			=> 'field_' . $aField['field_id'],
+						'advanced'			=> 'filemanager'
+					)
+				)
+			);
+
+			break;
+		}
+	}
+}
+
+$oH2 = $oDialog->create('h2');
+$oH2->setElement($oGui->t('Zugriffoptionen'));
+$oDialog->setElement($oH2);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Eintrag wird angezeigt von'),
+		'input',
+		array(
+			'db_column'			=> 'validfrom'
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Eintrag wird angezeigt bis'),
+		'input',
+		array(
+			'db_column'			=> 'validuntil'
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Nur bei folgenden Beutzergruppen zeigen'),
+		'select',
+		array(
+			'db_column'			=> 'access',
+			'multiple'			=> 5, 
+			'jquery_multiple'	=> 1,
+			'select_options'	=> $aGroups,
+			'searchable'		=> 1,
+			'style'				=> 'height: 105px;'
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Nicht bei folgenden Beutzergruppen zeigen'),
+		'select',
+		array(
+			'db_column'			=> 'noaccess',
+			'multiple'			=> 5, 
+			'jquery_multiple'	=> 1,
+			'select_options'	=> $aGroups,
+			'searchable'		=> 1,
+			'style'				=> 'height: 105px;'
+		)
+	)
+);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Search
+
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+$oBar->setElement($oBar->createLabelGroup($oGui->t('Filter')));
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('name');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('category_id');
+$oFilter->select_options = $aCategoriesCopy;
+$oFilter->db_operator	= '=';
+$oFilter->label			= $oGui->t('Kategorie');
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('language_code');
+$oFilter->select_options = $arrLanguagesCopy;
+$oFilter->db_operator	= '=';
+$oFilter->label			= $oGui->t('Sprache');
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Icons
+
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+$oBar->setElement($oBar->createLabelGroup($oGui->t('Aktionen')));
+
+$oIcon					= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon					= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon					= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Pagination and loading
+
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+$oBar->position			= 'top';
+
+if($oMulti->sortable_automatically == 1) {
+	$oPagination = $oBar->createPagination(false, true);
+} else {
+	$oPagination = $oBar->createPagination(true);
+}
+
+$oBar->setElement($oPagination);
+
+$oSeperator = $oBar->createSeperator();
+$oBar->setElement($oSeperator);
+
+$oIcon = $oBar->createIcon(
+	Ext_Gui2_Util::getIcon('confirm'),
+	'request',
+	$oGui->t('Veröffentlichen')
+);
+$oIcon->action				= 'Publish';
+$oIcon->label				= $oGui->t('Veröffentlichen');
+$oIcon->active				= 1;
+$oIcon->visible				= 1;
+$oBar->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // List
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'id';
+$oColumn->title = 'ID';
+$oColumn->width = 50;
+$oColumn->format = new Ext_Gui2_View_Format_Int;
+$oGui->setColumn($oColumn);
+			
+$oColumn						= $oGui->createColumn();
+$oColumn->db_column				= 'name';
+$oColumn->db_alias				= '';
+$oColumn->title					= $oGui->t('Titel');
+$oColumn->width					= 200;
+$oColumn->width_resize			= true;
+$oGui->setColumn($oColumn);
+
+$oColumn						= $oGui->createColumn();
+$oColumn->db_column				= 'category_id';
+$oColumn->db_alias				= '';
+$oColumn->title					= $oGui->t('Kategorie');
+$oColumn->width					= 200;
+$oColumn->width_resize			= false;
+$oColumn->format				= new Ext_Gui2_View_Format_Selection($aCategories);
+$oGui->setColumn($oColumn);
+
+$oColumn						= $oGui->createColumn();
+$oColumn->db_column				= 'language_code';
+$oColumn->db_alias				= '';
+$oColumn->title					= $oGui->t('Sprache');
+$oColumn->width					= 100;
+$oColumn->width_resize			= false;
+$oColumn->format				= new Ext_Gui2_View_Format_Selection($arrLanguagesCopy);
+$oGui->setColumn($oColumn);
+
+$oColumn						= $oGui->createColumn();
+$oColumn->db_column				= 'validfrom';
+$oColumn->db_alias				= '';
+$oColumn->title					= $oGui->t('Zeitraum');
+$oColumn->width					= 200;
+$oColumn->width_resize			= false;
+$oColumn->format				= new Ext_Multi_Entry_Gui2_Format_Validity();
+$oGui->setColumn($oColumn);
+
+$oColumn						= $oGui->createColumn();
+$oColumn->db_column				= 'active';
+$oColumn->db_alias				= '';
+$oColumn->db_type				= 'tinyint';
+$oColumn->title					= $oGui->t('Aktiv');
+$oColumn->width					= 40;
+$oColumn->inplaceEditor			= 1;
+$oColumn->inplaceEditorType		= 'checkbox';
+$oColumn->inplaceEditorStart	= 1;
+$oColumn->width_resize			= false;
+$oGui->setColumn($oColumn);
+
+/* ==================================================================================================== */
+
+$oGui->display();

@@ -1,0 +1,105 @@
+#externalApps .categories-container,
+#externalApps .apps-container {
+	padding: 20px;
+	overflow-y: auto;
+	height: 100vh;
+}
+
+/* bootstrap breakpoint */
+@media(max-width: 992px){
+	#externalApps .categories-container,
+	#externalApps .apps-container {
+		height: 50vh;
+	}
+}
+
+#externalApps .search {
+	margin: 20px 0;
+}
+
+#externalApps ul.categories {
+	display: block;
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+#externalApps ul.categories li {
+	padding: 10px;
+	cursor: pointer;
+}
+
+/*#externalApps ul.categories li:not(.btn-primary) {
+	border-bottom: 1px solid #CDCDCD;
+}*/
+
+#externalApps ul.categories li.btn-primary {
+	border-radius: 5px;
+}
+
+#externalApps .loading-message {
+	text-align: center;
+}
+
+#externalApps legend.my-apps-legend {
+	cursor: pointer;
+}
+
+#externalApps .apps {
+	position: relative;
+}
+
+#externalApps .apps .loading {
+	position: absolute;
+    margin: auto;
+    top: 50px;
+    right: 0;
+    left: 0;
+    width: 200px;
+    height: 200px;
+}
+
+#externalApps .apps .loading i.fa {
+	font-size: 30px;
+}
+
+#externalApps .box {
+	position: relative;	
+}
+
+#externalApps .box .box-body {
+	height: 130px;
+}
+
+#externalApps .box .info-icon {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	cursor: pointer;
+	font-size: 16px;
+}
+
+#externalApps .box .message-title {
+	border-bottom: 1px solid #EEE;
+	display: flex;
+}
+
+#externalApps .box .message-title h3,
+#externalApps .box .message-description {
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	width: 100%;
+}
+
+#externalApps .box .message-title h3 {
+	/* because of info-icon */
+	width: 95%;
+}
+
+#externalApps .box-footer .price {
+	font-weight: bold;
+	padding-top: 5px;
+	letter-spacing: -0.07em;
+	word-spacing: 0.01em;
+}

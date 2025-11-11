@@ -1,0 +1,385 @@
+<?php
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+ 
+Access_Backend::checkAccess("pagetemplates");
+
+$intPageId = (int)$_VARS['template_id'];
+
+$strMode = 'edit';
+$strView = $_VARS['view'];
+
+$objPagetemplate = new Cms\Entity\PageTemplate($intPageId);
+$page_data['id'] = $intPageId;
+$page_data['active'] = 1;
+
+$oPageTemplateAccess = new Cms\Helper\Access\Page($objPagetemplate);
+
+if($strMode == 'edit') {
+
+	if (isset($_VARS['save'])) {
+
+		// Save Page Template
+		$objPagetemplate->template = $_VARS['template'];
+		$objPagetemplate->save();
+		
+		$arrPage = $objPagetemplate->aData;
+		
+	}
+	if ($_VARS['task'] == 'delete') {
+		// Delete
+		$oContent = \Cms\Entity\Content::getInstance($_VARS['placeholder_id']);
+		$oContent->delete();
+		
+	}
+
+	if (isset($_VARS['module'])) {
+		// Add the Modul into cms_contents
+		$arrModule = $objPagetemplate->addContent($_VARS['module_id']);
+	}
+
+	if (isset($_VARS['block'])) {
+		// Add the Modul into cms_contents
+		$arrModule = $objPagetemplate->addContent($_VARS['block_id'], 'contentblock');
+	}
+
+	// Get the Placeholder
+	$arrPlaceholder = $objPagetemplate->getPlaceholder();
+	// Get the Template of the Page
+	$arrPage = $objPagetemplate->aData;
+
+	// Get Module List for Select
+	$arrModule = $objPagetemplate->getModule(1);
+	$arrBlocks = $objPagetemplate->getBlocks(1);
+
+	// Instantiate a CodeEditor\Editor Object
+	$oCodeEditor = new Codemirror\Service\EditorService();
+
+	// Editor must be configurated before including the resources - css/js -, because of the dependency between a configuration and a resource
+	$oCodeEditor->mode("text/html", true);
+	$oCodeEditor->enableFullscreen();
+	$oCodeEditor->lineNumbers(true);
+	$oCodeEditor->tabSize(2);
+
+	
+	// Resources
+	$sAdditional = $oCodeEditor->getResources();
+	
+	Admin_Html::loadAdminHeader($sAdditional);
+	
+?>
+	
+<section class="content-header">
+	<h1><?=L10N::t('Seitenvorlage', 'CMS')?> "<?=$objPagetemplate->title?>"</h1>
+</section>
+
+<form method="post" action="<?=$_SERVER['PHP_SELF']."?template_id=".$intPageId."&mode=".$strMode?>" class="form-inline">
+
+	<section class="content">
+		<div class="box">
+			<div class="box-body">
+				<textarea name="template" style="width:99%;height:300px" id="codemirror_editor"><?=\Util::getEscapedString($arrPage["template"])?></textarea>
+			</div>
+			<div class="box-footer">
+				<button type="submit" name="save" class="btn btn-primary pull-right"><?=L10N::t('Speichern', 'CMS')?></button>
+			</div>
+		</div>
+	</section>
+
+	<section class="content">
+		<div class="box">
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=L10N::t('Verfügbare Erweiterungen', 'CMS')?></h3>
+            </div>
+			<div class="box-body">
+<?php
+	
+	
+	// Create GUI Page
+	$objPage = new GUI_Div();										
+	// Create Div
+	$objNewDiv= new GUI_Div(
+							array(
+									'name' => 'name', 
+									'style' => 'text-align:left;'
+								)
+							);	
+	
+	// Add Select for Div							
+	$objNewDiv->appendElement(
+								new GUI_FormSelect(
+													array(
+															'name' => 'module_id', 
+															'options' => $arrModule  
+														)
+													)
+								); 
+	// Add Submit to Div							
+	$objNewDiv->appendElement(
+								new GUI_FormSubmit(
+													array(
+															'id' => 'module', 
+															'name' => 'module', 
+															'value' => 'Erweiterung hinzufügen'
+														)
+													)
+							);	
+	$objNewDiv->appendElement(
+								new GUI_EscapedString('<br/>')
+							);
+	// Add Select for Div							
+	$objNewDiv->appendElement(
+								new GUI_FormSelect(
+													array(
+															'name' => 'block_id', 
+															'options' => $arrBlocks  
+														)
+													)
+								); 
+	// Add Submit to Div							
+	$objNewDiv->appendElement(
+								new GUI_FormSubmit(
+													array(
+															'id' => 'block', 
+															'name' => 'block', 
+															'value' => 'Block hinzufügen'
+														)
+													)
+							);	
+	// Add Headline/Spacer to Div
+	$objNewDiv->appendElement(
+								new GUI_Headline(
+													array(
+														'text' => '',
+														'type' => '2'
+														)
+												)
+							); 
+	
+	// Add Form to GUI Page
+	$objPage->appendElement($objNewDiv);
+	// Create GUI Table for the Placeholder
+	$objTable = new GUI_Table(
+								array(
+										'cols' => array(
+														'ID',
+														'Name',
+														'Kategorie ',
+														'Platzhalter',
+														'Aktion'),
+										'css' => 'table table-striped table-hover'
+									)
+							); 
+							
+	$i = 1;
+	$style ='';
+	// Definied IMG Del		
+	$objImgDelete = new GUI_Image(
+									array(
+											'url' => '/admin/media/delete.png',
+											'alt' => 'löschen'
+										)
+								);
+	// Definied IMG Edit									
+	$objImgEdit = new GUI_Image(
+								array(
+										'url' => '/admin/media/edit.png',
+										'alt' => 'bearbeiten'
+									)
+								);
+	// Definied IMG Code							
+	$objImgCode = new GUI_Image(
+								array(
+										'url' => '/admin/media/edit_code.gif',
+										'alt' => 'Code Ansicht'
+									)
+								);
+								
+	// Add Row with Content Placeholder to GUI Table							
+	$objTable->appendRow(
+							array(
+									'cols' => array(
+													array(
+															'text'=>" ",
+															 'style'=>$style
+														),
+													array(
+															'text'=>"Content",
+															 'style'=>$style
+														),
+													array(
+															'text'=>"-",
+															'style'=>$style
+														),
+													array(
+															'text'=>"<#content001#> ... <#content900#>",
+															'style'=>$style
+														),
+													"-"
+													)
+									)
+						);
+
+	foreach ($arrPlaceholder as $aValue){
+		// Create ElementList
+		$objImgList = new GUI_ElementList();
+		
+		// does admin interface exists?
+		if(is_file(\Util::getDocumentRoot()."system/legacy/admin/extensions/".$aValue['file'].".html")) {
+			// Create GUI Link for Edit
+			$objLinkEdit = new GUI_Link(
+										array(
+												'onClick'=> 'window.open("/admin/extensions/'.$aValue['file'].'.html?page_id='.$intPageId.'&element_id='.$aValue['element_id'].'&content_id='.$aValue['content_id'].'","modul","status=no,resizable=yes,menubar=no,scrollbars=yes,width=650px,height=450px"); return false;',
+												'text' => $objImgEdit 
+											)
+										);
+										
+			$objImgList->appendElement($objLinkEdit);
+		}
+		// Create GUI Link for Code
+		$objLinkCode = new GUI_Link(
+			array(
+				'url' => 'javascript:void(null);',
+				'onClick'=> 'parent.Page.loadModal("/admin/extensions/cms/template.html?page_id='.$intPageId.'&element_id='.$aValue['element_id'].'&content_id='.$aValue['content_id'].'&action=template"); return false;',
+				'text' => $objImgCode 
+			)
+		);
+		// Add Code Link to imglist					
+		$objImgList->appendElement($objLinkCode);			
+		// Create GUI Link for Delete
+		$objLinkDelete = new GUI_Link(
+										array(
+												'onClick' => 'if(!confirm(\'Content löschen?\')){return false; }',
+												'url' => '?mode='.$strMode.'&template_id='.$intPageId.'&task=delete&placeholder_id='.$aValue['content_id'], 
+												'text' => $objImgDelete
+											)
+									);
+		// ADD Delete Link to imglist							
+		$objImgList->appendElement($objLinkDelete);
+		// Construkt the Placeholder String
+		if($aValue['number'] < 10){
+			$aValue['number'] = '0'.$aValue['number'];
+		}
+		$sPlaceholder = "<#content9".$aValue['number']."#>";
+		// ADD Table Row with Placeholderdata
+	
+		$sRowStyle = '';
+		$sRowClass = '';
+		// check if extensions is used
+		if(strpos($arrPage["template"], $sPlaceholder) === false) {
+			$sRowStyle = 'background-color: #FFD9BF;';
+			$sRowClass = 'noHighlight';
+		}
+
+		if($aValue['modul_title']) {
+			$aValue['title'] = $aValue['modul_title'];
+			$aValue['category'] = $aValue['modul_category'];
+		} else {
+			$aValue['title'] = $aValue['block_title'];
+			$aValue['category'] = 'Block';
+		}
+
+		$objTable->appendRow(
+								array(
+										'cols' => array(
+														array(
+																'text'=>(string)$aValue['content_id'], 
+																'style'=>'text-align: right;'
+															),
+														array(
+																'text'=>(string)$aValue['title']
+															),
+														array(
+																'text'=>(string)$aValue['category'].' ', 
+																'style'=>$style
+															),
+														array(
+																'text'=>(string)$sPlaceholder, 
+																'style'=>$style
+															), 
+														array(
+																'text'=>$objImgList, 
+																'css'=>'tdActionImg'
+															)
+														),
+										'style'=>$sRowStyle,
+										'css'=>$sRowClass
+										)
+								);
+
+	}
+	// Add GUI Table to GUI Page				
+	$objPage->appendElement($objTable);
+	// Print the GUI Page
+	echo $objPage->generateHTML();
+?>
+			</div>
+		</div>
+	</section>
+<?php
+	$sAdditional = '<script>'.$oCodeEditor->getJavaScriptCode('codemirror_editor').'</script>';
+
+	Admin_Html::loadAdminFooter($sAdditional);
+	die();
+
+}
+
+//Start
+if($oPageTemplateAccess->checkRightInPath("page_pref")) {
+?>
+	<script>
+	if(parent.parent.preload) {
+		parent.parent.preload.onlinediv('off');
+	}
+	</script>
+<?
+		}
+		//End
+if($oPageTemplateAccess->checkRightInPath("page_pref")) {
+?>
+	<script>
+	if(parent.parent.preload) {
+		parent.parent.preload.editdiv('on');
+	}
+	</script>
+<?
+}
+	if($oPageTemplateAccess->checkRightInPath("page_pref")) {
+?>
+	<script>
+	if(parent.parent.preload) {
+		parent.parent.preload.propertiesdiv('on');
+		parent.parent.preload.structurediv('on');
+	}
+	</script>
+<?
+}
+?>
+<script>
+
+if(parent.edittop) {
+
+	parent.edittop.pagePath = "<?=$_SERVER['PHP_SELF'].$_SERVER['PATH_INFO']?>";
+	parent.edittop.pageId 	= "<?=$page_data['id']?>";
+	parent.edittop.pageData['idPage'] = <?=$page_data['id']?>;
+	parent.edittop.pageData['bActive'] = <?=$page_data['active']?>;
+}
+if(parent.parent.menue) {
+	parent.parent.menue.setactive('sid_<?=$page_data['id']?>');
+}
+<?php
+if($strMode == 'edit'){
+?>
+// Append the CodeMirror editor
+window.onload = function (){
+	<?=$oCodeEditor->getJavaScriptCode('codemirror_editor');?>
+};
+<?php
+}
+?>
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+UPDATE `tc_flex_sections_fields` SET `visible` = 1 WHERE `section_id` = 38

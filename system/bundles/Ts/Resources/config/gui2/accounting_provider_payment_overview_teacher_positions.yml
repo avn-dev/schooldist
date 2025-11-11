@@ -1,0 +1,98 @@
+class:
+  wdbasic: Ext_Thebing_Teacher_Payment
+  data: Ext_Thebing_Gui2_Data
+  gui: Ext_Thebing_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+description: Thebing » Buchhaltung » Provider bezahlen » Bezahlte Lehrer
+#access: thebing_accounting_teacher_payments_groupings
+access: ""
+title: Positionen
+rows_clickable: false
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column:
+            - comment
+columns:
+  -
+    title: Monat/Woche
+    column: month_week
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Gehalt
+    column: amount
+    width: name
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: payment_currency_id
+  -
+    title: Tage
+    column: days
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Klasse
+    column: classname
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Kurse
+    column: courses
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Lektionen
+    column: lessons
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Schüler
+    column: count_bookings
+    width: id
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Stunden
+    column: hours
+    width: name
+    format: Ext_Thebing_Gui2_Format_Accounting_Teacher_Payment_Hours
+    sortable: false
+#  -
+#    title: Kurse
+#    column: course_list
+#    width: name
+#    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+#    sortable: false
+  -
+    title: je Lektion/Monat
+    column: per_lesson_month
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Kommentar der Position
+    column: payment_note
+    width: comment
+  -
+    title: Kommentar
+    column: comment
+    width: comment
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+  -
+    title: Kommentar der Zusatzposition
+    column: payed_additional_comment
+    width: comment
+    format: Ext_TS_Accounting_Provider_Grouping_Teacher_Gui2_Format_PositionData
+    sortable: false
+default_columns: []

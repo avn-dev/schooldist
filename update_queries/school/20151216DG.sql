@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questionaries_processes_results` ADD UNIQUE(`questionary_process_id`, `questionary_question_group_question_id`, `dependency_id`);

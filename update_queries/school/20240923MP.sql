@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_pdf_templates_types` ADD `element_swiss_qr_bill_code` TINYINT(1) NOT NULL DEFAULT '0' AFTER `element_signature_text`;

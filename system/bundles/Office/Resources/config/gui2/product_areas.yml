@@ -1,0 +1,87 @@
+class:
+  wdbasic: Office\Entity\ProductArea
+orderby : 
+  - Office\Gui2\Dialog\ProductAreaDialog
+  - getOrderBy
+id:
+  column: id
+  alias: opa
+title: "Produktbereiche"
+description: "Office"
+access: "office_config"
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements: 
+        -
+          element: icon_new
+          dialog:
+            - Office\Gui2\Dialog\ProductAreaDialog
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Office\Gui2\Dialog\ProductAreaDialog
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    description: ""
+    resize: true
+    width: name
+default_columns:
+  -
+    visible: true
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+  -
+    visible: true
+    title: Erstellt
+    format: Ext_Gui2_View_Format_Date
+    column: created
+    width: date
+    resize: false
+    sortable: true
+  -
+    visible: true
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    width: user_name
+    resize: false
+    sortable: true
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_Gui2_View_Format_Date
+    column: changed
+    width: date
+    resize: false
+    sortable: true

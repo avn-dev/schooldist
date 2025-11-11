@@ -1,0 +1,2 @@
+ALTER TABLE `tc_cancellation_conditions_fees` ADD `minimum_value` DECIMAL(10,0) NOT NULL DEFAULT '0' AFTER `currency_iso`;
+ALTER TABLE `tc_cancellation_conditions_fees_dynamic` ADD `selection` TEXT NULL DEFAULT NULL AFTER `type`;

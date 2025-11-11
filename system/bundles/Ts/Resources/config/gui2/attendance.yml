@@ -1,0 +1,777 @@
+class: 
+  wdbasic: Ext_Thebing_School_Tuition_Allocation
+  data: Ext_Thebing_Tuition_Gui2_Attendance
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Tuition_Gui2_Attendance_Gui2
+  js: Attendance
+  icon_visible: Ext_TS_Tuition_Attendance_Gui2_Icon_Visible
+description: Thebing » Tuition » Attendance
+api: false
+access: 
+  - thebing_tuition_attendance_list
+  - ""
+hash: 97a5d9d1fce0807920f7816f55e2b395
+view: list
+title: 
+  - Ext_TS_System_Navigation
+  - t
+multiple_selection: true
+encode_data_id_field:
+encode_data: 
+  - inquiry_id
+  - attendance_id
+  - inquiry_journey_course_id_communication
+where : 
+  - Ext_Thebing_Tuition_Gui2_Attendance
+  - getListWhere
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - firstname
+            - lastname
+            - name
+            - short
+            - firstname
+            - lastname
+            - name_short
+            - number
+          alias:
+            - tc_c
+            - tc_c
+            - kg
+            - kg
+            - kt
+            - kt
+            - ktc
+            - tc_c_n
+        - 
+          element: seperator
+        -
+          element: selectfilter
+          id: week_filter
+          name: week_filter
+          label: Kurswoche
+          searchempty: false
+          set: [edit]
+          value:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getDefaultWeekFilterValue
+          column:
+            - week
+          alias:
+            - ktb
+          entries:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getWeeks
+        -
+          element: selectfilter
+          id: week_from_filter
+          name: week_from_filter
+          label: Kurswoche von
+          searchempty: false
+          set: [list]
+          value:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getDefaultWeekFilterFromValue
+          column: 
+            - week
+          alias:
+            - ktb
+          searchtype: ">="
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getWeeks
+        -
+          element: selectfilter
+          id: week_until_filter
+          name: week_until_filter
+          label: Kurswoche bis
+          searchempty: false
+          set: [list]
+          value:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getDefaultWeekFilterUntilValue
+          column: 
+            - week
+          alias:
+            - ktb
+          searchtype: "<="
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getWeeks
+        -
+          element: icon
+          id: last_week_icon
+          task: lastWeek
+          active: 1
+          title: Eine Woche zurück
+          set: [edit]
+          img: fa-backward
+        -
+          element: icon
+          id: current_week_icon
+          task: currentWeek
+          active: 1
+          title: Aktuelle Woche
+          set: [edit]
+          img: fa-stop
+        -
+          element: icon
+          id: next_week_icon
+          task: nextWeek
+          active: 1
+          title: Eine Woche vor
+          set: [edit]
+          img: fa-forward
+        - 
+          element: seperator
+        -
+          element: selectfilter
+          id: has_attendance_filter
+          set: [edit]
+          value: no
+          searchempty: true
+          #filter_part: HAVING
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getAttendanceFilterOptions
+          filter_query:
+           no: kta.id IS NULL
+           incomplete: kta.id IS NULL OR kta.completed = 0
+           yes: kta.completed = 1
+          column: 
+            - has_attendance
+        -
+          element: selectfilter
+          id: attendance_view
+          name: attendance_view
+          label: Übersicht
+          set: [list]
+          value: journey_course
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getAttendanceViews
+          skip_query: true
+        -
+          element: selectfilter
+          id: categories_filter
+          value: xNullx
+          entries:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getCourseCategoriesFilterOptions
+          column:
+            - category_id
+          alias:
+            - ktc
+        -
+          element: selectfilter
+          label: Kurs
+          column:
+            - course_id
+          alias:
+            - ktbic
+          entries:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getCourses
+            - false
+          searchtype: =
+          label_as_item: true
+        -
+          element: selectfilter
+          id: classes_filter
+          column: 
+            - class_id
+        -
+          element: selectfilter
+          id: teacher_filter
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getFilterSelectTeacherOptions
+          column: 
+            - teacher_id
+          alias:
+            - ktb
+        -
+          element: selectfilter
+          id: critical_filter
+          value: xNullx
+          filter_part: HAVING
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getCriticalOptions
+          filter_query:
+           critical: " inquiry_all_attendance < :critical_config "
+           not_critical: " inquiry_all_attendance > :critical_config "
+        -
+          element: selectfilter
+          id: visum_filter
+          value: xNullx
+          searchempty: true
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getVisaFilterOptions
+          filter_query:
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getVisaFilterQuery
+          column: 
+            - status
+          alias:
+            - ts_j_t_v_d
+        -
+          element: selectfilter
+          id: level_filter
+          entries: 
+            - Ext_Thebing_Tuition_Gui2_Attendance
+            - getLevelFilterOptions
+          column: 
+            - id
+          alias:
+            - ktl
+        -
+          element: selectfilter
+          id: inbox_filter
+          name: inbox_filter
+          column: 
+            - inbox
+          alias:
+            - ts_i
+          entries: 
+            - Ext_Thebing_System
+            - getInboxListForSelect
+            - true
+            - true
+        -
+          element: selectfilter
+          label: Gruppen
+          label_as_null_item: true
+          alias:
+            - ts_i
+          column:
+            - group_id
+          entries:
+            - Ext_TC_Util
+            - getYesNoArray
+            - false
+          filter_query:
+            no: "`group_id` = 0"
+            yes: "`group_id` != 0"
+        -
+          element: selectfilter
+          label: Agentur
+          label_as_item: true
+          alias:
+            - ts_i
+          column:
+            - agency_id
+          entries:
+            - Ext_TS_Inquiry_Abstract
+            - getAgenciesForSelect
+        -
+          element: selectfilter
+          label: Eingecheckt
+          column: checkin
+          entries:
+            - Ext_TC_Util
+            - getYesNoArray
+            - false
+          filter_query:
+            no: '`checkin` IS NULL'
+            yes: '`checkin` IS NOT NULL'
+          label_as_item: true
+        -
+          element: selectfilter
+          label: Sponsoring
+          column: sponsored
+          entries:
+            - Ext_TC_Util
+            - getYesNoArray
+            - false
+          filter_query:
+            no: '`sponsored` = 0'
+            yes: '`sponsored` != 0'
+          label_as_item: true
+        -
+          element: selectfilter
+          label: Kurssprachen
+          value: ''
+          column: courselanguage_id
+          alias: ts_ijc
+          entries:
+            - Ext_Thebing_Tuition_LevelGroup
+            - getSelectOptions
+          label_as_item: true
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+#        -
+#          element: labelgroup
+#          label: Kommunikation
+#          access:
+#            - thebing_tuition_attendance_communication
+        -
+          element: icon_communication
+          application: tuition_attendance
+          access:
+            - thebing_tuition_attendance_communication
+        -
+          element: labelgroup
+          label: Auswertung
+          access: thebing_tuition_attendance_report
+          set: [list]
+        -
+          element: icon
+          label: Bericht
+          action: report
+          task: requestAsUrl
+          active: 0
+          access: thebing_tuition_attendance_report
+          set: [list]
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - excel
+        -
+          element: labelgroup
+          label: Dokumente
+          access: 
+            - thebing_tuition_attendance_display_documents
+            - thebing_tuition_attendance_documents
+    -
+      position: top
+      set: []
+      type: ""
+      elements:
+        - 
+          element: pagination
+          limit_selection: true
+        -
+          element: labelgroup
+          label: Export
+        -
+          element: csv_export
+        -
+          element: excel_export
+        -
+          element: labelgroup
+          label: Sonstiges
+          last_bar: true
+          set: [edit]
+        -
+          element: icon
+          task: save_inputs
+          active: 1
+          label: Speichern
+          title: Speichern
+          set: [edit]
+          access: 
+            - thebing_tuition_edit_attendance
+            - save
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - save
+#        -
+#          element: icon
+#          task: request
+#          action: report
+#          active: 1
+#          label: Anwesenheitsübersicht
+#          title: Anwesenheitsübersicht
+#          set: [list]
+#          img:
+#            - Ext_Thebing_Util
+#            - getIcon
+#            - info
+        -
+          element: icon_delete
+          label: Löschen
+          set: [edit]
+        -
+          element: icon
+          task: request
+          action: student_login_release
+          id: student_login_release
+          active: 0
+          label: Freigeben für Login
+          title: Freigeben für Login
+          set: [edit]
+          access: 
+            - thebing_tuition_attendance_release_week_sl
+            - ""
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - accept
+        -
+          element: icon
+          task: request
+          action: student_login_release_remove
+          id: student_login_release_remove
+          active: 0
+          label: Freigabe entfernen für Login
+          title: Freigabe entfernen für Login
+          set: [edit]
+          access: 
+            - thebing_tuition_attendance_release_week_sl
+            - ""
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - delete
+        - element: loading_indicator
+columns:
+  -
+    title: Inbox
+    column: inbox
+    alias: ts_i 
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_System, getInboxListForSelect, true, false]
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: group_short
+    width: group_short
+    resize: false
+    set: [edit]
+  -
+    title: K.Nr.
+    column: customer_number
+    width: number
+    resize: false
+  -
+    title: Name
+    column: customer_name
+    width: name
+    resize: true
+    default: false
+  -
+    title: Vorname
+    column: firstname
+    width: name
+    resize: true
+  -
+    title: Nachname
+    column: lastname
+    width: name
+    resize: true
+  -
+    title: Agentur
+    column: agency_id
+    alias: ts_i
+    width: name
+    default: false
+    sortable: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_TS_Inquiry_Abstract, getAgenciesForSelect]
+  -
+    title: Alter
+    column: age
+    format: Ext_TS_Gui2_Format_AgeAtCourseBeginn
+    sortable: true
+    width: age
+    resize: false
+    default: false
+    sortable_column: customer_birthday
+  -
+    title: Nationalität
+    set: [edit]
+    column: nationality
+    width: name
+    format: Ext_Thebing_Gui2_Format_Nationality
+    default: false
+  -
+    title: Sponsoring
+    column: sponsored
+    width: yes_no
+    resize: false
+    default: false
+    format: Ext_TC_Gui2_Format_YesNo
+  -
+    title: Kurs
+    group: Zuweisung
+    column: course_name_short
+    width: short_name
+    resize: false
+    flexibility: false
+  -
+    title: Kurssprache
+    group: Zuweisung
+    alias: ts_ijc
+    column: courselanguage_id
+    width: name
+    default: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [ Ext_Thebing_Tuition_LevelGroup, getSelectOptions ]
+
+  -
+    title: Kategorie
+    group: Zuweisung
+    column: course_category_name
+    width: date
+    resize: false
+    flexibility: false
+  -
+    title: Klasse
+    group: Zuweisung
+    column: class_name
+    width: name
+    resize: false
+    set: [edit]
+    flexibility: false
+  -
+    title: Kurszeit
+    group: Zuweisung
+    column: template_name_and_time
+    width: date_user
+    resize: false
+    format: Ext_TS_Tuition_Attendance_Gui2_Format_Template
+    sortable: false
+    set: [edit]
+    flexibility: false
+  -
+    title: Level
+    group: Zuweisung
+    column: level_name_short
+    width: short_name
+    resize: false
+    flexibility: false
+  -
+    title: Kursstart
+    group: Zuweisung
+    column: course_start
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    flexibility: false
+  -
+    title: Kursende
+    group: Zuweisung
+    column: course_end
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    flexibility: false
+  -
+    title: Lehrer
+    group: Zuweisung
+    column: teacher_name
+    width: person_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Name
+    format_params:
+      - teacher_firstname
+      - teacher_lastname
+    flexibility: false
+  -
+    title: Montag
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: mo
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 1
+  -
+    title: Dienstag
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: di
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 2
+  -
+    title: Mittwoch
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: mi
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 3
+  -
+    title: Donnerstag
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: do
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 4
+  -
+    title: Freitag
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: fr
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 5
+  -
+    title: Samstag
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: sa
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 6
+  -
+    title: Sonntag
+    group: Abwesenheit pro Wochentag
+    set: [edit]
+    column: so
+    width: 170
+    flexibility: false
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DayInput
+    format_params:
+       - 7
+  -
+    title: Zeitraum
+    group: Anw. Lehrerbezogen
+    column: journey_course_teacher_period_attendance
+    width: short_name
+    style: Ext_Thebing_Gui2_Style_Attendance
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    resize: false
+    flexibility: false
+  -
+    title: Absolut
+    group: Anw. Lehrerbezogen
+    column: journey_course_teacher_all_attendance
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    style: Ext_Thebing_Gui2_Style_Attendance
+    flexibility: false
+  -
+    title: Zeitraum
+    group: Anw. Kursbezogen
+    column: journey_course_period_attendance
+    width: short_name
+    style: Ext_Thebing_Gui2_Style_Attendance
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    resize: false
+    flexibility: false
+  -
+    title: Absolut
+    group: Anw. Kursbezogen
+    column: journey_course_all_attendance
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    style: Ext_Thebing_Gui2_Style_Attendance
+    flexibility: false
+  -
+    title: Erwartete Anwesenheit absolut
+    group: Anw. Kursbezogen
+    column: journey_course_all_expected_attendance
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    style: Ext_Thebing_Gui2_Style_Attendance
+    flexibility: false
+  -
+    title: Zeitraum
+    group: Anw. Allgemein
+    column: inquiry_period_attendance
+    width: short_name
+    style: Ext_Thebing_Gui2_Style_Attendance
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    resize: false
+    flexibility: false
+  -
+    title: Absolut
+    group: Anw. Allgemein
+    column: inquiry_all_attendance
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    style: Ext_Thebing_Gui2_Style_Attendance
+    flexibility: false
+  -
+    title: Erwartete Anwesenheit absolut
+    group: Anw. Allgemein
+    column: inquiry_all_expected_attendance
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    style: Ext_Thebing_Gui2_Style_Attendance
+    flexibility: false
+  -
+    title: Anwesenheitswarnungen
+    group: Anw. Allgemein
+    column: index_attendance_warning
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_AttendanceWarning
+    width: name
+    small: true
+    resize: false
+    sortable: false
+    set: [list]
+  -
+    title: Auswertung
+    column: score
+    width: 80
+    resize: false
+    set: [edit]
+    format: Ext_Thebing_Gui2_Format_Input
+    format_params: [70, 'form-control input-sm multiple_handle']
+    flexibility: false
+  -
+    title: Kommentar
+    column: comment
+    width: 150
+    resize: false
+    set: [edit]
+    format: Ext_Thebing_Gui2_Format_Input
+    format_params: [140, 'form-control input-sm multiple_handle']
+    flexibility: false
+  -
+    title: Visum
+    column: visa
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_Tuition_Gui2_Attendance, getVisaFilterOptions, null, false]
+  -
+    title: Eingecheckt
+    column: checkin
+    width: datetime
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date_Time
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Checkin
+  -
+    title: Freigabe
+    column: student_login_release
+    width: date
+    resize: false
+    set: [edit]
+    format: Ext_Thebing_Gui2_Format_Date
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+  - [gui2/studentlists.js, thebing]
+  - [tuition/js/attendance.js, thebing]
+default_columns: []
+pagination: false
+export: false
+limit : 30

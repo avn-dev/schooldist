@@ -1,0 +1,33 @@
+class:
+  wdbasic: \Tc\Entity\Employee\Category
+id:
+  column: id
+  alias: tc_ec
+description: "TC » Mitarbeiter » Kategorien"
+access:
+  - thebing_admin_users_functions
+  - ""
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Tc\Gui2\Data\Employee\Category
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Tc\Gui2\Data\Employee\Category
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Bezeichnung
+    column: name
+    alias: tc_ec
+    width: name
+    resize: true

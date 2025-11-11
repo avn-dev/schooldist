@@ -1,0 +1,96 @@
+<?php
+
+// =============== Header ===============
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+
+
+
+include_once(\Util::getDocumentRoot()."system/includes/class.pagetemplate.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'delete')
+{
+	$oComment = new Ext_Blog_BlogComment($_VARS['entry_id'] , $_VARS['comment_id']);
+	$oComment->deleteComment();
+}
+
+
+$objPage = new GUI_Page();
+$objPage->appendElement(new GUI_Headline(array('text' => 'Kommentare', 'type' => '1')));
+
+// Show all comments
+$oEntry = new Ext_Blog_BlogEntry($_VARS['blog_id'] , $_VARS['entry_id']);
+$aCommentsList = $oEntry->getCommentsList();
+
+$aTable = array(
+			'showth'	=> false,
+			'cols'		=> array(
+								array('text' => '', 'style' => 'width: 10%;'),
+								array('text' => '', 'style' => 'width: 10%;'),
+								array('text' => '', 'style' => 'width: 75%;'),
+								array('text' => '', 'style' => 'width: 5%;')
+							)
+		);
+$oTable = new GUI_Table($aTable);
+
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Name'
+								),
+								array(
+									'forceTh' => true,
+									'text' => 'E-Mail'
+								),
+								array(
+									'forceTh' => true,
+									'text' => 'Kommentar'
+								),
+								array(
+									'forceTh' => true,
+									'text' => 'Bearbeiten'
+								)
+							)
+						)
+					);
+
+foreach($aCommentsList as $aComment)
+{
+	$oImgDelete		= new GUI_Image(array('url'	=> '/admin/media/delete.png'));
+	$oLinkDelete	= new GUI_Link(array('url'	=> '?action=delete&blog_id='.$_VARS['blog_id'].'&entry_id='.$_VARS['entry_id'].'&comment_id='.$aComment['id'], 'text' => $oImgDelete ));
+	$oImgList		= new GUI_ElementList();
+
+	$oImgList->appendElement($oLinkDelete);
+
+	$oTable->appendRow(array(
+						'cols' => array(
+									array(
+										'forceTh' => false,
+										'text' => $aComment['name']
+									),
+									array(
+										'forceTh' => false,
+										'text' => $aComment['email']
+									),
+									array(
+										'forceTh' => false,
+										'text' => $aComment['comment']
+									),
+									array(
+										'forceTh' => false,
+										'text' => $oImgList,
+										'style' => 'text-align:center;'
+									)
+								)
+							)
+						);
+}
+$objPage->appendElement($oTable);
+
+echo $objPage->generateHTML();
+
+?>

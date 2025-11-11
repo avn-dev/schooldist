@@ -1,0 +1,16 @@
+<?php
+
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sAccess = "thebing_tuition_progress_report";
+Ext_Thebing_Access::accesschecker($sAccess);
+
+$sGuiDescription = 'Thebing » Tuition » Progress Report';
+
+$sView						= 'progress_report';
+$sCommunicationApplication	= 'simple_view';
+
+include_once(Util::getDocumentRoot()."system/legacy/admin/extensions/thebing/students/basic.php");
+
+$oGui->display($aOptionalInfo);

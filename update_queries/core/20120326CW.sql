@@ -1,0 +1,2 @@
+ALTER TABLE `tc_frontend_templates_fields` CHANGE `display` `display` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '''input'',''textarea'',''select'',''date'',''time''';
+ALTER TABLE `tc_frontend_templates_fields` DROP `field_id`;

@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_inquiries_payments` CHANGE `amount_inquiry` `amount_inquiry` DECIMAL(16,5) NOT NULL COMMENT 'Items + Overpayment';
+ALTER TABLE `kolumbus_inquiries_payments_overpayment` CHANGE `inquiry_document_id` `inquiry_document_id` INT(11) NOT NULL COMMENT 'Nur wichtig für Rechnung/Creditnote';

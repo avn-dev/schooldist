@@ -1,0 +1,81 @@
+<?
+// customer_db_data
+// Administration zum Mini Modul um eine Seite zurück zu blättern
+
+// Soll default-Ziel haben
+// Soll verzweigen können
+
+include("../includes/main.inc.php");
+require \Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php";
+
+Access_Backend::checkAccess("modules_admin");
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+<script>
+function open_media(form_field,s) {
+	window.open('/admin/frame.html?file=media&mode=selecticon&form_name=customer_db_data_login_button&input_name=&submit_button_value=<?=urlencode('�bernehmen')?>&form_submit=0&input_name_title=&input_name_name='+form_field, 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+</script>
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+		<h1>Konfiguration des Speichern-Buttons</h1>
+
+			<form name="customer_db_data_login_button" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+<?
+
+	// hierher erweiterungen der Speichern-routine
+	if($_VARS['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	    $config->url                    = $_VARS['url'];
+	    $config->button_name            = $_VARS['button_name'];
+	    $config->button_look            = $_VARS['button_look'];
+	    $config->button_image           = $_VARS['button_image'];
+	    $config->check_mandatory        = $_VARS['check_mandatory'];
+	    $config->tagatt					= $_VARS['tagatt'];
+
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	if($config->button_name=="") {
+		$button_name = "Speichern";
+	} else {
+		$button_name = $config->button_name;
+	}
+
+?>
+<?=printTableStart()?>
+	<?=printFormPageSelect("Ziel-Seite des Buttons", "url", $config->url, "", "width:400px", 1); ?>
+	<?=printFormText("Beschriftung des Buttons","button_name",$config->button_name)?>
+	<?=printFormText("Weitere Tagattribute","tagatt",$config->tagatt)?>
+	<?=printFormSelect("Aussehen des Buttons","button_look", array("Button"=>"Button","image"=>"Grafik"),$config->button_look)?>
+	<?
+	if($config->button_look == "image") {
+	?>
+	<?=printFormText("Grafik","button_image",$config->button_image)?>
+	<?
+	}
+	?>
+	<?=printFormSelect("Sollen die Pflichtfelder beim Klick geprüft werden?","check_mandatory",array("1"=>"Ja","0"=>"Nein"),$config->check_mandatory)?>
+
+	<?=printTableEnd()?>
+	<?=printSubmit("Konfiguration speichern")?>
+
+		</td>
+	</tr>
+</table>
+
+
+<?=Admin_Html::loadAdminFooter()?>
+
+

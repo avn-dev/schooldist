@@ -1,0 +1,250 @@
+<?php
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+include_once(\Util::getDocumentRoot()."system/includes/wdpdf/wdpdf.php");
+include_once(\Util::getDocumentRoot()."system/extensions/customdata/customdata.php");
+include_once(\Util::getDocumentRoot()."system/extensions/license/class.license.php");
+
+// Datenbank Tabelle der Lizenzen
+$license_table='license';
+
+Access_Backend::checkAccess("modules_admin");
+
+// Your MySQL Server Hostname
+$strDbHost = "update.webdynamics.de";
+
+// Your MySQL Server User Name
+$strDbUser = "webdynamics";
+
+// Your MySQL Sever Password
+$strDbPasswd = "cms6598";
+
+// Connect to MySql
+$objWdDb = DB::createConnection('webdynamics', $strDbHost, $strDbUser, $strDbPasswd, 'webdynamics');
+
+$strView = "";
+
+// Ceck cases to identify what is to do
+if(isset($_VARS['task'])) { 
+
+	switch ($_VARS['task']) {
+		case 'new':
+			// Create a new Licens
+			$strView = "new";
+			break;
+		case 'save':
+			// Save a License
+			$objLicense = new Ext_License((int)$_VARS['id'], $objWdDb);
+			$objLicense->name = $_VARS['name'];
+			$objLicense->domain = $_VARS['domain'];
+			$objLicense->version = (float)$_VARS['version'];
+			$objLicense->license_key = $_VARS['license_key'];
+			$objLicense->validfrom = $_VARS['validfrom'];
+			$objLicense->validuntil = $_VARS['validuntil'];
+			$objLicense->domain_check = $_VARS['domain_check'];
+			$objLicense->encode = $_VARS['encode'];
+			$objLicense->save();
+			break;
+		case 'get':
+			$strView = "get";
+			break;
+		case 'edit':
+			// Edit a License
+			if (isset($_VARS['id'])) {
+				$objLicense = new Ext_License($_VARS['id'], $objWdDb);
+			}		
+			$strView = "edit";
+			break;
+		case 'delete':
+			// delete a License
+			if (isset($_VARS['id'])) {
+				$objLicense = new Ext_License($_VARS['id'], $objWdDb);
+				$objLicense->delete();
+			}		
+			break;
+	}
+}
+
+// Read all License from the Database
+$strSql = "SELECT * FROM ".$license_table." ORDER BY `last_access` DESC";
+$arrSql = array();
+$arrLicense = $objWdDb->queryData($strSql);
+
+// Prepare Lizenses for managing in the Forms
+$arrLicList = array();
+foreach ($arrLicense as $arrLic) {
+	$arrLicList[] = array('display' => $arrLic['name'], 'value' => $arrLic['id']);
+}
+
+
+$objPage = new GUI_Page();
+
+$objPage->appendElement(new GUI_Headline(array('text' => 'Erweiterungen » Lizenzen', 'type' => '1')));
+
+
+
+// Creats form for editing a Lizenz
+if ($strView == 'edit') {
+	
+	// Headline
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Lizenz Speichern', 'type' => '2')));
+	
+	// Inserts form for editing License
+	$objNewForm = new GUI_form(array('method' => 'POST', 'action'=>'license.html'));
+	$objTable = new GUI_Table(array('cols' => array('Name', 'Domain ', 'Check', 'Zend', 'Version', 'Key', 'Start', 'Ende'))); 
+	$objTable->appendRow(array('cols' => array(
+	new GUI_FormText(array('name' => 'name', 'value' => $objLicense->name, 'style' => 'width:200px;')),
+	new GUI_FormText(array('name' => 'domain', 'value' => $objLicense->domain, 'style' => 'width:200px;')),
+	new GUI_Formcheckbox(array('name' => 'domain_check', 'checked' => (bool)$objLicense->domain_check, 'value'=>'' )),
+	new GUI_Formcheckbox(array('name' => 'encode', 'checked' => (bool)$objLicense->encode, 'value'=>'' )),
+	new GUI_FormText(array('name' => 'license_key', 'value' => $objLicense->license_key, 'style' => 'width:200px;')),
+	new GUI_FormText(array('name' => 'version', 'value' => (float)$objLicense->version, 'style' => 'width:50px;')),
+	new GUI_FormText(array('name' => 'validfrom', 'value' => $objLicense->validfrom, 'style' => 'width:200px;')),	
+	new GUI_FormText(array('name' => 'validuntil', 'value' => $objLicense->validuntil, 'style' => 'width:200px;')))));
+	$objNewForm->appendElement($objTable);
+			
+	// Hidden Fields for submitting variables
+	$objNewForm->appendElement(new GUI_FormHidden(array('name' => 'task', 'value' => 'save')));
+	$objNewForm->appendElement(new GUI_FormHidden(array('name' => 'id', 'value' => $_VARS['id'])));
+	$objNewForm->appendElement(new GUI_FormSubmit(array('value' => 'Lizenz speichern')));
+	$objPage->appendElement($objNewForm);
+	
+}
+
+// Lists all License
+
+
+// Create Form for build a new License
+if($strView == "new") {
+
+	$strDate = date("Y-m-d H:i:s",time());
+	$strDateFuture = date("Y-m-d H:i:s",(time()+ '315576000'));
+	// Headline for License
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Lizenz erstellen', 'type' => '2')));
+	
+	// Build a form with Table for managing the Licenses
+	$objNewForm = new GUI_form(array('method' => 'POST', 'action'=>'license.html'));
+	$objTable = new GUI_Table(array('cols' => array('Name', 'Domain ','Check', 'Version', 'Key', 'Start', 'Ende'))); 
+	$objTable->appendRow(array('cols' => array(
+	new GUI_FormText(array('name' => 'name', 'value' => '', 'style' => 'width:200px;')),
+	new GUI_FormText(array('name' => 'domain', 'value' => '', 'style' => 'width:200px;')),
+	new GUI_Formcheckbox(array('name' => 'domain_check', 'value' => '')),
+	new GUI_FormText(array('name' => 'license_key', 'value' => time(), 'style' => 'width:200px;')),
+	new GUI_FormText(array('name' => 'version', 'value' => '5', 'style' => 'width:50px;')),
+	new GUI_FormText(array('name' => 'validfrom', 'value' => $strDate, 'style' => 'width:200px;')),
+	new GUI_FormText(array('name' => 'validuntil', 'value' => $strDateFuture, 'style' => 'width:200px;')))));
+	
+	$objNewForm->appendElement($objTable);
+	
+	// Transfers the id of the License in a hidden form tag
+	$objNewForm->appendElement(new GUI_FormHidden(array('name' => 'task', 'value' => 'save')));
+	$objNewForm->appendElement(new GUI_FormSubmit(array('value' => 'Lizenz erstellen')));
+	$objPage->appendElement($objNewForm);
+} 
+
+	// Lists all License
+	// fetch Images  
+	$objImgDelete = new GUI_Image(array('url' => '/admin/media/delete.png'));
+	$objImgEdit = new GUI_Image(array('url' => '/admin/media/edit.png'));
+	
+	// Create form for submiting a new License
+	$objNewForm = new GUI_Form(array('method' => 'POST', 'action' => 'license.html'));
+	$objNewForm->appendElement(new GUI_FormHidden(array('name' => 'task', 'value' => 'new')));
+	$objNewForm->appendElement(new GUI_FormSubmit(array('value' => 'Neue Lizenz erstellen')));
+	
+	// Create table-header
+
+		$arrTableConfig = array('cols' => array(array('text'=>'Id', 'style' => 'width:20px;'), array('text'=>'Name', 'style' => 'width:150px;'),array('text'=>'Domain', 'style' => 'width:150px;'),array('text'=>'Check', 'style' => 'width:20px;'),array('text'=>'Version', 'style' => 'width:20px;'),array('text'=>'Key', 'style' => 'width:150px;'),array('text'=>'Start', 'style' => 'width:150px;'),array('text'=>'Ende', 'style' => 'width:150px;'), array('text'=>'Aktion', 'style' => 'width:50px; text-align:center;')));
+
+	// Read table-content and set links for managing 
+	$objTable=new GUI_Table($arrTableConfig);
+	foreach ($arrLicense as $arrValue)
+	{
+		$objLinkEdit = new GUI_Link(array('url' => 'license.html?task=edit&id='.$arrValue['id'], 'text' => $objImgEdit ));
+		$objLinkDelete = new GUI_Link(array('url' => 'javascript:if(confirm(\'Lizenz wirklich lÃ¶schen?\')) self.location.href=\'license.html?task=delete&id='.$arrValue['id'].'\';', 'text' => $objImgDelete));
+		$objImgList = new GUI_ElementList();
+		$objImgList->appendElement($objLinkEdit);	
+		$objImgList->appendElement($objLinkDelete);
+	}
+	
+
+
+	// Headline License
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Lizenzen', 'type' => '2')));
+
+	// Create form for submiting a new License
+	$objNewLicenseForm = new GUI_Form(array('method' => 'POST', 'action' => 'license.html'));
+	$objNewLicenseForm->appendElement(new GUI_FormHidden(array('name' => 'task', 'value' => 'new')));
+	$objNewLicenseForm->appendElement(new GUI_FormSubmit(array('value' => 'Neue Lizenz erstellen')));
+	
+	// Insert Forms for Licens
+	$objPage->appendElement($objNewLicenseForm);
+	
+	// Headline License
+	$objPage->appendElement(new GUI_Headline(array('text' => '', 'type' => '2')));
+	
+	// Lists all License with buttons and displays the selcet box for the FAQs
+	// fetch Images  
+	$objImgDelete = new GUI_Image(array('url' => '/admin/media/delete.png'));
+	$objImgEdit = new GUI_Image(array('url' => '/admin/media/edit.png'));
+	
+	// Create form for submiting a new Category
+	$objNewForm = new GUI_Form(array('method' => 'POST', 'action' => 'license.html'));
+	$objNewForm->appendElement(new GUI_FormHidden(array('name' => 'task', 'value' => 'new')));
+	$objNewForm->appendElement(new GUI_FormSubmit(array('value' => 'Neue Lizenz erstellen')));
+	
+	// Create table-header
+	$arrTableConfig = array(
+		'style' => 'width:100%;table-layout:fixed;',
+		'cols' => array(
+			array('text'=>'ID', 'style' => 'width:40px;'), 
+			array('text'=>'Name', 'style' => 'width:auto;'),
+			array('text'=>'Domain', 'style' => 'width:200px;'),
+			array('text'=>'Check', 'style' => 'width:50px;'),
+			array('text'=>'Version', 'style' => 'width:60px;'),
+			array('text'=>'Aktuell', 'style' => 'width:60px;'),
+			array('text'=>'Key', 'style' => 'width:80px;'),
+			array('text'=>'Letzter Zugriff', 'style' => 'width:140px;'),
+			array('text'=>'Start', 'style' => 'width:140px;'),
+			array('text'=>'Ende', 'style' => 'width:140px;'), 
+			array('text'=>'Aktion', 'style' => 'width:50px; text-align:center;')
+			)
+		);
+
+	// Read table-content and set links for managing 
+	$objTable=new GUI_Table($arrTableConfig);
+	foreach ($arrLicense as $arrValue)
+	{
+		$objLinkEdit = new GUI_Link(array('url' => 'license.html?task=edit&id='.$arrValue['id'], 'text' => $objImgEdit ));
+		$objLinkDelete = new GUI_Link(array('url' => 'javascript:if(confirm(\'Lizenz wirklich löschen?\')) self.location.href=\'license.html?task=delete&id='.$arrValue['id'].'\';', 'text' => $objImgDelete));
+		$objImgList = new GUI_ElementList();
+		$objImgList->appendElement($objLinkEdit);	
+		$objImgList->appendElement($objLinkDelete);
+		
+		// Wenn der Key abgelaufen ist , farbig hinterlegen
+		if(strtotime($arrValue['validuntil'])<time() ){
+			$style_old_key='background-color:#FF6666;';
+		}
+		// Wenn kein Domain Check an ist , farbig hinterlegen
+		elseif($arrValue['domain_check']=='0'){
+			$style_old_key='background-color:#ccc;';
+		}
+		// sonst keine Farbe
+		else{
+			$style_old_key='';
+		}
+				
+		$objTable->appendRow(array('cols' => array(array('text'=>$arrValue['id'], 'style'=>$style_old_key),array('text'=>$arrValue['name'], 'style'=>$style_old_key),array('text'=>$arrValue['domain'], 'style'=>$style_old_key),array('text'=>$arrValue['domain_check'], 'style'=>$style_old_key),array('text'=>$arrValue['version'], 'style'=>$style_old_key),array('text'=>(string)$arrValue['current_version'], 'style'=>$style_old_key),array('text'=>$arrValue['license_key'], 'style'=>$style_old_key),array('text'=>$arrValue['last_access'], 'style'=>$style_old_key),array('text'=>$arrValue['validfrom'], 'style'=>$style_old_key),array('text'=>$arrValue['validuntil'], 'style'=>$style_old_key), $objImgList)));
+
+	}
+	// Table License
+	$objPage->appendElement($objTable);
+	// From License
+	$objPage->appendElement($objNewForm);
+
+
+echo $objPage->generateHTML();
+
+?>
+
+

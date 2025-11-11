@@ -1,0 +1,604 @@
+class: 
+  wdbasic: Ext_TS_Accounting_BookingStack
+  data: Ext_TS_Accounting_BookingStack_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+description: Thebing » Accounting » Booking Stack
+access: thebing_accounting_booking_stack
+multiple_selection: true
+title: Buchungsstapel
+id:
+  column: id
+  alias: ts_bs
+where : 
+  - Ext_TS_Accounting_BookingStack_Gui2_Data
+  - getListWhere
+orderby : 
+  - Ext_TS_Accounting_BookingStack_Gui2_Data
+  - getOrderby
+designer:
+  filter: ts_booking_stack
+pagination: false
+export: false
+bars: 
+  -
+      position: top
+      type: ''
+      elements:
+        -
+          element: icon
+          label: Buchungsstapel bereinigen
+          task: openDialog
+          action: clear_stack
+          active: 1
+          access: thebing_accounting_booking_stack
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - broom
+          dialog:
+            - Ext_TS_Accounting_BookingStack_Gui2_Data
+            - getClearDialog
+        -
+          element: icon
+          label: Weiterverarbeiten
+          task: openDialog
+          action: interface_export
+          active: 0
+          access: thebing_accounting_booking_stack
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - cog_go
+          dialog:
+            - Ext_TS_Accounting_BookingStack_Gui2_Data
+            - getInterfaceExportDialog
+  -
+      position: top
+      type: ''
+      elements:
+        -
+          element: pagination
+          only_pagecount: false
+          limit_selection: true
+        -
+          element: labelgroup
+          label: Export
+        -
+          element: csv_export
+        -
+          element: excel_export
+        -
+          element: labelgroup
+          label: Historie
+          hide_empty: true
+        -
+          element: icon
+          label: Historie
+          task: openDialog
+          action: interface_export_history
+          active: 1
+          access: thebing_accounting_booking_stack
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - timeline_marker
+          dialog:
+            - Ext_TS_Accounting_BookingStack_Gui2_Data
+            - getInterfaceExportHistoryDialog
+        -
+          element: loading_indicator
+  - 
+      position: bottom
+      type: legend
+      elements: 
+        - 
+          element: legend_label
+          label: Legende
+        - 
+          element: legend_info
+          label: Automatikkonto
+          info:
+            color: green
+            background: true
+columns:
+  # Nicht sichtbare Felder
+  -
+    title: Adressat Vorname
+    column: address_firstname
+    alias: ts_bs
+    visible: false
+    filterset:
+      type: input
+  -
+    title: Adressat Nachname
+    column: address_lastname
+    alias: ts_bs
+    visible: false
+    filterset:
+      type: input
+  - 
+    title: Kontonummer
+    column: account_number
+    visible: false
+    filterset:
+      type: select
+      options:
+       - Ext_TS_Accounting_BookingStack_Gui2_Data
+       - getAccountExistsOptions
+      query:
+        exists: IF(`double_accounting` = 1, `account_number_income` != '' AND `account_number_expense` != '', `account_number_income` != '')
+        not_exists: IF(`double_accounting` = 1, `account_number_income` = '' OR `account_number_expense` = '', `account_number_income` = '')
+  -
+    title: Ursprung
+    column: is_payment
+    visible: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Accounting_BookingStack_Gui2_Data
+        - getSourceFilterOptions
+      query:
+        document: " `payment_id` = 0 "
+        payment: " `payment_id` > 0 "
+  -
+    title: Firma
+    column: company_id
+    alias: ts_bs
+    visible: false
+    filterset:
+      type: select
+      options: 
+        - Ext_TS_Accounting_BookingStack_Gui2_Data
+        - getCompanyFilterOptions
+  -
+    title: Inbox
+    column: inbox_id
+    visible: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Accounting_BookingStack_Gui2_Data
+        - getInboxFilterOptions
+      check: 
+        - Ext_Thebing_System
+        - hasInbox
+  # Sichtbare Felder
+  - 
+    visible: true
+    title: Beleg Nr.
+    column: document_number
+    alias: ts_bs
+    width: document_number
+    resize: false
+    filterset:
+      type: input
+  - 
+    visible: true
+    default: false
+    title: Hauptbeleg-Nr.
+    column: main_document_number
+    alias: ts_bs
+    width: document_number
+    resize: false
+    filterset:
+      type: input
+  - 
+    visible: true
+    default: false
+    title: Rechnungs-Nr.
+    column: invoice_document_number
+    alias: ts_bs
+    width: document_number
+    resize: false
+    filterset:
+      type: input
+  - 
+    visible: true
+    title: Belegdatum
+    column: document_date
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: date
+  - 
+    visible: true
+    title: Belegtext
+    column: stack_description
+    width: long_description
+    resize: true
+    inplace_editor: true
+    alias: ts_bs
+    filterset:
+      type: input
+  - 
+    visible: true
+    title: Betrag
+    column: amount
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  - 
+    visible: true
+    default: false
+    title: Betrag in Standardwährung
+    column: amount_default_currency
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  -
+    visible: true
+    title: Währung
+    column: currency_iso
+    width: short_name
+    resize: false
+    format: Ext_TC_Gui2_Format_Currency
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Accounting_BookingStack_Gui2_Data
+        - getCurrencyFilterOptions
+  -
+    visible: true
+    title: Währung (ISO-Kürzel)
+    column: currency_iso_original
+    sortable_column: currency_iso
+    data: currency_iso
+    width: short_name
+    resize: false
+    default: false
+  -
+    # Quickbooks
+    visible: true
+    title: QB
+    description: QB Rechnungsnummer
+    alias: ts_bs
+    column: qb_number
+    width: number
+    resize: false
+    default: false
+    inplace_editor: true
+    flexibility: false
+    filterset:
+      type: input
+  -
+    visible: true
+    title: Sollkonto
+    column: account_number_expense
+    width: number
+    resize: false
+    style: Ext_TS_Accounting_BookingStack_Gui2_Style_AccountNumber
+    inplace_editor: true
+    alias: ts_bs
+    flexibility: false
+    filterset:
+      type: input
+  -
+    visible: true
+    title: Habenkonto
+    column: account_number_income
+    width: number
+    resize: false
+    style: Ext_TS_Accounting_BookingStack_Gui2_Style_AccountNumber
+    inplace_editor: true
+    alias: ts_bs
+    flexibility: false
+    filterset:
+      type: input
+  -
+    visible: true
+    title: Kostenstelle
+    column: cost_center
+    width: number
+    resize: false
+    inplace_editor: true
+    flexibility: false
+    filterset:
+      type: select
+      options:
+       - Ext_TS_Accounting_BookingStack_Gui2_Data
+       - getCostCenterExistsOptions
+      query:
+        exists: "`cost_center` != ''"
+        not_exists: "`cost_center` = ''"
+  -
+    visible: true
+    title: Buchungsschlüssel
+    small: true
+    column: posting_key
+    width: number
+    resize: false
+    inplace_editor: true
+    flexibility: false
+    filterset:
+      type: select
+      options:
+       - Ext_TS_Accounting_BookingStack_Gui2_Data
+       - getPositionKeysFilterOptions
+  -
+    visible: true
+    title: Buchungszeitpunkt
+    small: true
+    column: booking_date
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: date
+  -
+    visible: true
+    title: Leistungszeitraum
+    column: service_from
+    width: comment
+    resize: false
+    format: Ext_TS_Gui2_Format_FromUntil
+    format_params:
+      - service_from
+      - service_until
+  -
+    visible: true
+    title: Beschreibung
+    column: position_description
+    width: long_description
+    resize: false
+    filterset:
+      type: input
+  -
+    visible: true
+    title: Adressat - Firma
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_name
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    title: Adressat - Name
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressName
+    column: address_full_name
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - Name (Nachname Vorname)
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_firstname_lastname
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - Name (Firma - Vorname Nachname)
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_name_firstname_lastname
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - Adresse
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_address
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - PLZ und Ort
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_zip_city
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - Land
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_country
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - E-Mail
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_email
+    sortable: false
+    width: name
+    resize: false
+  -
+    visible: true
+    default: false
+    title: Adressat - Nummer
+    format: Ext_TS_Accounting_Bookingstack_Gui2_Format_AddressField
+    column: address_number
+    sortable: false
+    width: name
+    resize: false    
+  -
+    title: Schule
+    column: school_id
+    width: name
+    resize: false
+    sortable: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getSchoolList, true]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Client
+        - getSchoolList
+        - true
+  -
+    title: Schulkürzel
+    small: true
+    column: school_shortcode
+    data: school_id
+    width: short_name
+    resize: false
+    sortable: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getSchoolList, true, 0, false, true]
+  -
+    title: Dokument-Typ
+    column: document_type
+    format: Ext_TS_Document_Release_Gui2_Format_DocType
+    width: comment
+    flexibility: false
+  -
+    title: Kundennummer
+    column: customer_number
+    width: number
+    flexibility: false
+  -
+    title: Name des Schülers
+    column: customer_name
+    width: name
+    flexibility: false
+  -
+    title: Nationalität des Schülers
+    column: nationality
+    width: name
+    format: Ext_Thebing_Gui2_Format_Nationality
+  -
+    # Xero
+    title: Anzahl
+    column: quantity
+    width: number
+    default: false
+  -
+    # Xero
+    title: Restzahlungsdatum
+    column: due_date
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    default: false
+  -
+    # Xero
+    title: Steuer
+    column: tax
+    width: name
+    default: false
+  - # Xero
+    title: Steuerschlüssel
+    column: tax_key
+    width: name
+    default: false
+  - 
+    title: Soll/Haben
+    column: debit_credit
+    width: short_name
+    default: false    
+  - 
+    title: Kontenart
+    column: account_type
+    width: short_name
+    default: false    
+  - 
+    title: Frühester Leistungsbeginn (Beleg)
+    column: earliest_commencement
+    width: date
+    default: false    
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Dokument-ID
+    column: document_id
+    visible: true
+    default: false
+  -
+    title: Zahlung-ID
+    column: payment_id
+    visible: true
+    default: false
+  -
+    column: agency_id
+    visible: true
+    default: false
+    title: Agentur
+    width: name
+    resize: false
+    sortable: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_TS_Inquiry_Abstract, getAgenciesForSelect]
+  -
+    column: agency_number
+    visible: true
+    default: false
+    title: Agenturnummer
+    width: name
+  # Sage50
+  -
+    title: Betrag wenn Forderung
+    column: amount_if_claim
+    visible: true
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  # Sage50
+  -
+    title: Betrag wenn Position
+    column: amount_if_position
+    visible: true
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  # Sage50
+  -
+    title: Steuerbetrag
+    column: amount_tax
+    visible: true
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  # GIT
+  -
+    title: Zahlungsbedingung - Kommentar
+    column: payment_condition_comment
+    visible: true
+    default: false
+    
+    
+default_columns:
+  -
+    title: Ersteller
+    column: creator_id
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    sortable: true
+  -
+    title: Erstellt
+    alias: ts_bs
+    column: created
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+    filterset:
+      type: date
+  -
+    title: Bearbeiter
+    column: editor_id
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    sortable: true
+  -
+    title: Verändert
+    column: changed
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+js:
+  - [document/release/js/gui2.js, ts]
+filter_values:
+  company_id: [Ext_TS_Accounting_BookingStack_Gui2_Data, getCompanyFilterFirstValue]

@@ -1,0 +1,158 @@
+
+.infoBox {
+	margin-top:			5px;
+}
+
+#form_pages_content {
+	float:				left;
+	margin-left:		10px;
+	margin-top:			5px;
+	width:				910px;
+}
+
+#form_pages_tabs {
+	line-height:		20px;
+	float:				left;
+	
+}
+
+.form_pages_tab {
+	float:				left;
+	margin-right:		5px;
+	border:				1px solid #CCC;
+	border-bottom:		0;
+	padding:			2px 5px;
+	background-color:	#EEE;
+	cursor:				e-resize;
+}
+
+#form_pages_tabs .form_pages_tab_active {
+	background-color:	#DEDEDE;
+}
+
+#form_pages_tabs .form_pages_tab .form_tab_title {
+	float:				left;
+}
+
+#form_pages_tabs .form_pages_tab .form_tab_icons {
+	margin-left:		10px;
+	float:				right;
+}
+
+.form_pages_tab img {
+	display:			block;
+	float:				left;
+	margin-left:		3px;
+	margin-top:			2px;
+	cursor:				pointer;
+}
+
+#form_pages_contents {
+	width:				900px;
+	border:				1px solid #CCC;
+}
+
+.form_pages_content {
+	padding:			15px;
+}
+
+.infoBox {
+	padding:			3px;
+	padding-bottom:		1px;
+	width:				194px;
+}
+
+.filter_col {
+	cursor:				move;
+    margin:				1px;
+    overflow:			hidden;
+    padding:			3px 4px;
+    background-color:	#EEE;
+    margin-bottom:		3px;
+    border:				1px solid #DEDEDE;
+}
+
+.filter_col_disabled {
+	cursor:				auto;
+    background-color:	#DEDEDE;
+}
+
+.block_move_img,
+.block_edit_img,
+.block_remove_img {
+	cursor: pointer;
+}
+
+.accept_element {
+	background-color:	yellow !important;
+}
+
+.areas {
+	width:				100%;
+	border:				1px solid #CCC;
+	border-spacing:		0px;
+	border-collapse:	collapse;
+	background-color:	#FFF;
+	margin:				2px 0;
+}
+
+.areas td {
+	border:				1px solid #CCC;
+	background-color:	#FFF;
+	padding:			15px;
+	vertical-align:		top;
+}
+
+.areas th {
+	float:				auto;
+	background-color:	#EEE;
+	font-weight:		normal;
+	text-align:			left;
+	padding:			2px 5px;
+	border:				1px solid #CCC;
+	cursor:				move;
+}
+
+.areas th .floatLeft {
+	height:				20px;
+	line-height:		20px;
+}
+
+.areas th img {
+	display:			block;
+	float:				left;
+	margin-left:		3px;
+	margin-top:			2px;
+	cursor:				pointer;
+}
+
+.areas td p {
+	font-size:			12px;
+	margin:				0;
+}
+
+.areas h2, .areas h3 {
+	margin: 0;
+	padding: 0;
+	color: #000; /* GUI-Style überschreiben (weiß auf weiß) */
+}
+
+.form_pages_content .ui-sortable-placeholder {
+	height:				10px !important;
+	visibility:			visible !important;
+	background-color:	yellow;
+}
+
+.form_pages_content .ui-sortable-helper {
+	height:				auto !important;
+	overflow:			hidden !important;
+	width:				auto !important;
+}
+
+.form_pages_content .ui-sortable-helper td {
+	display:			none !important;
+}
+
+.form_pages_content hr {
+	margin: 1rem 0;
+}

@@ -1,0 +1,55 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+//$sAccess = "thebing_students_visa_list";
+//Ext_Thebing_Access::accesschecker($sAccess);
+//
+//$sGuiDescription = 'Thebing » Invoice » Inbox';
+//$sCommunicationApplication = 'visum_list';
+//$sView = 'visum_list';
+//$bAddIconAdditionalFiles = true;
+//$aAdditionalTemplates = array(
+//	'document_studentrecord_visum_pdf'
+//);
+//$sOrderByOption = 'visum';
+//
+//include_once(Util::getDocumentRoot()."admin/extensions/thebing/students/basic.php");
+
+$oSchool						= Ext_Thebing_Client::getFirstSchool($sAccess);
+$iPassportDue					= (int)$oSchool->passport_due;
+$iVisumDue						= (int)$oSchool->visum_due;
+
+$sView = 'students_visum';
+
+$oFactory		= new Ext_Gui2_Factory('ts_students_visum');
+$oGui			= $oFactory->createGui($sView, null, array('only_documents_from_same_gui' => true));
+$oGui->sView	= $sView;
+
+//nur Visum-spezifische flexiblen Felder anzeigen
+$oGui->sSection = 'student_record_visum';
+
+$sHtmlLegend = '<div style="float: left"><b>' . $oGui->t('Gültigkeit') . ': </b>&nbsp;</div>';
+$sHtmlLegend .= '<div style="float: left">' . $oGui->t('abgelaufen') . '</div> <div class="colorkey" style="background-color: '.Ext_Thebing_Util::getColor('red').'" ></div>';
+
+$sInfoPass = $oGui->t('Passablaufdatum in den nächsten %s Tagen');
+$sInfoPass = str_replace('%s', $iPassportDue, $sInfoPass);
+
+$sInfoVisum = $oGui->t('Visaablaufdatum in den nächsten %s Tagen');
+$sInfoVisum = str_replace('%s', $iVisumDue, $sInfoVisum);
+
+$sHtmlLegend .= '<div style="float: left;margin-right:5px;"> <label>' . $sInfoPass.', ' . $sInfoVisum . '</label></div>';
+
+$sHtmlLegend .= '<div style="float: left"> | <b>' . $oGui->t('Buchung') . ': </b>&nbsp;</div>';
+$sHtmlLegend .= '<div style="float: left">' . $oGui->t('Storniert') . '</div> <div class="colorkey" style="background-color: ' . Ext_Thebing_Util::getColor('storno') . '" ></div>';
+$sHtmlLegend .= '<div style="float: left">' . $oGui->t('Verändert') . '</div> <div class="colorkey" style="background-color: ' . Ext_Thebing_Util::getColor('changed') . '" ></div>';
+$sHtmlLegend .= '<div style="float: left">' . $oGui->t('nicht bestätigt') . '</div> <div class="colorkey" style="color: red" ><i> ABC </i></div>';
+
+$oBarLegend = $oGui->createBar();
+$oBarLegend->position = 'bottom';
+$oHtml = $oBarLegend->createHtml($sHtmlLegend);
+$oBarLegend ->setElement($oHtml);
+
+$oGui->setBar($oBarLegend);
+
+$oGui->display();

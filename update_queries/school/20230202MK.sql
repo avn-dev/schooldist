@@ -1,0 +1,2 @@
+CREATE TABLE `ts_accounting_companies_combinations_to_services` (`company_combination_id` int(11) UNSIGNED NOT NULL, `service` varchar(50) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+ALTER TABLE `ts_accounting_companies_combinations_to_services` ADD PRIMARY KEY (`company_combination_id`,`service`) USING BTREE, ADD KEY `company_combination_id` (`company_combination_id`),  ADD KEY `school_id` (`service`);

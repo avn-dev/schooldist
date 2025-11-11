@@ -1,0 +1,1 @@
+ALTER TABLE `tc_frontend_combinations` ADD `refresh_status` TINYINT(1) NOT NULL DEFAULT '1' ;

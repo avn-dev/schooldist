@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_accommodations_meals` CHANGE `active` `active` TINYINT(1) NOT NULL DEFAULT '1';

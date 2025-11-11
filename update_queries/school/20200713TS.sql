@@ -1,0 +1,1 @@
+ALTER TABLE `ts_companies` ADD `automatic_release` TINYINT(1) NOT NULL DEFAULT '0' AFTER `export_charset`, ADD `automatic_release_after` TINYINT(3) NOT NULL AFTER `automatic_release`, ADD `automatic_stack_export` TINYINT(1) NOT NULL DEFAULT '0' AFTER `automatic_release_after`;

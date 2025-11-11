@@ -1,0 +1,2 @@
+ALTER TABLE `ts_payment_conditions_settings` CHANGE `installment_split` `installment_split` ENUM('service_period','percentage','quarterly_month') CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL;
+ALTER TABLE `ts_payment_conditions_settings` ADD `combine_partial_instalments` TINYINT NOT NULL DEFAULT '0';

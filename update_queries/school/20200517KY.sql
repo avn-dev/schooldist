@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_rooms` ADD `beds_comment` VARCHAR(255) NOT NULL COMMENT 'Z.B. Für zusätzliche Vermietung von Betten' AFTER `double_beds`;
+ALTER TABLE `kolumbus_cancellation_fees` ADD `minimum_value` DECIMAL NOT NULL DEFAULT '0' AFTER `currency_id`;

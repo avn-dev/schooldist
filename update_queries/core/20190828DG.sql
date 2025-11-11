@@ -1,0 +1,1 @@
+ALTER TABLE `tc_gui2_filtersets_bars_elements` CHANGE `display_label` `display_label` TINYINT(1) NOT NULL DEFAULT '0';

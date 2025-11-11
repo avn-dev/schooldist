@@ -1,0 +1,56 @@
+class:
+  data: Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data
+  wdbasic: Ext_Thebing_Management_Settings_TuitionTime
+access: thebing_management_resources
+pagination: false
+export: false
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    visible: true
+    sortable: false
+    title: Standardzeit
+    column: tuition_time_id
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data, getTuitionTemplateOptions]
+  -
+    visible: true
+    sortable: false
+    title: Tage
+    column: days
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data, getDayOptions]
+      - ", "
+      - array
+  -
+    visible: true
+    sortable: false
+    title: Kurse
+    column: courses
+    width: long_description
+    resize: true
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data, getCourseOptions]
+      - ", "
+      - array
+default_columns: []

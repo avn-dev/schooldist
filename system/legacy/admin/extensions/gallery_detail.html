@@ -1,0 +1,330 @@
+<?php
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+Admin_Html::loadAdminHeader();
+
+if(
+	isset($_VARS['task']) &&
+	(
+		$_VARS['task'] === 'rotate_left' ||
+		$_VARS['task'] === 'rotate_right'
+	)
+) {
+	
+	$oGalleryData = Gallery\Entity\Data::getInstance($_VARS['image_id']);
+	$oMedia = Cms\Entity\Media::getInstance($oGalleryData->image);
+	$sPath = $oMedia->getPath();
+	
+	$oImgBuilder = new imgBuilder();
+	$rImage = $oImgBuilder->getImageObject($sPath);
+	
+	if($_VARS['task'] === 'rotate_left') {
+		$iAngle = 90;
+	} elseif($_VARS['task'] === 'rotate_right') {
+		$iAngle = -90;
+	}
+	
+	$rColor = imagecolorallocate($rImage, 255, 255, 255);
+	$rImage = imagerotate($rImage, $iAngle, $rColor);
+	
+	$aPathInfo = pathinfo($sPath);
+
+	switch(strtolower($aPathInfo['extension'])) {
+		case 'png':
+			imagepng($rImage, $sPath);
+			break;
+		case 'jpg':
+			imagejpeg($rImage, $sPath);
+			break;
+		case 'gif':
+			imagegif($rImage, $sPath);
+			break;
+	}
+	
+	Util::changeFileMode($sPath);
+	
+}
+
+$form_name = "down_form_data2";
+$input_name = "down_auswahl";
+$submit_button_value = "Bild auswählen";
+$form_submit = 1;
+
+?>
+<script>
+function open_media2() {
+window.open('../frame.<? echo $file_ext; ?>?file=media&mode=selecticon&form_name=<?echo $form_name;?>&input_name=<?echo $input_name;?>&submit_button_value=<?echo $submit_button_value;?>&form_submit=<?echo $form_submit;?>', 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+</script>
+<?
+
+//aktivieren/deaktivieren bearbeiten
+if($down_active_id > 0){
+	$down_aufgabe = DB::executeQuery("UPDATE gallery_data SET active = ".(int)$down_active." WHERE id = ".(int)$down_active_id."");
+	echo last_error();
+}//if
+
+//Einträge löschen
+if(isset($_VARS['down_loesch_id'])) {
+	//id's extrahieren
+	$down_loesch_id = explode("|", $_VARS['down_loesch_id']);
+	for($i=0;$i<=count($down_loesch_id);$i++) {
+		if($down_loesch_id[$i] > 0) {
+			//löschen
+			DB::executeQuery("DELETE FROM gallery_data WHERE id = ".(int)$down_loesch_id[$i]."");
+		}//if
+	}//for
+}//if
+
+?>
+<style>
+.newfolder {
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+.select_on {
+	background-color: buttonface;
+	border-bottom: 1px solid buttonhighlight;
+	border-right: 1px solid buttonhighlight;
+	border-top: 1px solid buttonshadow;
+	border-left: 1px solid buttonshadow;
+}
+.select_off {
+	background-color: buttonface;
+	border-top: 1px solid buttonhighlight;
+	border-left: 1px solid buttonhighlight;
+	border-bottom: 1px solid buttonshadow;
+	border-right: 1px solid buttonshadow;
+}
+</style>
+<script>
+
+var folder = "<? echo $folder; ?>";
+/**
+ * Sets/unsets the pointer in browse mode
+ *
+ * @param   object   the table row
+ * @param   object   the color to use for this row
+ * @param   object   the background color
+ *
+ * @return  boolean  whether pointer is set or not
+ */
+var delete_media = new Array();
+ 
+function setPointer(theRow, e, thePointerColor, theNormalBgColor) {
+
+	if(!e.ctrlKey) {
+
+		for (var i=0;i<document.getElementsByTagName("tr").length;i++) {
+			var a = eval("document.getElementsByTagName('tr')["+i+"];");
+			if(a.id != "") {
+
+				////////////////////////////////////////////////////////////////////////////////////////
+				var theCells = null;
+
+				if (thePointerColor == '' || typeof(a.style) == 'undefined') {
+					return false;
+				}
+				if (typeof(document.getElementsByTagName) != 'undefined') {
+					theCells = a.getElementsByTagName('td');
+				}
+				else if (typeof(theRow.cells) != 'undefined') {
+					theCells = a.cells;
+				}
+				else {
+					return false;
+				}
+				var rowCellsCnt  = theCells.length;
+				var currentColor = null;
+				var newColor     = null;
+				var newTextColor = 'HIGHLIGHTTEXT';
+				// Opera does not return valid values with "getAttribute"
+				currentColor = theCells[0].getAttribute('bgcolor');
+				newColor     = theNormalBgColor;
+				newTextColor = 'INFOTEXT';
+				delete_media[a.id] = '0';
+				//delete_media[theRow.id] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+
+
+				for (var c = 0; c < rowCellsCnt; c++) {
+					theCells[c].setAttribute('bgcolor', newColor, 0);
+					theCells[c].style.color = newTextColor;
+				} // end for
+				////////////////////////////////////////////////////////////////////////////////////////		
+			}
+		}
+	}// end if not ctrl-key
+
+	var theCells = null;
+
+	if (thePointerColor == '' || typeof(theRow.style) == 'undefined') {
+		return false;
+	}
+	if (typeof(document.getElementsByTagName) != 'undefined') {
+		theCells = theRow.getElementsByTagName('td');
+	}
+	else if (typeof(theRow.cells) != 'undefined') {
+		theCells = theRow.cells;
+	}
+	else {
+		return false;
+	}
+	var rowCellsCnt  = theCells.length;
+	var currentColor = null;
+	var newColor     = null;
+	var newTextColor = 'HIGHLIGHTTEXT';
+// Opera does not return valid values with "getAttribute"
+	currentColor = theCells[0].getAttribute('bgcolor');
+	newColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+				 ? theNormalBgColor
+				 : thePointerColor;
+	newTextColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+				 ? 'INFOTEXT'
+				 : 'HIGHLIGHTTEXT';
+	delete_media[theRow.id] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+				 ? 0
+				 : 1;
+	for (var c = 0; c < rowCellsCnt; c++) {
+		theCells[c].setAttribute('bgcolor', newColor, 0);
+		theCells[c].style.color = newTextColor;
+	} // end for
+
+    return true;
+} // end of the 'setPointer()' function
+
+
+
+function upd_file_prefs(file_id, file_title, description){
+	parent.down_form_data2.down_neu_beschr.value = file_title;
+	parent.document.down_form_data2.down_neu_titel.value = description;
+	parent.document.down_form_data2.down_chg_id.value = file_id;
+}
+
+function deleteitem() {
+	var count = 0;
+	var loeschen = "|";
+
+	for(i=0;i<=delete_media.length;i++) {
+		if(delete_media[i] == 1) {
+			count++;
+			loeschen +=  i + "|";
+		}
+	}
+
+	if(count>1) {
+		var text = "Möchten Sie diese " + count + " Dateien wirklich aus der Liste entfernen?";
+		var check = confirm(text);
+	} 
+	if(count==1) {
+		var text = "Möchten Sie diese Datei wirklich aus der Liste entfernen?";
+		var check = confirm(text);
+	}
+	if(count==0) {
+		var text = "Es ist keine Datei markiert!";
+		alert(text);
+	}  
+	if(check) {
+		document.location.href='<?=$_SERVER['PHP_SELF']?>?gallery_id=<?=$_VARS['gallery_id']?>&down_loesch_id=' + loeschen;
+	}
+}
+
+</script>
+
+<script>
+
+var loading;
+var imagetypes = "jpg|png|gif|tif|bmp";
+
+</script>
+
+<table cellpadding="1" cellspacing="0" border="0" width="100%" style="table-layout : fixed;">
+<tr style="cursor:pointer;">
+
+<td width=2% class=select_off>&nbsp;</td>
+<? /* <td width=23% class=select_off>Dateiname</td> */ ?>
+<td width=23% class=select_off>Vorschau</td>
+<td width=50% class=select_off>Beschreibung</td>
+<td width=15% class=select_off>Datum</td>
+<td width=5% class=select_off>Views</td>
+<td width=5% class=select_off>Aktiv</td>
+</tr>
+<?
+
+//Daten holen
+
+$down_abfrage = DB::getQueryRows("SELECT * FROM gallery_data WHERE gallery_id = ".(int)$_VARS['gallery_id']." ORDER BY created");
+foreach($down_abfrage as $down_array) {
+
+	//Filename und Titel aus media-tabelle holen
+	$down_array2 = DB::getQueryRow("SELECT * FROM cms_media WHERE id = ".(int)$down_array['image']);
+	//Grafik und Link für active/deactive
+	if($down_array['active'] == 1){
+		$down_active_gra = "sitemap_active.gif";
+		$down_active_link = $PHP_SELF."?gallery_id=".$_VARS['gallery_id']."&down_active_id=".$down_array['id']."&down_active=2";
+	}else{
+		$down_active_gra = "sitemap_inactive.gif";
+		$down_active_link = $PHP_SELF."?gallery_id=".$_VARS['gallery_id']."&down_active_id=".$down_array['id']."&down_active=1";
+	}//else
+	//Titellänge begrenzen
+	$down_array2['title_lang'] = $down_array2['title'];
+
+	//Listeneinträge erzeugen
+	echo "<tr style=\"cursor:default;\" id=\"".$down_array['id']."\" onclick=\"setPointer(this, event, 'ACTIVECAPTION', '#FFFFFF'); upd_file_prefs('".$down_array['id']."', '".$down_array['description']."', '".$down_array['keywords']."');\">";
+	echo "<td nowrap>";
+	if($down_array['pic']==1 OR $down_array['pic']==2){
+		echo "<img src=\"/admin/media/$icon\" border=0 width=16 height=16 align=absmiddle>";
+	}//if pic==1 OR 2
+	echo "</td>";
+
+	$sFile = '/storage/public/'.$down_array2['folder'].$down_array2['file'];
+	$sThumbnail = '/storage/public/temp/'.filemtime(Util::getDocumentRoot(false).$sFile).'_'.\Util::getCleanFileName($down_array2['folder'].$down_array2['file']);
+
+	if(!is_file(Util::getDocumentRoot(false).$sThumbnail)) {
+		imgBuilder::createThumbnail(Util::getDocumentRoot(false).$sFile, Util::getDocumentRoot(false).$sThumbnail, 200, 200);
+	}
+
+	echo "<td nowrap><img src=\"".$sThumbnail."\" width=\"100\" alt=\"\" /></td>";
+	echo "<td nowrap>".$down_array['description']."</td>";
+	echo "<td nowrap>".strftime("%d.%m.%Y %H:%M",$down_array['created'])."</td>";
+	echo "<td nowrap align=right>".$down_array['views']."</td>";
+	echo "<td nowrap align=\"center\">
+		<a href=\"".$down_active_link."\"><img src=\"/admin/media/$down_active_gra\" border=0 align=absmiddle></a>
+		<a href=\"".$_SERVER['PHP_SELF']."?gallery_id=".(int)$_VARS['gallery_id']."&image_id=".(int)$down_array['id']."&task=rotate_right\"><img src=\"/admin/extensions/gallery/arrow_rotate_clockwise.png\" border=0 align=absmiddle></a>
+		<a href=\"".$_SERVER['PHP_SELF']."?gallery_id=".(int)$_VARS['gallery_id']."&image_id=".(int)$down_array['id']."&task=rotate_left\"><img src=\"/admin/extensions/gallery/arrow_rotate_anticlockwise.png\" border=0 align=absmiddle></a>
+		</td>";
+	echo "</tr>\n";
+
+	//javascripfunktionen erstellen
+	echo "\n<script>\n";
+
+	echo "\nfunction down_select_submit".$down_array['id']."(){\n";
+	echo "if(down_form".$down_array['id'].".down_bild_wahl.value == 1 || down_form".$down_array['id'].".down_bild_wahl.value == 0){\ndocument.down_form".$down_array['id'].".submit();}\n";
+	echo "if(down_form".$down_array['id'].".down_bild_wahl.value == 2){\ndocument.down_form_data2.down_file_auswahl.value = ".$down_array['id'].";\nopen_media2();}\n";
+	echo "\n}\n";
+
+	echo "\nfunction down_select_submit_b$down_array[id](){\n";
+	echo "if(down_form_c$down_array[id].down_kat_wahl.value >= 0){\ndocument.down_form_c$down_array[id].submit();}\n";
+	echo "if(down_form_c$down_array[id].down_kat_wahl.value < 0){\n";
+	?>
+	window.open('download_kat.<? echo $file_ext; ?>?down_id=<?echo $down_array[id];?>&gallery_id=<?=$_VARS['gallery_id']?>', 'Kategorien','status=no,resizable=yes,menubar=no,scrollbars=yes,width=400,height=130');
+	<?
+	echo "}\n";
+	echo "\n}\n";
+
+	echo "</script>\n";
+}//while
+//formular aus welchem die medienverwaltung die nötigen variablen für den href holt
+echo "<form  name=\"down_form_data2\" action=\"\">";
+echo "<input type=\"hidden\" name=\"gallery_id\" value=\"".$_VARS['gallery_id']."\">";
+echo "<input type=\"hidden\" name=\"down_file_auswahl\" value=\"\">";
+echo "<input type=\"hidden\" name=\"down_auswahl\" value=\"\">";
+echo "</form>";
+?>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

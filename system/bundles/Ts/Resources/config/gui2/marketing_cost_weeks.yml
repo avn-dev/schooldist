@@ -1,0 +1,76 @@
+hash: a810441e274011705ca31e6bd143a21c
+class:
+  wdbasic: Ext_Thebing_Accommodation_Cost_Week
+  data: \Ts\Gui2\Data\MarketingCostWeeks
+access: thebing_marketing_weeks
+id:
+  column: id
+  alias: kacw
+sortable: true
+limit: PHP_INT_MAX
+only_pagecount: true
+orderby:
+  - \Ts\Gui2\Data\MarketingCostWeeks 
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+            - id
+            - week
+            - title
+        alias: 
+            - kacw
+            - kacw
+            - kacw
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog: 
+          - \Ts\Gui2\Data\MarketingCostWeeks  
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\MarketingCostWeeks
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Bezeichnung
+    alias: kacw
+    column: title
+    width: name
+    resize: true   
+  - 
+    title: Schulen	
+    column: schools
+    width: name
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+        - [Ext_Thebing_Client, getSchoolList, true]
+  - 
+    title: Extrawoche	
+    column: extra
+    alias: kacw
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_YesNo
+  - 
+    title: Startwoche	
+    column: start_week
+    alias: kacw
+    width: number
+  - 
+    title: Wochenanzahl	
+    column: week_count
+    alias: kacw
+    width: number  
+    

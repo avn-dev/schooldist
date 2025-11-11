@@ -1,0 +1,67 @@
+	table.table TD, table.table TH {
+		padding: 		4px 3px;
+	}
+	
+	.selectedRow TD {
+		background: 	#8D93A0;
+	}
+	
+	table .divHeader {
+		position: 			relative; 
+		height: 			53px;
+		overflow: 			hidden; 
+		background-color:	#f7f7f7;	
+	}
+	
+	.divToolbar {
+		padding: 			0px 5px;
+		line-height:		16px;
+		clear:				both;
+		height:				26px;
+		overflow:			hidden;
+	}
+	
+	.divToolbar INPUT,
+	.divToolbar SELECT {
+		padding:			0px;
+		margin:				0px;
+	}
+	
+	.divTopLine {
+		border-top: 	1px solid #ccc;
+	}
+	
+	.divToolbar .divToolbarIcon {
+		margin-top:		5px;
+		float: 			left;
+		width: 			24px;
+		height:			16px;
+		cursor:			pointer;
+		overflow:		hidden;
+		text-align:		center;
+	}
+	
+	.divToolbar .divToolbarLabel {
+		margin-top:		5px;
+		float: 			left;
+		height:			16px;
+		padding-right:	4px;
+		font-weight:	bold;
+		line-height:	16px;
+	}
+	
+	.divToolbar .divToolbarSeparator {
+		margin-top:		5px;
+		float: 			left;
+		height:			16px;
+		padding-right:	4px;
+		line-height:	16px;
+	}
+	
+	.divToolbar .divToolbarFormItem {
+		margin-top:		5px;
+		float: 			left;
+		height:			16px;
+		padding-right:	4px;
+		line-height:	16px;
+	}

@@ -1,0 +1,99 @@
+hash: 9d00168f2712205a0a9623a402d0d06a
+class:
+  wdbasic: Ext_Thebing_Tuition_Level
+  data: Ext_Thebing_Tuition_Level_Gui2_Data
+access: thebing_tuition_resource_proficiency
+id:
+  column: id
+  alias: ktul
+sortable: true
+only_pagecount: true
+designer: 
+  flex: tuition_course_proficiency
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        id: search
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Tuition_Level_Gui2_Data
+          - manipulateSearchFilter
+        alias:
+          - ktul
+          - ktul
+        column:
+          - id
+          - name
+     -
+        element: selectfilter
+        label: Typ
+        label_as_item: true
+        column: 
+            - type
+        entries:
+            - Ext_Thebing_Util
+            - getStudentLevels
+     -
+        element: validfilter
+        label: Gültigkeit     
+  -
+    position: top
+    elements:
+     -
+      element: icon_new
+      dialog: 
+          - Ext_Thebing_Tuition_Level_Gui2_Data  
+          - getDialog
+     -
+      element: icon_edit
+      dialog:
+          - Ext_Thebing_Tuition_Level_Gui2_Data  
+          - getDialog
+     -
+      element: icon_delete
+      dialog:
+          - Ext_Thebing_Tuition_Level_Gui2_Data  
+          - getDialog
+     -
+      element: icon_deactivate
+      alias: ktc
+columns:
+  -  
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true
+    i18n: 
+      pass_language: true
+      interface: frontend 
+  -
+    title: Kürzel
+    column: name_short
+    width: short_name
+    resize: false
+  -
+    title: Typ
+    column: type
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_Util, getStudentLevels]
+  -  
+    title: Schulen
+    column: schools
+    width: comment
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]  
+  -
+    title: Gültig bis
+    column: valid_until
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date

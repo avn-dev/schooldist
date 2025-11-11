@@ -1,0 +1,9 @@
+trigger ThebingWebhookAccountWebhookTrigger on Account (after insert,after update,after delete,after undelete) {
+
+    String url = 'https://tamwood.thebing.com/wdmvc/ts-salesforce/webhook/account';
+
+    String content = Webhook.jsonContent(Trigger.new, Trigger.old);
+
+    Webhook.callout(url, content);
+
+}

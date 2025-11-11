@@ -1,0 +1,215 @@
+<?php
+
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('modules_admin');
+
+/* ==================================================================================================== */
+
+$iListID = $_VARS['list_id'];
+
+$oGui = new Ext_Gui2(md5('newsletter_recipients'), 'Ext_Newsletter_Gui2');
+
+$oGui->setWDBasic('Ext_Newsletter');
+$oGui->setTableData('where', array('idList' => $iListID));
+$oGui->setTableData('limit', 100);
+$oGui->setTableData('orderby', array('name' => 'ASC'));
+
+$oGui->gui_description 		= 'Newsletter';
+$oGui->gui_title 			= 'Empfänger';
+$oGui->column_sortable		= 1; // es geht nur eine sortierart!
+$oGui->row_sortable			= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGui->multiple_selection 	= 1;
+$oGui->query_id_column		= 'id';
+$oGui->class_js				= 'NewsletterGui';
+$oGui->row_style			= new Ext_Newsletter_Gui2_Row();
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Edit data
+
+$oDialog			= $oGui->createDialog($oGui->t('Empfänger "{name}"'), $oGui->t('Neuer Empfänger'));
+
+$oDialog->width		= 950;
+$oDialog->height	= 600;
+
+$oDiv = $oDialog->createRow(
+	$oGui->t('Anrede'),
+	'select',
+	array(
+		'db_column' => 'sex',
+		'select_options' => Ext_Newsletter::getRecipientsGenders(true)
+	)
+);
+$oDialog->setElement($oDiv);
+
+$oDiv = $oDialog->createRow(
+	$oGui->t('Titel'),
+	'select',
+	array(
+		'db_column' => 'title',
+		'select_options' => Ext_Newsletter::getRecipientsTitles(true)
+	)
+);
+$oDialog->setElement($oDiv);
+
+$oDiv = $oDialog->createRow(
+	$oGui->t('Nachname'),
+	'input',
+	array(
+		'db_column' => 'name'
+	)
+);
+$oDialog->setElement($oDiv);
+
+$oDiv = $oDialog->createRow(
+	$oGui->t('Vorname'),
+	'input',
+	array(
+		'db_column' => 'firstname'
+	)
+);
+$oDialog->setElement($oDiv);
+
+$oDiv = $oDialog->createRow(
+	$oGui->t('E-Mail'),
+	'input',
+	array(
+		'db_column' => 'email'
+	)
+);
+$oDialog->setElement($oDiv);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Filter
+
+$oBar						= $oGui->createBar();
+$oLabelgroup				= $oBar->createLabelGroup($oGui->t('Filter'));
+$oBar->setElement($oLabelgroup);
+
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('name', 'firstname', 'email');
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oLabelgroup				= $oBar->createLabelGroup($oGui->t('Status'));
+$oBar->setElement($oLabelgroup);
+
+$oFilter					= $oBar->createFilter('select');
+$oFilter->id				= 'search_active';
+$oFilter->value				= '';
+$oFilter->select_options	= array('' => $oGui->t('Alle'), 'active' => $oGui->t('Aktive'), 'inactive' => $oGui->t('Inaktive'));
+$oFilter->filter_query	= array(
+	''			=> "",
+	'active'	=> "`active` = 1",
+	'inactive'	=> "`active` = 0"
+);
+$oBar->setElement($oFilter);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Icons
+
+$oBar						= $oGui->createBar();
+
+$oLabelGroup				= $oBar->createLabelGroup($oGui->t('Aktionen'));
+$oBar->setElement($oLabelGroup);
+
+$oIcon						= $oBar->createNewIcon(
+								$oGui->t('Neuer Eintrag'),
+								$oDialog,
+								$oGui->t('Neuer Eintrag')
+							);
+$oBar->setElement($oIcon);
+
+$oIcon						= $oBar->createEditIcon(
+								$oGui->t('Editieren'),
+								$oDialog,
+								$oGui->t('Editieren')
+							);
+$oBar->setElement($oIcon);
+
+$oIcon						= $oBar->createDeleteIcon(
+								$oGui->t('Löschen'),
+								$oGui->t('Löschen')
+							);
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+$oIcon						= $oBar->createIcon(
+								'/admin/media/accept.png',
+								'request',
+								$oGui->t('Status umschalten')
+							);
+$oIcon->action				= 'invertActive';
+$oIcon->label				= $oGui->t('Status umschalten');
+$oIcon->active				= 0;
+$oIcon->visible				= 1;
+$oIcon->multipleId			= 1;
+$oBar->setElement($oIcon);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Pagination
+
+$oBar						= $oGui->createBar();
+$oPagination				= $oBar->createPagination(false);
+$oBar->setElement($oPagination);
+
+$oLabelGroup				= $oBar->createLabelGroup($oGui->t('Weitere Aktionen'));
+$oBar->setElement($oLabelGroup);
+$oIcon						= $oBar->createIcon(
+								'/admin/media/arrow_left.png',
+								'',
+								$oGui->t('Zurück zum Newsletter')
+							);
+$oIcon->action				= 'goBack';
+$oIcon->label				= $oGui->t('Zurück zum Newsletter');
+$oIcon->active				= 1;
+$oIcon->visible				= 1;
+$oBar->setElement($oIcon);
+
+$oLoading					= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // List
+
+$oCol						= new Ext_Gui2_Head();
+$oCol->db_column			= 'name';
+$oCol->title				= $oGui->t('Nachname');
+$oCol->width				= 200;
+$oGui->setColumn($oCol);
+
+$oCol						= new Ext_Gui2_Head();
+$oCol->db_column			= 'firstname';
+$oCol->title				= $oGui->t('Vorname');
+$oCol->width				= 200;
+$oGui->setColumn($oCol);
+
+$oCol						= new Ext_Gui2_Head();
+$oCol->db_column			= 'email';
+$oCol->title				= $oGui->t('E-Mail');
+$oCol->width				= 300;
+$oCol->width_resize			= true;
+$oGui->setColumn($oCol);
+
+$oCol						= new Ext_Gui2_Head();
+$oCol->db_column			= 'sex';
+$oCol->title				= $oGui->t('Anrede');
+$oCol->format				= new Ext_Gui2_View_Format_Selection(Ext_Newsletter::getRecipientsGenders(true));
+$oCol->width				= 80;
+$oGui->setColumn($oCol);
+
+$oCol						= new Ext_Gui2_Head();
+$oCol->db_column			= 'title';
+$oCol->title				= $oGui->t('Titel');
+$oCol->format				= new Ext_Gui2_View_Format_Selection(Ext_Newsletter::getRecipientsTitles(true));
+$oCol->width				= 80;
+$oGui->setColumn($oCol);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+$aOptional = array();
+
+$aOptional['js'][] = '/admin/extensions/newsletter/js/newsletter.js';
+
+$oGui->display($aOptional);
+
+?>

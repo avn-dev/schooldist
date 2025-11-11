@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `frontend_years_of_bookable_services` TINYINT(1) NOT NULL DEFAULT '2' AFTER `frontend_date_format`;

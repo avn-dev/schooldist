@@ -1,0 +1,523 @@
+hook: ts_accommodation_provider_payment_gui2_hook
+class:
+  wdbasic: \Ts\Entity\AccommodationProvider\Payment
+  data: \Ts\Gui2\AccommodationProvider\PaymentData
+  date_format: Ext_Thebing_Gui2_Format_Date
+  row_style: \Ts\Gui2\AccommodationProvider\PaymentRowStyle
+  icon_status: \Ts\Gui2\AccommodationProvider\PaymentIconStatus
+  js: UtilGui
+description: Thebing » Accounting » Accommodation
+access: thebing_accounting_accommodation_payments
+where:
+  - \Ts\Gui2\AccommodationProvider\PaymentData
+  - getListWhere
+title: 
+  - Ext_TS_System_Navigation
+  - t
+id:
+  column: id
+  alias: ts_app
+multiple_selection: true
+designer:
+  additional_flex:
+    -
+      section: accommodation_providers_bank
+      primary_key: accommodation_provider_id
+js:
+  - [gui2/util.js, thebing]
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column:
+            - number
+            - firstname 
+            - lastname
+            - short
+            - ext_33
+          alias:
+            - tc_cn
+            - tc_c
+            - tc_c
+            - kg
+            - cdb4
+        -
+          element: seperator
+        -
+          element: selectfilter
+          searchempty: false
+          label: Abrechnungskategorie
+          label_as_item: true
+          entries:
+            - \Ts\Gui2\AccommodationProvider\PaymentData
+            - getCategoryFilterOptions
+          filter_query:
+            yes: 'payment_category_id != 0'
+            no: 'payment_category_id = 0'
+        -
+          element: selectfilter
+          searchempty: false
+          label: Kostenkategorie
+          label_as_item: true
+          entries:
+            - \Ts\Gui2\AccommodationProvider\PaymentData
+            - getCategoryFilterOptions
+          filter_query:
+            yes: 'cost_category_id != 0'
+            no: 'cost_category_id = 0'
+        -
+          element: selectfilter
+          label: Unterkunftskategorie
+          label_as_item: true
+          alias:
+            - ts_actap
+          column:
+            - accommodation_category_id
+          entries:
+            - \Ts\Gui2\AccommodationProvider\PaymentData
+            - getAccommodationCategories
+          filter_query: ((FIND_IN_SET(`booked_category`, `accommodation_category_ids`) AND `booked_category` = {value}) OR (!FIND_IN_SET(`booked_category`, `accommodation_category_ids`) AND `default_category_id` = {value}))
+          filter_part: having
+        -
+          element: selectfilter
+          searchempty: false
+          label: Unterkunft
+          label_as_item: true
+          column: 
+            - accommodation_id
+          alias:
+            - kr
+          entries:
+            - Ext_Thebing_Data_Accommodation
+            - getAccommodations
+            - true
+        -
+          element: selectfilter
+          searchempty: false
+          label: Inbox
+          label_as_item: true
+          column: 
+            - inbox
+          alias:
+            - ts_i
+          entries: 
+            - Ext_Thebing_System
+            - getInboxListForSelect
+            - true
+            - true
+        -
+          element: selectfilter
+          label: Gruppe
+          label_as_null_item: true
+          alias:
+            - ts_i
+          column:
+            - group_id
+          entries:
+            - Ext_TC_Util
+            - getYesNoArray
+            - false
+          filter_query:
+            no: " `group_id` = 0 "
+            yes: " `group_id` != 0 "
+    -
+      position: top
+      elements:
+        -
+          element: icon
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - money
+          task: openDialog
+          action: accommodation_payment
+          active: 0
+          label: Zahlung eintragen
+          multipleId: 1
+    -
+      position: top
+      last: true
+      elements:
+        -
+          element: icon
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - refresh
+          task: confirm
+          action: reset
+          confirm_message: Möchten Sie die aktuellen Einträge wirklich zurücksetzen und neu generieren? Dieser Vorgang kann einige Minuten dauern!
+          active: 1
+          label: Aktualisieren
+    -
+      position: bottom
+      type: legend
+      elements: 
+        - 
+          element: legend_label
+          label: Legende
+        - 
+          element: legend_info
+          label: Keine Abrechnungskategorie
+          info:
+            color: red
+            background: true
+        - 
+          element: legend_info
+          label: Keine Abrechnungsperiode
+          info:
+            color: [red, 50]
+            background: true
+        - 
+          element: legend_info
+          label: Keine Kostenkategorie
+          info:
+            color: orange
+            background: true
+        - 
+          element: legend_info
+          label: Keine Kostenperiode
+          info:
+            color: [orange, 50]
+            background: true
+        - 
+          element: legend_info
+          label: Zurückgenommene Zahlung
+          info:
+            color: selected
+            background: true
+        - 
+          element: legend_info
+          label: Storniert
+          info:
+            color: storno
+            background: true
+        - 
+          element: legend_info
+          label: Zuweisungsveränderung
+          info:
+            color: red_font
+            italic: true
+            background: false
+columns:
+  -
+    title: Inbox
+    column: name
+    alias: k_inb
+    data: inbox
+    width: name
+    resize: true
+    group: Persönliche Daten
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    default: false
+  -
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    data: group
+    column: short
+    alias: kg
+    width: group_short
+    resize: true
+    group: Persönliche Daten
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+  -
+    title: Gruppennummer
+    data: group_number
+    column: number
+    alias: kg
+    width: number
+    group: Persönliche Daten
+    default: false
+  -
+    title: Kundennummer
+    data: customer_number
+    column: number
+    alias: tc_cn
+    width: customer_number
+    resize: true
+    group: Persönliche Daten
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+  -
+    title: Kunde
+    column: customer
+    alias: tc_c
+    width: customer_name
+    resize: true
+    sortable_column: lastname
+    group: Persönliche Daten
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - \Ext_TC_Gui2_Format_Name
+      - customer_firstname
+      - customer_lastname
+  -
+    title: Gebuchter Raum
+    data: booked_room
+    alias: ts_app
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - \Ext_Thebing_Gui2_Format_Select
+      - [Ext_Thebing_Data_Accommodation, getAccommodationRoomTypes]
+    sortable: false
+  -
+    title: Zugewiesener Raum
+    column: allocated_roomtype_id
+    alias: ts_app
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - Ext_Thebing_Gui2_Format_Select
+      - [Ext_Thebing_Data_Accommodation, getAccommodationRoomTypes]
+    sortable: false
+  -
+    title: Verpflegung
+    column: meal
+    alias: ts_app
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - Ext_Thebing_Gui2_Format_Select
+      - [Ext_Thebing_Data_Accommodation, getAccommodationMeals]
+    sortable: false
+  -
+    title: Abrechnungskategorie
+    column: name
+    alias: ts_appc
+    data: payment_category_name
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentCategoryFormat
+  -
+    title: Kostenkategorie
+    column: name
+    alias: kacc
+    data: cost_category_name
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+  -
+    title: Gebuchte Kategorie
+    data: booked_category
+    column: accommodation_id
+    alias: ts_ija
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - Ext_Thebing_Gui2_Format_Select
+      - [Ext_Thebing_Data_Accommodation, getAccommodationCategories]
+    sortable: false
+  -
+    title: Zugewiesene Kategorie
+    data: allocated_category
+    column: allocated_category
+    width: name
+    resize: true
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - \Ts\Gui2\AccommodationProvider\Payment\AllocatedCategoryFormat
+    sortable: false
+  -
+    title: Zeitraum
+    data: allocation_period
+    alias: kaa
+    width: name
+    group: Unterkunftszuweisung
+    format: \Ts\Gui2\AccommodationProvider\PaymentPeriodFormat
+    format_params:
+      - allocation_from
+      - allocation_until
+    sortable: false
+  -
+    title: Anbieter
+    column: ext_33
+    alias: cdb4
+    data: provider
+    width: person_name
+    resize: true
+    group: Unterkunft
+  -
+    title: Vorname
+    column: ext_103
+    alias: cdb4
+    data: provider_firstname
+    width: name
+    group: Unterkunft
+    default: false
+  -
+    title: Nachname
+    column: ext_104
+    alias: cdb4
+    data: provider_lastname
+    width: name
+    group: Unterkunft
+    default: false
+  -
+    title: Adresse
+    data: provider_address
+    column: ext_63
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: PLZ
+    data: provider_zip
+    column: ext_64
+    alias: cdb4
+    width: zip
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: Stadt
+    data: provider_city
+    column: ext_65
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: Monat/Woche
+    column: month_week
+    alias: ts_app
+    width: name
+    resize: true
+    group: Bezahlung
+    format: \Ts\Gui2\AccommodationProvider\PaymentPeriodFormat
+    sortable: true
+    sortable_column: from
+  -
+    title: Von
+    column: from
+    alias: ts_app
+    width: name
+    resize: true
+    group: Bezahlung
+    format: Ext_Thebing_Gui2_Format_Date
+    sortable: true
+    default: false
+  -
+    title: Bis
+    column: until
+    alias: ts_app
+    width: name
+    resize: true
+    group: Bezahlung
+    format: Ext_Thebing_Gui2_Format_Date
+    sortable: true
+    default: false
+  -
+    title: Dauer
+    column: duration
+    alias: ts_app
+    width: short_name
+    resize: true
+    group: Bezahlung
+    format: \Ts\Gui2\AccommodationProvider\PaymentGroupByFormat
+    format_params: 
+      - \Ts\Gui2\AccommodationProvider\PaymentDurationFormat
+    sortable: false
+  -
+    title: Nächte
+    column: nights
+    alias: ts_app
+    width: short_name
+    resize: true
+    group: Bezahlung
+    format: \Ts\Gui2\AccommodationProvider\PaymentNightsFormat
+    sortable: false
+  -
+    visible: false
+    title: Je Nacht/Woche/Monat
+    column: relation
+    alias: ts_app
+    width: name
+    resize: true
+    group: Bezahlung
+    sortable: false
+  -
+    title: Gehalt
+    column: amount
+    alias: ts_app
+    width: amount
+    resize: true
+    group: Bezahlung
+    format: \Ts\Gui2\AccommodationProvider\PaymentAmountFormat
+    format_params: amount_currency_id
+  -
+    title: Kontoinhaber
+    data: bank_account_holder
+    column: ext_68
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: Kontonummer
+    data: bank_account_number
+    column: ext_70
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: BLZ
+    data: account_bank_number
+    column: ext_71
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: IBAN
+    column: bank_account_iban
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+  -
+    title: BIC
+    column: bank_account_bic
+    alias: cdb4
+    width: short_name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: Name der Bank
+    data: bank_name
+    column: ext_69
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+  -
+    title: Adresse der Bank
+    data: bank_address
+    column: ext_72
+    alias: cdb4
+    width: name
+    resize: true
+    group: Unterkunft
+    default: false
+

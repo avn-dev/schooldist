@@ -1,0 +1,73 @@
+<?
+///////////////////////////////////////////////////
+////// Administration für Hauptmodul für die //////
+////////// customer-login Funktionalität //////////
+///////////////////////////////////////////////////
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+require (\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+if(!$_VARS['page_id'] && !$_VARS['element_id']) {
+	header("Location: ./customer_db/customer_db_admin.html");
+}
+
+$identifier="customer_db_";
+$definition_table=$identifier."definition";
+$value_table=$identifier."values";
+
+////////////////////////////////////////////////
+
+if($_VARS['action'] == "config") {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$config->table_name 	= $identifier.$_VARS['idDatabase'];
+	$config->type			= $_VARS['type'];
+	$config->error_password	= $_VARS['error_password'];
+	$config->error_required	= $_VARS['error_required'];
+	$config->idDatabase		= $_VARS['idDatabase'];
+
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+
+}
+
+// Laden der vorhandenen Daten
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Konfiguration Kundendaten-Hauptmodul</h1>
+
+
+
+<form name="customer_db_form" method=post enctype="multipart/form-data" action="<?=$PHP_SELF?>">
+	<input type="hidden" name="action" value="config">
+	<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+	<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+	<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+
+<table class=table border=0 cellpadding="4" cellspacing=0 width="100%">
+	<?=printFormSelect("Datenbank","idDatabase", CustomerDb\Helper\Functions::getCustomerTables(),$config->idDatabase)?>
+	<?=printFormSelect("Typ","type",array("input"=>"Eingabe","output"=>"Ausgabe"),$config->type)?>
+	<?=printFormText("Fehlermeldung: Pflichtfelder","error_required",$config->error_required)?>
+	<?=printFormText("Fehlermeldung: Passwörter","error_password",$config->error_password)?>
+</table>
+<p align="right">
+	<input type=submit class=btn value="Speichern">
+	&nbsp;
+	<input type=button class=btn value="Fenster schliessen" OnClick='top.close();'>
+</p>
+</form>
+
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

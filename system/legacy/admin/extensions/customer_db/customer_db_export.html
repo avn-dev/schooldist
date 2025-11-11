@@ -1,0 +1,284 @@
+<?php
+
+
+
+// TODO - 20.02.2008: Lokalisierung
+
+
+
+// ========== Header ==========
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+require(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+require(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_functions.inc.php");
+
+
+Access_Backend::checkAccess("modules_admin");
+
+getExtensionTranslations('customer_db');
+ob_start();
+
+
+$aDatabaseData = array();
+if (array_key_exists('idDatabase', $_VARS)) {
+	$sSelectedTable = "customer_db_".intval($_VARS['idDatabase']);
+	$aDatabaseData  = get_data(db_query($db_data['module'], "SELECT `db_name`, `db_encode_pw` FROM `customer_db_config` WHERE `id` = '".intval($_VARS['idDatabase'])."'"));
+}
+if (count($aDatabaseData) < 1) {
+	die('Datenbank nicht gefunden!');
+}
+
+function escape_csv_string($sString, $sSeparator) {
+	$sString = str_replace($sSeparator, $sSeparator.$sSeparator, $sString);
+	return $sSeparator.$sString.$sSeparator;
+}
+
+
+echo Admin_Html::loadAdminHeader();
+
+
+// TODO: $sOldMbEncoding is not defined !!!
+//mb_internal_encoding($sOldMbEncoding);
+
+
+?><table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+    <tr>
+        <td valign="top">
+        	<form action="<?=$_SERVER['PHP_SELF']?>" method="post" target="_self" name="main_form">
+        		<input type="hidden" name="idDatabase" value="<?=intval($_VARS['idDatabase'])?>" />
+        		<input type="hidden" name="exportConfirm" value="" />
+				<h1><?=$LANGUAGE_DATA['customer_db']?> &raquo; <?=$LANGUAGE_DATA['administration']?></h1><br />
+				<h2><?=$LANGUAGE_DATA['export_data_records_for_table']?>: "<?=$aDatabaseData['db_name']?>"</h2>
+<?php
+
+
+// ========== Script ==========
+
+
+
+
+
+// default values
+$sExportColTitles = 'checked="checked" ';
+$sExportSkipId = '';
+$sExportFieldSeparator = \Util::convertHtmlEntities(';');
+$sExportStringSeparator = \Util::convertHtmlEntities('"');
+
+
+// export all records of the selected database table (new window)
+if (array_key_exists('exportConfirm', $_VARS) && $_VARS['exportConfirm'] == 'export') {
+
+
+	// set the config values
+	$bExportColTitles           = ($_VARS['exportColTitles'] == '1') ? true : false;
+	$bExportSkipId              = ($_VARS['exportSkipId'] == '1') ? true : false;
+	$sExportFieldSeparatorReal  = $_VARS['exportFieldSeparator'];
+	$sExportStringSeparatorReal = $_VARS['exportStringSeparator'];
+
+
+	// get the list of database fields
+	$rResult = db_query($db_data['module'], "
+		SELECT
+			*
+		FROM
+			`customer_db_definition`
+		WHERE
+			`db_nr` = '".intval($_VARS['idDatabase'])."' AND
+			`active` = '1'
+		ORDER BY
+			`field_nr`,
+			`id`
+	");
+	$aFields = array();
+
+	if ($bExportSkipId != true) {
+
+		$aFields[] = array(
+			'name' => 'id',
+			'title' => 'ID'
+		);
+
+	}
+
+	$aFields[] = array(
+		'name' => 'nickname',
+		'title' => 'Nickname'
+	);
+
+	$aFields[] = array(
+		'name' => 'email',
+		'title' => 'Email'
+	);
+
+	$aFields[] = array(
+		'name' => 'password',
+		'title' => 'Passwort'
+	);
+
+	$aFields[] = array(
+		'name' => 'created',
+		'title' => 'Erstellt'
+	);
+
+	$aFields[] = array(
+		'name' => 'groups',
+		'title' => 'Gruppen'
+	);
+
+	while ($aRow = get_data($rResult)) {
+
+		$sFieldName = '';
+		$sFieldTitle = '';
+
+		if ($aRow['field_nr'] != '0') {
+
+			$sFieldName = 'ext_'.$aRow['field_nr'];
+			$sFieldTitle = $aRow['name'];
+
+		}
+
+		if (mb_strlen($sFieldName) < 1 || mb_strlen($sFieldTitle) < 1) {
+			continue;
+		}
+
+		$aFields[] = array(
+			'name' => $sFieldName,
+			'title' => $sFieldTitle
+		);
+
+	}
+
+
+	// build the select query
+	$sQuery = "SELECT `id`";
+	foreach ($aFields as $aField) {
+		if ($aField['name'] == 'id') { continue; }
+		$sQuery .= ", `".$aField['name']."`";
+	}
+	$sQuery .= " FROM `customer_db_".intval($_VARS['idDatabase'])."`";
+	$sQuery .= " ORDER BY `id`";
+	$rResult = db_query($sQuery);
+
+
+	// process the records of the database table
+	$sCSV = "";
+	if ($bExportColTitles == true) {
+
+		$bFirstField = true;
+		foreach ($aFields as $aField) {
+
+			if ($bFirstField == true) {
+				$bFirstField = false;
+			} else {
+				$sCSV .= $sExportFieldSeparatorReal;
+			}
+
+			$sCSV .= escape_csv_string($aField['title'], $sExportStringSeparatorReal);
+
+		}
+		$sCSV .= "\n";
+
+	}
+	while ($aRow = get_data($rResult)) {
+
+		$bFirstField = true;
+		foreach ($aFields as $aField) {
+
+			if ($bFirstField == true) {
+				$bFirstField = false;
+			} else {
+				$sCSV .= $sExportFieldSeparatorReal;
+			}
+
+			$sCSV .= escape_csv_string($aRow[$aField['name']], $sExportStringSeparatorReal);
+
+		}
+		$sCSV .= "\n";
+
+	}
+
+
+	// send the csv file
+	ob_end_clean();
+	header('Content-Type: application/force-download; charset=utf-8');
+	header('Cache-Control: maxage=3600');
+	header('Content-Disposition: attachment; filename='.$aDatabaseData['db_name'].'.csv');
+	header('Content-Length: '.mb_strlen($sCSV));
+	header('Pragma: public');
+	die($sCSV);
+
+
+}
+
+
+// show information message
+if (array_key_exists('exportConfirm', $_VARS) && $_VARS['exportConfirm'] == 'confirm') {
+
+
+	// set form values
+	$sExportColTitles       = ($_VARS['exportColTitles'] == '1') ? 'checked="checked" ' : '';
+	$sExportSkipId          = ($_VARS['exportSkipId'] == '1') ? 'checked="checked" ' : '';
+	$sExportFieldSeparator  = \Util::convertHtmlEntities($_VARS['exportFieldSeparator']);
+	$sExportStringSeparator = \Util::convertHtmlEntities($_VARS['exportStringSeparator']);
+
+
+	// show the confirmation message
+	?><p>
+		Die Datens&auml;tze aus der Tabelle <b><?=$aDatabaseData['db_name']?></b> werden exportiert und in einem neuen Fenster angezeigt.
+	</p><?php
+
+
+}
+
+
+// input fields
+echo printTableStart();
+?>
+	<tr>
+		<th>Titelzeile einfügen</th>
+		<td><input type="checkbox" name="exportColTitles" value="1" <?=$sExportColTitles?>/></td>
+	</tr>
+	<tr>
+		<th>Datensatz ID nicht exportieren (Nickname ist der Prim&auml;rschl&uuml;ssel)</th>
+		<td><input type="checkbox" name="exportSkipId" value="1" <?=$sExportSkipId?>/></td>
+	</tr>
+	<tr>
+		<th>Feldtrennzeichen</th>
+		<td><input type="text" class="txt" name="exportFieldSeparator" value="<?=$sExportFieldSeparator?>" /></td>
+	</tr>
+	<tr>
+		<th>Zeichenkettenbegrenzer</th>
+		<td><input type="text" class="txt" name="exportStringSeparator" value="<?=$sExportStringSeparator?>" /></td>
+	</tr>
+<?php
+echo printTableEnd();
+
+
+// buttons
+?><p align="right">
+	<input type="button" class="btn" value="<?=$LANGUAGE_DATA['export_data_records_start']?>" onclick="document.forms['main_form'].target='_blank'; document.forms['main_form'].exportConfirm.value='export'; document.forms['main_form'].submit(); document.forms['main_form'].target='_self'; document.forms['main_form'].exportConfirm.value='confirm'; document.forms['main_form'].submit(); return false;" />
+	&nbsp;
+	<input type="button" class="btn" value="<?=$LANGUAGE_DATA['cancel']?>" onclick="document.forms['main_form'].action='/admin/extensions/customer_db_admin.html'; document.forms['main_form'].submit(); return false;" />
+</p><?php
+
+
+
+
+
+// ========== Header ==========
+
+
+?>
+			</form>
+		</td>
+	</tr>
+</table><?php
+
+
+$sOldMbEncoding = mb_internal_encoding();
+mb_internal_encoding('UTF-8');
+
+
+echo Admin_Html::loadAdminFooter();
+ob_end_flush();

@@ -1,0 +1,92 @@
+hash: 422c2fdc4208ac0a4489968368188344
+class:
+  wdbasic: Ext_Thebing_Accommodation_Category
+  data: Ext_Thebing_Accommodation_Category_Gui2
+access: thebing_accommodation_categories
+id:
+  column: id
+  alias: kac
+sortable: true
+only_pagecount: true
+designer: 
+  flex: accommodations
+orderby:
+  - Ext_Thebing_Accommodation_Category_Gui2
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: kac
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Accommodation_Category_Gui2
+          - manipulateSearchFilter
+     -
+        element: seperator
+     -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Accommodation_Category_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Accommodation_Category_Gui2
+          - getDialog
+     -
+        element: icon_delete
+     -
+        element: icon_deactivate
+        access: thebing_accommodation_categories_deactivate
+     -
+        element: icon_file_manager
+        
+columns:
+  - 
+    title: Name
+    column: name
+    width: name
+    resize: true
+    i18n: 
+      pass_language: true
+      interface: frontend      
+  - 
+    title: Kürzel	
+    column: short
+    width: short_name  
+    i18n: 
+      pass_language: true
+      interface: frontend    
+  - 
+    title: Schulen	
+    column: schools
+    width: name 
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]
+  - 
+    title: Einzugszeit	
+    column: arrival_time
+    width: time  
+    format: Ext_Thebing_Gui2_Format_Time
+  - 
+    title: Auszugszeit	
+    column: departure_time
+    width: time
+    format: Ext_Thebing_Gui2_Format_Time
+  - 
+    title: Gültig bis	
+    column: valid_until
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    

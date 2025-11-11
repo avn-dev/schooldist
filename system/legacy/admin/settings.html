@@ -1,0 +1,24 @@
+<?
+
+include("./includes/main.inc.php");
+
+if($_VARS['task']) {
+	header("Location: /admin/".$_VARS['task'].".html");
+}
+ 
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

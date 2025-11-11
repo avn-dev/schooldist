@@ -1,0 +1,141 @@
+set: enquiry
+parent: ts_inquiry
+class:
+  # Eigene Dialog-Data! Ext_TS_Enquiry_Gui2_Dialog_Data
+  data: Ext_TS_Enquiry_Gui2
+  icon_status: Ext_TS_Enquiry_Gui2_Icon_Active
+  icon_visible: Ext_TS_Enquiry_Gui2_Icon_Visible
+  row_style: Ext_TS_Enquiry_Gui2_Style_Row
+  js: Enquiry
+hash: b5c06a1746bc9cd1e453ed987520e719
+access:
+  - thebing_students_contact_request
+  -
+leftframe: true
+pagination: true
+export: true
+multiple_selection: true
+sidebar: false # TODO
+options:
+  template_type: document_student_requests
+where:
+  - Ext_TS_Enquiry_Gui2
+  - getListWhere2
+index:
+  registry:
+    generate: false
+designer:
+  dialog: ""
+  filter: ts_enquiry
+  additional_flex:
+    -
+      section: [student_record, enquiry]
+    -
+      section: [student_record, enquiry_booking]
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog: Ext_TS_Enquiry_Gui2_Dialog
+        access:
+          - thebing_students_contact_request
+          - new
+      -
+        element: icon_edit
+        dialog: Ext_TS_Enquiry_Gui2_Dialog
+        access:
+          - thebing_students_contact_request
+          - edit
+      -
+        element: icon_delete
+        access:
+          - thebing_students_contact_request
+          - delete
+      -
+        element: icon
+        label: In Buchung umwandeln
+        task: openDialog
+        action: convert_enquiry_to_inquiry
+        access: thebing_students_contact_convert
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - convert_item
+      -
+        element: icon_notes
+      -
+        element: labelgroup
+        label: Kommunikation
+      -
+        element: icon_communication
+        application: enquiry
+      -
+        element: labelgroup
+        label: Dokumente
+        access:
+          - thebing_invoice_documents
+          - thebing_invoice_display_pdf
+      -
+        element: icon
+        title: "Dokumente editieren"
+        label: ""
+        action: additional_document
+        task: openDialog
+        access: thebing_invoice_documents
+        active: 0
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - page_edit
+      -
+        element: icon
+        title: "Dokument PDF öffnen"
+        label: ""
+        action: openDocumentPdf
+        task: request
+        access: thebing_invoice_display_pdf
+        request_data: "&action=openDocumentPdf"
+        active: 0
+        info_text: 1
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - pdf
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Anfragen
+      -
+        element: legend_info
+        label: Umgewandelte Angebote
+        info:
+          color: lightgreen
+      -
+        element: legend_info
+        label: Nachhaken
+        info:
+          color: red
+      -
+        element: legend_label
+        label: Angebot
+      -
+        element: legend_info
+        label: Nicht erstellt
+        access:
+          - thebing_students_contact_gui
+          - ""
+        info:
+          color: red_font
+          background: false
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+  - [gui2/studentlists.js, thebing]
+  - [enquiry/convert/gui2.js, ts]
+  - [enquiry/gui2.js, ts]
+  - [enquiry/combination/gui2.js, ts]

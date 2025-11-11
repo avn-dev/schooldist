@@ -1,0 +1,20 @@
+parent: ts_inquiry 
+title: ""
+description: ""
+access: thebing_students_welcome_list
+leftframe: true
+multiple_selection: true
+hash: 4d32b8e4ba45a67df74d661ed649e726
+where : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getStudentCheckedinListWhere
+index:
+  registry: 
+    generate: false
+designer:
+  dialog: ""
+  filter: ts_students_checkedin
+  flex: student_record
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo

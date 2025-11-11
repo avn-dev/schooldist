@@ -1,0 +1,229 @@
+<?php
+
+use Illuminate\Support\Arr;
+
+include Util::getDocumentRoot().'system/includes/admin.inc.php';
+
+Access_Backend::checkAccess("system_admin");
+
+Admin_Html::loadAdminHeader();
+
+$system_data = System::getConfig();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?> &raquo; <?=L10N::t('Systemeinstellungen')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		
+			
+<?
+
+if($_VARS['action'] == "save") {
+
+	foreach($_VARS as $key=>$val) {
+		if($key == "logo") {
+			if(is_file($_FILES['logo']['tmp_name'])) {
+				
+				$sSystemDir = Util::getDocumentRoot().'storage/system/';
+				
+				Util::checkDir($sSystemDir);
+				
+				$sLogo = 'system/logo.png';
+				
+				move_uploaded_file($_FILES['logo']['tmp_name'], Util::getDocumentRoot().'storage/'.$sLogo);
+				Util::changeFileMode(Util::getDocumentRoot().'storage/'.$sLogo);
+				
+				$oDesign = new \Admin\Helper\Design;
+
+				$sImage = $oDesign->formatLogo($sLogo, '/storage/');
+
+				$sTarget = $sSystemDir.'logo.png';
+
+				rename(Util::getDocumentRoot(false).$sImage, $sTarget);
+				\Util::changeFileMode($sTarget);
+
+			}
+		} else if ($key === 'smtp_oauth2_data') {
+
+			if (!empty($val)) {
+				$tokenData = json_decode($val, true);
+
+				$providerConfig = \Api\Helper\MailserverOAuth2::getByProviderKey($tokenData['provider']);
+
+				try {
+					$accessToken = \Api\Service\OAuth2\Token::getAccessToken($tokenData['provider'], $tokenData['code'], Arr::wrap($providerConfig['scopes'] ?? []));
+
+					System::s('smtp_oauth2_data', json_encode($accessToken->jsonSerialize()));
+					System::s('smtp_oauth2_provider', $tokenData['provider']);
+				} catch (\Throwable $e) {
+					if (\Util::isDebugIP()) {
+						dd($e);
+					}
+				}
+			}
+		} else {
+				System::s($key, $val);
+		}
+	}
+	
+	Log::enterLog(0, "Systemeinstellungen wurden gespeichert.");
+?>
+		<div class="box-body">
+			<h3><?=L10N::t('Die Einstellungen wurden erfolgreich gespeichert.', 'Framework')?></h3>
+		</div>
+		<div class="box-footer">
+			<a href="global.html" class="btn btn-primary pull-right"><?=L10N::t('Zurück', 'Framework')?></a>
+		</div>
+<?
+} else {
+
+	// Default values
+	if(!array_key_exists('db_query_report_limit', $system_data)) {
+		$system_data['db_query_report_limit'] = 0.2;
+	}
+
+?>
+			<form method="POST" action="global.html" enctype="multipart/form-data">
+			<input type="hidden" name="action" value="save">
+
+			<div class="box-body">
+			
+			<h3>Allgemeine Einstellungen</h3>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t("Projektname", 'Framework'),"project_name",$system_data['project_name'],"",1,28)?>
+				<?=printFormText(L10N::t("Domain (http://www.domain.de)", 'Framework'),"domain",$system_data['domain'],"",1,29)?>
+			</table>
+
+			<h3><?=L10N::t('E-Mail-Einstellungen', 'Framework')?></h3>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t("Webmaster-E-Mail-Adresse", 'Framework'),"admin_email",$system_data['admin_email'],"",1,31)?>
+				<?=printFormText(L10N::t("Fehler-E-Mail-Adresse", 'Framework'),"error_email",$system_data['error_email'],"",1,32)?>
+				<?=printFormSelect(L10N::t("E-Mail Zeichensatz", 'Framework'), "mail_charset", array("UTF-8"=>"UTF-8", "ISO-8859-1"=>"ISO-8859-1"), $system_data['mail_charset'])?>
+			</table>
+			<h3><?=L10N::t('SMTP-Einstellungen', 'Framework')?></h3>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t("Host", 'Framework'), "smtp_host", $system_data['smtp_host'])?>
+				<?=printFormText(L10N::t("Port", 'Framework'), "smtp_port", $system_data['smtp_port'])?>
+				<?=printFormSelect(L10N::t("Verschlüsselung", 'Framework'), "smtp_encryption", [''=> L10N::t('Ohne', 'Framework'), 'ssl' => L10N::t('SSL', 'Framework'), 'tls' => L10N::t('TLS', 'Framework')], $system_data['smtp_encryption'])?>
+				<?=printFormText(L10N::t("Benutzername", 'Framework'), "smtp_user", $system_data['smtp_user'])?>
+				<?=printFormSelect(L10N::t("Authentifizierung", 'Framework'), "smtp_auth_mode", array("password"=>L10N::t("Passwort", 'Framework'), "oauth2"=>L10N::t("OAuth2", 'Framework')), $system_data['smtp_auth_mode'])?>
+				<?=printFormText(L10N::t("Passwort", 'Framework'), "smtp_password", $system_data['smtp_password'])?>
+				<tr>
+					<th><?=L10N::t("OAuth2", 'Framework')?></th>
+					<td>
+						<textarea name="smtp_oauth2_data" style="display: none;"></textarea>
+						<button id="oauth2Window" type="button" class="btn btn-primary" onclick="openOauth2()"><?=L10N::t("Verifizierung")?></button>
+					</td>
+				</tr>
+			</table>
+
+			<h3><?=L10N::t('Erweiterte Einstellungen', 'Framework')?></h3>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t('Statuszeile Vorlage', 'Framework')."","status_template",$system_data['status_template'],"",1,39)?>
+				<?=printFormText(L10N::t("Standard Locale für Zeit- und Datums-Formatierung (de_DE, de_DE.utf8, en_EN)", 'Framework'),"locale", $system_data['locale'],"",1,40)?>
+				<?=printFormText(L10N::t("Standard Zeitzone (Europe/Berlin)", 'Framework'),"timezone", $system_data['timezone'],"",1,40)?>
+				<?=printFormText(L10N::t("G&uuml;ltigkeitsdauer der Session (min.)", 'Framework'),"session_time",$system_data['session_time'],"",1,41)?>
+				<?=printFormSelect(L10N::t("Art der Fehlerprotokollierung", 'Framework'), "error_logging", array("logging_server"=>L10N::t("Fidelo Log-Server", 'Framework'),"email"=>L10N::t("E-Mail", 'Framework'),"apache"=>L10N::t("Apache error log", 'Framework')),$system_data['error_logging'],"",1)?>
+				<?=printFormSelect(L10N::t("Fehlerprotokollierung", 'Framework'), "report_error", array("0"=>L10N::t('Aus', 'Framework'),"1"=>L10N::t("Alle Fehler", 'Framework'),"2"=>L10N::t("Nur wichtige Fehler", 'Framework')), $system_data['report_error'], "", 1, 44)?>
+				<?=printFormText(L10N::t("Limit für Benachrichtigungen bei langsamen Datenbankabfragen (in Sekunden)", 'Framework'), "db_query_report_limit", $system_data['db_query_report_limit'])?>
+				<?=printFormFile(L10N::t("Individuelles Logo", 'Framework'), "logo")?>
+			</table>
+
+			<h3><?=L10N::t('Profi Einstellungen')?></h3>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t("ImageMagick Pfad", 'Framework'),"im_path",$system_data['im_path'],"",1,49)?>
+				
+				<?=printFormCheckbox(L10N::t("Transparente SESSION-ID-Unterstützung", 'Framework'), "use_trans_sid", 1 ,$system_data['use_trans_sid'],1,0)?>
+				<?=printFormText(L10N::t("Globale Ordnerrechte (CHMOD): ", 'Framework'), "chmod_mode_dir", base_convert($system_data['chmod_mode_dir'], 10, 8))?>
+				<?=printFormText(L10N::t("Globale Dateirechte (CHMOD): ", 'Framework'), "chmod_mode_file", base_convert($system_data['chmod_mode_file'], 10, 8))?>
+			</table>
+			
+		</div>
+		<div class="box-footer">
+			<input type="submit" value="<?=L10N::t('Einstellungen speichern', 'Framework')?>" class="btn btn-primary pull-right" />
+		</div>
+			</form>
+<?
+}
+?>
+
+	</div>
+</section>
+
+<?
+	$sAdditional = '
+		<script>
+		
+			var oWindow = null;
+		
+			$j(function() {
+                
+                checkOauth2();
+                
+                $j("select[name=smtp_auth_mode]").change(() => checkOauth2())
+                
+			});
+            
+            function checkOauth2() {
+                if ($j("select[name=smtp_auth_mode]").val() === "oauth2") {
+                    $j("#oauth2Window").closest("tr").show();
+                    $j("input[name=smtp_password]").closest("tr").hide();
+                } else {
+                    $j("#oauth2Window").closest("tr").hide();
+                    $j("input[name=smtp_password]").closest("tr").show();
+                }
+            }
+            
+            function receiveMessage(event) {
+
+				if (
+					event.origin !== window.location.origin ||
+					!event.data
+				) {
+					return;
+				}
+	
+				var success = event.data.success;
+	
+				if (success) {
+					$j("textarea[name=smtp_oauth2_data]").html(JSON.stringify(event.data));
+					$j("#oauth2Window").closest("td").append("<span class=\'verify-message\'><i class=\'fa fa-check\'></i> '.L10N::t("Verifizierung erfolgreich! Bitte speichern Sie die Einstellungen.", 'Framework').'</span>");
+				} else {
+					$j("#oauth2Window").closest("td").append("<span class=\'verify-message\'><i class=\'fa fa-times\'></i> '.L10N::t("Bei der Verifizierung ist etwas fehlgeschlagen Bitte führen Sie den Prozess erneut aus", 'Framework').'</span>");
+				}
+	
+			}
+            
+            function openOauth2() {
+                
+                $j("#oauth2Window").closest("td").find("span.verify-message").remove();
+                
+                var redirectUrl = "/api/1.0/oauth2/host/redirect?host="+$j("input[name=smtp_host]").val().toString();
+
+				// window features
+				const strWindowFeatures = "toolbar=no, menubar=no, width=600, height=700, top=100, left=100";
+	
+				if (oWindow === null || oWindow.closed) {
+					/* if the pointer to the window object in memory does not exist
+					 or if such pointer exists but the window was closed */
+					oWindow = window.open(redirectUrl, "oauth2", strWindowFeatures);
+				} else {
+					/* else the window reference must exist and the window
+					 is not closed; therefore, we can bring it back on top of any other
+					 window with the focus() method. There would be no need to re-create
+					 the window or to reload the referenced resource. */
+					oWindow.focus();
+				}
+	
+				window.addEventListener("message", receiveMessage, false);
+            }
+            
+		</script>
+	';
+
+	Admin_Html::loadAdminFooter($sAdditional)
+?>

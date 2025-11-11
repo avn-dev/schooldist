@@ -1,0 +1,1 @@
+UPDATE `tc_external_apps` SET `app_key` = 'flywire_sync' WHERE `app_key` = 'flywire';

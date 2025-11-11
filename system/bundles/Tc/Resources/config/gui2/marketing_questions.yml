@@ -1,0 +1,167 @@
+class:
+  wdbasic: Ext_TC_Marketing_Feedback_Question
+  data: Ext_TC_Marketing_Feedback_Question_Gui2_Data
+  js: QuestionGUI
+id:
+  column: id
+  alias: tc_fq
+access: 
+  - core_marketing_questions
+  - ""
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column: 
+          - question
+        alias: 
+          - questions_tc_i18n
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Thema
+        label_as_null_item: true
+        column:
+          - topic_id
+        alias:
+          - tc_fq
+        entries:
+            - Ext_TC_Marketing_Feedback_Topic
+            - getSelectOptions
+            - ""
+            - false
+     -
+        element: selectfilter
+        label: Abhängig von
+        label_as_null_item: true
+        column:
+          - dependency_on
+        alias:
+          - tc_fq
+        entries:
+            - Ext_TC_Marketing_Feedback_Question_Gui2_Data
+            - getDependencyFilterOptions
+            - false
+     -
+        element: selectfilter
+        label: Antworttyp
+        label_as_null_item: true
+        column:
+          - question_type
+        alias:
+          - tc_fq
+        entries:
+            - Ext_TC_Marketing_Feedback_Question
+            - getQuestionTypes
+            - ""
+            - false
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Marketing_Feedback_Question_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Marketing_Feedback_Question_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+        
+
+columns:
+  -
+    visible: true
+    sortable: false
+    title: Frage
+    column: question
+    alias: tc_fq
+    width: name
+    resize: true
+    i18n: 
+      ## falls query gui definiert das hier den jointable alias
+      jointable: questions_tc_i18n
+      ## sagt aus ob der letzten methode von dem (index) callpath die sprache übergeben wird
+      pass_language: true
+      ## definiert of die sprach flagge in der spalte angezeigt wird
+      show_flag: true  
+  -
+    visible: true
+    title: Thema
+    column: topic_id
+    alias: tc_fq
+    width: name
+    format: Ext_TC_Marketing_Feedback_Topic_Gui2_Format_Name
+    resize: false
+  -
+    visible: true
+    title: Antworttyp
+    column: question_type
+    alias: tc_fq
+    width: short_name
+    format: Ext_TC_Marketing_Feedback_Question_Gui2_Format_QuestionType
+    resize: false
+  -
+    visible: true
+    title: GZ
+    description: Gesamtzufriedenheit
+    column: overall_satisfaction
+    alias: tc_fq
+    width: short_name
+    format: Ext_Gui2_View_Format_YesNo
+    resize: false
+  -
+    visible: true
+    title: Abhängig von
+    column: dependency_on
+    alias: tc_fq
+    width: name
+    format: Ext_TC_Marketing_Feedback_Question_Gui2_Format_DependencyOn
+    resize: false
+  
+      
+default_columns:
+   -
+     title: Ersteller
+     column: creator_id
+     width: user_name
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Erstellt
+     column: created
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true
+   -
+     title: Bearbeiter
+     column: editor_id
+     width: editor_id
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Verändert
+     column: changed
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true    
+    
+js:
+  - [marketing/js/questions.js, tc]
+
+
+  

@@ -1,0 +1,1 @@
+INSERT INTO `system_elements` (`id`, `title`, `description`, `element`, `category`, `file`, `version`, `parent`, `image`, `documentation`, `template`, `sql`, `administrable`, `include_backend`, `include_frontend`, `include_mode`, `active`) VALUES (NULL, 'TsRdstation', '', 'bundle', 'Fidelo', 'TsRdstation', '0.01', '', '', '', '', '', '1', '1', '0', '0', '1');

@@ -1,0 +1,51 @@
+class:
+  wdbasic: \TsTuition\Entity\AbsenceReason
+  data: \TsTuition\Gui2\Data\AbsenceReasons
+  date_format: Ext_Thebing_Gui2_Format_Date
+id:
+  column: id
+  alias: ts_tar
+orderby:
+  - \TsTuition\Gui2\Data\AbsenceReasons
+  - getOrderby
+access: 
+    - ts_tuition_absence_reasons
+    - ""
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - \TsTuition\Gui2\Data\AbsenceReasons
+            - getDialog
+        -
+          element: icon_edit
+          dialog:
+            - \TsTuition\Gui2\Data\AbsenceReasons
+            - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Kürzel
+    column: key
+    width: short_name
+  -
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true
+    i18n: 
+      pass_language: true
+      interface: frontend 
+  -
+    title: Im Lehrerportal verfügbar
+    column: teacher_portal_available
+    small: true
+    width: name
+    format: Ext_Thebing_Gui2_Format_YesNo
+
+      
+      

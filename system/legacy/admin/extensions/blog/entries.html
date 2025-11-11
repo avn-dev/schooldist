@@ -1,0 +1,98 @@
+<?php
+
+// =============== Header ===============
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+
+
+
+include_once(\Util::getDocumentRoot()."system/includes/class.pagetemplate.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'delete')
+{
+	$oEntry = new Ext_Blog_BlogEntry($_VARS['blog_id'], $_VARS['entry_id']);
+	$oEntry->deleteEntry();
+}
+
+
+$objPage = new GUI_Page();
+$objPage->appendElement(new GUI_Headline(array('text' => 'Einträge', 'type' => '1')));
+
+// Show all entries
+$oBlog = new Ext_Blog_Blog($_VARS['blog_id'], -1);
+$aEntriesList = $oBlog->getEntriesList();
+
+$aTable = array(
+			'showth'	=> false,
+			'cols'		=> array(
+								array('text' => '', 'style' => 'width: 20%;'),
+								array('text' => '', 'style' => 'width: 75%;'),
+								array('text' => '', 'style' => 'width: 5%;')
+							)
+		);
+$oTable = new GUI_Table($aTable);
+
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Titel'
+								),
+								array(
+									'forceTh' => true,
+									'text' => 'Eintrag'
+								),
+								array(
+									'forceTh' => true,
+									'text' => 'Bearbeiten'
+								)
+							)
+						)
+					);
+
+foreach($aEntriesList as $aEntry)
+{
+	$oLink			= new GUI_Link(array('url'	=> 'comments.html?blog_id='.$_VARS['blog_id'].'&entry_id='.$aEntry['id'], 'text' => $aEntry['title']));
+	$oImgDelete		= new GUI_Image(array('url'	=> '/admin/media/delete.png'));
+	$oImgEdit		= new GUI_Image(array('url'	=> '/admin/media/edit.png'));
+	$oLinkEdit		= new GUI_Link(array('url'	=> 'edit_entry.html?blog_id='.$_VARS['blog_id'].'&entry_id='.$aEntry['id'], 'text' => $oImgEdit ));
+	$oLinkDelete	= new GUI_Link(array('url'	=> '?action=delete&blog_id='.$_VARS['blog_id'].'&entry_id='.$aEntry['id'], 'text' => $oImgDelete ));
+	$oImgList		= new GUI_ElementList();
+
+	$oImgList->appendElement($oLinkEdit);
+	$oImgList->appendElement(' ');
+	$oImgList->appendElement($oLinkDelete);
+
+	$oTable->appendRow(array(
+						'cols' => array(
+									array(
+										'forceTh' => false,
+										'text' => $oLink
+									),
+									array(
+										'forceTh' => false,
+										'text' => substr($aEntry['text'], 0, 150).'...'
+									),
+									array(
+										'forceTh' => false,
+										'text' => $oImgList,
+										'style' => 'text-align:center;'
+									)
+								)
+							)
+						);
+}
+$objPage->appendElement($oTable);
+
+// "Add a new blog" button
+$oForm = new GUI_form(array('method' => 'post', 'action' => 'edit_entry.html?blog_id='.$_VARS['blog_id']));
+$oButton = new GUI_FormSubmit(array('value' => 'Eintrag hinzufügen', 'style' => 'float:right;'));
+$oForm->appendElement($oButton);
+
+$objPage->appendElement($oForm);
+echo $objPage->generateHTML();
+
+?>

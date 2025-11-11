@@ -1,0 +1,1 @@
+UPDATE `system_config` SET `c_value` = 'logging_server' WHERE `c_key` = 'error_logging';

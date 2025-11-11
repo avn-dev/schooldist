@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries` DROP `firstpay`, DROP `finalpay`;

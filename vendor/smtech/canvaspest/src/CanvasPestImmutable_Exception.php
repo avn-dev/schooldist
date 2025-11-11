@@ -1,0 +1,18 @@
+<?php
+
+/** smtech\CanvasPest\CanvasPestImmutable_Exception */
+
+namespace smtech\CanvasPest;
+
+/**
+ * All exceptions thrown by CanvasPestImmutable
+ *
+ * @author Seth Battis <SethBattis@stmarksschool.org>
+ **/
+class /* @codingStandardsIgnoreStart */ CanvasPestImmutable_Exception /* @codingStandardsIgnoreEnd */ extends CanvasPest_Exception
+{
+    /**
+     * @const IMMUTABLE A request to the API that would change data was attempted
+     **/
+    const IMMUTABLE = 1001;
+}

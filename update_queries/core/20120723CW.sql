@@ -1,0 +1,1 @@
+ALTER TABLE `tc_gui2_filtersets_bars_elements` ADD `position` INT NOT NULL , ADD INDEX ( `position` ) ;

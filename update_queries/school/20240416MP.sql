@@ -1,0 +1,1 @@
+ALTER TABLE `ts_tuition_levels` ADD `automatic_assignment_from` FLOAT NULL DEFAULT NULL AFTER `type`, ADD `automatic_assignment_until` FLOAT NULL DEFAULT NULL AFTER `automatic_assignment_from`;

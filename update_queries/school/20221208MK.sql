@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_clients_users` DROP `id`;

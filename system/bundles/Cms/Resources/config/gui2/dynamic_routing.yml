@@ -1,0 +1,70 @@
+class:
+  wdbasic: Cms\Entity\DynamicRouting
+  data: Cms\Gui2\Dialog\DynamicRoutingDialog
+orderby : 
+  - Cms\Gui2\Dialog\DynamicRoutingDialog
+  - getOrderBy
+id:
+  column: id
+  alias: cms_dr
+title: "Dynamische Routen"
+description: "CMS"
+access: "page_admin"
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Cms\Gui2\Dialog\DynamicRoutingDialog
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Cms\Gui2\Dialog\DynamicRoutingDialog
+            - getDialog
+        - 
+          element: icon_delete
+        -
+          element: icon
+          task: openDialog
+          action: content
+          label: Texte
+          dialog:
+              - Cms\Gui2\Dialog\DynamicRoutingDialog
+              - getContentDialog
+          img: 
+            - Util
+            - getIcon
+            - page_edit
+columns:
+  -
+    title: Name
+    column: name
+    description: ""
+    resize: true
+    width: name
+  -
+    title: Permalink-Vorlage
+    column: permalink_template
+    description: ""
+    resize: false
+    width: extra_long_description

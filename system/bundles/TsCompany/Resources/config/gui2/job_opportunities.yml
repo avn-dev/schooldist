@@ -1,0 +1,127 @@
+class:
+  wdbasic: \TsCompany\Entity\JobOpportunity
+  data: \TsCompany\Gui2\Data\Company\JobOpportunity
+  icon_status: \TsCompany\Gui2\Icon\JobOpportunityStatus
+access:
+  - ts_marketing_companies_job_opportunities
+  -
+description: "Fidelo » Marketing » Firmen » Arbeitsangebote"
+id:
+  column: id
+  alias: ts_cjo
+multiple_selection: true
+orderby:
+  - \TsCompany\Gui2\Data\Company\JobOpportunity
+  - getOrderBy
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - name
+          - short_name
+      -
+        element: selectfilter
+        label: Firma
+        label_as_null_item: true
+        column:
+          - company_id
+        entries:
+          - \TsCompany\Entity\Company
+          - getSelectOptions
+          - true
+      -
+        element: selectfilter
+        label: Branche
+        label_as_null_item: true
+        column:
+          - industry_id
+        entries:
+          - \TsCompany\Entity\Industry
+          - getSelectOptions
+          - true
+      -
+        element: selectfilter
+        id: status_filter
+        label: Status
+        label_as_item: true
+        value: status_1
+        filter_query:
+          status_1: " `ts_cjo`.`status` = 1 "
+          status_0: " `ts_cjo`.`status` = 0 "
+        entries:
+          - Ext_Thebing_Agency_Gui2
+          - getFilterStatusArray
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsCompany\Gui2\Data\Company\JobOpportunity
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsCompany\Gui2\Data\Company\JobOpportunity
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Bezeichnung
+    column: name
+    alias: ts_cjo
+    width: name
+    resize: true
+  -
+    title: Abkürzung
+    column: short_name
+    alias: ts_cjo
+    width: name
+    resize: false
+  -
+    title: Firma
+    column: company_id
+    alias: ts_cjo
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ \TsCompany\Entity\Company, getSelectOptions, true ]
+  -
+    title: Branche
+    column: industry_id
+    alias: ts_cjo
+    width: comment
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ \TsCompany\Entity\Industry, getSelectOptions ]
+  -
+    title: Gehalt
+    column: wage
+    alias: ts_cjo
+    width: name
+    resize: false
+    format: TsCompany\Gui2\Format\JobOpportunity\ValuePer
+    format_params:
+      - wage
+      - wage_per
+  -
+    title: Geplante Stunden
+    column: hours
+    alias: ts_cjo
+    width: name
+    resize: false
+    format: TsCompany\Gui2\Format\JobOpportunity\ValuePer
+    format_params:
+      - hours
+      - hours_per

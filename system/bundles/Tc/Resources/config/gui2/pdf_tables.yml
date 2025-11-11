@@ -1,0 +1,87 @@
+class:
+  wdbasic: Ext_TC_Pdf_Table_WDBasic
+  gui: Ext_TC_Pdf_Table_Gui2
+  data: Ext_TC_Pdf_Table_Gui2_Data
+  date_format: Ext_TA_Format_Date
+  js: PdfTable
+id:
+  column: id
+  alias: 
+access: 
+  - core_admin_templates_pdf_tables
+  - 
+orderby : 
+  - Ext_TC_Pdf_Table_Gui2_Data
+  - getOrderby
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Pdf_Table_Gui2_Data
+          - getDialog
+      - 
+        element: icon_edit
+        dialog:
+          - Ext_TC_Pdf_Table_Gui2_Data
+          - getDialog
+      - 
+        element: icon_delete
+columns:
+  -
+    title: Bezeichnung
+    column: name
+    alias: 
+    width: name
+    resize: true
+  -
+    title: Platzhalter
+    column: placeholder
+    alias: 
+    width: name
+
+default_columns:
+  -
+    visible: true
+    set: []
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ta_e
+    width: user_name
+  -
+    visible: true
+    set: []
+    title: Erstellt
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: created
+    alias: ta_e
+    width: date
+    filterset: 
+      type: date
+  -
+    visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: ta_e
+    width: user_name
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: changed
+    alias: ta_e
+    width: date
+    filterset: 
+      type: date
+css:
+  - [css/pdf_table.css, tc]
+js:
+  - [js/pdf_table.js, tc]

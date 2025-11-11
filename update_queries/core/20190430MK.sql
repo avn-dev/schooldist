@@ -1,0 +1,2 @@
+ALTER TABLE `tc_communication_messages_flags` CHANGE `flag` `flag` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
+ALTER TABLE `tc_communication_templates_flags` CHANGE `flag` `flag` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

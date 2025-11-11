@@ -1,0 +1,158 @@
+hash: a1635460e883608e8e913c1fc8e48502
+class:
+  wdbasic: Ext_TC_Upload
+  data: Ext_TC_Upload_Gui2_Data
+  icon_status: Ext_TC_Upload_Gui2_Icon
+  row_style: Ext_TC_Upload_Gui2_Row
+access:
+  - core_admin_templates_uploads
+  -
+orderby:
+  - Ext_TC_Upload_Gui2_Data
+  - getOrderby
+limit: 30
+limit_selection: false
+multiple_selection: 0
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - id
+          - description
+        alias:
+          - tc_u
+          - tc_u
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Kategorie
+        label_as_item: true
+        value: ''
+        column:
+          - category
+        entries:
+          - Ext_TC_Upload_Gui2_Data
+          - getCategories
+      -
+        element: selectfilter
+        label: Sprachen
+        label_as_item: true
+        value: ''
+        column:
+          - language_iso
+        alias:
+          - languages
+        width: 200px
+        entries:
+          - Ext_TC_Object
+          - getLanguages
+          - true
+      -
+        element: selectfilter
+        label:
+          - Ext_TC_Object
+          - getSubObjectLabel
+          - false
+        label_as_item: true
+        column:
+          - object_id
+        alias:
+          - objects
+        entries:
+          - Ext_TC_Object
+          - getSubObjects
+          - true
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Upload_Gui2_Data
+          - getNewDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Upload_Gui2_Data
+          - getEditDialog
+      -
+        element: icon_delete
+  - position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Status
+      -
+        element: legend_info
+        label: wird verwendet
+        info:
+          color: lightgreen
+columns:
+  -
+    title: Datei
+    column: filename
+    alias: tc_u
+    width: 50
+    resize: false
+    format: Ext_TC_Upload_Gui2_Format_Upload
+    sortable: false
+  -
+    title: Bezeichnung
+    column: description
+    alias: tc_u
+    width: name
+    resize: true
+  -
+    title: Dateigröße
+    column: filesize
+    data: filename
+    alias: tc_u
+    width: 75
+    resize: false
+    format: Ext_TC_Upload_Gui2_Format_Size
+    sortable: false
+  -
+    title: Verwendungszweck
+    column: usage
+    data: id
+    alias: tc_u
+    width: long_description
+    resize: false
+    format: Ext_TC_Upload_Gui2_Format_Usage
+    sortable: false
+  -
+    title: Kategorie
+    column: category
+    alias: tc_u
+    width: long_description
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_TC_Upload_Gui2_Data, getCategories]
+  -
+    title:
+      - Ext_TC_Object
+      - getSubObjectLabel
+      - true
+    column: objects
+    sortable: false
+    width: name
+    resize: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_TC_Object, getSubObjects, true]
+  -
+    title: Sprachen
+    column: language_id
+    data: id
+    alias: tc_u
+    width: 100
+    sortable: false
+    resize: false
+    format: Ext_TC_Gui2_Format_Imagelist

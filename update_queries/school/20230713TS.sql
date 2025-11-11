@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `activity_parallel_frontend` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `activity_endtime`

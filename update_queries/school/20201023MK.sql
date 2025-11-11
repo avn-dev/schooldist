@@ -1,0 +1,3 @@
+ALTER TABLE `kolumbus_accommodations_allocations` ADD `reservation_date` DATE NULL DEFAULT NULL AFTER `reservation`;
+UPDATE `kolumbus_accommodations_allocations` SET changed = changed, reservation_date = SUBSTRING(reservation, LOCATE('date":"', reservation)+7, 10) WHERE reservation IS NOT NULL AND reservation_date IS NULL;
+UPDATE `system_elements` SET `include_backend` = '1' WHERE `file` = 'tsaccommodation';

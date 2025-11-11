@@ -1,0 +1,186 @@
+<?
+
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('office_absence');
+
+/* ==================================================================================================== */
+
+$oConfig = Ext_Office_Config::getInstance();
+
+$oAbsence = new Ext_Office_Absence();
+
+/* ==================================================================================================== */
+
+if(
+	isset($_VARS['action']) && 
+	$_VARS['action'] == 'get_absences_list'
+) {
+
+	$aData = $oAbsence->getAbsencesList($_VARS['month'], $_VARS['year']);
+
+	echo json_encode($aData);
+
+	exit();
+
+} elseif($_VARS['task'] == 'export_sickness_absence') {
+
+	$aExport = array(
+		array(
+			'Mitarbeiter',
+			'Von',
+			'Bis',
+			'Anzahl Tage'
+		)
+	);
+
+	$aData = $oAbsence->getAbsencesData($_VARS['year']);
+
+	foreach($aData as $aEmployee) {
+		
+		foreach($aEmployee['data'] as $aEntry) {
+			$aRow = array();
+			$aRow[] = $aEmployee['name'];
+			$aRow[] = strftime("%x", $aEntry['from_unix']);
+			$aRow[] = strftime("%x", $aEntry['till_unix']);
+			$aRow[] = $aEntry['quote'];//number_format($aEntry['quote'], 2, ",", ".");
+
+			$aExport[] = $aRow;
+		}
+		
+	}
+
+	WDExport::exportXLSX('Krankentage', $aExport);
+	
+	die();
+	
+}
+
+/* ==================================================================================================== */
+
+$aYears = $aMonths = array();
+
+$oDate = new WDDate(0);
+
+for($i = date('Y') - 3; $i <= date('Y') + 1; $i++)
+{
+	$aYears[$i] = $i;
+}
+for($i = 1; $i <= 12; $i++)
+{
+	$oDate->set($i, WDDate::MONTH);
+
+	$aMonths[$i] = strftime('%B', $oDate->get(WDDate::TIMESTAMP));
+}
+
+/* ==================================================================================================== */
+
+$sParams = '<link rel="stylesheet" href="/admin/extensions/office/office.css"></link>';
+$sParams .= '<script type="text/javascript" src="/admin/extensions/office/js/absence.js"></script>';
+$sParams .= '<style type="text/css">body { overflow:hidden; scroll:no-scroll; }</style>';
+
+$aOptions = array('additional' => $sParams);
+$aOptions['xhtml'] = false;
+Admin_Html::loadAdminHeader($aOptions);
+
+?>
+
+<style type="text/css">
+    .tblAbsences, .tblAbsences tr, .tblAbsences th, .tblAbsences td {
+        /*border:					1px solid #CCC;*/
+        border-collapse:		collapse;
+        border-spacing:			0;
+        padding:				0;
+        margin:					0;
+    }
+    .tblAbsences thead {
+        position: sticky;
+        top: 0;
+    }
+    .tblAbsences,
+    .tblAbsences td {
+        box-shadow: inset 1px -1px #CCC;
+    }
+    .tblAbsences thead th {
+        box-shadow: inset 1px 1px #CCC, 0 1px #CCC;
+    }
+    .tblAbsences tbody th {
+        border-bottom:			1px solid #CCC;
+    }
+    .tblAbsences th {
+        padding:				4px 3px;
+        background-color:		#EEE;
+        color:					#29527A;
+    }
+    .monthDays {
+        padding:				4px 0;
+        font-size:				9px;
+    }
+    .w10 {
+        width:					10px;
+    }
+</style>
+
+<script type="text/javascript">
+	Event.observe(window, 'load', loadAbsencesList);
+	Event.observe(window, 'resize', resize);
+</script>
+
+<div class="divHeader" style="height:52px; margin-bottom:5px; border-bottom:1px solid #CCC;">
+	<h1>Abwesenheitsliste</h1>
+	<div class="divToolbar">
+		<div class="divToolbarFormItem">
+			<b>Datum:</b>
+			<select id="filter_month" class="txt" onchange="loadAbsencesList();">
+				<? foreach((array)$aMonths as $iKey => $sMonth) { ?>
+					<option value="<?=$iKey?>" <? if(date('m') == $iKey) { ?>selected="selected"<? } ?>><?=$sMonth?></option>
+				<? } ?>
+			</select>
+		</div>
+		<div class="divToolbarFormItem">
+			<select id="filter_year" class="txt" onchange="loadAbsencesList();">
+				<? foreach((array)$aYears as $iYear) { ?>
+					<option value="<?=$iYear?>" <? if(date('Y') == $iYear) { ?>selected="selected"<? } ?>><?=$iYear?></option>
+				<? } ?>
+			</select>
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Liste der Krankentage:</div>
+		<div class="divToolbarIcon" id="toolbar_edit">
+			<img src="/admin/media/table_go.png" onclick="exportSicknessAbsence();" alt="Exportieren" title="Exportieren" />
+		</div>
+		<div class="divToolbarIcon">
+			<img id="loader" alt="" src="/admin/media/indicator.gif" style="display:none;" />
+		</div>
+		<div class="divToolbarFormItem" style="float:right;">
+			<div style="float:left; background-color:#FF9900; margin: 0 2px; padding: 0 2px; width:100px; text-align:center; border: 1px solid #CCC;">Krankheit</div>
+			<div style="float:left; background-color:#33FF33; margin: 0 2px; padding: 0 2px; width:100px; text-align:center; border: 1px solid #CCC;">Urlaub</div>
+			<div style="float:left; background-color:#FFFF00; margin: 0 2px; padding: 0 2px; width:100px; text-align:center; border: 1px solid #CCC;">Überstunden</div>
+			<div style="float:left; background-color:#66FFFF; margin: 0 2px; padding: 0 2px; width:100px; text-align:center; border: 1px solid #CCC;">Feiertag</div>
+			<div style="float:left; background-color:#DDDDDD; margin: 0 2px; padding: 0 2px; width:100px; text-align:center; border: 1px solid #CCC;">Wochenende</div>
+		</div>
+		<div style="clear:both;"></div>
+	</div>
+</div>
+
+<div id="divDays" style="overflow:scroll;">
+	<table class="tblAbsences" style="width:100%;">
+		<thead>
+			<tr>
+				<th>&nbsp;</th>
+				<th style="width:30%;" id="1_Month">&nbsp;</th>
+				<th style="width:30%;" id="2_Month">&nbsp;</th>
+				<th style="width:30%;" id="3_Month">&nbsp;</th>
+			</tr>
+			<tr id="daysHeader">
+				<th>&nbsp;</th>
+				<td class="monthDays">&nbsp;</td>
+				<td class="monthDays">&nbsp;</td>
+				<td class="monthDays">&nbsp;</td>
+			</tr>
+		</thead>
+		<tbody id="tblAbsences"></tbody>
+	</table>
+</div>
+
+<?=Admin_Html::loadAdminFooter()?>

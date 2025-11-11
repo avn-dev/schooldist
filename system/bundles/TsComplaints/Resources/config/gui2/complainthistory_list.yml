@@ -1,0 +1,85 @@
+parent: TcComplaints_complainthistory_list
+class:
+  wdbasic: TsComplaints\Entity\ComplaintHistory
+  data: \TsComplaints\Gui2\Data\ComplaintHistory
+  date_format: Ext_Thebing_Gui2_Format_Date
+access: thebing_marketing_complaints
+id:
+  column: id
+  alias: tc_ch
+title: Nachrichtenverlauf
+sortable: false
+export: false
+limit: 10
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: selectfilter
+          label: Status
+          label_as_item: true
+          searchtype: LIKE
+          column:
+            - state
+          alias:
+            - tc_ch
+          entries:
+             - \TcComplaints\Gui2\Data\ComplaintHistory
+             - getState
+             - ''
+          visibility: true
+        -
+          element: selectfilter
+          label: Kommentarart
+          label_as_item: true
+          searchtype: LIKE
+          column:
+            - comment_type
+          alias:
+            - tc_ch
+          entries:
+            - \TcComplaints\Gui2\Data\ComplaintHistory
+            - getCommentaryTypesFilterOptions
+        -
+          element: selectfilter
+          label: Zugeordnet an
+          label_as_null_item: true
+          alias:
+            - tc_ch
+          column:
+            - assigned_to
+          entries:
+            - Ext_TS_Marketing_Feedback_Questionary_Process_Gui2_Data
+            - getUserSelectOptions
+          visibility: true
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - \TcComplaints\Gui2\Data\ComplaintHistory
+            - getDialog
+        -
+          element: icon_edit
+          dialog:
+            - \TcComplaints\Gui2\Data\ComplaintHistory
+            - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Nachrichtenverlauf
+    column: id
+    alias: tc_ch
+    data: commenthistory
+    format: \TsComplaints\Gui2\Format\MessageHistoryFormat
+    resize: true
+
+##############################################################
+# Da es sich bei dem Verlauf der Beschwerde-Kommentare nicht #
+# um eine normale Liste handelt müssen die Default Columns   #
+# auf nicht sichtbar geschaltet werden.                      #
+##############################################################
+default_columns:

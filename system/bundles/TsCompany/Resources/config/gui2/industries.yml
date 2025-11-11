@@ -1,0 +1,67 @@
+class:
+  wdbasic: \TsCompany\Entity\Industry
+  data: \TsCompany\Gui2\Data\Industry
+  icon_status: \TsCompany\Gui2\Icon\IndustryStatus
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+description: "Fidelo » Marketing » Firmen » Branchen"
+access:
+  - ts_marketing_industries
+  -
+title: Branchen
+options:
+id:
+  column: id
+  alias: ts_ci
+multiple_selection: true
+where:
+  - \TsCompany\Gui2\Data\Industry
+  - getWhere
+orderby:
+  - \TsCompany\Gui2\Data\Industry
+  - getOrderBy
+sets:
+  sub_categories:
+    hash: db8602ac7abd87c1bdab8be20bf56ecc
+    title: Unterbranchen
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - name
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsCompany\Gui2\Data\Industry
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsCompany\Gui2\Data\Industry
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_ci
+    width: name
+    resize: true
+  -
+    title: Abkürzung
+    column: short_name
+    alias: ts_ci
+    width: name
+    resize: false

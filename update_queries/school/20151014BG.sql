@@ -1,0 +1,2 @@
+DELETE `p` FROM `kolumbus_forms_pages` `p` LEFT JOIN `kolumbus_forms` `f` ON `p`.`form_id` = `f`.`id` WHERE `f`.`id` IS NULL;
+DELETE `b` FROM `kolumbus_forms_pages_blocks` `b` LEFT JOIN `kolumbus_forms_pages` `p` ON `b`.`page_id` = `p`.`id` WHERE `p`.`id` IS NULL;

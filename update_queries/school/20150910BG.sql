@@ -1,0 +1,1 @@
+ALTER TABLE `ts_enquiries` ADD `form_enquiry` TINYINT(1) NOT NULL DEFAULT '0';

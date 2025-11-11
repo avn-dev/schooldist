@@ -1,0 +1,50 @@
+class:
+  wdbasic: \TsAccommodation\Entity\Cleaning\Type
+  data: \TsAccommodation\Gui2\Data\CleaningTypesData
+  date_format: Ext_Thebing_Gui2_Format_Date
+  js: CleaningTypesGui
+description: Thebing » Accommodation » Room Cleaning Types
+access: thebing_accommodation_other_cleaning
+sortable: false
+only_pagecount: false
+title: 
+  - Ext_TS_System_Navigation
+  - t
+id:
+  column: id
+  alias: ts_act
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \TsAccommodation\Gui2\Data\CleaningTypesData
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \TsAccommodation\Gui2\Data\CleaningTypesData
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_act
+    width: name
+    sortable: false
+    resize: true
+js:
+  - /admin/ts/accommodation/resources/js/cleaning_types.js

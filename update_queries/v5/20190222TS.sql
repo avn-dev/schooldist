@@ -1,0 +1,1 @@
+ALTER TABLE `poll_questions` ADD INDEX `idPoll` ( `idPoll`, `idParagraph`);

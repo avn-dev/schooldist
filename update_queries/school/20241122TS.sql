@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_accommodations_categories` ADD `accommodation_start` CHAR(2) NULL DEFAULT NULL AFTER `cost_center`, ADD `inclusive_nights` TINYINT(1) UNSIGNED NULL DEFAULT NULL AFTER `accommodation_start`;

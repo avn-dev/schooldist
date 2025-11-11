@@ -1,0 +1,105 @@
+<?php
+ 
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+Admin_Html::loadAdminHeader();
+
+$sMessage = null;
+$bError = false;
+$sDocumentRoot = \Util::getDocumentRoot();
+
+if(!isset($_VARS['task'])) {
+	$_VARS['task'] = null;
+}
+
+if($_VARS['task'] == 'unlock_dialogs') {
+
+	$_SESSION['gui2_dialog_lock_break'] = true;
+
+	$sSql = "DELETE FROM `gui2_dialog_lock` WHERE `user_id` = ".$user_data['id'];
+	DB::executeQuery($sSql);
+	__out(DB::fetchAffectedRows());
+
+} elseif($_VARS['task'] === 'update_routings') {
+
+	$oRoutingService = new Core\Service\RoutingService();
+	$oRoutingService->buildRoutes();
+
+	__out($oRoutingService->getRouteCollection());
+
+} elseif($_VARS['task'] === 'update_composer') {
+
+	$oUpdate = new Update();
+	$bSuccess = $oUpdate->executeComposerUpdate();
+
+	__out($bSuccess);
+
+} else if($_VARS['task'] == 'execute_check'){
+    $oCheck = new $_VARS['check'];
+
+	if($oCheck instanceof GlobalChecks) {
+		$bSuccess = $oCheck->executeCheck();
+		__pout($bSuccess);
+	} else {
+		__pout(get_class($oCheck).' leitet nicht von GlobalChecks ab!');
+	}
+
+} else if($_VARS['task'] == 'add_to_debug_ips') {
+
+	\AdminTools\Helper\Util::setDebugIP($_SERVER['REMOTE_ADDR']);
+
+}
+
+?>
+
+<div class="divHeader">
+	<h1>Tools</h1>
+</div>
+
+<div style="max-width: 1200px; padding: 30px;">
+
+<?
+	if($sMessage !== null) {
+		echo '<p>'.$sMessage.'</p>';
+	}
+?>
+    
+    <h2>Check ausführen</h2>
+    <form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="execute_check" />
+		<?=printTableStart()?>
+			<?=printFormText('Check Name', 'check')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('ausführen')?>
+	</form>
+
+	<h2>Diverses</h2>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="unlock_dialogs" />
+		<? printSubmit('Unlock dialogs') ?>
+	</form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="update_routings" />
+		<? printSubmit('Update routings') ?>
+	</form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="update_composer" />
+		<? printSubmit('Update composer') ?>
+	</form>
+	
+	<? if(!Util::isDebugIP()) { ?>
+		<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="add_to_debug_ips" />
+			<? printSubmit('Add IP to Util::isDebugIP()') ?>
+		</form>
+	<? } ?>
+
+</div>
+
+<?
+Admin_Html::loadAdminFooter();
+?>

@@ -1,0 +1,8 @@
+{
+	"name": "fidelo-bundle/api",
+	"version": "1.0.1",
+	"require": {
+		"stevenmaguire/oauth2-microsoft": "2.2.*",
+		"league/oauth2-google": "4.0.*"
+	}
+}

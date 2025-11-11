@@ -1,0 +1,14 @@
+.ELPLeftRow {
+	width: 200px;
+}
+.ELPRightRow {
+	width: auto;
+}
+.ELPImageRow {
+	vertical-align: middle;
+	text-align: center;
+}
+.ELPLinkRow {
+	vertical-align: top !important;
+	padding: 5px;
+}

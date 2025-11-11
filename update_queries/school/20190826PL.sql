@@ -1,0 +1,1 @@
+INSERT INTO `system_config` (`c_id`, `c_key`, `c_value`, `c_description`) VALUES (NULL, 'booking_auto_confirm', '1', '');

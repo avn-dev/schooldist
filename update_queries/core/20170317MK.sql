@@ -1,0 +1,1 @@
+ALTER TABLE `tc_wdmvc_tokens`  ADD `parameters` TEXT NOT NULL;

@@ -1,0 +1,331 @@
+class:
+  wdbasic: Ext_TS_Inquiry_Journey_Activity
+access: thebing_activities_icon
+id:
+  column: id
+  alias: ts_ijact
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        alias:
+          - tc_cn
+          - tc_c
+          - tc_c
+          - kg
+          - kg
+          - ka
+        column:
+          - number
+          - firstname
+          - lastname
+          - name
+          - short
+          - ext_1
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          alias:
+            - ts_ijact
+          column:
+            - from
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterFrom
+            - true
+            - week
+        until:
+          alias:
+            - ts_ijact
+          column:
+            - until
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterUntil
+            - week
+        searchtype: contact
+        text_after: basierend auf Aktivitätszeitraum
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Aktivität
+        label_as_item: true
+        alias:
+          - ts_act
+        column:
+          - id
+        entries:
+          - \TsActivities\Gui2\Data\ActivityData
+          - getActivityOptions
+      -
+        element: selectfilter
+        label: Inbox
+        label_as_item: true
+        alias:
+          - k_il
+        column:
+          - short
+        entries:
+          - Ext_Thebing_System
+          - getInboxListForSelect
+          - true
+          - false
+      -
+        element: selectfilter
+        label: Schülerstatus
+        label_as_item: true
+        alias:
+          - k_ss
+        column:
+          - id
+        entries:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getCustomerStatusOptions
+columns:
+  -
+    title: Kundennummer
+    group: Persönliche Daten
+    column: customer_number
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - customer_number
+      - true
+    width: number
+    resize: false
+    filterset:
+      type: input
+  -
+    column: customer_name
+    title: Name
+    group: Persönliche Daten
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Name
+    sortable_column: lastname
+  -
+    column: firstname
+    title: Vorname
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: input
+  -
+    column: lastname
+    title: Nachname
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: input
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    group: Persönliche Daten
+    column: group_short
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - group_name
+      - true
+  -
+    title: Alter
+    column: age
+    format: Ext_Thebing_Gui2_Format_Age
+    group: Persönliche Daten
+    width: number
+    resize: false
+    default: false
+  -
+    title: Geburtsdatum
+    column: birthday
+    format: Ext_Thebing_Gui2_Format_Date
+    group: Persönliche Daten
+    width: date
+    resize: false
+    default: false
+  -
+    title: Geschlecht
+    column: gender
+    format: Ext_Thebing_Gui2_Format_Gender
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Adresse
+    column: address
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Adresszusatz
+    column: address_addon
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: PLZ
+    column: zip
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Stadt
+    column: city
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Land
+    column: country_iso
+    format: Ext_TC_Gui2_Format_Country
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Nationalität
+    column: nationality
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Muttersprache
+    column: customer_mother_tongue
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: E-Mail
+    column: email
+    group: Persönliche Daten
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - email
+      - true
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: input
+  -
+    title: Telefonnummer
+    column: phone_private
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Mobilfunknummer
+    column: phone_mobile
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: E-Mail (Gruppe)
+    column: group_email
+    group: Persönliche Daten
+    width: name
+    default: false
+  -
+    title: Inbox
+    column: inbox_name
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_System
+        - getInboxListForSelect
+        - true
+        - false
+  -
+    title: Agenturnummer
+    column: agency_number
+    group: Persönliche Daten
+    width: number
+    resize: false
+    default: false
+  -
+    title: Agentur
+    column: ext_1
+    group: Persönliche Daten
+    width: name
+    resize: false
+    filterset:
+      type: input
+  -
+    title: Schülerstatus
+    column: student_status
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    column: activity_short
+    title: Abkürzung
+    group: Aktivität
+    width: short_name
+  -
+    column: activity_name
+    title: Aktivität
+    group: Aktivität
+    width: name
+  -
+    column: from
+    title: Start
+    group: Aktivität
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    column: until
+    title: Ende
+    group: Aktivität
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    column: weeks
+    title: Wochen
+    group: Aktivität
+    width: number
+    resize: false
+  -
+    column: blocks
+    title: Blöcke
+    group: Aktivität
+    width: number
+    resize: false
+  -
+    column: comment
+    title: Kommentar
+    group: Aktivität
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - comment
+      - true
+      - 80
+    width: comment
+    resize: false
+default_columns: []

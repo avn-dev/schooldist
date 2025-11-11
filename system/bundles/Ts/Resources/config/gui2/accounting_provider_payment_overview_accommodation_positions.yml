@@ -1,0 +1,114 @@
+class:
+  wdbasic: Ext_Thebing_Accommodation_Payment
+  data: Ext_Thebing_Gui2_Data
+  gui: Ext_Thebing_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+id:
+  alias: kap
+description: Thebing » Buchhaltung » Provider bezahlen » Bezahlte Unterkünfte
+##access: thebing_accounting_accommodation_payments_groupings
+access: ""
+title: Positionen
+rows_clickable: false
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          filter_part: HAVING
+          column:
+            - customer_firstname
+            - customer_lastname
+            - customer_number
+            - document_number
+        -
+          element: selectfilter
+          id: inbox_filter
+          name: inbox_filter
+          column: 
+            - inbox
+          alias:
+            - ts_i
+          entries: 
+            - Ext_Thebing_System
+            - getInboxListForSelect
+            - true
+            - true
+columns:
+  -
+    title: Inbox
+    column: inbox
+    alias: ts_i 
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_System, getInboxListForSelect, true, false]
+  -
+    title: Gehalt
+    column: amount
+    width: name
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: payment_currency_id
+  -
+    title: Raumtyp
+    column: room_id
+    width: name
+    format: Ext_TS_Gui2_Format_Accommodation_Room
+    format_params:
+        - room_type_name
+  -
+    title: Verpflegung
+    column: meal_id
+    width: name
+    format: Ext_TS_Gui2_Format_Accommodation_Meal
+  -
+    title: Dauer
+    column: current
+    width: nights
+    format: \Ts\Gui2\AccommodationProvider\PaymentDurationFormat
+  -
+    title: Nächte
+    column: nights
+    width: nights
+    format: \Ts\Gui2\AccommodationProvider\PaymentNightsFormat
+#  -
+#    title: Je Nacht / Woche / Monat
+#    column: single_amount
+#    width: name
+#    format: Ext_Thebing_Gui2_Format_Accounting_Accommodation_Payment_Singleamount
+#    format_params: payment_currency_id
+  -
+    title: Kundennummer
+    column: customer_number
+    width: customer_number
+    format: Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Format_PositionData
+  -
+    title: Kunde
+    column: customer_id
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Format_PositionData
+  -
+    title: Gruppennummer
+    column: group_number
+    width: number
+    default: false
+  -
+    title: Kommentar der Position
+    column: payment_note
+    width: comment
+  -
+    title: Kommentar
+    column: comment
+    width: comment
+    format: Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Format_PositionData
+  -
+    title: Kommentar der Zusatzposition
+    column: payed_additional_comment
+    width: comment
+    format: Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Format_PositionData
+    sortable: false
+default_columns: []

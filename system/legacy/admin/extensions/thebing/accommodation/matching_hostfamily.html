@@ -1,0 +1,13 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sAccess = "thebing_accommodation_family_matching";
+Ext_Thebing_Access::accesschecker($sAccess);
+
+$sTitle = Ext_TS_System_Navigation::t();
+
+$sGuiUnique = 'thebing_accommodation_matching_hostfamily';
+$sView = 'matching_hostfamily';
+
+include_once(Util::getDocumentRoot()."system/legacy/admin/extensions/thebing/accommodation/matching.php");

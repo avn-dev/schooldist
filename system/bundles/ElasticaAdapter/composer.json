@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/elastica-adapter",
+  "version": "1.0.1",
+  "require": {
+    "ruflin/elastica": "8.2.*"
+  }
+}

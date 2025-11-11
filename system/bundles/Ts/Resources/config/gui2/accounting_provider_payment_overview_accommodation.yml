@@ -1,0 +1,282 @@
+class:
+  wdbasic: Ext_TS_Accounting_Provider_Grouping_Accommodation
+  data: Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Data
+  gui: Ext_TS_Accounting_Provider_Grouping_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+  icon_status: Ext_TS_Accounting_Provider_Grouping_Gui2_View_Icon_Active
+  js: AccommodationPaymentOverview
+id:
+  column: id
+  alias: ts_apg
+orderby:
+  - Ext_TS_Accounting_Provider_Grouping_Accommodation
+  - getOrderby
+  - ""
+description: Thebing » Buchhaltung » Provider bezahlen » Bezahlte Unterkünfte
+multiple_selection: true
+access: thebing_accounting_accommodation_payments_groupings
+title:
+  - Ext_TS_System_Navigation
+  - t
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          filter_part: HAVING
+          column:
+            - accommodation_name
+            - customer_firstname
+            - customer_lastname
+            - customer_number
+            - document_number
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            alias:
+              - ts_apg
+            column:
+              - date
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterFrom
+              - true
+          until:
+            alias:
+              - ts_apg
+            column:
+              - date
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterUntil
+              - true
+          searchtype: between
+          text_after: basierend auf Bezahldatum
+        -
+          element: seperator
+        -
+          element: selectfilter
+          label: Zahlungsmethode
+          label_as_item: true
+          value:
+            - Ext_Gui2_Factory_Default
+            - getValue
+          column:
+            - payment_method_id
+          entries:
+            - Ext_Thebing_Teacher_Payment
+            - getMatchingPaymentMethods
+            - true
+            - false
+        -
+          element: selectfilter
+          label: Unterkunftskategorie
+          label_as_item: true
+          alias:
+            - cdb4
+          column:
+            - default_category_id
+          entries:
+            - Ext_Thebing_Accommodation_Category
+            - getSelectOptions
+        -
+          element: selectfilter
+          label: Kostenkategorie
+          label_as_item: true
+          alias:
+            - kap
+          column:
+            - costcategory_id
+          entries:
+            - Ext_Thebing_Accommodation_Cost_Category
+            - getSelectOptions
+        -
+          element: selectfilter
+          label: Unterkunft
+          label_as_item: true
+          alias:
+            - kap
+          column:
+            - accommodation_id
+          entries:
+            - Ext_Thebing_Accommodation
+            - getSelectOptions
+        -
+          element: selectfilter
+          label: Weiterverarbeitet
+          label_as_item: true
+          alias:
+            - ts_apg
+          column:
+            - processed
+          entries:
+            - Ext_TS_Accounting_Provider_Grouping_Gui2
+            - getSelectOptions
+          filter_query:
+            yes: " processed IS NOT NULL "
+            no: " processed IS NULL "
+    -
+      position: top
+      elements:
+        -
+          element: icon
+          label: Löschen
+          task: openDialog
+          action: delete-interface_export
+          img:
+            - Util
+            - getIcon
+            - delete
+          access: thebing_accounting_accommodation_payments_delete
+        -
+          element: icon_communication
+          application: accounting_accommodation
+        -
+          element: icon
+          label: Massen-PDF öffnen
+          task: openMultiplePdf
+          img:
+            - Util
+            - getIcon
+            - pdf
+        -
+          element: icon
+          label: Weiterverarbeiten
+          task: openDialog
+          action: interface_export
+          active: 0
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - cog_go
+          dialog:
+            - Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Data
+            - getInterfaceExportDialog
+    -
+      position: top
+      last: true
+      elements:
+        -
+          element: labelgroup
+          label: Historie
+        -
+          element: icon
+          label: Historie
+          task: openDialog
+          action: interface_export_history
+          active: 1
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - timeline_marker
+          dialog:
+            - Ext_TS_Accounting_Provider_Grouping_Accommodation_Gui2_Data
+            - getInterfaceExportHistoryDialog
+columns:
+  -
+    title: Anbieter
+    column: accommodation_name
+    width: name
+    resize: true
+  -
+    title: Gehalt
+    column: amount
+    width: name
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: amount_currency_id
+  -
+    title: E-Mail
+    width: email
+    column: accommodation_email
+    format: Ext_Thebing_Gui2_Format_Email
+    default: false
+  -
+    title: Kategorie
+    column: accommodation_category
+    width: name
+  -
+    title: Kontoinhaber
+    column: accommodation_bank_account_holder
+    width: name
+  -
+    title: Kontonummer
+    column: accommodation_bank_account_number
+    width: number
+  -
+    title: BLZ
+    column: accommodation_bank_account_code
+    width: number
+  -
+    title: Name der Bank
+    column: accommodation_bank_name
+    width: name
+  -
+    title: Bankadresse
+    column: accommodation_bank_address
+    width: name
+  -
+    title: IBAN
+    column: accommodation_iban
+    width: name
+  -
+    title: BIC
+    column: accommodation_bic
+    width: name
+  -
+    title: Kostenstelle
+    column: cost_center
+    alias: kac
+    width: name
+  -
+    title: Sozialversicherungsnummer
+    column: accommodation_social_security_number
+    width: name
+  -
+    title: Zahlungsmethode
+    column: payment_method_id
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Admin_Payment, getPaymentMethods, true]
+  -
+    title: Datum der Zahlung
+    column: date
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: PDF
+    column: file
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params: file
+    width: id
+  -
+    title: Nummer
+    column: number
+    width: name
+    default: false
+  -
+    title: Weiterverarbeitet
+    column: processed
+    format: Ext_Thebing_Gui2_Format_Accounting_Accommodation_Payment_Processed
+    width: name
+    small: true
+    resize: false
+    sortable: false
+default_columns:
+  -
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    width: user_name
+  -
+    title: Erstellt
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    column: created
+    width: date
+js:
+  - [accounting/js/payment_overview_accommodation.js, thebing]

@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_courses` ADD `price_calculation` ENUM('week','month') CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL DEFAULT 'week' AFTER `per_unit`;

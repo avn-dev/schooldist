@@ -1,0 +1,1 @@
+DROP TABLE `kolumbus_forms_codes`;

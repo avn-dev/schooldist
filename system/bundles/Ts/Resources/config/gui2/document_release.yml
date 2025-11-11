@@ -1,0 +1,93 @@
+parent: ts_document
+hook: ts_document_release_hook
+class: 
+  wdbasic: Ext_Thebing_Inquiry_Document
+  data: Ext_TS_Document_Release_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+  icon_status: Ext_TS_Document_Release_Gui2_Icon_Active
+  js: DocumentRelease
+description: Thebing » Invoice » Release
+access: thebing_accounting_release_documents_list
+row_multiple_checkbox: Ext_TS_Document_Release_Gui2_MultipleCheckbox
+multiple_selection: true
+hash: 428796a6c81465000581444e93e53172
+where : 
+  - Ext_TS_Document_Release_Gui2_Data
+  - getListWhere
+orderby : 
+  - Ext_TS_Document_Release_Gui2_Data
+  - getOrderby
+designer: 
+  filter: ts_document_release
+index:
+  registry: 
+    generate: false
+bars: 
+    - 
+      position: top
+      set: [list]
+      type: ""
+      elements:
+        -
+          element: icon
+          task: openDialog
+          access: thebing_accounting_release_documents_button
+          action: release
+          active: 0
+          label: Freigeben
+          title: Freigeben
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - edit
+        -
+          element: icon
+          task: requestAsUrl
+          access: thebing_accounting_release_documents_button
+          action: testExport
+          label: Test-Export
+          title: Test-Export
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - page
+    - 
+      position: bottom
+      type: legend
+      set: [list]
+      elements:
+        -
+          element: legend_label
+          label: Zahlung
+        -
+          element: legend_info
+          label: eingegangen
+          info:
+            color: [soft_green, 30]
+            background: true
+        -
+          element: legend_info
+          label: vollständig
+          info:
+            color: lightgreen
+            background: true
+        -
+          element: legend_info
+          label: nicht erfolgt
+          info:
+            color: red
+            background: true
+        - 
+          element: legend_label
+          label: Dokumente
+        - 
+          element: legend_info
+          label: Ursprungsrechnung wurde noch nicht freigegeben
+          info:
+            color: red_font
+            background: false
+            text: true
+            italic: true
+js:
+  - [document/release/js/gui2.js, ts]

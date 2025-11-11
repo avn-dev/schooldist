@@ -1,0 +1,33 @@
+class:
+  wdbasic: Ext_TC_Gui2_Filterset_Bar
+  date_format: Ext_TC_Gui2_Format_Date
+sortable: true
+pagination: false
+access:
+  - core_gui2_designer
+  - ""
+bars:
+    - 
+      position: top
+      type: ""
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Ext_TC_Gui2_Filterset_Bar
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Ext_TC_Gui2_Filterset_Bar
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_gfb
+    width: name
+    resize: true
+        

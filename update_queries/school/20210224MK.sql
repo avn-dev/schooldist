@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_prices_new` ADD `payment_condition_id` INT NULL DEFAULT NULL AFTER `idParent`;
+ALTER TABLE `kolumbus_prices_new` DROP INDEX `idClient`, ADD UNIQUE `idClient` (`idClient`, `idSchool`, `idSaison`, `idCurrency`, `idWeek`, `idParent`, `typeParent`, `payment_condition_id`) USING BTREE;

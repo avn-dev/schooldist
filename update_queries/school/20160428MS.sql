@@ -1,0 +1,1 @@
+ALTER TABLE `ts_accommodations_payments_groupings` ADD `processed` TIMESTAMP NULL DEFAULT NULL;

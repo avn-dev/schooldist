@@ -1,0 +1,7 @@
+UPDATE `system_config` SET `c_key`='communication.app.app_identifier' WHERE `c_key` = 'ts_student_app_identifier';
+INSERT INTO `system_elements` (`id`, `title`, `description`, `element`, `category`, `file`, `version`, `parent`, `image`, `documentation`, `template`, `sql`, `administrable`, `include_backend`, `include_frontend`, `include_mode`, `active`) VALUES (NULL, 'Communication', '', 'bundle', 'Fidelo', 'Communication', '0.010', '', '', '', '', '', '0', '1', '1', '0', '1');
+ALTER TABLE `tc_communication_templates` ADD `legacy` TINYINT(1) UNSIGNED NULL DEFAULT NULL AFTER `shipping_method`;
+ALTER TABLE `tc_communication_messages` CHANGE `status` `status` ENUM('sent','received','seen','failed','sending') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL;
+ALTER TABLE `tc_communication_templates` ADD `cc` TINYTEXT NOT NULL AFTER `shipping_method`, ADD `bcc` TINYTEXT NOT NULL AFTER `cc`, ADD `default_identity_id` INT UNSIGNED NULL DEFAULT NULL AFTER `bcc`;
+ALTER TABLE `tc_communication_templates_applications` CHANGE `application` `application` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
+ALTER TABLE `tc_communication_templates_recipients` CHANGE `recipient` `recipient` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;

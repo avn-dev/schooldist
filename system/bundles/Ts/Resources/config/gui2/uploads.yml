@@ -1,0 +1,8 @@
+parent: tc_uploads
+hash: 45c8d748d0b50ab9e1c89fe0abcf35fb
+class:
+  wdbasic: Ext_Thebing_Upload_File
+access: thebing_admin_file_upload
+
+
+

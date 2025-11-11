@@ -1,0 +1,336 @@
+class:
+  wdbasic: \TsCompany\Entity\JobOpportunity\StudentAllocation
+  data: \TsCompany\Gui2\Data\JobOpportunity\StudentAllocation
+  icon_status: \TsCompany\Gui2\Icon\JobOpportunity\StudentAllocationStatus
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+title: Schülerliste
+access:
+  - ts_coop_students_allocations
+  -
+id:
+  column: id
+  alias: ts_cjoic
+view: job_opportunities
+pagination: false
+export: false
+where:
+  - \TsCompany\Gui2\Data\JobOpportunity\StudentAllocation
+  - getWhere
+sets:
+  journey_employments:
+    view: journey_employments
+    title: Arbeitsangebote
+    decode_parent_primary_key: true
+bars:
+  -
+    position: top
+    set: [job_opportunities]
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - firstname
+          - lastname
+          - number
+          - name
+          - ext_1
+        alias:
+          - tc_c
+          - tc_c
+          - tc_c_n
+          - kg
+          - ts_co
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          alias:
+            - ts_ijc
+          column:
+            - from
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterFrom
+            - true
+        until:
+          alias:
+            - ts_ijc
+          column:
+            - until
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterUntil
+            - true
+        searchtype: contact
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon
+        set: [journey_employments]
+        label: Arbeitsangebote zuweisen
+        access:
+          - ts_coop_students_allocations
+          - new
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - add
+        active: true
+        task: openDialog
+        action: assign
+        dialog:
+          - \TsCompany\Gui2\Data\JobOpportunity\StudentAllocation
+          - getDialog
+      -
+        element: labelgroup
+        label: Angebot
+        hide_empty: true
+      -
+        element: icon
+        label: Angefragt
+        access:
+          - ts_coop_students_allocations
+          - request
+        img: "fa-user-clock"
+        task: request
+        action: changeStatus
+        additional: 1
+      -
+        element: icon
+        label: Bestätigen
+        access:
+          - ts_coop_students_allocations
+          - confirm
+        img: fa-user-check
+        task: request
+        action: changeStatus
+        additional: 2
+      -
+        element: icon
+        label: Zuweisen
+        access:
+          - ts_coop_students_allocations
+          - allocate
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - confirm
+        task: request
+        action: changeStatus
+        additional: 4
+      -
+        element: icon_delete
+      -
+        element: seperator
+        access:
+          - ts_coop_students_allocations
+          - communication
+      -
+        element: icon_communication
+        label: Kommunikation
+        application: job_opportunity_allocation
+      -
+        element: labelgroup
+        label: Dokumente
+        hide_empty: true
+      -
+        element: icon
+        title: "Dokumente editieren" #Rechnung editieren
+        access:
+          - ts_coop_students_allocations
+          - documents
+        action: additional_document
+        request_data: "&template_type=document_job_opportunity"
+        task: openDialog
+        active: 0
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - page_edit
+      -
+        element: icon
+        title: "PDFs anzeigen" #Dokument PDF öffnen
+        access:
+          - ts_coop_students_allocations
+          - documents
+        action: openDocumentPdf
+        task: request
+        active: 0
+        info_text: 1
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - pdf
+columns:
+  -
+    title: Jobangebot
+    set: [journey_employments]
+    alias: ts_cjo
+    column: name
+    data: job_opportunity_name
+    width: name
+    resize: true
+  -
+    title: Firma
+    set: [journey_employments]
+    alias: ts_co
+    column: ext_1
+    data: company_name
+    width: name
+    resize: false
+  -
+    title: Branche
+    set: [journey_employments]
+    alias: ts_coi
+    column: name
+    data: job_opportunity_industry_id
+    width: comment
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ \TsCompany\Entity\Industry, getSelectOptions ]
+  -
+    title: Gehalt
+    set: [journey_employments]
+    alias: ts_cjo
+    column: wage
+    data: job_opportunity_wage
+    width: name
+    resize: false
+    format: TsCompany\Gui2\Format\JobOpportunity\ValuePer
+    format_params:
+      - job_opportunity_wage
+      - job_opportunity_wage_per
+  -
+    title: Geplante Stunden
+    set: [journey_employments]
+    alias: ts_cjo
+    column: hours
+    data: job_opportunity_hours
+    width: name
+    resize: false
+    format: TsCompany\Gui2\Format\JobOpportunity\ValuePer
+    format_params:
+      - job_opportunity_hours
+      - job_opportunity_hours_per
+  -
+    title: Inbox
+    set: [job_opportunities]
+    alias: ts_i
+    column: inbox
+    data: inquiry_inbox
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_System, getInboxListForSelect, true, false ]
+  -
+    title: Kundennummer
+    set: [job_opportunities]
+    alias: tc_c_n
+    column: number
+    data: customer_number
+    width: name
+    resize: false
+  -
+    title: Agentur
+    set: [job_opportunities]
+    alias: ts_i
+    column: agency_id
+    data: inquiry_agency_id
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_AgencyShort
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    set: [job_opportunities]
+    alias: ts_i
+    column: group_id
+    data: inquiry_group_name
+    width: group_short
+    resize: false
+  -
+    title: Name
+    set: [job_opportunities]
+    alias: tc_c
+    column: lastname
+    data: customer_lastname
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_CustomerName
+    format_params:
+      - customer_firstname
+      - customer_lastname
+  -
+    title: Geburtsdatum
+    set: [job_opportunities]
+    alias: tc_c
+    column: birthday
+    data: customer_birthday
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Alter
+    set: [job_opportunities]
+    alias: tc_c
+    column: birthday
+    data: customer_age
+    width: age
+    resize: false
+    format: Ext_TS_Gui2_Format_Age
+    format_params:
+      - false
+      - customer_birthday
+  -
+    title: Geschlecht
+    set: [job_opportunities]
+    alias: tc_c
+    column: gender
+    data: customer_gender
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Gender
+  -
+    title: Nationalität
+    set: [job_opportunities]
+    alias: tc_c
+    column: nationality
+    data: customer_nationality
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Nationality
+  -
+    title: Von
+    set: [job_opportunities]
+    alias: ts_ijc
+    column: from
+    data: student_allocation_from
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Bis
+    set: [job_opportunities]
+    alias: ts_ijc
+    column: until
+    data: student_allocation_until
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Status
+    alias: ts_cjoic
+    column: status
+    width: name
+    resize: false
+    format: TsCompany\Gui2\Format\JobOpportunity\StudentAllocationStatus
+    format_params:
+      - true
+

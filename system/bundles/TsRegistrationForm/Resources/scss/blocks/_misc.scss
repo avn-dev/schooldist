@@ -1,0 +1,54 @@
+@import "../mixins";
+@import "../variables";
+
+div[component="block-notifications"] {
+	@include block-margin;
+
+	li {
+		// transition: Keep width while in fade-leave
+		width: 100%;
+	}
+}
+
+div[component="block-static"] {
+	h2, h3 {
+		@include block-margin;
+	}
+}
+
+div[component="block-static"] {
+	h2, h3 {
+		@include block-margin;
+	}
+}
+
+div[component="block-download"] {
+	a[download] {
+		display: none;
+	}
+}
+
+div[component="block-payment"] {
+	@include block-margin;
+
+	// Loading overlay
+	position: relative;
+	min-height: 100px;
+
+	> .payment-methods {
+		position: relative;
+
+		label.custom-control-label {
+			i/*,
+			img*/ {
+				vertical-align: 0 !important;
+			}
+		}
+
+		//.card-block .card-title label img {
+		//	vertical-align: -($spacer * .25);
+		//}
+	}
+
+	@import "~TcFrontend/common/_payment";
+}

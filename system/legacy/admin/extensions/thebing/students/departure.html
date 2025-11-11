@@ -1,0 +1,26 @@
+<?php
+
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+//$sAccess = "thebing_students_departure_list";
+//Ext_Thebing_Access::accesschecker($sAccess);
+//
+//$sGuiDescription = 'Thebing » Invoice » Inbox';
+//$sCommunicationApplication = 'departure_list';
+//$sView = 'departure_list';
+//$bAddIconAdditionalFiles = true;
+//$sOrderByOption = 'departure';
+//
+//include_once(Util::getDocumentRoot()."admin/extensions/thebing/students/basic.php");
+//
+//$oGui->display($aOptionalInfo);
+
+
+$sView = 'students_departure';
+
+$oFactory		= new Ext_Gui2_Factory('ts_students_departure');
+$oGui			= $oFactory->createGui($sView, null, array('only_documents_from_same_gui' => true));
+$oGui->sView	= $sView;
+
+$oGui->display();

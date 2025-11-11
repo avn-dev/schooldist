@@ -1,0 +1,1 @@
+UPDATE `data_countries` SET `cn_eu_member` = '0' WHERE `cn_iso_2` = 'GB';

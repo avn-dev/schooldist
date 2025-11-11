@@ -1,0 +1,46 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$aEmailAccounts = Ext_TC_Communication_EmailAccount::getSelectOptions();
+
+$aConfig = array();
+
+/*$aConfig['core_test_1'] = array(
+	'description' => L10N::t('Konfig 1'),
+	'type' => 'select',
+	'select_options' => array('t1' => 'Test 1','t2' => 'Test 2', 't3' => 'Test 3'),
+	'multiple' => 5, 
+	'jquery_multiple' => 1,
+	'style' => 'height: 105px;'
+);
+$aConfig['core_test_2'] = array(
+	'description' => L10N::t('Konfig 2'),
+	'type' => 'input'
+);*/
+
+$aConfig['standard_emailaddress'] = array(
+	'description' => L10N::t('Standard-E-Mail-Adresse'),
+	'type' => 'input'
+);
+
+$aConfig['standard_email_account'] = array(
+	'description' => L10N::t('Standard-E-Mail-Account'),
+	'type' => 'select',
+	'select_options' => $aEmailAccounts 
+);
+
+/*$aConfig['standard_sms_sender'] = array(
+	'description' => L10N::t('SMS Absender'),
+	'type' => 'input'
+); */
+
+$aConfig['logo'] = array(
+	'description' => L10N::t('Logo'),
+	'type' => 'upload'
+);
+
+$oGui = new Ext_TC_Config_Gui2(md5('core_config'), 'Ext_TC_Config_Gui2_Data');
+$oGui->setWDBasic('Ext_TC_Config');
+$oGui->setConfigurations($aConfig);
+$oGui->display();

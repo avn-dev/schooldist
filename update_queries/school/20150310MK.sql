@@ -1,0 +1,1 @@
+ALTER TABLE  `kolumbus_accommodations_costs_categories` ADD  `rounding_precision` TINYINT NOT NULL DEFAULT  '2', ADD  `rounding_increment` TINYINT NOT NULL DEFAULT  '1';

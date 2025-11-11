@@ -1,0 +1,7 @@
+CREATE TABLE `ts_screens` (`id` int(11) NOT NULL, `changed` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, `created` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', `active` tinyint(4) NOT NULL DEFAULT '1', `user_id` int(10) UNSIGNED NOT NULL, `creator_id` int(10) UNSIGNED NOT NULL, `name` varchar(255) NOT NULL, `key` char(32) NOT NULL ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `ts_screens` ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `key` (`key`);
+ALTER TABLE `ts_screens` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `ts_screens` ADD `logo` VARCHAR(255) NOT NULL AFTER `key`, ADD `color` CHAR(7) NOT NULL AFTER `logo`;
+CREATE TABLE `ts_screens_schedule` (`id` int(10) UNSIGNED NOT NULL, `changed` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, `created` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', `user_id` int(10) UNSIGNED NOT NULL, `creator_id` int(10) UNSIGNED NOT NULL, `screen_id` int(10) UNSIGNED NOT NULL, `active` tinyint(3) UNSIGNED NOT NULL DEFAULT '1', `visible` tinyint(3) UNSIGNED NOT NULL DEFAULT '1', `date_from` date DEFAULT NULL, `date_to` date DEFAULT NULL, `time_from` time DEFAULT NULL, `time_to` time DEFAULT NULL, `type` varchar(100) NOT NULL, `content` mediumtext NOT NULL ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `ts_screens_schedule` ADD PRIMARY KEY (`id`), ADD KEY `active` (`active`), ADD KEY `visible` (`visible`), ADD KEY `screen_id` (`screen_id`);
+ALTER TABLE `ts_screens_schedule` MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;

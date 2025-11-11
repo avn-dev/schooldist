@@ -1,0 +1,8 @@
+{
+  "name": "fidelo-bundle/communication",
+	"version": "1.0.1",
+  "require": {
+    "kreait/firebase-php": "7.14.*",
+    "pelago/emogrifier": "8.1.*"
+  }
+}

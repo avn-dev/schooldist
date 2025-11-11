@@ -1,0 +1,1 @@
+UPDATE `system_config` SET `c_value` = '9208' WHERE `c_key` = 'elasticsearch_port';

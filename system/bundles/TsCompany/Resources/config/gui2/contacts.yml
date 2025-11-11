@@ -1,0 +1,177 @@
+class:
+  wdbasic: \TsCompany\Entity\Contact
+  data: \TsCompany\Gui2\Data\Contact
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+access:
+  - ts_marketing_companies_employees
+  -
+title: Mitarbeiter
+options:
+id:
+  column: id
+  alias: ts_ac
+multiple_selection: true
+where:
+  - \TsCompany\Gui2\Data\Contact
+  - getWhere
+orderby:
+  - \TsCompany\Gui2\Data\Contact
+  - getOrderby
+sets:
+  agency:
+    description: Thebing » Marketing » Agenciegroups
+    hash: 114574722529d924373bf8c2e40e46b3
+    access: thebing_marketing_agencies
+    designer:
+      flex: agencies_users
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - lastname
+          - firstname
+          - email
+  -
+    position: top
+    set: [company]
+    elements:
+      -
+        element: icon_new
+      -
+        element: icon_edit
+      -
+        element: icon_delete
+#      -
+#        element: icon_communication
+#        label: Mitarbeiter informieren
+#        application: marketing_agencies_contact
+#        access: thebing_marketing_agency_crm
+  -
+    position: top
+    set: [agency]
+    elements:
+      -
+        element: icon_new
+        access: thebing_marketing_agencies_members_edit
+      -
+        element: icon_edit
+        access: thebing_marketing_agencies_members_edit
+      -
+        element: icon_delete
+        access: thebing_marketing_agencies_members_edit
+      -
+        element: icon_communication
+        label: Mitarbeiter informieren
+        application: marketing_agencies_contact
+        access: thebing_marketing_agency_crm
+columns:
+  -
+    title: Foto
+    set: [agency]
+    column: image
+    alias: ts_ac
+    width: 138
+    resize: false
+    format: Ext_TC_Gui2_Format_Image
+    format_params:
+      - 'agency/user'
+      - ""
+  -
+    title: Foto
+    set: [company]
+    column: image
+    alias: ts_ac
+    width: 138
+    resize: false
+    format: Ext_TC_Gui2_Format_Image
+    format_params:
+      - 'company/user'
+      - ""
+  -
+    title: Name
+    column: fullname
+    alias: ts_ac
+    data: lastname
+    sortable_column: lastname
+    width: user_name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Name
+  -
+    title: Vorname
+    column: firstname
+    alias: ts_ac
+    width: name
+    resize: false
+    default: false
+  -
+    title: Nachname
+    column: lastname
+    alias: ts_ac
+    width: name
+    resize: false
+    default: false
+  -
+    title: Agenturname
+    column: company_id
+    format: Ext_Thebing_Gui2_Format_Agency
+    width: name
+    default: false
+  -
+    title: E-Mail
+    column: email
+    alias: ts_ac
+    width: email
+    resize: false
+  -
+    title: Abteilung
+    set: [agency]
+    column: group
+    alias: ts_ac
+    width: email
+    resize: false
+  -
+    title: Anrede
+    column: gender
+    alias: ts_ac
+    width: gender
+    resize: false
+    default: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_TC_Util, getPersonTitles]
+  -
+    title: Skype
+    column: skype
+    alias: ts_ac
+    width: name
+    resize: false
+  -
+    title: Telefon
+    column: phone
+    alias: ts_ac
+    width: phone
+    resize: false
+  -
+    title: Fax
+    column: fax
+    alias: ts_ac
+    width: phone
+    resize: false
+    default: false
+  -
+    title: Verantwortlichkeit
+    set: [agency]
+    column: reminder
+    alias: ts_ac
+    width: name
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Agency_Responsibility

@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_journeys_courses` ADD `lessons_catch_up_original_until` DATE NULL DEFAULT NULL AFTER `state`;

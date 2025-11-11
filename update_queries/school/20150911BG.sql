@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_forms` ADD `ignore_cache` TINYINT(1) NOT NULL DEFAULT '0';

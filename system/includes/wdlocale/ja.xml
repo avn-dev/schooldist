@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>「</quotationStart>
+		<quotationEnd>」</quotationEnd>
+		<alternateQuotationStart>『</alternateQuotationStart>
+		<alternateQuotationEnd>』</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar>
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">1月</month>
+					<month type="2">2月</month>
+					<month type="3">3月</month>
+					<month type="4">4月</month>
+					<month type="5">5月</month>
+					<month type="6">6月</month>
+					<month type="7">7月</month>
+					<month type="8">8月</month>
+					<month type="9">9月</month>
+					<month type="10">10月</month>
+					<month type="11">11月</month>
+					<month type="12">12月</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">1月</month>
+					<month type="2">2月</month>
+					<month type="3">3月</month>
+					<month type="4">4月</month>
+					<month type="5">5月</month>
+					<month type="6">6月</month>
+					<month type="7">7月</month>
+					<month type="8">8月</month>
+					<month type="9">9月</month>
+					<month type="10">10月</month>
+					<month type="11">11月</month>
+					<month type="12">12月</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">日</day>
+					<day type="mon">月</day>
+					<day type="tue">火</day>
+					<day type="wed">水</day>
+					<day type="thu">木</day>
+					<day type="fri">金</day>
+					<day type="sat">土</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">日曜日</day>
+					<day type="mon">月曜日</day>
+					<day type="tue">火曜日</day>
+					<day type="wed">水曜日</day>
+					<day type="thu">木曜日</day>
+					<day type="fri">金曜日</day>
+					<day type="sat">土曜日</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">Q1</quarter>
+					<quarter type="2">Q2</quarter>
+					<quarter type="3">Q3</quarter>
+					<quarter type="4">Q4</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">第1四半期</quarter>
+					<quarter type="2">第2四半期</quarter>
+					<quarter type="3">第3四半期</quarter>
+					<quarter type="4">第4四半期</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>午前</am>
+			<pm>午後</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%y年%M月%d日</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%Y/%m/%d</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%Y/%m/%d</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H:%M:%S %p</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H:%M:%S </pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H:%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>年</displayName>
+				</field>
+				<field type="month">
+					<displayName>月</displayName>
+				</field>
+				<field type="week">
+					<displayName>週</displayName>
+				</field>
+				<field type="day">
+					<displayName>日</displayName>
+					<relative type="-2">一昨日</relative>
+					<relative type="-1">昨日</relative>
+					<relative type="0">今日</relative>
+					<relative type="1">明日</relative>
+					<relative type="2">明後日</relative>
+				</field>
+				<field type="weekday">
+					<displayName>曜日</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>午前/午後</displayName>
+				</field>
+				<field type="hour">
+					<displayName>時</displayName>
+				</field>
+				<field type="minute">
+					<displayName>分</displayName>
+				</field>
+				<field type="second">
+					<displayName>秒</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>.</decimal>
+			<group>,</group>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<percentFormats>
+			<percentFormatLength>
+				<percentFormat>
+					<pattern>#,##0%</pattern>
+				</percentFormat>
+			</percentFormatLength>
+		</percentFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>¤#,##0.00</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="other">{0} 日</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="other">{0} 時間</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="other">{0} 分</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="other">{0} か月</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="other">{0} 秒</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="other">{0} 週</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="other">{0} 年</unitPattern>
+		</unit>
+	</units>
+</ldml>

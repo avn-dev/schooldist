@@ -1,0 +1,61 @@
+hash: 7292cf44ff65e001876985640f5080c1
+class:
+  wdbasic: Ext_Thebing_Insurances_Provider
+  data: Ext_Thebing_Insurances_Gui2_Provider
+access: thebing_insurance_icon
+id:
+  column: id
+  alias: kinsp
+orderby:
+  - Ext_Thebing_Insurances_Gui2_Provider
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: kinsp
+        searchtype: LIKE
+        column: 
+          - company
+          - contact
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Insurances_Gui2_Provider
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Insurances_Gui2_Provider
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Firma
+    column: company
+    width: name
+    resize: true 
+  - 
+    title: Ansprechpartner	
+    column: contact
+    width: name
+  - 
+    title: Telefon	
+    column: phone1
+    width: name
+  - 
+    title: Fax	
+    column: fax
+    width: name
+  - 
+    title: E-Mail	
+    column: email
+    width: email
+  

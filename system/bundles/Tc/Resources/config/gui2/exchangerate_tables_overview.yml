@@ -1,0 +1,124 @@
+description: "Exchangerates Overview"
+class:
+  wdbasic: Ext_TC_Exchangerate_Table_Source_Rate
+  data: Ext_TC_Exchangerate_Table_Overview_Gui2_Data
+orderby: 
+  - Ext_TC_Exchangerate_Table_Overview_Gui2
+  - getOrderby
+id:
+  column: id
+  alias: tc_etr
+access: 
+  - core_admin_exchangerate
+  - exchangerate_view
+foreign_key_alias: tc_etr
+foreign_key: table_id
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+          - currency_iso_from
+          - currency_iso_to
+        alias:
+          - tc_etr
+          - tc_etr
+     -
+        element: selectfilter
+        label: Datum
+        select_navigation:
+          - Ext_TC_Exchangerate_Table_Overview_Gui2
+          - getSelectFilterNavigation
+        value:
+          - Ext_TC_Exchangerate_Table_Overview_Gui2
+          - getSelectValue
+        selection: Ext_TC_Exchangerate_Table_Overview_Gui2_Filter_Selection_Date
+        column:
+          - date
+        alias:
+          - tc_etr
+     -
+       element: selectfilter
+       label:
+       label_as_item: true
+       selection: \Tc\Gui2\Selection\Exchangerate\Sources
+       alias:
+         - tc_etr
+       column:
+         - source_id
+columns:
+  -
+    visible: true
+    sortable: true
+    title: Quellwährung
+    column: currency_iso_from
+    alias: tc_etr
+    width: name
+    resize: false
+  -
+    visible: true
+    sortable: true
+    title: Zielwährung
+    column: currency_iso_to
+    alias: tc_etr
+    width: name
+    resize: false
+  -
+    visible: true
+    sortable: false
+    title: Quelle
+    column: source_name
+    alias: tc_ets
+    width: name
+    resize: true
+  -
+    visible: true
+    sortable: true
+    title: Wechselkurs
+    column: price
+    alias: tc_etr
+    width: short_name
+    resize: false  
+    format: Ext_TC_Gui2_Format_Align
+  -
+    visible: true
+    sortable: true
+    title: Erhöhung
+    column: factor
+    alias: tc_etr
+    width: short_name
+    resize: false  
+    format: Ext_TC_Gui2_Format_Align
+  -
+    visible: true
+    sortable: true
+    title: Original
+    column: rate
+    alias: tc_etr
+    width: short_name
+    resize: false  
+    format: Ext_TC_Gui2_Format_Align
+  -
+    visible: true
+    sortable: true
+    title: Aktualisierung
+    column: created
+    alias: tc_etr
+    width: date_time
+    resize: false   
+    format: Ext_TC_Gui2_Format_Date_Time
+  -
+    visible: true
+    sortable: true
+    title: Kursdatum
+    column: date
+    alias: tc_etr
+    width: date
+    resize: false   
+    format: Ext_TC_Gui2_Format_Date
+    
+default_columns:

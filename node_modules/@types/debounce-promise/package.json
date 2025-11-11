@@ -1,0 +1,30 @@
+{
+    "name": "@types/debounce-promise",
+    "version": "3.1.9",
+    "description": "TypeScript definitions for debounce-promise",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/debounce-promise",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Wu Haotian",
+            "githubUsername": "whtsky",
+            "url": "https://github.com/whtsky"
+        },
+        {
+            "name": "Trevor Robinson",
+            "githubUsername": "tprobinson",
+            "url": "https://github.com/tprobinson"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/debounce-promise"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "typesPublisherContentHash": "357658709aa853c0523c1e5ed0ce8a21093999bb092fcc9f8af441a55fc0b8db",
+    "typeScriptVersion": "4.5"
+}

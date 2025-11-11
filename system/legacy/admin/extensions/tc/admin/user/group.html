@@ -1,0 +1,11 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = Ext_TC_User_Group::getGui('TC');
+
+$aOptionalInfo = array();
+$aOptionalInfo['js'][] = "/admin/extensions/tc/admin/licence/modules.js";
+$oGui->display($aOptionalInfo);
+
+?>

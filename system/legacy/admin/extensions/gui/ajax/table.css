@@ -1,0 +1,302 @@
+
+
+
+/* Error Lit Box */
+#divLitboxError {
+    background-color: #F7F7F7;
+    border-bottom: 1px solid #DDDDDD;
+    color: red;
+    font-size: 11px;
+    padding: 1px;
+}
+
+/* Sortable Flex list */
+.flexList .drag_drop_list {
+    list-style-type: none;
+    padding: 0px;
+    margin: 0px
+}
+
+.flexList .drag_drop_list li {
+    height: 20px;
+    font-size: 11px;
+    line-height: 20px;
+    margin: 5px;
+    padding: 2px;
+    padding-left: 5px;
+    cursor: move;
+}
+
+.flexList .drag_drop_list li span {
+    display: block;
+}
+
+.flexList h1 {
+    font-size: 11px;
+    font-weight: bold;
+    vertical-align: middle;
+    padding: 5px;
+    margin: 0px;
+}
+
+.table .sortdesc {
+    background-color: #B9DDFF;
+    background-position: right center;
+    background-repeat: no-repeat;
+    background-image: url(/admin/extensions/gui/ajax/down.gif);
+}
+
+.table .sortasc {
+    background-color: #DDFFAC;
+    background-position: right center;
+    background-repeat: no-repeat;
+    background-image: url(/admin/extensions/gui/ajax/up.gif);
+}
+
+.cleaner {
+    clear: both;
+}
+
+.row_edit2 {
+    margin: 5px;
+    background-color: rgb(238, 238, 238);
+    padding: 2px 5px;
+}
+
+.row_input {
+    padding: 4px 4px 2px 4px;
+    float: left;
+}
+
+.row_label {
+    padding: 4px 0px;
+    width: 100px;
+}
+
+.row_btn {
+    border-top: 1px solid #ccc;
+    height: 27px;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 100%
+}
+
+/*table.table TD, table.table TH {
+    padding: 0 2px 0 2px;
+	font-size: 12px;	
+}
+
+.guiTableHead th, .guiTableBody td {
+    margin: 0;
+    padding: 0 2px 1px 2px;
+    font-size: 10px;
+}
+
+.guiTableHead th {
+    border-bottom: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+}*/
+
+.guiTableHead th.small {
+	line-height: 10px;
+	font-size: 9px;
+}
+
+/*.guiTableBody td {
+    border: none;
+	border-right: 1px solid #ccc;
+}
+
+.guiTableBody tr:first-child {
+	border-top: 0 !important;
+}
+
+.guiTableBody tr:last-child {
+	border-bottom: 1px solid #eee;
+}*/
+
+.guiTableBody td:last-child {
+	border-right: 0;
+}
+
+.guiTableTBody .guiSelectedRow {
+	background-color: #999 !important;
+}
+
+.guiTableTBody .guiSelectedRow:nth-child(even) {
+	height: 20px !important;
+}
+
+.guiTableTBody .guiSelectedRow:nth-child(odd) {
+	height: 18px !important;
+}
+
+.guiTableTBody .guiSelectedRow td {
+	padding: 1px 2px 1px 2px;
+}
+
+/* Zeile 1,3,5,8... */
+.guiTableBody tr:nth-child(odd) {
+	border-top: 1px solid #fff;
+	height: 18px;
+}
+
+.guiTableBody tr:nth-child(odd) td {
+	padding: 0 2px 0 2px;
+}
+
+/* Zeile 2,4,6,8... */
+.guiTableBody tr:nth-child(even) {
+	background-color: #F3F3F3;
+	border-top: 1px solid #fff;
+	height: 20px;
+}
+
+.guiTableBody tr:nth-child(even) td {
+	padding: 1px 2px 1px 2px;
+}
+
+.guiTableTBody tr:hover {
+    background: #FDFF00 !important;
+}
+
+
+.selectedRow TD {
+    background: #8D93A0;
+}
+
+.divToolbar {
+    padding: 0px 5px;
+    line-height: 16px;
+    clear: both;
+    height: 26px;
+    overflow: hidden;
+}
+
+.divToolbar INPUT, .divToolbar SELECT {
+    padding: 0px;
+    margin: 0px;
+}
+
+.divTopLine {
+    border-top: 1px solid #ccc;
+}
+
+.divToolbar .divToolbarIcon {
+    margin-top: 5px;
+    float: left;
+    width: 24px;
+    height: 16px;
+    cursor: pointer;
+    overflow: hidden;
+    text-align: center;
+}
+
+.divToolbar .divToolbarLabel {
+    margin-top: 5px;
+    float: left;
+    height: 16px;
+    padding-right: 4px;
+    font-weight: bold;
+    line-height: 16px;
+}
+
+.divToolbar .divToolbarSeparator {
+    margin-top: 5px;
+    float: left;
+    height: 16px;
+    padding-right: 4px;
+    line-height: 16px;
+}
+
+.divToolbar .divToolbarFormItem {
+    margin-top: 5px;
+    float: left;
+    height: 16px;
+    padding-right: 4px;
+    line-height: 16px;
+}
+
+.txtRight {
+    text-align: right;
+}
+
+#divAccordionContainer {
+    padding: 10px;
+}
+
+#accordionTitleBorderDiv {
+    width: 100%;
+}
+
+#accordionTitle {
+    cursor: pointer;
+    font-size: 8pt;
+}
+
+.divOfficeFieldsetContainer {
+    padding: 5px;
+}
+
+.divOfficeFieldsetContainer .divOfficeFieldset {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    margin: 0px;
+    padding: 0px;
+}
+
+.divOfficeFieldsetContainer .divOfficeFieldsetLegend {
+    margin-left: 6px;
+    color: #29527A;
+}
+* html .divOfficeFieldsetContainer .divOfficeFieldsetLegend {
+    margin-left: 0px !important;
+}
+
+.divOfficeFieldsetContainer .divOfficeFieldsetContent {
+    padding: 3px 8px;
+}
+
+.divOfficeFieldsetContainer .divOfficeFieldsetContent DIV {
+    padding-top: 2px;
+}
+
+.LB_closeAjaxWindow {
+    margin: 0 !important;
+}
+
+.LB_content #divLitboxError {
+    border-bottom: 1px solid #DDDDDD;
+    background-color: #f7f7f7;
+    color: red;
+    font-size: 11px;
+    padding: 1px;
+}
+
+#divBlockSets .block_error fieldset {
+    border: 1px solid red;
+}
+
+.row_edit h2 {
+    color: #000;
+    border-bottom: 1px solid #CCC;
+    margin-left: 5px;
+    font-size: 11px;
+    padding-left: 5px;
+}
+
+.row_edit h3 {
+    border-bottom: 0px;
+    margin-left: 5px;
+    font-weight: bold;
+    font-size: 11px;
+    color: #000;
+    padding-left: 5px;
+    font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+}
+
+input.txt,
+select.txt {
+	height: auto;
+}

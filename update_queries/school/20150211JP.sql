@@ -1,0 +1,4 @@
+INSERT INTO `kolumbus_inquiries_payments_types` (`id`, `type`) VALUES (4, 'Refund CreditNote');
+ALTER TABLE `kolumbus_clients` ADD `inquiry_payments_creditnote_receipt` TINYINT(1) NOT NULL DEFAULT '1' AFTER `inquiry_payments_overview`, ADD `inquiry_payments_creditnote` TINYINT(1) NOT NULL AFTER `inquiry_payments_creditnote_receipt`, ADD `inquiry_payments_creditnote_overview` TINYINT(1) NOT NULL AFTER `inquiry_payments_creditnote`;
+CREATE TABLE IF NOT EXISTS `kolumbus_payment_method_reciept_template_creditnote` (`template_id` int(11) NOT NULL, `payment_method_id` int(11) NOT NULL, `payment_type_id` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `kolumbus_payment_method_reciept_template_creditnote` ADD PRIMARY KEY (`template_id`,`payment_method_id`,`payment_type_id`);

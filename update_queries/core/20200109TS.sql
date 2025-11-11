@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_messages_addresses_relations` DROP PRIMARY KEY, ADD PRIMARY KEY( `address_id`, `relation`, `relation_id`);

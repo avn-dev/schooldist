@@ -1,0 +1,1 @@
+ALTER TABLE `tc_gui2_designs_tabs_elements_selectoptions` ADD `position` INT NOT NULL;

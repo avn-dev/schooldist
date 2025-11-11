@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_emailaccounts` ADD `imap_folder` VARCHAR( 100 ) NOT NULL AFTER  `imap_filter`;

@@ -1,0 +1,1 @@
+ALTER TABLE `ts_booking_stacks` ADD `tax_key` VARCHAR(255) NOT NULL AFTER `tax`;

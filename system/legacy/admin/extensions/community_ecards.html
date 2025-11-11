@@ -1,0 +1,194 @@
+<?
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+require_once(\Util::getDocumentRoot()."system/extensions/community_ecards/community_ecards.inc.php");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+
+if($_POST['action'] == "config") {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->subject = $_VARS['subject'];
+	$config->message = $_VARS['message'];
+
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>eCards</h1>
+			<p>
+<?
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<?=printTableStart()?>
+				<?=printFormText("Betreff", "subject", $config->subject)?>
+				<?=printFormTextarea("Nachricht", "message", $config->message)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+			<p>
+				Platzhalter: {$key}, {$link}, {$sender_name}, {$recipient_name} 
+			</p>
+<?
+} else {
+
+	if($_VARS['task'] == "activate") {
+		$strStr = "UPDATE community_ecards SET active = 1 WHERE id = :intId LIMIT 1";
+		$arrSql = array('intId'=>(int)$_VARS['id']);
+		DB::executePreparedQuery($strStr, $arrSql);
+	}
+
+	if($_VARS['task'] == "deactivate") {
+		$strStr = "UPDATE community_ecards SET active = 0 WHERE id = :intId LIMIT 1";
+		$arrSql = array('intId'=>(int)$_VARS['id']);
+		DB::executePreparedQuery($strStr, $arrSql);
+	}
+
+	if($_VARS['task'] == "save") {
+		$arrSql = array();
+		if($_VARS['id']) {
+			$strStr = "
+					UPDATE community_ecards SET 
+						name = :name, 
+						description = :description, 
+						author = :author, 
+						category_id = :category_id, 
+						imgbuilder_id = :imgbuilder_id 
+					WHERE id = :intId LIMIT 1";
+			$arrSql['intId'] = $_VARS['id'];
+		} else {
+			$strStr = "
+					INSERT INTO community_ecards SET 
+						created = NOW(), 
+						active = 0,  
+						name = :name, 
+						description = :description, 
+						author = :author, 
+						category_id = :category_id, 
+						imgbuilder_id = :imgbuilder_id 
+					";
+		}
+		$arrSql['name'] 			= $_VARS['name'];
+		$arrSql['description']	= $_VARS['description'];
+		$arrSql['author']	= $_VARS['author'];
+		$arrSql['category_id']	= $_VARS['category_id'];
+		$arrSql['imgbuilder_id']	= $_VARS['imgbuilder_id'];
+		DB::executePreparedQuery($strStr, $arrSql);
+		
+	}
+
+	if($_VARS['task'] == "edit") {
+
+		$arrEcard = array();
+		if($_VARS['id']) {
+			$arrEcard = community_ecards::getEcard($_VARS['id']);
+		}
+
+		$strSql = "SELECT * FROM system_imgbuilder WHERE 1 ORDER BY title";
+		$arrSetData = DB::getQueryData($strSql);
+		$arrSets = array();
+		foreach((array)$arrSetData as $arrData) {
+			$arrSets[$arrData['id']] = $arrData['title'];	
+		}
+
+		$arrCategories = community_ecards::getCategories();
+
+?>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="save">
+			<input type="hidden" name="id" value="<?=(int)$arrEcard['id']?>">
+			<?=printTableStart()?>
+				<?=printFormText("Name", "name", $arrEcard['name'])?>
+				<?=printFormTextarea("Beschreibung", "description", $arrEcard['description'])?>
+				<?=printFormTextarea("Autor", "author", $arrEcard['author'], 3)?>
+				<?=printFormSelect("Kategorie", "category_id", $arrCategories, $arrEcard['category_id'])?>
+				<?=printFormSelect("Grafikgenerierung Set", "imgbuilder_id", $arrSets, $arrEcard['imgbuilder_id'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit("speichern")?>
+			</form>
+
+<?
+	} elseif ($_VARS['task'] == "delete") {
+			
+			$strStr = "DELETE FROM `community_ecards` WHERE id = :intId LIMIT 1";
+			$arrSql = array('intId'=>(int)$_VARS['id']);
+			DB::executePreparedQuery($strStr, $arrSql);
+?>
+			<div>eCard erfolgreich gelöscht.</div>
+			<div><button class="btn" onClick="self.location.href='<?=$_SERVER['PHP_SELF']?>?task=back';">zurück</button></div>
+			
+<?
+			
+			
+			
+	} else {
+	
+		$arrEcards = community_ecards::getEcards();
+
+?>
+			
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th width="80%">Name</th>
+					<th width="10%">Status</th>
+					<th width="10%">Aktionen</th>
+				</tr>
+<?
+		foreach((array)$arrEcards as $arrEcard) {
+?>
+				<tr>
+					<td><?=$arrEcard['name']?></td>
+					<td align="center">
+<?
+			if($arrEcard['active']) {
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=deactivate&amp;id=<?=$arrEcard['id']?>"><img src="/admin/media/sitemap_active.gif" alt="eCard deaktivieren" /></a>
+<?
+			} else {
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=activate&amp;id=<?=$arrEcard['id']?>"><img src="/admin/media/sitemap_inactive.gif" alt="eCard aktivieren" /></a>
+<?
+			}
+?>
+					</td>
+					<td align="center">
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&amp;id=<?=$arrEcard['id']?>"><img src="/admin/media/edit.png" alt="eCard bearbeiten" /></a>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=delete&amp;id=<?=$arrEcard['id']?>"><img src="/admin/media/delete.png" alt="eCard l&ouml;schen" /></a>
+					</td>
+				</tr>
+<?
+		}
+?>			
+			</table>
+						
+			<p align="right">
+				<button class="btn" onClick="self.location.href='<?=$_SERVER['PHP_SELF']?>?task=edit';">Neue eCards hinzufügen</button>
+			</p>
+
+<?
+	}
+}
+?>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

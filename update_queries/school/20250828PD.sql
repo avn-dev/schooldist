@@ -1,0 +1,1 @@
+ALTER TABLE `ts_tuition_blocks_daily_units` ADD INDEX `state` (`state`);

@@ -1,0 +1,260 @@
+class:
+  wdbasic: Ext_TS_Enquiry_Offer
+  data: Ext_TS_Enquiry_Offer_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+  icon_status: Ext_TS_Enquiry_Offer_Gui2_Icon_Active
+  row_style: Ext_TS_Enquiry_Offer_Gui2_Style_Rowstyle
+  gui: Ext_Thebing_Gui2
+  js: RequestConvertGui
+access:
+    thebing_students_contact_gui
+id:
+  column: id
+  alias: ts_eo
+title: "Angebote"
+bars:
+    -
+      position: top
+      type: ''
+      elements:
+        -
+          element: icon_delete
+        -
+          element: seperator
+        -
+          element: icon
+          label: PDF erstellen
+          task: openDialog
+          action: document_edit
+          access:
+            - thebing_students_contact_search
+            - ""
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+        -
+          element: icon
+          label: In eine Buchung umwandeln
+          action: convert_offer_to_inquiry
+          task: openDialog
+          dialog: [Ext_Gui2_Factory_Default,getDialog]
+          access:
+            - thebing_students_contact_convert
+            - ""
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - page_go
+    -
+      position: bottom
+      type: legend
+      elements:
+        -
+          element: legend_label
+          label: Legende
+        -
+          element: legend_info
+          label: Umgewandelte Angebote
+          info:
+            color: lightgreen
+            
+columns:
+  -
+    title: Angebotsnummer
+    column: document_number
+    width: number
+    resize: false
+  -
+    title: Betrag
+    column: amount
+    width: amount
+    format: Ext_TS_Gui2_Format_Enquiry_Service_Amount
+    format_params: [Ext_TS_Enquiry_Offer, setOffer, true]
+    resize: false
+    sortable: false
+  -
+    title: PDF
+    column: number
+    width: icon
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Pdf
+    resize: false
+    sortable: false
+#Kurse
+  -
+    title: Kurs
+    group: Kursdaten
+    column: course_name_short
+    data: courses
+    width: name
+    resize: true
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_GroupedfieldTooltip
+    format_params: [name, short]
+    sortable: false
+  -
+    title: Kursbeginn
+    group: Kursdaten
+    column: course_from
+    data: courses
+    width: date
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [from, Ext_Thebing_Gui2_Format_Date]
+    sortable: false
+  -
+    title: Kursende
+    group: Kursdaten
+    column: course_until
+    data: courses
+    width: date
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [until, Ext_Thebing_Gui2_Format_Date]
+    sortable: false
+  -
+    title: Kurslevel
+    group: Kursdaten
+    column: course_level
+    data: courses
+    width: name
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [level]
+    sortable: false
+  -
+    title: Lektionen
+    group: Kursdaten
+    column: course_units
+    data: courses
+    width: number
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [units, Ext_Thebing_Gui2_Format_Float]
+    sortable: false
+  -
+    title: Kurswochen
+    group: Kursdaten
+    column: course_weeks
+    data: courses
+    width: number
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [weeks, Ext_Thebing_Gui2_Format_Int]
+    sortable: false
+  -
+    title: Unterkunft
+    group: Unterkunftsdaten
+    column: accommodation_all_short
+    data: accommodations
+    width: extra_long_description
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_GroupedfieldTooltip
+    format_params: [description, description_short]
+    sortable: false
+  -
+    title: Unterkunftsbeginn
+    group: Unterkunftsdaten
+    column: accommodation_from
+    data: accommodations
+    width: name
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [from, Ext_Thebing_Gui2_Format_Date]
+    sortable: false
+  -
+    title: Unterkunftsende
+    group: Unterkunftsdaten
+    column: accommodation_until
+    data: accommodations
+    width: name
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [until, Ext_Thebing_Gui2_Format_Date]
+    sortable: false
+  -
+    title: Unterkunftswochen
+    group: Unterkunftsdaten
+    column: accommodation_weeks
+    data: accommodations
+    width: name
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [weeks, Ext_Thebing_Gui2_Format_Int]
+    sortable: false
+#Transfer    
+  -
+    group: Transfer
+    title: Anreiseinformation
+    column: arrival_information
+    data: transfer_information
+    width: extra_long_description
+    default: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Transfer
+    #format: Ext_Thebing_Gui2_Format_Transfer_Info
+    #format_params: [arrival]
+    resize: false
+    sortable: false
+  -
+    group: Transfer
+    title: Abreiseinformation
+    column: departure_information
+    data: transfer_information
+    width: extra_long_description
+    default: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Transfer
+    #format: Ext_Thebing_Gui2_Format_Transfer_Info
+    #format_params: [departure]
+    resize: false
+    sortable: false
+  -
+    group: Transfer
+    title: Transfer
+    column: transfer_modes
+    data: transfer_information
+    width: date_time
+    default: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [7, Ext_Thebing_Gui2_Format_Transfer, ',', '_']
+    resize: false
+    sortable: false
+#Versicherungen
+  -
+    title: Versicherung
+    group: Versicherungsdaten
+    column: insurance_name
+    data: insurances
+    width: name
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [name]
+    sortable: false
+  -
+    title: Versicherungsstart
+    group: Versicherungsdaten
+    column: insurance_from
+    data: insurances
+    width: name
+    default: false
+    resize: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [from, Ext_Thebing_Gui2_Format_Date]
+    sortable: false
+  -
+    title: Versicherungsende
+    group: Versicherungsdaten
+    column: insurance_until
+    data: insurances
+    width: name
+    resize: false
+    default: false
+    format: Ext_TS_Enquiry_Offer_Gui2_Format_Groupedfield
+    format_params: [until, Ext_Thebing_Gui2_Format_Date]
+    sortable: false

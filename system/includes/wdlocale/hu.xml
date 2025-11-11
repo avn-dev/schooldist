@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>„</quotationStart>
+		<quotationEnd>”</quotationEnd>
+		<alternateQuotationStart>„</alternateQuotationStart>
+		<alternateQuotationEnd>”</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar type="gregorian">
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">jan.</month>
+					<month type="2">febr.</month>
+					<month type="3">márc.</month>
+					<month type="4">ápr.</month>
+					<month type="5">máj.</month>
+					<month type="6">jún.</month>
+					<month type="7">júl.</month>
+					<month type="8">aug.</month>
+					<month type="9">szept.</month>
+					<month type="10">okt.</month>
+					<month type="11">nov.</month>
+					<month type="12">dec.</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">január</month>
+					<month type="2">február</month>
+					<month type="3">március</month>
+					<month type="4">április</month>
+					<month type="5">május</month>
+					<month type="6">június</month>
+					<month type="7">július</month>
+					<month type="8">augusztus</month>
+					<month type="9">szeptember</month>
+					<month type="10">október</month>
+					<month type="11">november</month>
+					<month type="12">december</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">V</day>
+					<day type="mon">H</day>
+					<day type="tue">K</day>
+					<day type="wed">Sze</day>
+					<day type="thu">Cs</day>
+					<day type="fri">P</day>
+					<day type="sat">Szo</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">vasárnap</day>
+					<day type="mon">hétfő</day>
+					<day type="tue">kedd</day>
+					<day type="wed">szerda</day>
+					<day type="thu">csütörtök</day>
+					<day type="fri">péntek</day>
+					<day type="sat">szombat</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">N1</quarter>
+					<quarter type="2">N2</quarter>
+					<quarter type="3">N3</quarter>
+					<quarter type="4">N4</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">I. negyedév</quarter>
+					<quarter type="2">II. negyedév</quarter>
+					<quarter type="3">III. negyedév</quarter>
+					<quarter type="4">IV. negyedév</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>de.</am>
+			<pm>du.</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%y. %B %d.</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%Y.%m.%d.</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%Y.%m.%d.</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H:%M:%S %Z</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H:%M:%S</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H:%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>év</displayName>
+				</field>
+				<field type="month">
+					<displayName>hónap</displayName>
+				</field>
+				<field type="week">
+					<displayName>hét</displayName>
+				</field>
+				<field type="day">
+					<displayName>nap</displayName>
+					<relative type="-3">három nappal ezelőtt</relative>
+					<relative type="-2">tegnapelőtt</relative>
+					<relative type="-1">tegnap</relative>
+					<relative type="0">ma</relative>
+					<relative type="1">holnap</relative>
+					<relative type="2">holnapután</relative>
+					<relative type="3">három nap múlva</relative>
+				</field>
+				<field type="weekday">
+					<displayName>hét napja</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>napszak</displayName>
+				</field>
+				<field type="hour">
+					<displayName>óra</displayName>
+				</field>
+				<field type="minute">
+					<displayName>perc</displayName>
+				</field>
+				<field type="second">
+					<displayName>másodperc</displayName>
+				</field>
+				<field type="zone">
+					<displayName>zóna</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>,</decimal>
+			<group> </group>
+			<list>;</list>
+			<percentSign>%</percentSign>
+			<nativeZeroDigit>0</nativeZeroDigit>
+			<patternDigit>#</patternDigit>
+			<plusSign>+</plusSign>
+			<minusSign>-</minusSign>
+			<exponential>E</exponential>
+			<perMille>‰</perMille>
+			<infinity>∞</infinity>
+			<nan>NaN</nan>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>#,##0.00 ¤</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+			<unitPattern count="other">{0} {1}</unitPattern>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="other">{0} nap</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="other">{0} óra</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="other">{0} perc</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="other">{0} hónap</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="other">{0} másodperc</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="other">{0} hét</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="other">{0} év</unitPattern>
+		</unit>
+	</units>
+</ldml>
+

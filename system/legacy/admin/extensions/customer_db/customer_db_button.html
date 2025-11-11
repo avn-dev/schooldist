@@ -1,0 +1,148 @@
+<?
+// customer_db_data
+// Administration zum Mini Modul um eine Seite zurück zu blättern
+
+// Soll default-Ziel haben
+// Soll verzweigen können
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+require (\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+            <h1>Konfiguration Button / Link</h1>
+
+<form name="customer_db_data_login_button" enctype="multipart/form-data" action="<?=$PHP_SELF?>">
+<input type='hidden' name="form_action" value="">
+<input type='hidden' name="page_id" value=<?=$page_id?>>
+<input type='hidden' name="element_id" value=<?=$element_id?>>
+<?
+
+
+// Negiert, damit im Zweifelsfall lieber eine Option zuviel als zuwenig angezeigt wird.
+$DONT_SHOW_DETAIL_LINK =		false;
+$DONT_SHOW_ADD_LINK =			false;
+$DONT_SHOW_GOTO_ORDER_LINK =	        false;
+$DONT_SHOW_OTHER_LINK =			false;
+$DONT_SHOW_ANY_LINK =			true;
+
+//include("shop/shop_admin.inc");ä
+
+$res_element = db_query($db_system, "SELECT * FROM content WHERE page_id='$page_id' AND number='$element_id'");
+$my_element  = get_data($res_element);
+$template    = $my_element[content]  ;
+
+
+
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if ($form_action=="Speichern")
+{
+
+    $config->url                    =   $url;
+    $config->button_name            =   $button_name;
+    $config->button_look            =   $button_look;
+    $config->check_mandatory        =   $check_mandatory;
+
+
+    $config->save_config($page_id, $element_id);
+}
+
+
+ if($config->button_name=="")
+ 	{
+	   $button_name="Login";
+	}
+ else
+ 	{
+	   $button_name=$config->button_name;
+	}
+	
+
+if ($config->button_look=="Text")
+{
+   $text_checked="SELECTED";
+ }
+else
+{
+   $text_checked="";
+}
+
+if ($config->check_mandatory==0)
+{
+   $pre_selected="SELECTED";
+ }
+else
+{
+   $pre_selected="";
+}
+
+?>
+
+
+<table class=table border=0 cellpadding="4" cellspacing=0 >
+
+    <tr>
+        <th>
+            Ziel-Seite des Links:
+        </th>
+        <td>
+            <?=printPageSelect("url",$config->url,"","","width:400px"); ?>
+        </td>
+    </tr>
+    <tr>
+        <th>Beschriftung des Links:</th>
+        <td><input type='text' class = 'input' style= 'width:200px' name = 'button_name' value='<?=$button_name?>'></td>
+    </tr>
+    <tr>
+        <th>Aussehen des Links :</th>
+        <td>
+            <select name="button_look" style= 'width:200px'>
+                <option>Button</option>
+                <option <?=$text_checked?>>Text</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th>Sollen die Pflichtfelder beim Klick geprüft werden ?</th>
+        <td>
+            <select name="check_mandatory" style= 'width:200px'>
+                <option value=1>Prüfen</option>
+                <option value=0 <?=$pre_selected?>>Nicht Prüfen</option>
+            </select>
+        </td>
+    </tr>
+
+
+    <tr>
+        <td  colspan=2 align="center" >
+				<!--<input type=button value="speichern" OnClick="document.customer_db_data_form_back.submit()"></td> -->
+            <input type=button value="Speichern" class="btn" style="width:150" OnClick="document.customer_db_data_login_button.form_action.value='Speichern';document.customer_db_data_login_button.submit();">
+            <input class=btn type=button value="Fenster schliessen" style="width:150" OnClick='top.close();'>
+        </td>
+    </tr>
+
+</table>
+
+
+</form>
+
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>
+
+

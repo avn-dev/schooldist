@@ -1,0 +1,1 @@
+<h{$iType|escape:"htmlall"}{if $sName != ''} name="{$sName|escape:"htmlall"}"{/if}{if $sID != ''} id="{$sID|escape:"htmlall"}"{/if}{if $sCss != ''} class="{$sCss|escape:"htmlall"}"{/if}{if $sStyle != ''} style="{$sStyle|escape:"htmlall"}"{/if}>{if $bEscapeString == true}{$sString|escape:"htmlall"}{else}{$sString}{/if}</h{$iType|escape:"htmlall"}>

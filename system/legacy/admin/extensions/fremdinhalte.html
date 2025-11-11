@@ -1,0 +1,215 @@
+<?
+/**
+ * Konfigurationsdatei für Fremdinhalte-Modul
+ *
+ * @author: Bastian Hübner
+ * @date: 29.06.06
+ *
+ * Hier kann man konfigurieren, wie der Inhalt einer anderen Datei angezeigt werden soll.
+ *
+**/
+
+
+include("../includes/main.inc.php");
+Admin_Html::loadAdminHeader();
+Access_Backend::checkAccess("edit");
+
+
+
+###########################################
+## Laden der Daten
+###########################################
+
+	#
+	#$my_parent = get_data(db_query($db_data['system'],"SELECT * FROM cms_content WHERE page_id = '".$_VARS['page_id']."' AND content LIKE '%<#content".(str_pad($_VARS['element_id'], 3, "0", STR_PAD_LEFT))."#>%'"));
+	#
+	#$aParent = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	#
+
+	// Initialisieren der Klasseninstanz
+	#$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+
+
+
+###########################################
+###########################################
+
+
+/*echo "<pre>";
+print_r($_REQUEST);
+print_r($_VARS);
+echo "</pre>";*/
+
+
+###########################################
+## Speichern der eingegebenen Daten
+###########################################
+
+if(trim($_REQUEST['speichern'])=="speichern")# && $page_id > 0 && $element_id > 0)
+{
+	$config->page_type 		          = $_REQUEST['page_type'];
+
+	if(strlen(trim($_VARS['extern_url']))>0)
+	{
+		$config->intern_url               = '';
+		$config->extern_url               = trim($_REQUEST['extern_url']);
+	}
+	else
+	{
+		$config->extern_url               = '';
+		$config->intern_url               = trim($_REQUEST['intern_url']);
+	}
+
+
+	$config->width               			= trim($_REQUEST['width']);
+	$config->height               			= trim($_REQUEST['height']);
+
+  	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+
+}
+
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+###########################################
+###########################################
+
+
+/*var_dump($config);*/
+
+
+
+
+
+
+
+
+
+###########################################
+## Anzeige des Konfig-Bildschirms
+###########################################
+
+
+if($config->page_type==1)
+{
+	$body_select="SELECTED";
+	$frame_select="";
+}
+else
+{
+	$frame_select="SELECTED";
+	$body_select="";
+}
+
+$drop_Type = "<select name=page_type>";
+$drop_Type.= "<option value=1 $body_select>Nur den Body</option>";
+$drop_Type.= "<option value=2 $frame_select>in einem Iframe</option>";
+$drop_Type.= "</select>";
+
+
+
+
+?>
+
+
+<form name=fremdinhalte method=POST action='<?=$PHP_SELF?>'>
+<input type="hidden" name="file" value="<?=$_VARS['file']?>">
+<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+<h1>Fremdinhalte - Modul</h1>
+<table class=table border=0 width=100% cellspacing=0 cellpadding=0>
+
+<tr>
+	<th>
+		Anzuzeigende Seite
+	</th>
+
+	<td align=left>
+
+	<!--Dieses DIV verhindert, dass zu lange Seiten/Verzeichnisnamen das Popup unleserlich machen-->
+    <!--<div style='position:absolute;margin-top:-10px'>-->
+
+    <select name="intern_url" class="txt" style="font-family:Arial;font-size:10px;">
+<?
+echo "<option value=''>--</option>";
+
+$res_pages = db_query($db_data['system'],"SELECT id,language,path,file FROM cms_pages WHERE active = 1 AND element != 'template' ORDER BY path, position");
+while($my_pages = get_data($res_pages))
+{
+	if("/".$my_pages['language']."/".$my_pages['path']."".$my_pages['file'].".html"==$config->intern_url)
+	{
+		$SELECTED="SELECTED";
+	}
+	else
+	{
+		$SELECTED='';
+	}
+
+
+	echo "<option $SELECTED value=\"/".$my_pages['language']."/".$my_pages['path']."".$my_pages['file'].".html\">".getPageTrack($my_pages['id'])."";
+}
+?>
+	</select>
+	<!--</div>-->
+
+	</td>
+</tr>
+
+
+<tr>
+	<th>
+		oder externe URL:
+	</th>
+
+	<td>
+		<input type=text name=extern_url value='<?=trim($config->extern_url)?>'>
+	</td>
+</tr>
+
+
+
+
+<tr>
+	<th>
+		Art der Anzeige
+	</th>
+
+	<td>
+		<?php echo $drop_Type;?>
+	</td>
+</tr>
+
+
+<tr><th colspan=2>Wenn Iframe:</th></tr>
+<tr><th>Höhe</th><td><input tpye=text name=height value='<?=$config->height?>'></td></tr>
+<tr><th>Breite</th><td><input tpye=text name=width value='<?=$config->width?>'></td></tr>
+
+<!--<tr><td>&nbsp;</td></tr>-->
+
+<tr>
+	<td colspan=2 align=center>
+		<input type=submit name=speichern value=speichern>
+	</td>
+</tr>
+
+
+</table>
+</form>
+
+
+<?
+
+
+
+
+###########################################
+###########################################
+
+
+
+
+
+Admin_Html::loadAdminFooter();
+?>

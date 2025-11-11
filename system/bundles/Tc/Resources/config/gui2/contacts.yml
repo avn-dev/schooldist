@@ -1,0 +1,125 @@
+class:
+  wdbasic: Ext_TC_Contact
+  data: Tc\Gui2\Data\ContactData
+  date_format: Ext_TC_Gui2_Format_Date
+access:
+  - core_admin_contacts
+  - ""
+options:
+#  system_type: ""
+#  list_system_types: []
+  required_fields:
+    - firstname
+    - lastname
+id:
+  column: id
+  alias: tc_c
+orderby:
+  - Tc\Gui2\Data\ContactData
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - tc_c
+          - tc_c
+          - tc_cn
+          - tc_ea
+        column:
+          - firstname
+          - lastname
+          - number
+          - email
+      -
+        element: selectfilter
+        label: Systemtyp
+        label_as_item: true
+        alias:
+          - tc_stm
+        column:
+          - id
+        entries:
+          - Tc\Entity\SystemTypeMapping
+          - getSelectOptions
+          - contacts
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Tc\Gui2\Data\ContactData
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Tc\Gui2\Data\ContactData
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_communication
+        set: [global]
+        application: contact
+columns:
+  -
+    title: Nummer
+    alias: tc_cn
+    column: number
+    width: name
+    resize: false
+    default: false
+  -
+    title: Titel
+    alias: tc_c
+    column: title
+    width: name
+    resize: false
+    default: false
+  -
+    title: Nachname
+    alias: tc_c
+    column: lastname
+    width: name
+    resize: true
+    default: true
+  -
+    title: Vorname
+    alias: tc_c
+    column: firstname
+    width: name
+    default: true
+  -
+    title: E-Mail
+    alias: tc_ea
+    column: email
+    data: email_addresses
+    width: name
+    default: true
+  -
+    title: Kontaktdaten
+    alias: tc_cd
+    column: type
+    data: contact_details
+    width: long_description
+    format: Tc\Gui2\Format\Contact\Details
+    format_params:
+      - phone_private
+      - phone_mobile
+      - phone_office
+      - phone_emergency
+    default: true
+  -
+    set: [global]
+    title: Systemtypen
+    alias: tc_ctst
+    column: type
+    data: system_types
+    width: long_description
+    format: Tc\Gui2\Format\Contact\SystemType
+    default: true

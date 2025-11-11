@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_school_customerupload` ADD `position` INT(11) NOT NULL AFTER `release_sl`;

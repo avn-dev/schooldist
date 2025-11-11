@@ -1,0 +1,202 @@
+<?
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+
+Access_Backend::checkAccess("filter_admin");
+
+Admin_Html::loadAdminHeader();
+
+$objWebDynamicsDAO = new Cms\Helper\Data;
+
+?>
+<script>
+
+function selectAll(on) {
+	var x = on.checked;
+	for(var i=0;i<=document.objList.elements.length;i++) {
+		if(document.objList.elements[i] && document.objList.elements[i].name.indexOf("objects")==0) {
+			document.objList.elements[i].checked=x;
+		}
+	}
+}
+
+</script>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen und Funktionen', 'Framework')?> &raquo; <?=L10N::t('Filter', 'Framework')?></h1>
+</section>
+
+<section class="content">
+
+			<h2>Ersetzen</h2>
+			<form method="POST" action="filter.html">
+			<input type="hidden" name="task" value="replace">
+			<?=printTableStart()?>
+			<?=printFormText("Suchen", "search", $_VARS['search'])?>
+			<?=printFormText("Ersetzen", "replace", $_VARS['replace'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Ersetzungen ausführen")?>
+			<p class="note">Die Ersetzungen werden in folgenden Tabellen ausgeführt: cms_blockdata, cms_content, cms_pages, cms_extensions_config, system_elements, system_media</p>
+			</form>
+			
+<?
+		if($_VARS['task'] == "replace") {
+			if($_VARS['search'] && $_VARS['replace']) {
+				replaceContent($_VARS['search'], $_VARS['replace']);
+				echo '<p style="font-weight: bold; color: green;">Die Ersetzungen wurden ausgeführt!</p>';
+			}
+		}
+?>
+			
+			<h2><?=L10N::t('Bitte setzen Sie hier einen Filter auf die Objekte:', 'Framework')?></h2>
+			<form method="POST" action="filter.html">
+			<input type="hidden" name="task" value="filter">
+			<?=printTableStart()?>
+			<?
+			$aElements = array_splice($admin_data['elements'],0,-1);
+			?>
+			<?=printFormSiteSelect(L10N::t('Internetauftritt'), 'site_id', $_VARS['site_id'])?>
+			<?=printFormSelect("Objekttyp","sType",$aElements,$_VARS['sType'])?>
+			<?=printFormText("Objekte ab Pfad","sPath",$_VARS['sPath'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit(L10N::t('Objekte suchen', 'Framework'))?>
+			</form>
+			
+<?
+		if($_VARS['task'] == "execute") {
+			
+			$sQuery = " SET ";
+			if(isset($_VARS['css']) && $_VARS['css'] != -1) { 
+				$sQuery .= "`css` = '".$_VARS['css']."',   ";
+			}
+			if(isset($_VARS['template']) && $_VARS['template'] != -1) { 
+				$sQuery .= "`template` = '".$_VARS['template']."',   ";
+			}
+			if(isset($_VARS['active']) && $_VARS['active'] != -1) { 
+				$sQuery .= "`active` = ".(int)$_VARS['active'].",   ";
+			}
+			if(isset($_VARS['dynamic']) && $_VARS['dynamic'] != -1) { 
+				$sQuery .= "`dynamic` = ".(int)$_VARS['dynamic'].",   ";
+			}			
+			if(isset($_VARS['menue']) && $_VARS['menue'] != -1) { 
+				$sQuery .= "`menue` = '".$_VARS['menue']."',   ";
+			}
+			if(isset($_VARS['login']) && $_VARS['login'] != -1) { 
+				$sQuery .= "`login` = '".$_VARS['login']."',   ";
+			}
+			if(isset($_VARS['access']) && $_VARS['access'][0] != -1) {
+				$buffer = array();
+				$c=0;
+				foreach((array)$_VARS['access'] as $val) {
+					if($val>0) {
+						$buffer[$val] = 1;
+						$c++;
+					}
+				}
+				$access = serialize($buffer);
+				if($c==0) $access = "";
+				$sQuery .= "`access` = '".$access."',   ";
+			}
+			$sQuery = substr($sQuery,0,strlen($sQuery)-4);
+			foreach((array)$_VARS['objects'] as $obj) {
+				DB::executeQuery("UPDATE cms_pages ".$sQuery." WHERE id = ".(int)$obj." LIMIT 1");//$obj;
+			}
+			Log::enterLog(0, L10N::t('Ein Filterupdate wurde durchgeführt.', 'Framework'));
+?>
+		<h2><?=L10N::t('Die Änderungen wurden erfolgreich durchgeführt.', 'Framework')?></h2>
+<?
+		}
+
+		if($_VARS['task'] == "filter") {
+?>
+			<form method="POST" name="objList" action="filter.html">
+			<input type="hidden" name="task" value="execute">
+			<?=printTableStart()?>
+				<tr>
+					<th style="width: 200px;">Titel</th>
+					<th style="width: auto;">Pfad</th>
+					<th style="width: 30px;"><input type="checkbox" name="selectall" value="1" onClick="selectAll(this);" /></th>
+				</tr>
+<?
+			$sSql = "
+					SELECT 
+						id,
+						path,
+						file,
+						title 
+					FROM 
+						cms_pages 
+					WHERE 
+						path LIKE '".$_VARS['sPath']."%' AND 
+						element = '".$_VARS['sType']."' AND 
+						site_id = ".(int)$_VARS['site_id']." 
+					ORDER BY 
+						title";
+			$res = DB::getQueryRows($sSql);
+			foreach($res as $my) {
+?>
+			<tr id="tr_<?=$my['id']?>">
+				<td><?=$my['title']?></td>
+				<td><?=$my['path']?><?=$my['file']?>.html</td>
+				<th><input type="checkbox" name="objects[]" value="<?=$my['id']?>"></th>
+			</tr>
+<?
+			}
+?>
+			<?=printTableEnd()?>
+
+			<h2><?=L10N::t('Eigenschaften')?></h2>
+
+			<?=printTableStart()?>
+
+<?
+			$aStyles = array("-1"=>L10N::t('keine Änderung', 'Framework'));
+			$arrFiles = $objWebDynamicsDAO->getCssFiles();
+			foreach((array)$arrFiles as $arrFile) {
+				$aStyles[$arrFile['name']] = $arrFile['name'];
+			}
+?>
+			<?=printFormSelect("CSS-Stil Datei", "css", $aStyles)?>
+<?
+			$aTemplate = array("-1"=>L10N::t('keine Änderung', 'Framework'));
+			$result_templates = (array)DB::getQueryRows("SELECT * FROM cms_pages WHERE element = 'template' AND active = 1 ORDER BY title");
+			foreach($result_templates as $my_template) {
+				$aTemplate[$my_template['file']] = $my_template['title'];
+			}
+?>
+			<?=printFormSelect("Seitenvorlage","template",$aTemplate)?>
+			<?
+			$aActive = array("-1"=>L10N::t('keine Änderung', 'Framework'));
+			$aActive['1'] = L10N::t('Ja', 'Framework');
+			$aActive['0'] = L10N::t('Nein', 'Framework');
+			?>
+			<?=printFormSelect(L10N::t('Aktiv', 'Framework'), "active", $aActive)?>
+			
+			<?=printFormSelect(L10N::t("Cache", 'CMS'), "dynamic", array("-1"=>L10N::t('keine Änderung', 'CMS'),"1"=>L10N::t("Inaktiv", 'CMS'),"0"=>L10N::t("Aktiv", 'CMS')))?>
+
+			<?
+			$aMenue = array("-1"=>L10N::t('keine Änderung', 'Framework'));
+			$aMenue['1'] = L10N::t('Ja', 'Framework');
+			$aMenue['0'] = L10N::t('Nein', 'Framework');
+			?>
+			<?=printFormSelect(L10N::t('Im Menü anzeigen', 'Framework'),"menue",$aMenue)?>
+
+			<?=printFormPageSelect("Loginseite", "login", -1, array('empty'=>array("-1"=>L10N::t('keine Änderung', 'Framework')), 'site_id'=>(int)$_VARS['site_id'], 'value_type'=>1))?>
+			<?
+			$arrGroups["-1"] = L10N::t('keine Änderung', 'Framework');
+			$arrGroups = array_merge($arrGroups, CustomerDb\Helper\Functions::getCustomerGroups());
+			?>
+			<?=printFormSelect(L10N::t('Kundendatenbank', 'Framework'),"access[]",$arrGroups,-1," size=\"5\" multiple")?>
+
+			<?=printTableEnd()?>
+			<?=printSubmit(L10N::t('Einstellungen für gewählte Objekte übernehmen.', 'Framework'))?>
+			</form>
+<?
+		}
+?>
+	
+</section>
+		
+<?=Admin_Html::loadAdminFooter()?>

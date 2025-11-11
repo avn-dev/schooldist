@@ -1,0 +1,149 @@
+hash: 45c8d748d0b50ab9e1c89fe0abcf35fb
+class:
+  wdbasic: Ext_Thebing_Upload_File
+  data: Ext_Thebing_Upload_Gui2
+  icon_status: Ext_Thebing_Gui2_Icon_Upload_Upload
+  row_style: Ext_Thebing_Gui2_Style_Upload_Row
+access: thebing_admin_file_upload
+orderby:
+  - Ext_Thebing_Upload_Gui2
+  - getOrderby
+limit: 30
+limit_selection: false
+multiple_selection: 0
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - id
+          - description
+        alias:
+          - ku
+          - ku
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Kategorie
+        label_as_item: true
+        value: ''
+        column:
+          - category_id
+        entries:
+          - Ext_Thebing_Upload_Gui2
+          - getCategories
+      -
+        element: selectfilter
+        label: Sprachen
+        label_as_item: true
+        value: ''
+        column:
+          - language
+        alias:
+          - languages
+        width: 200px
+        entries:
+          - Ext_Thebing_Upload_Gui2
+          - getLanguageSelectOptions
+      -
+        element: selectfilter
+        label: Schule
+        label_as_item: true
+        column:
+          - school_id
+        alias:
+          - schools
+        entries:
+          - Ext_Thebing_Client
+          - getSchoolList
+          - true
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Upload_Gui2
+          - getNewDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Upload_Gui2
+          - getEditDialog
+      -
+        element: icon_delete
+  - position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Status
+      -
+        element: legend_info
+        label: wird verwendet
+        info:
+          color: lightgreen
+columns:
+  -
+    title: Datei
+    column: filename
+    alias: ku
+    width: 50
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Upload_File
+    sortable: false
+  -
+    title: Bezeichnung
+    column: description
+    alias: ku
+    width: name
+    resize: true
+  -
+    title: Dateigröße
+    column: filesize
+    data: filename
+    alias: ku
+    width: 75
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Upload_Size
+    sortable: false
+  -
+    title: Verwendungszweck
+    column: usage
+    data: id
+    alias: ku
+    width: long_description
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Upload_Usage
+    sortable: false
+  -
+    title: Kategorie
+    column: category_id
+    alias: ku
+    width: long_description
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Upload_Gui2, getCategories]
+  -
+    title: Schulen
+    column: schools
+    sortable: false
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Client, getSchoolList, true]
+  -
+    title: Sprachen
+    column: language_id
+    data: id
+    alias: ku
+    width: 100
+    sortable: false
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Upload_Imagelist

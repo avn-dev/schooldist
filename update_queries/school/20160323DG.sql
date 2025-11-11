@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_forms` ADD `acc_depending_on_course` TINYINT(1) NOT NULL DEFAULT '1' AFTER `ignore_cache`;

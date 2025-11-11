@@ -1,0 +1,23 @@
+<?
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("help");
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Hilfe')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+			
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

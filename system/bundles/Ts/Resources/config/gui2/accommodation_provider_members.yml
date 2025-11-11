@@ -1,0 +1,44 @@
+class:
+  wdbasic: \TsAccommodation\Entity\Member
+  gui: Ext_Thebing_Gui2
+access: thebing_accommodation_accommodations
+title: Zugehörige
+designer:
+  flex: accommodation_providers_members
+id:
+  column: id
+  alias: tc_c
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column:
+            - firstname
+            - lastname
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog:
+          - TsAccommodation\Gui2\Data\MemberData
+          - getDialog
+        -
+          element: icon_edit
+          dialog:
+          - TsAccommodation\Gui2\Data\MemberData
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Name

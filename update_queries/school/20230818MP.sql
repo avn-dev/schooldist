@@ -1,0 +1,2 @@
+ALTER TABLE `customer_db_4` ADD `diverse` BOOLEAN NOT NULL DEFAULT TRUE AFTER `ext_38`;
+ALTER TABLE `kolumbus_rooms` ADD `diverse` BOOLEAN NOT NULL DEFAULT FALSE AFTER `male`;

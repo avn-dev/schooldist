@@ -1,0 +1,93 @@
+<? 
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sPicturePool = \Util::getDocumentRoot().'media/mosaik';
+$sPicture = \Util::getDocumentRoot().'media/frosch.JPG';
+
+if($_VARS['task'] != 'createPicture'){
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			
+		<form id="mosaik" method="post">
+			<input type="hidden" name="task" value="">
+			<table class="table" style="width:100%">
+				<tr>
+					<th>Bilderpool</th>
+					<td><input type="text" name="picture_pool" value="<?=$sPicturePool?>" style="width:100%;"></td>
+				</tr>
+				<tr>
+					<th>Bild</th>
+					<td><input type="text" name="picture" value="<?=$sPicture?>" style="width:100%;"></td>
+				</tr>
+				<tr>
+					<th>Pixelgröße(x/y)</th>
+					<td><input type="text" name="pixelX" value="10"><input type="text" name="pixelY" value="10"></td>
+				</tr>
+				<tr>
+					<th>Auflösung</th>
+					<td>
+						<select name="quality">
+							<option value ="1">Sehr Fein</option>
+							<option value ="2" selected="selected">Fein</option>
+							<option value ="3">Grob</option>
+						</select>
+					</td>
+				</tr>
+			</table>
+			<button onclick="$('mosaik').task.value='createIndex';submit();">Index neu schreiben</button>
+			<button onclick="$('mosaik').task.value='createPicture';submit();">Bild generieren</button>
+		</form>
+
+<?
+
+}
+//
+//die('die');
+
+if($_VARS['task'] != ''){
+
+	if(!empty($_VARS['picture_pool'])){
+		$sPicturePool = $_VARS['picture_pool'];
+	}
+	
+	if(!empty($_VARS['picture'])){
+		$sPicture = $_VARS['picture'];
+	}
+	
+	$oMosaik = new Ext_Mosaik_Generator($sPicture,$sPicturePool);
+	$oMosaik->setQualityLevel($_VARS['quality']);
+	$oMosaik->setPixelSize($_VARS['pixelX'],$_VARS['pixelY']);
+
+}
+
+	//$oMosaik = new Ext_Mosaik_Generator($sPicture,$sPicturePool); // löschen
+	//$oMosaik->importImagesFromFlickrCSV(); // löschen
+	//die('die');
+
+if($_VARS['task'] == 'createIndex'){
+	//error_reporting(0);	
+	$oMosaik->createIndex();
+	echo "Index erfolgreich eingespielt";
+}else if($_VARS['task'] == 'createPicture'){
+	error_reporting(0);
+	$oMosaik->createPicture();
+}
+
+if($_VARS['task'] != 'createPicture'){
+	
+?>
+
+		</td>
+	</tr>
+</table>
+
+<?
+Admin_Html::loadAdminFooter();
+
+}

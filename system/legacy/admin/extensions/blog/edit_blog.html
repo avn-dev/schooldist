@@ -1,0 +1,117 @@
+<?php
+
+// =============== Header ===============
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+
+
+
+include_once(\Util::getDocumentRoot()."system/includes/class.pagetemplate.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+
+
+$objPage = new GUI_Page();
+
+if(isset($_VARS['blog_id'])) {
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Blog bearbeiten', 'type' => '1')));
+} else {
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Blog hinzufügen', 'type' => '1')));
+}
+
+if(isset($_VARS['submit']))
+{
+	// New blog
+	if(isset($_VARS['blogname']) && trim($_VARS['blogname']) != '' && !isset($_VARS['edit_id']))
+	{
+		$oBlog = new Ext_Blog_Blog();
+		$oBlog->__set('title', $_VARS['blogname']);
+
+		if(!isset($_VARS['active']))
+		{
+			$oBlog->__set('active', 0);
+		}
+
+		$oBlog->saveData();
+	}
+	// Edit blog
+	else
+	{
+		$oBlog = new Ext_Blog_Blog($_VARS['edit_id']);
+		$oBlog->__set('title', $_VARS['blogname']);
+
+		if(!isset($_VARS['active'])) {
+			$oBlog->__set('active', 0);
+		} else {
+			$oBlog->__set('active', 1);
+		}
+
+		$oBlog->saveData();
+	}
+	header('Location: ../blog.html');
+	exit;
+}
+
+$oForm = new GUI_form(array('method' => 'post', 'action' => 'edit_blog.html'));
+
+$aTable = array(
+			'showth'	=> false,
+			'cols'		=> array(
+								array('text' => '', 'style' => 'width: 10%;'),
+								array('text' => '', 'style' => 'width: 90%;')
+							)
+		);
+$oTable = new GUI_Table($aTable);
+
+// New blog
+if(!isset($_VARS['blog_id'])) {
+	$oInput = new GUI_FormText(array('name' => 'blogname', 'value' => '', 'style' => 'width:300px;'));
+	$oCheckBox = new GUI_FormCheckbox(array('name' => 'active', 'checked' => true));
+}
+// Edit blog
+else {
+	$oBlog = new Ext_Blog_Blog($_VARS['blog_id']);
+	$oInput = new GUI_FormText(array('name' => 'blogname', 'value' => $oBlog->title, 'style' => 'width:300px;'));
+	$oCheckBox = new GUI_FormCheckbox(array('name' => 'active', 'checked' => $oBlog->active == 1 ? true : false));
+	$oHidden = new GUI_FormHidden(array('name' => 'edit_id', 'value' => $oBlog->id));
+	$oForm->appendElement($oHidden);
+}
+
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Titel'
+								),
+								array(
+									'forceTh' => false,
+									'text' => $oInput
+								)
+							)
+						)
+					);
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Aktiv'
+								),
+								array(
+									'forceTh' => false,
+									'text' => $oCheckBox
+								)
+							)
+						)
+					);
+					
+$oForm->appendElement($oTable);
+
+// "Save" button
+$oButton = new GUI_FormSubmit(array('name' => 'submit', 'value' => 'Speichern', 'style' => 'float:right;'));
+$oForm->appendElement($oButton);
+
+$objPage->appendElement($oForm);
+echo $objPage->generateHTML();
+
+?>

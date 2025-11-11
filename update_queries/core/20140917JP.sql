@@ -1,0 +1,1 @@
+ALTER TABLE `tc_frontend_combinations_items` ADD `position` MEDIUMINT( 9 ) NOT NULL DEFAULT '0';

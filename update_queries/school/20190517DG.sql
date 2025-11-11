@@ -1,0 +1,1 @@
+ALTER TABLE `ts_accommodations_numbers` ADD PRIMARY KEY(`accommodation_id`);

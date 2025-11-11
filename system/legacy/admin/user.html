@@ -1,0 +1,301 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("user_admin");
+
+$oDb = DB::getDefaultConnection();
+
+if($_VARS['action'] == 'free_login')
+{
+	
+	$oUser = new User($_VARS['id']);
+	$oUser->unblockLogin();
+
+	unset($_VARS['action']);
+}
+else if($_VARS['action'] == "save") {
+
+	$sTable = 'system_user';
+	
+	$aUserData = [
+		'username' => $_VARS['save_username'],
+		'firstname' => $_VARS['save_firstname'],
+		'lastname' => $_VARS['save_lastname'],
+		'email' => $_VARS['save_email'],
+		'phone' => $_VARS['save_phone'],
+		'access' => $_VARS['save_access'],
+		'access_denied' => $_VARS['save_denied'],
+		'role' => $_VARS['save_role'],
+		'ext_role' => $_VARS['save_ext_role'],
+		'active' => 1
+	];
+
+	if($_VARS['id'] > 0) {
+		
+		$rResult = DB::updateData($sTable, $aUserData, "`id` = ".(int)$_VARS['id']);
+
+		\System::wd()->executeHook('user_update', $_VARS['id']);
+		if($rResult) {
+			\Log::enterLog(0, "Benutzerdaten von \"".$_VARS['save_username']."\" wurden gespeichert.");
+		}
+	} else {
+		$iInsertID = DB::insertData($sTable, $aUserData);
+		if(!empty($iInsertID)) {
+			\Log::enterLog(0,"Benutzer \"".$_VARS['save_username']."\" wurde angelegt.");
+			\System::wd()->executeHook('user_insert', $iInsertID);
+		}
+	}
+
+	unset($_VARS['action']);
+
+}
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Benutzerverwaltung')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+<?
+if($_VARS['action'] == "edit") {
+
+	if($_VARS['id'] > 0) {
+		$my = DB::getQueryRow("SELECT * FROM system_user WHERE id = ".(int)$_VARS['id']." ");
+	}
+
+?>
+
+<form name="f1" action="user.html" method="post" enctype="multipart/form-data" onSubmit="sendRights()">
+<input type="hidden" name="action" value="save" />
+<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>" />
+<input type="hidden" name="save_access" value="" />
+<input type="hidden" name="save_denied" value="" />
+<input type="hidden" name="save_ext_role" value="" />
+<table class="table" cellpadding="4" cellspacing="0" border="0" width="100%">
+	<tr>
+		<th width="20%">Vorname</th>
+		<td><input type="text" class="txt" name="save_firstname" value="<?=$my['firstname']?>" /></td>
+	</tr>
+	<tr>
+		<th>Nachname</th>
+		<td><input type="text" class="txt" name="save_lastname" value="<?=$my['lastname']?>" /></td>
+	</tr>
+	<tr>
+		<th>E-Mail</th>
+		<td><input type="text" class="txt" name="save_email" value="<?=$my['email']?>" /></td>
+	</tr>
+	<tr>
+		<th>Telefon</th>
+		<td><input type="text" class="txt" name="save_phone" value="<?=$my['phone']?>" /></td>
+	</tr>
+	<tr>
+		<th>Benutzername</th>
+		<td><input type="text" class="txt" name="save_username" value="<?=$my['username']?>" /></td>
+	</tr>
+</table>
+
+<?
+
+\System::wd()->executeHook('user_additional_data');
+
+?>
+
+<h2>Rechte</h2>
+<table class="table" cellpadding="4" cellspacing="0" border="0" width="100%">
+	<tr>
+		<th width="20%">Rolle</th>
+		<td>
+<script>
+function checkRights()
+{
+	var rolle = document.f1.save_role[document.f1.save_role.selectedIndex].value;
+	var rollen = '|';
+	for(i=0; i<document.f1.ext_role.length; i++)
+	{
+		if(document.f1.ext_role[i].selected)
+			rollen += document.f1.ext_role[i].value+'|';
+	}
+	var ifr = iframe1.document.f2;
+	ifr.role.value=rolle;
+	ifr.ext_role.value=rollen;
+	//alert(rolle+'#'+rollen);
+	ifr.submit();
+}
+
+function sendRights() {
+
+	var ifr = iframe1.document.f2;
+	var access = document.f1.save_access;
+	var denied = document.f1.save_denied;
+
+	access.value = '|';
+	denied.value = '|';
+
+	for(i=0; i<=ifr.right_cnt.value; i++) {
+		if(ifr['status'+i][1].checked) {
+			access.value += ifr['right'+i].value+'|';
+		}
+		if(ifr['status'+i][2].checked) {
+			denied.value += ifr['right'+i].value+'|';
+		}
+	}
+	var rollen = '|';
+	for(i=0; i<document.f1.ext_role.length; i++) {
+		if(document.f1.ext_role[i].selected) {
+			rollen += document.f1.ext_role[i].value+'|';
+		}
+	}
+	//alert("Erlaubt:"+access.value+"\nVerboten:"+denied.value+"\Rollen:"+rollen)
+	document.f1.save_ext_role.value=rollen;
+
+}
+</script>
+			<select name="save_role" class="txt" onChange="checkRights()">
+<?
+		$aRoles = SQL_getRoles();
+		foreach($aRoles as $key=>$val) {
+?>
+				<option value="<?=$key?>" <?=(($my['role'] == $key)?"selected":"")?>><?=$val?><br>
+<?
+		}
+?>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<th>Weitere Rollen</th>
+		<td>
+			<table cellspacing=0 cellpadding=0 border=0 style="border:0px solid white !important">
+				<tr>
+					<td style="border:0px solid white !important">
+						<select name="ext_role" class="txt" size="<?=count($aRoles)?>" onChange="checkRights()" multiple>
+<?
+		foreach($aRoles as $key=>$val) {
+?>
+				<option value="<?=$key?>" <?=((!(strpos($my['ext_role'],'|'.$key.'|')===false))?"selected":"")?>><?=$val?><br>
+<?
+		}
+?>
+						</select>
+					</td>
+					<td style="border:0px solid white !important">&nbsp;</td>
+                    <td style="border:0px solid white !important">Wenn Sie die Strg-Taste (Ctrl-Taste auf internationalen Tastaturen) gedrückt halten, können Sie mehrere Einträge auswählen.</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<th>Rechte</th>
+		<td><iframe id="iframe1" name="iframe1" width=100% height=300 src="user_rights.html?userID=<?=$my['id']?>&role=<?=$my['role']?>&ext_role=<?=$my['ext_role']?>" frameborder=0></iframe></td>
+	</tr>
+</table>
+<? 
+\System::wd()->executeHook('user_additional_data2', $_VARS['id']);
+?>
+<?=printSubmit("Speichern")?>
+</form>
+<?
+} elseif($_VARS['action'] == "delete") {
+	if($_VARS['id']>0) {
+		$my = DB::getQueryRow("SELECT * FROM system_user WHERE id = '".(int)$_VARS['id']."'");
+		$rResult = DB::executeQuery("DELETE FROM system_user WHERE id = '".(int)$_VARS['id']."' LIMIT 1");
+		$iAffectedRows = DB::fetchAffectedRows();
+		if ($rResult && $iAffectedRows > 0) {
+			\Log::enterLog(0,"Benutzer \"".$my['username']."\" wurde gelöscht.");
+			\System::wd()->executeHook('user_delete', $_VARS['id']);
+		}
+	}
+?>
+<script>
+	self.location.href='user.html';
+</script>
+<?
+} else {
+?>
+<table class="table table-hover table-striped">
+	<tr>
+		<th width="15%">Zugang</th>
+		<th width="20%">Name</th>
+		<th width="20%">E-Mail</th>
+		<th width="15%">Rolle</th>
+		<th width="12%">Registriert seit</th>
+		<th width="12%">Letzter Login</th>
+		<th width="5%">Aktion</th>
+	</tr>
+<?
+
+$sSQL = "
+	SELECT
+		u.id,
+		u.username,
+		u.firstname,
+		u.lastname,
+		u.email,
+		UNIX_TIMESTAMP(u.created) created,
+		UNIX_TIMESTAMP(u.lastlogin) lastlogin,
+		r.name,
+		IF(`blocked_until` > NOW(), 1, 0) AS `blocked`
+	FROM
+		system_user u,
+		system_roles r
+	WHERE
+		u.role = r.id
+	ORDER BY
+		username
+";
+$aUsers = DB::getQueryRows($sSQL);
+
+foreach((array)$aUsers as $my) {
+
+?>
+	<tr id="tr_<?=$my['id']?>" onmouseout="showRow(<?=$my['id']?>,0)" onmousemove="showRow(<?=$my['id']?>,1);">
+		<td><?=$my['username']?>&nbsp;</td>
+		<td><?=$my['firstname']?> <?=$my['lastname']?>&nbsp;</td>
+		<td><?=$my['email']?>&nbsp;</td>
+		<td><?=$my['name']?>&nbsp;</td>
+		<td><?=(($my['created']>0)?strftime("%x",$my['created']):"&nbsp;")?></td>
+		<td><?=(($my['lastlogin']>0)?strftime("%x",$my['lastlogin']):"&nbsp;")?></td>
+		<td align="center" nowrap>
+			<a href="user.html?action=edit&id=<?=$my['id']?>"><img src="media/edit.png" border="0"></a> 
+		<?
+		// Löschen nur wenn Eintrag nicht aktueller Benutzer ist
+		if($my['id'] != $user_data['id']) {
+		?>
+			<a href="javascript:if(confirm('Möchten Sie diesen Eintrag wirklich löschen?')) document.location.href='user.html?action=delete&category_id=<?=$category_id?>&id=<?=$my['id']?>';"><img src="media/delete.png" border="0"></a>
+			<?
+			// Nur bei gesperrten
+			if($my['blocked']) {
+			?>
+				<a title="Login freigeben" href="javascript:document.location.href='user.html?action=free_login&id=<?=$my['id']?>';"><img src="media/lock_delete.png" border="0"></a>
+			<?
+			}
+			?>
+		<?
+		}
+		?>
+		</td>
+	</tr>
+<?
+}
+?>
+</table>
+	
+	<form method=post><input type="hidden" name="action" value="edit">
+	<p align="right"><input type="submit" value="Hinzufügen" class="btn btn-primary"></p>
+	</form>
+
+<?
+}
+?>
+	
+
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

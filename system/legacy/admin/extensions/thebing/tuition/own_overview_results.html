@@ -1,0 +1,123 @@
+<?php
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker('thebing_tuition_overview');
+
+$oSchool = Ext_Thebing_School::getSchoolFromSession();
+$sDescription = 'Thebing » Tuition » Own overview';
+
+$oClient = Ext_Thebing_System::getClient();
+
+$oReport = new Ext_Thebing_Tuition_Report();
+$oGui = new Ext_Thebing_Gui2(md5('thebing_tuition_overview'), 'Ext_Thebing_Tuition_Report_Gui2');
+$oGuiData = $oGui->getDataObject();
+$aGuiTranslations = $oGuiData->getTranslations('');
+
+$aReports = $oReport->getList();
+
+$aWeeks = Ext_Thebing_Util::getWeekOptions('TIMESTAMP', 1, $oSchool->course_startday);
+
+$oDate = new WDDate();
+$aLimits = $oDate->getWeekLimits();
+$iCurrentWeek = $aLimits['start'];
+
+$sLanguage = \Ext_TC_System::getInterfaceLanguage();
+$oLanguage = new \Tc\Service\Language\Backend($sLanguage);
+$oLanguage->setPath($sDescription);
+
+$oStateHelper = new \TsTuition\Helper\State(\TsTuition\Helper\State::KEY_STRING, $oLanguage);
+$aStates = $oStateHelper->getOptions(false);
+$aCourseStates = $oStateHelper->getOptions();
+
+$aOptions = array();
+
+$aOptions['additional']  = '<link rel="stylesheet" href="/admin/extensions/gui2/gui2.css" />';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/assets/ts/css/gui2.css" />';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/assets/ts-reporting/css/reporting_legacy.css" />';
+
+$aOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/gui2/jquery/jquery-1.11.2.min.js?v='.System::d('version').'"></script>';
+$aOptions['additional'] .= '<script type="text/javascript">var $j = jQuery.noConflict();</script>';
+$aOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/gui2/gui2.js?v='.System::d('version').'"></script>';
+$aOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/thebing/tuition/js/report.js?v='.System::d('version').'"></script>';
+$aOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/thebing/tuition/js/own_overview.js?v='.System::d('version').'"></script>';
+
+$aTranslations = array(
+	'title' => Ext_TS_System_Navigation::t(),
+	'own_overview' => L10N::t('Eigene Übersicht', $sDescription),
+	'overview' => L10N::t('Übersicht', $sDescription),
+	'filter' => L10N::t('Filter', $sDescription),
+	'courseweek' => L10N::t('Kurswoche', $sDescription),
+	'hide_left_navi' => L10N::t('Linkes Menü ausblenden', $sDescription),
+	'show_left_navi' => L10N::t('Linkes Menü einblenden', $sDescription),
+	'pdf' => L10N::t('PDF', $sDescription),
+	'csv' => L10N::t('CSV', $sDescription),
+	'last_week' => L10N::t('Eine Woche zurück', $sDescription),
+	'current_week' => L10N::t('Aktuelle Woche', $sDescription),
+	'next_week' => L10N::t('Eine Woche vor', $sDescription),
+	'state_booking' => L10N::t('Status (Buchung)', $sDescription),
+	'state_course' => L10N::t('Status (Kurs)', $sDescription),
+	'export' => L10N::t('Export', $sDescription),
+	'export_error' => L10N::t('Bitte wählen Sie einen Bericht aus!', $sDescription),
+	'weekday' => L10N::t('Wochentage', $sDescription),
+	'course_time' => L10N::t('Kurszeiten', $sDescription),
+	'search' => L10N::t('Suche', $sDescription),
+	'course' => L10N::t('Kurs', $sDescription),
+	'course_category' => L10N::t('Kurskategorie', $sDescription),
+	'teacher' => L10N::t('Lehrer', $sDescription),
+	'inbox' => L10N::t('Inbox', $sDescription),
+	'show_more_options' => $aGuiTranslations['show_more_options'],
+	'hide_more_options' => $aGuiTranslations['hide_more_options'],
+	'class_color' => L10N::t('Klassenfarbe', $sDescription),
+	'course_start_from' => L10N::t('Kursstartzeit von', $sDescription),
+	'course_start_until' => L10N::t('Kursstartzeit bis', $sDescription),
+	'label_course_language' => $oGui->t('Kurssprache')
+);
+
+$oLegend = new Ext_Gui2_Bar_Legend(new Ext_Thebing_Gui2());
+$oLegend->addTitle(L10N::t('Legende', $sDescription));
+$oLegend->addInfo(L10N::t('Lehrer mit Abwesenheit', $sDescription), Ext_Thebing_Util::getColor('red'), true);
+$oLegend->addInfo(L10N::t('Vertretungslehrer', $sDescription), Ext_Thebing_Util::getColor('substitute_teacher'), true);
+$aElements = (array)$oLegend->getElements();
+$oHtml = reset($aElements);
+$sLegendHtml = $oHtml->html;
+
+$aCourses = $oSchool->getCourseList(true, false, true, true);
+$aCourseCategories = $oSchool->getCourseCategoriesList('select');
+$aTeachers = $oSchool->getTeacherList(true);
+$aWeekDays = Ext_Thebing_Util::getDays();
+$aInbox = $oClient->getInboxList(true, true);
+
+$oSchool = Ext_Thebing_School::getSchoolFromSession();
+$aTuitionTemplates = $oSchool->getTuitionTemplates(true);
+
+$aColors = Ext_Thebing_Tuition_Color::getColorsForSchool($oSchool->getId(), true);
+
+$courseTimes = $oSchool->getClassTimesOptions('format', 5);
+
+$levelGroups = \Ext_Thebing_Tuition_LevelGroup::getSelectOptions(schools:  [$oSchool]);
+
+$oSmarty = new SmartyWrapper();
+$oGuiHtml = new Ext_Gui2_Html(new Ext_Thebing_Gui2()); // Ext_Thebing_Gui2 benötigt wegen JS-Includes für statistic.js
+$oSmarty->assign('aOptions', $oGuiHtml->generateHtmlHeader());
+$oSmarty->assign('aTranslations', $aTranslations);
+$oSmarty->assign('aTranslationsJson', json_encode($aTranslations));
+$oSmarty->assign('aReports', $aReports);
+$oSmarty->assign('aWeeks', $aWeeks);
+$oSmarty->assign('aCourses', $aCourses);
+$oSmarty->assign('aCourseCategories', $aCourseCategories);
+$oSmarty->assign('aTeachers', $aTeachers);
+$oSmarty->assign('iCurrentWeek', $iCurrentWeek);
+$oSmarty->assign('aStates', $aStates);
+$oSmarty->assign('aCourseStates', $aCourseStates);
+$oSmarty->assign('aStateFilters', array('booking', 'course'));
+$oSmarty->assign('aColors', $aColors);
+$oSmarty->assign('sLegendHtml', $sLegendHtml);
+$oSmarty->assign('aWeekDays', $aWeekDays);
+$oSmarty->assign('aInbox', $aInbox);
+$oSmarty->assign('aTuitionTemplates', $aTuitionTemplates);
+$oSmarty->assign('courseTimes', $courseTimes);
+$oSmarty->assign('levelGroups', $levelGroups);
+$oSmarty->assign('sJs', $oGuiHtml->getJsFooter());
+$oSmarty->display(Ext_Thebing_Tuition_Report_Gui2::getTemplatePath() . 'reports.tpl');

@@ -1,0 +1,98 @@
+class:
+  wdbasic: Tc\Entity\EventManagement
+  data: Tc\Gui2\Data\EventManagementData
+  icon_status: Tc\Gui2\Icon\EventManagementIcon
+  js: EventManagerGui
+access:
+  - core_event_manager
+  - ""
+id:
+  column: id
+  alias: tc_em
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - tc_em
+        column:
+          - name
+      -
+        element: selectfilter
+        label: Event
+        label_as_item: true
+        entries:
+          - \Tc\Gui2\Data\EventManagementData
+          - getEventOptions
+        alias:
+          - tc_em
+        column:
+          - event_name
+      -
+        element: selectfilter
+        label: Benutzer
+        label_as_item: true
+        entries:
+          - \Tc\Gui2\Data\EventManagementData
+          - getUserFilterOptions
+        filter_query:
+          - \Tc\Gui2\Data\EventManagementData
+          - getUserFilterOptionsQueries
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Tc\Gui2\Data\EventManagementData
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Tc\Gui2\Data\EventManagementData
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+      -
+        element: icon
+        access:
+          - core_event_manager
+          - testing
+        label: Testen
+        img: fa-tasks
+        task: openDialog
+        action: testing
+        dialog:
+          - Tc\Gui2\Data\EventManagementData
+          - getTestingDialog
+        active: 0
+columns:
+  -
+    title: Name
+    alias: tc_em
+    column: name
+    width: name
+    resize: true
+    default: true
+    sortable: false
+  -
+    title: Ereignis
+    alias: tc_em
+    column: event_name
+    width: long_description
+    resize: false
+    default: true
+    format: Tc\Gui2\Format\EventManagement\EventName
+js:
+  - /assets/tc/js/gui2/event_manager.js

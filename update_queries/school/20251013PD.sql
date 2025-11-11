@@ -1,0 +1,1 @@
+UPDATE `kolumbus_tuition_classes` SET `changed` = `changed`, `confirmed` = NOW() WHERE `confirmed` IS NULL;

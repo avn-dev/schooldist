@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__.'/system/includes/console.inc.php';
+
+$oApplication = new \Core\Service\Console($app, $app['events'], \System::d('version'));
+$oApplication->setName('Fidelo Framework - Console');
+$oApplication->addBundleCommands();
+$oApplication->run();

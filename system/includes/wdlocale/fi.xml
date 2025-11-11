@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>”</quotationStart>
+		<quotationEnd>”</quotationEnd>
+		<alternateQuotationStart>’</alternateQuotationStart>
+		<alternateQuotationEnd>’</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar>
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">tammikuuta</month>
+					<month type="2">helmikuuta</month>
+					<month type="3">maaliskuuta</month>
+					<month type="4">huhtikuuta</month>
+					<month type="5">toukokuuta</month>
+					<month type="6">kesäkuuta</month>
+					<month type="7">heinäkuuta</month>
+					<month type="8">elokuuta</month>
+					<month type="9">syyskuuta</month>
+					<month type="10">lokakuuta</month>
+					<month type="11">marraskuuta</month>
+					<month type="12">joulukuuta</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">tammikuuta</month>
+					<month type="2">helmikuuta</month>
+					<month type="3">maaliskuuta</month>
+					<month type="4">huhtikuuta</month>
+					<month type="5">toukokuuta</month>
+					<month type="6">kesäkuuta</month>
+					<month type="7">heinäkuuta</month>
+					<month type="8">elokuuta</month>
+					<month type="9">syyskuuta</month>
+					<month type="10">lokakuuta</month>
+					<month type="11">marraskuuta</month>
+					<month type="12">joulukuuta</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">su</day>
+					<day type="mon">ma</day>
+					<day type="tue">ti</day>
+					<day type="wed">ke</day>
+					<day type="thu">to</day>
+					<day type="fri">pe</day>
+					<day type="sat">la</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">sunnuntaina</day>
+					<day type="mon">maanantaina</day>
+					<day type="tue">tiistaina</day>
+					<day type="wed">keskiviikkona</day>
+					<day type="thu">torstaina</day>
+					<day type="fri">perjantaina</day>
+					<day type="sat">lauantaina</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">1. nelj.</quarter>
+					<quarter type="2">2. nelj.</quarter>
+					<quarter type="3">3. nelj.</quarter>
+					<quarter type="4">4. nelj.</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">1. neljännes</quarter>
+					<quarter type="2">2. neljännes</quarter>
+					<quarter type="3">3. neljännes</quarter>
+					<quarter type="4">4. neljännes</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>ap.</am>
+			<pm>ip.</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%e. %B %y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%e.%m.%Y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%e.%m.%Y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H.%M.%S %p</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H.%M.%S</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H.%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>vuosi</displayName>
+				</field>
+				<field type="month">
+					<displayName>kuukausi</displayName>
+				</field>
+				<field type="week">
+					<displayName>viikko</displayName>
+				</field>
+				<field type="day">
+					<displayName>päivä</displayName>
+					<relative type="-2">toissapäivänä</relative>
+					<relative type="-1">eilen</relative>
+					<relative type="0">tänään</relative>
+					<relative type="1">huomenna</relative>
+					<relative type="2">ylihuomenna</relative>
+				</field>
+				<field type="weekday">
+					<displayName>viikonpäivä</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>ap/ip</displayName>
+				</field>
+				<field type="hour">
+					<displayName>tunti</displayName>
+				</field>
+				<field type="minute">
+					<displayName>minuutti</displayName>
+				</field>
+				<field type="second">
+					<displayName>sekunti</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>,</decimal>
+			<group> </group>
+			<list>;</list>
+			<percentSign>%</percentSign>
+			<nativeZeroDigit>0</nativeZeroDigit>
+			<patternDigit>#</patternDigit>
+			<plusSign>+</plusSign>
+			<minusSign>-</minusSign>
+			<exponential>E</exponential>
+			<perMille>‰</perMille>
+			<infinity>∞</infinity>
+			<nan>epäluku</nan>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<percentFormats>
+			<percentFormatLength>
+				<percentFormat>
+					<pattern>#,##0 %</pattern>
+				</percentFormat>
+			</percentFormatLength>
+		</percentFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>#,##0.00 ¤</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+			<unitPattern count="one">{0} {1}</unitPattern>
+			<unitPattern count="other">{0} {1}</unitPattern>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="one">{0} päivä</unitPattern>
+			<unitPattern count="other">{0} päivää</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="one">{0} tunti</unitPattern>
+			<unitPattern count="other">{0} tuntia</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="one">{0} minuutti</unitPattern>
+			<unitPattern count="other">{0} minuuttia</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="one">{0} kuukausi</unitPattern>
+			<unitPattern count="other">{0} kuukautta</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="one">{0} sekunti</unitPattern>
+			<unitPattern count="other">{0} sekuntia</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="one">{0} viikko</unitPattern>
+			<unitPattern count="other">{0} viikkoa</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="one">{0} vuosi</unitPattern>
+			<unitPattern count="other">{0} vuotta</unitPattern>
+		</unit>
+	</units>
+</ldml>

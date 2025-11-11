@@ -1,0 +1,235 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.dao.inc.php");
+
+Access_Backend::checkAccess("office_employees");
+
+$aAdditional = array();
+$aAdditional['additional'] = '
+<style>
+
+.employee {
+	border-bottom: 1px dashed #ccc;
+	padding-bottom: 10px;
+	margin-top: 10px;
+	font-size: 12px;
+	line-height: 18px;
+}
+
+.employee:last-child {
+	border-bottom: 0;
+}
+
+.employee .name {
+	font-weight: bold;
+	width: 200px;
+	float: left;
+}
+
+.employee .days {
+	width: 90px;
+	float: left;
+	text-align: right;
+	min-height: 16px;
+	margin-right: 5px;
+}
+
+.employee .days input {
+	text-align: right;
+	width: 40px;
+	border: 1px solid #ccc;
+	font-size: 12px;
+	margin: 0;
+}
+
+.head {
+	font-weight: bold;
+}
+
+.head .days {
+	text-align: left;
+}
+
+.employee .contracts {
+	float: left;
+	width: 200px;
+	min-height: 16px;
+}
+
+</style>
+';
+
+Admin_Html::loadAdminHeader($aAdditional);
+
+$aYears = Ext_Office_Employee_Contract::getAvailableYears();
+
+if(
+	isset($_VARS['year']) &&
+	isset($aYears[$_VARS['year']])
+) {
+	$iYear = $_VARS['year'];
+} else {
+	$iYear = date("Y");
+}
+
+$aGroups = array();
+$oEmployee = new Ext_Office_Employee;
+$aGroupData = $oEmployee->getGroups();
+
+foreach((array)$aGroupData as $sKey => $mValue) {
+	$aGroups[$mValue['id']] = $mValue['name'];
+}
+
+if(
+	isset($_VARS['group_id']) &&
+	isset($aGroups[$_VARS['group_id']])
+) {
+
+	$iGroupId = (int)$_VARS['group_id'];
+	
+	Ext_Office_Config::set('employee_holidays_group', $iGroupId);
+
+} else {
+	$iGroupId = Ext_Office_Config::get('employee_holidays_group');
+}
+
+if(!empty($_VARS['residual'])) {
+	foreach($_VARS['residual'] as $iEmployeeId=>$sDays) {
+		$sDays = str_replace(".", "", $sDays);
+		$sDays = str_replace(",", ".", $sDays);
+		$fDays = (float)$sDays;
+		$oEmployee = new Ext_Office_Employee($iEmployeeId);
+		$oEmployee->saveResidualHoliday($iYear, $fDays);
+	}	
+}
+
+?>
+<div class="divHeader">
+	<h1>Office » Mitarbeiter » Urlaub</h1>
+</div>
+<div style="padding: 30px;">
+
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<?=printTableStart()?>
+			<?=printFormSelect('Jahr', 'year', $aYears, $iYear, 'onchange="this.form.submit();"')?>
+			<?=printFormSelect('Gruppe', 'group_id', $aGroups, $iGroupId, 'onchange="this.form.submit();"')?>
+		<?=printTableEnd()?>
+	</form>
+
+	
+	
+	
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<?=printFormHidden('year', $iYear)?>
+
+	<div class="employee head">
+		<div class="name">Mitarbeiter</div>
+		<div class="contracts">Vertrag</div>
+		<div class="days">Urlaubstage</div>
+		<div class="days">Dauer</div>
+		<div class="days">Jahresurlaub</div>
+		<div class="days">Vorjahr</div>
+		<div class="days">Genommen</div>
+		<div class="days">Resturlaub</div>
+		
+		<div class="divCleaner"></div>
+	</div>
+<?
+
+$oYearStart = new WDDate($iYear, WDDate::YEAR);
+$oYearStart->set(1, WDDate::DAY);
+$oYearStart->set(1, WDDate::MONTH);
+
+$oYearEnd = new WDDate($oYearStart);
+$oYearEnd->set(31, WDDate::DAY);
+$oYearEnd->set(12, WDDate::MONTH);
+
+$oEmployee = new Ext_Office_Employee();
+$aEmployees = $oEmployee->getEmployeesList(null, null, 100, $iGroupId);
+
+foreach($aEmployees as $aEmployee) {
+
+	$oEmployee = new Ext_Office_Employee($aEmployee['id']);
+	$aContracts = $oEmployee->getContractListData($oYearStart->get(WDDate::DB_DATE), $oYearEnd->get(WDDate::DB_DATE), '`from` ASC');
+	$fTakenHolidays = $oEmployee->getFreeDates($oYearStart->get(WDDate::DB_DATE), $oYearEnd->get(WDDate::DB_DATE));
+	$fResidualHoliday = $oEmployee->getResidualHoliday($oYearStart->get(WDDate::YEAR));
+
+	if(empty($aContracts)) {
+		continue;
+	}
+
+?>
+	<div class="employee">
+		<div class="name"><?=$aEmployee['name']?></div>
+		<div class="contracts">
+<?
+	$fDaysTotal = 0;
+	foreach($aContracts as $aContract) {
+		$oContract = Ext_Office_Employee_Contract::getInstance($aContract['id']);
+		$fDays = $oContract->getHolidays($oYearStart->get(WDDate::DB_DATE), $oYearEnd->get(WDDate::DB_DATE));
+?>
+			<?=$aContract['from']?> bis <?=$aContract['until']?><br/>
+<?
+		$fDaysTotal += $fDays;
+	}
+?>
+		</div>
+		<div class="days">
+<?
+	$fDaysTotal = 0;
+	$fFactorTotal = 0;
+	$oContract = null;
+	foreach($aContracts as $aContract) {
+		$oContract = Ext_Office_Employee_Contract::getInstance($aContract['id']);
+?>
+			<?=number_format((float)$oContract->holiday, 0, ",", ".")?> Tage<br/>
+<?
+		$fDaysTotal += $fDays;
+		$fFactorTotal += $fFactor;
+	}
+?>
+		</div>
+		<div class="days">
+<?
+	$fDaysTotal = 0;
+	$fFactorTotal = 0;
+	$oContract = null;
+	foreach($aContracts as $aContract) {
+		$oContract = Ext_Office_Employee_Contract::getInstance($aContract['id']);
+		$fFactor = $oContract->getDuration($oYearStart->get(WDDate::DB_DATE), $oYearEnd->get(WDDate::DB_DATE));
+		$fDays = $oContract->getHolidays($fFactor);
+?>
+			<?=number_format($fFactor*100, 0, ",", ".")?> %<br/>
+<?
+		$fDaysTotal += $fDays;
+		$fFactorTotal += $fFactor;
+	}
+?>
+		</div>
+<?
+	$iHolidayDays = $oContract->holiday;
+	// Wenn man mindestens das halbe Jahr voll hat bekommt man den vollen Urlaubsanspruch
+	if($fFactorTotal > 0.5) {
+		$fFactorTotal = 1;
+	}
+	$fDaysTotal = $iHolidayDays * $fFactorTotal;
+?>
+		<div class="days"><?=number_format($fDaysTotal, 0, ",", ".")?> Tage</div>
+		<div class="days"><input type="text" name="residual[<?=$oEmployee->id?>]" value="<?=number_format($fResidualHoliday, 2, ",", ".")?>" /> Tage</div>
+		<div class="days"><?=number_format($fTakenHolidays, 2, ",", ".")?> Tage</div>
+		<div class="days"><?=number_format($fDaysTotal + $fResidualHoliday - $fTakenHolidays, 0, ",", ".")?> Tage</div>
+
+		<div class="divCleaner"></div>
+	</div>
+<?
+}
+
+?>
+		<?=printSubmit('Speichern')?>
+	</form>
+	<p class="note">Auf Basis vom Bundesurlaubsgesetz (BUrlG) vom 07.05.2002</p>
+</div>
+
+<?
+Admin_Html::loadAdminFooter();

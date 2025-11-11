@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_courses` ADD `only_for_combination_courses` TINYINT NOT NULL;

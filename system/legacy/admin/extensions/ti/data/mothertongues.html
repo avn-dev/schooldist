@@ -1,0 +1,148 @@
+<?php
+
+require_once(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+if(!Ext_TC_Util::isDevCoreSystem()) {
+	die('No access');
+}
+
+$oGui = new Ext_TC_Gui2(md5('tc_data_mothertongue'));
+
+$sLabelField = 'nationality_'.$system_data['systemlanguage'];
+$sCountryField = 'cn_short_'.$system_data['systemlanguage'];
+
+// Datenbasis
+$oGui->setWDBasic('Ext_TI_Data_Mothertongue');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array($sCountryField => 'ASC'));
+
+// Listenoptionen
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'dc';
+
+// Dialog
+$sTitle = L10N::t('Muttersprache für Land "{%s}" auswählen und Nationalität pflegen', $oGui->gui_description);
+$sTitle = sprintf($sTitle, $sCountryField, $sLabelField);
+
+$oDialog			= $oGui->createDialog($sTitle);
+$oDialog->height	= 650;
+$aMothertonge		= Data_Languages::getList($system_data['systemlanguage']);
+$aMothertonge		= Ext_TC_Util::addEmptyItem($aMothertonge);
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Muttersprache', $oGui->gui_description), 'select', array('db_alias' => '', 'db_column'=>'mothertonge_id', 'select_options' => $aMothertonge)));
+
+$oH3 = $oDialog->create('h4');
+$oH3->setElement($oGui->t('Nationalität'));
+$oDialog->setElement($oH3);
+
+$aLanguages	= $system_data['allowed_languages'];
+
+foreach($aLanguages as $sIso=>$sName) {
+	$oDialog->setElement(
+		$oDialog->createRow(
+			L10N::t($sName), 
+			'input', 
+			array('db_alias' => '', 'db_column'=>'nationality_'.$sIso)
+		)
+	);	
+}
+
+// Leiste(n)
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', $sLabelField, $sCountryField);
+$oFilter->db_alias		= array('dc', 'dc', 'dc');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createEditIcon(L10N::t('Editieren', $oGui->gui_description), $oDialog, L10N::t('Editieren', $oGui->gui_description));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// Spalten
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= $sCountryField;
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Land', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= $sLabelField;
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Nationalität', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'cn_iso_2';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('ISO Code', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('short_name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'mothertongue';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Muttersprache', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'user_id';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Bearbeiter', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oColumn->format		= new Ext_Gui2_View_Format_UserName();
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'changed';
+$oColumn->db_alias		= 'dc';
+$oColumn->title			= L10N::t('Verändert', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('date_time');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oColumn->format		= new Ext_TC_Gui2_Format_Date_Time();
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'created';
+$oColumn->db_alias		= 'dc';
+$oColumn->title			= L10N::t('Erstellt', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('date_time');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oColumn->format		= new Ext_TC_Gui2_Format_Date_Time();
+$oGui->setColumn($oColumn);
+
+// Anzeige
+$oGui->display();

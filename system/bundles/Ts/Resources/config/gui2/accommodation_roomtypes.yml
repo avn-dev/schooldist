@@ -1,0 +1,80 @@
+hash: e0127a2582fd5cf1cd3f6b8d0c2b2547
+class:
+  wdbasic: Ext_Thebing_Accommodation_Roomtype
+  data: Ext_Thebing_Accommodation_Roomtype_Gui2
+access: thebing_accommodation_roomtypes
+id:
+  column: id
+  alias: kar
+sortable: true
+only_pagecount: true
+designer: 
+  flex: roomtypes
+orderby:
+  - Ext_Thebing_Accommodation_Roomtype_Gui2
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: kar
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Accommodation_Roomtype_Gui2
+          - manipulateSearchFilter
+     -
+        element: seperator
+     -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Accommodation_Roomtype_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Accommodation_Roomtype_Gui2
+          - getDialog
+     -
+        element: icon_delete
+     -
+        element: icon_deactivate
+        access: thebing_accommodation_roomtypes_deactivate
+        
+columns:
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true
+    i18n: 
+      pass_language: true
+      interface: frontend      
+  - 
+    title: Kürzel	
+    column: short
+    width: short_name  
+    i18n: 
+      pass_language: true
+      interface: frontend    
+  - 
+    title: Schulen	
+    column: schools
+    width: name 
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]
+  - 
+    title: Gültig bis	
+    column: valid_until
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    

@@ -1,0 +1,65 @@
+hash: 4dd93c051c140bb3ff84fc1865124e74
+class:
+  wdbasic: Ext_Thebing_Admin_Usergroup
+  data: Ext_Thebing_Access_Gui2
+  js: Licence
+js:
+  - [admin/js/licence.js, thebing]
+access: thebing_admin_usergroups
+orderby:
+  - Ext_Thebing_Access_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Access_Gui2
+  - getWhere
+limit: 30
+limit_selection: false
+multiple_selection: 0
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - id
+          - name
+        alias:
+          - kag
+          - kag
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Access_Gui2
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Access_Gui2
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon
+        label: Zugriffsrechte
+        task: openDialog
+        action: access
+        dialog:
+          - Ext_Thebing_Access_Gui2
+          - getAccessDialog
+        img:
+          - Util
+          - getIcon
+          - access
+columns:
+  -
+    title: Bezeichnung
+    column: name
+    alias: kag
+    width: name
+    resize: true

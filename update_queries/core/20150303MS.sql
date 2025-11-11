@@ -1,0 +1,2 @@
+ALTER TABLE  `tc_complaints_histories` CHANGE  `state`  `state` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT  'open';
+ALTER TABLE  `tc_complaints` CHANGE  `latest_comment_id`  `latest_comment_id` MEDIUMINT( 9 ) NOT NULL;

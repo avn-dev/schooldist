@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questions` CHANGE `overall_satisfaction` `overall_satisfaction` TINYINT( 1 ) NOT NULL DEFAULT '0';

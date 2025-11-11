@@ -1,0 +1,20 @@
+parent: ts_inquiry 
+title: ""
+description: ""
+access: thebing_students_visa_list
+hash: 49b812fe40ccb6d761fd9621b06dfb31
+leftframe: true
+multiple_selection: true
+index:
+  registry: 
+    generate: false
+where : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getStudentVisumlistWhere
+designer:
+  dialog: ""
+  filter: ts_students_visum
+  flex: student_record
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo

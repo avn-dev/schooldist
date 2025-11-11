@@ -1,0 +1,871 @@
+<?
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+// create the table if not exist
+$sSQL = "
+	 CREATE TABLE IF NOT EXISTS
+		`lottery_results` (
+			`id` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+			`created` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00-00-00',
+			`changed` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL ,
+			`active` TINYINT( 1 ) NOT NULL DEFAULT '1',
+			`lottery_id` INT ( 11 ) NOT NULL DEFAULT '0',
+			`sex` TINYINT( 1 ) NOT NULL DEFAULT '0',
+			`firstname` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+			`lastname` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+			`telephone` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+			`email` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+			`newsletter` TINYINT( 1 ) NOT NULL DEFAULT '0'
+		) ENGINE = MYISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci 
+";
+DB::executeQuery($sSQL);
+
+
+$sSql = "
+ CREATE TABLE IF NOT EXISTS
+ 	`lottery_answers` (
+		`id` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+		`created` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00-00-00',
+		`changed` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
+		`active` TINYINT( 1 ) NOT NULL DEFAULT '1',
+		`answer` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL ,
+		`lottery_id` INT( 11 ) NOT NULL ,
+		`right_one` TINYINT( 1 ) NOT NULL DEFAULT '0'
+	) ENGINE = MYISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci 
+";
+DB::executeQuery($sSql);
+
+
+
+$sSQL = "
+	 CREATE TABLE IF NOT EXISTS
+		`lotteries` (
+			`id` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+			`created` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00-00-00',
+			`changed` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL ,
+			`active` TINYINT( 1 ) NOT NULL DEFAULT '1',
+			`newsletter_id` INT ( 11 ) NOT NULL ,
+			`title` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+			`question` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
+		) ENGINE = MYISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci 
+";
+DB::executeQuery($sSQL);
+
+$sSql = "
+	SELECT
+		l.*,
+		nl.name newsletter
+	FROM
+		lotteries l LEFT OUTER JOIN
+		newsletter2_lists nl ON
+		l.newsletter_id = nl.id
+	ORDER BY
+		`title`
+	";
+$aLotteries = DB::getQueryData($sSql);
+
+if(
+	isset($_VARS['page_id']) &&
+	isset($_VARS['element_id']) &&
+	isset($_VARS['content_id'])
+) {
+	if($_VARS['action'] == "config") {
+		$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$oConfig->lottery_id = $_VARS['lottery_id'];
+		$oConfig->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$objPage = new GUI_Page();
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Gewinnspiel', 'type' => '1')));
+	
+	$oForm = new GUI_form(array('method' => 'post', 'action' => $_SERVER['PHP_SELF']));
+	$oButton = new GUI_FormSubmit(array('value' => 'Gewinnspiel wählen'));
+	$oH_Action = new GUI_FormHidden(array('name' => 'action', 'value' => 'config'));
+	$oH_Page = new GUI_FormHidden(array('name' => 'page_id', 'value' => $_VARS['page_id']));
+	$oH_Element = new GUI_FormHidden(array('name' => 'element_id', 'value' => $_VARS['element_id']));
+	$oH_Content = new GUI_FormHidden(array('name' => 'content_id', 'value' => $_VARS['content_id']));
+	
+	$aOptions = array();
+	foreach($aLotteries as $aLottery)
+	{
+		$aOptions[] = array('display' => $aLottery['title'], 'value' => $aLottery['id']);
+	}
+	$oSelect = new GUI_FormSelect(array('name' => 'lottery_id', 'options' => $aOptions, 'selected'=>$oConfig->lottery_id));
+
+	$oForm->appendElement($oSelect);
+	$oForm->appendElement(' ');
+	$oForm->appendElement($oButton);
+	$oForm->appendElement($oH_Action);
+	$oForm->appendElement($oH_Page);
+	$oForm->appendElement($oH_Element);
+	$oForm->appendElement($oH_Content);
+
+	$objPage->appendElement($oForm);
+	echo $objPage->generateHTML();
+}
+else
+{
+
+
+
+
+
+// if button "Gewinnspiel erstellen" has been pressed
+ // Check if name isset / alwasy_exists..
+if(isset($_VARS['create']) && isset($_VARS['create_btn'])){
+	if(($_VARS['create']) == ""){
+		$sAbort = "nothing";
+	} else {
+		$_VARS['create'] = DB::escapeQueryString($_VARS['create']);
+		$sSql = "
+			SELECT
+				*
+			FROM
+				`lotteries`
+			WHERE
+				`title` = '".$_VARS['create']."'
+		";
+		
+		$aDouble = DB::getQueryData($sSql);
+		if(count($aDouble) >= 1){
+			$sAbort = "exists";	
+		} else {
+			$sSql = "INSERT INTO
+				 			`lotteries`
+								(`title`)
+						VALUES
+								('".$_VARS['create']."')
+			";
+			DB::executeQuery($sSql);
+		}
+	}
+}
+
+
+
+
+
+// if button "gewinnspiel löschen" has been pressed
+if (isset($_VARS['lotteries']) && isset($_VARS['delete'])){
+	$sSql = "
+		DELETE FROM
+			`lottery_results`
+		WHERE
+			`lottery_id` = '".$_VARS['lotteries']."'
+	";
+	DB::executeQuery($sSql);
+	
+	$sSql = "
+		DELETE FROM
+			`lotteries`
+		WHERE
+			`id` = '".$_VARS['lotteries']."'
+	";
+	DB::executeQuery($sSql);
+	
+	$sSql = "
+		DELETE FROM
+			`lottery_answers`
+		WHERE
+			`lottery_id` = '".$_VARS['lotteries']."'
+	";
+	DB::executeQuery($sSql);
+}
+
+
+
+
+
+// if button "teilnehmerliste leeren" has been pressed
+if(isset($_VARS['lotteries']) && isset($_VARS['truncate'])){
+	$sSql = "
+		DELETE FROM
+			`lottery_results`
+		WHERE
+			`lottery_id` = '".$_VARS['lotteries']."'
+	";
+	DB::executeQuery($sSql);
+
+
+	$sSql = "
+			SELECT
+				*
+			FROM
+				`lotteries`
+			WHERE
+				`id` = '".$_VARS['lotteries']."' 
+			";
+	$aLotteriesid = DB::getQueryData($sSql);
+	
+}
+
+
+// delete
+function delete($id){
+	$aSql = array('id' => $id);
+	$sSql = "
+		DELETE FROM
+			`lottery_results`
+		WHERE
+			`lottery_id` = :id
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+
+
+	$sSql = "
+		DELETE FROM
+			`lotteries`
+		WHERE
+			`id` = :id
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+	
+	return true;
+	
+}
+
+
+
+// get User Play
+function getUserPlay($id){
+
+	$aSql = array('id' => $id);
+	$sSql = "
+			SELECT
+				COUNT(*) AS `count`
+			FROM
+				`lottery_results`
+			WHERE
+				`lottery_id` = :id 
+	";
+	$aResult = DB::getPreparedQueryData($sSql, $aSql);
+	return $aResult[0]['count'];
+}	
+
+
+function getAnswers($id){
+	
+	$aSql = array('id' => $id);
+	$sSql = "
+			SELECT
+				*
+			FROM
+				`lottery_answers`
+			WHERE
+				`lottery_id` = :id
+			ORDER BY
+				`id`
+	";
+	$aResult = DB::getPreparedQueryData($sSql, $aSql);
+	return $aResult;
+	
+}
+
+
+// get Question
+function getQuestion($id){
+	
+	$aSql = array('id' => $id);
+	$sSql = "
+			SELECT
+				`question`
+			FROM
+				`lotteries`
+			WHERE
+				`id` = :id 
+	";
+	$aResult = DB::getPreparedQueryData($sSql, $aSql);
+	return $aResult[0]['question'];
+	
+}
+
+// Update Answers
+function UpdateAnswers($id, $answer){
+
+	$aSql = array('id' 		=> $id,
+				'answer' 	=> $answer);
+	$sSql = "
+			UPDATE
+				`lottery_answers`
+			SET
+				`answer` 	= :answer
+			WHERE
+				`id` = :id
+	";	
+	DB::executePreparedQuery($sSql, $aSql);
+}
+
+function UpdateRights($id, $int){
+	
+	$aSql = array(	'id' 	=> $id,
+					'int'	=> $int);
+	$sSql = "
+			UPDATE
+				`lottery_answers`
+			SET
+				`right_one` = :int
+			WHERE
+				`id` = :id
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+	
+}
+
+
+function getRights($id){
+	$aSql = array('id' => $id);
+	$sSql = "
+		SELECT
+			*
+		FROM
+			`lottery_answers`
+		WHERE
+			`right_one` = '1'
+		AND
+			`lottery_id` = :id
+	";
+	$aData	= DB::getPreparedQueryData($sSql, $aSql);
+	if(count($aData) >= 1){
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+
+function deleteAnswer($id){
+	$aSql = array('id' => $id);
+	$sSql = "
+		DELETE FROM
+			`lottery_answers`
+		WHERE
+			`id` = :id
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+}
+
+
+
+
+function InsertAnswer($answer, $id){
+	
+	$aSql = array('id' => $id,
+				'answer'=> $answer);
+	$sSql = "
+		INSERT INTO
+			`lottery_answers`
+				(`answer`, `lottery_id`)
+			VALUES
+				(:answer, :id)
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+}
+
+
+
+
+
+if(isset($_VARS['create']) && isset($_VARS['list_user']) && isset($_VARS['lotteries'])){
+	$sSql = "
+			SELECT
+				*
+			FROM
+				`lottery_results`
+			WHERE
+				`lottery_id` = '".$_VARS['lotteries']."'
+			ORDER BY
+				`lastname`
+			";
+	$aUser_list = DB::getQueryData($sSql);
+		
+	$sSql = "
+		SELECT
+			*
+		FROM
+			`lotteries`
+		WHERE
+			`id` = '".$_VARS['lotteries']."' 
+		";
+	$aLotterie = DB::getQueryData($sSql);
+	
+}
+
+
+
+
+
+
+
+//##TODO Und Hier
+if(isset($_VARS['create']) && isset($_VARS['newsletter']) && isset($_VARS['lotteries'])){
+	
+	function getLotterie($lotterie){
+		
+		$sSql = "
+			SELECT
+				*
+			FROM
+				`lotteries`
+			WHERE
+				`id` = '".$lotterie."' 
+			";
+		$aLotterie = DB::getQueryData($sSql);
+		return $aLotterie[0]['title'];
+	}
+	
+	try{
+		$sSql = "
+			SELECT
+				*
+			FROM
+				`newsletter2_lists`
+			";
+		$aNewsletters = DB::getQueryData($sSql);
+		$bCheck = true;
+	} catch(Exception $e) {
+		$bCheck = false;
+	}
+	if($bCheck == false){
+		$sErrorNewsletter = 'Sie haben kein Newsletter v2 Modul installiert.';
+	}
+}
+
+
+
+
+
+
+
+
+
+// if button "gewinner ermitteln" has been pressed
+if(isset($_VARS['lotteries']) && isset($_VARS['submit'])){
+	$sSql = "
+			SELECT
+				*
+			FROM
+				`lotteries`
+			WHERE
+				`id` = '".$_VARS['lotteries']."' 
+			";
+	$aLotteriesid = DB::getQueryData($sSql);
+	
+	
+	$sSql = "
+			SELECT
+				*
+			FROM
+				`lottery_results`
+			WHERE
+				`lottery_id` = '".$_VARS['lotteries']."' 
+			";
+	$aLotteryEntrys = DB::getQueryData($sSql);
+	$iLotteryEntrys = count($aLotteryEntrys);
+	
+	
+	$iMax = count($aLotteryEntrys);
+	$iWinner = rand(1, $iMax);
+	$iWinner = $iWinner -1;
+}
+
+if(isset($_VARS['question_submit'])){
+	$aSql = array('question' => $_VARS['question_enter'],
+					'id' => $_VARS['lotteries']);
+	$sSql = "
+		UPDATE
+			`lotteries`
+		SET
+			`question` = :question
+		WHERE
+			`id` = :id
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+	
+}
+
+	Admin_Html::loadAdminHeader();
+?>
+
+
+
+
+
+<script type="text/javascript">
+	function question2(){
+		var lottery = document.getElementById('select_lotteries').options[document.getElementById('select_lotteries').selectedIndex].text;	
+		if (confirm("Das Gewinnspiel '"+lottery+"' und seine Teilnehmer unwiederruflich löschen?")){
+		} else {
+			return false;
+		}
+	}
+	
+	function question3(){
+		var lottery = document.getElementById('select_lotteries').options[document.getElementById('select_lotteries').selectedIndex].text;	
+		if (confirm("Die Teilnehmer des Gewinnspieles '"+lottery+"' unwiederruflich löschen?")){
+		} else {
+			return false;
+		}
+	}
+</script>
+
+
+
+
+
+<table style="border:1; width:100%; height:100%;" cellpadding="0" cellspacing="30">
+	<tr>
+		<td style="vertical-align:top;">
+			<h1>Gewinnspiel Administration</h1>
+			<table cellpadding="3" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th width="15%">Gewinnspiel</th>
+					<th width="50%">Gewinnspiel-Frage</th>
+					<th width="25%">Newsletter</th>
+					<th width="10%">Teilnehmer</th>
+				</tr>
+<?php
+
+//##TODO OUT
+
+
+foreach($aLotteries as $key => $aLottery){
+	echo '<tr>
+			<td>
+				'.$aLottery["title"].'
+			</td>
+		  	<td>
+				'.$aLottery['question'].'
+			</td>
+			<td>
+				'.$aLottery['newsletter'].'
+			</td>
+			<td style="text-align: right;">
+				'.getUserPlay($aLottery['id']).'
+			</td>
+		  </tr>
+	';
+}
+
+
+?>
+			</table>		
+<?
+
+
+
+
+if (count($aLotteries) <= 0){
+	
+	echo 'Kein Gewinnspiel vorhanden';
+?>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input name="create" value="" type="text" />
+		<input name="create_btn" value="Gewinnspiel erstellen" type="submit" class="btn" />
+		<br />
+	</form>
+<?php
+} else {
+?>
+			<div style="float:left;">
+				<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			    	<select id="select_lotteries" name="lotteries">
+<?php
+	foreach($aLotteries as $key => $value){
+		echo '<option value="'.$value["id"].'">'.$value["title"].'</option>';
+	}
+	
+?>
+			    	</select>
+			    	<input name="submit" value="Gewinner ermitteln" type="submit" class="btn" />
+			    	<input name="truncate" value="Teilnehmerliste leeren" type="submit" class="btn" onclick="return question3();"/>
+			    	<input name="delete" value="Gewinnspiel löschen" type="submit" class="btn" onclick="return question2();"/>
+			    	<input name="question" value="Frage und Antworten editieren" type="submit" class="btn" />
+			    	<input name="list_user" value="Teilnehmende Spieler anzeigen" type="submit" class="btn" />
+					<input name="newsletter" value="Newsletter zuweisen" type="submit" class="btn" />
+					<br /><br />
+					<input name="create" value="" type="text" />
+					<input name="create_btn" value="Gewinnspiel erstellen" type="submit" class="btn" />
+					<br />
+				</form>
+			</div>
+			<div style="clear: both;"></div>
+<?php
+}
+
+
+
+
+
+
+
+if(isset($_VARS['question'])){
+	if(isset($_VARS['answer'])){
+		foreach($_VARS['answer'] as $key => $value){
+			if($key != 0){
+				if(trim($value['text']) == ""){
+					deleteAnswer($key);
+				}
+				UpdateAnswers($key, $value['text']);
+				if($key == $_VARS['radio']){
+					UpdateRights($key, 1);
+				} else {
+					UpdateRights($key, 0);
+				}
+			} elseif(trim($value['text']) != "") {
+				InsertAnswer($value['text'], $_VARS['lotteries']);
+			}
+		}
+		if($sErrorL == true){
+			echo '<br /><span style="color:red;">Bitte wählen Sie eine "richtige Antwort"</span>';
+		}
+	}
+?>
+<br /><br /><br />
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+	<div>Frage für das Gewinnspiel:</div>
+	<div>
+		<input size="150" name="question_enter" value="<?=getQuestion($_VARS['lotteries'])?>" type="text" />
+	</div><br /><br />
+	<div style="width: 600px;">
+	<div style="float: left;">
+		Antworten:
+	</div>
+	<div style="float: right;">
+		richtige Antwort:
+	</div>
+	<div style="clear:both;"></div>
+<?php
+	$aAnswers = getAnswers($_VARS['lotteries']);
+	echo '<div>';
+	foreach($aAnswers as $key => $value){
+		if($value['right_one'] == 1){
+			$checked = 'checked = "checked"';
+		} else {
+			$checked = "";
+		}
+		echo '<div>
+				<div style="float: left;">					
+					<input size="100" type="text" value="'.$value["answer"].'" name="answer['.$value["id"].'][text]" /> 
+			  	</div>
+				<div style="float: rigth;">
+					<input '.$checked.' type="radio" name="radio" value="'.$value["id"].'" />
+				<div style="clear: both"></div>
+		';
+	}
+?>
+	<div>
+		<br /><br /><div>Neue Antwort erstellen:</div><input size="100" type="text" name="answer[0][text]" /> 
+ 	</div>
+
+	</div><br /><br />
+	<div>
+		<input name="question_submit" value="Speichern" type="submit" class="btn" />
+		<input name="lotteries" value="<?=$_VARS['lotteries']?>" type="hidden" />
+		<input name="question" value="<?=$_VARS['question']?>" type="hidden" />
+	</div>
+</form>
+<?php
+
+}
+
+
+
+
+
+//##TODO Hier
+if(isset($_VARS['create']) && isset($_VARS['newsletter']) && isset($_VARS['lotteries'])){
+?>
+		<br />
+		<br />
+<?
+	if(isset($sErrorNewsletter)){
+ 		echo $sErrorNewsletter;
+	} else {
+?>
+		<div>
+			Bitte wählen Sie den Newsletter für das Gewinnspiel "<span style="color:green;"><?=getLotterie($_VARS['lotteries'])?></span>" aus.
+		</div>
+		<form>
+			<div>
+				<select id="select_lotteries" name="newsletter">
+<?php
+				foreach($aNewsletters as $key => $value){
+					echo '<option value="'.$value["id"].'">'.$value["name"].'</option>';
+				}
+		
+?>
+				</select>
+				<input name="newsletter_submit" value="Speichern" type="submit" class="btn" />
+				<input name="lotteries" value="<?=$_VARS['lotteries']?>" type="hidden" />
+			</div>
+		</form>
+<?
+	}
+}
+
+
+
+
+
+
+if(isset($_VARS['newsletter']) && isset($_VARS['newsletter_submit']) && isset($_VARS['lotteries'])){
+	
+	$aSql = array(	'newsletter_id'	=> $_VARS['newsletter'],
+					'lottery_id'	=> $_VARS['lotteries']);
+					
+	$sSql = "
+		UPDATE
+			`lotteries`
+		SET
+			`newsletter_id` = :newsletter_id
+		WHERE
+			`id` = :lottery_id
+	";
+	DB::executePreparedQuery($sSql, $aSql);
+?>
+	<br />
+	<br />
+<?
+	echo 'Newsletter erfolgreich zugeordnet';
+}
+
+
+
+
+
+
+if(isset($_VARS['create']) && isset($_VARS['list_user']) && isset($_VARS['lotteries'])){
+?>
+	<h2>Teilnehmer des Gewinnspiels "<?=$aLotterie[0]['title']?>"</h2>
+	<table cellpadding="3" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th width="20%">Nachname</th>
+			<th width="20%">Vorname</th>
+			<th width="15%">Telefon</th>
+			<th width="35%">eMail</th>
+			<th width="10%">Newsletter</th>
+		</tr>
+<?php
+	foreach($aUser_list as $key => $value){
+?>
+		<tr>
+			<td><?=$value['lastname']?></td>
+			<td><?=$value['firstname']?></td>
+			<td><?=$value['telephone']?></td>
+			<td><?=$value['email']?></td>
+			<td style="text-align: center;">
+<?
+			if($value['newsletter'] == 1){
+				echo "Ja";
+			} else {
+				echo "Nein";
+			}
+?>			
+			</td>
+		</tr>
+<?
+	}
+
+}
+
+
+
+
+
+
+
+
+
+if(isset($_VARS['create']) && isset($_VARS['create_btn'])){
+	if($sAbort == "exists"){
+		echo '<br /><br />Das Gewinnspiel "<span style="color:red;">'.$_VARS['create'].'</span>" ist schon vorhanden.';
+	} elseif($sAbort == "nothing"){
+		echo '<br /><br />Bitte geben Sie einen Namen für das neue Gewinnspiel an.';
+	} else {
+		echo '<br /><br />Das Gewinnspiel "<span style="color:green;">'.$_VARS['create'].'</span>" wurde erfolgreich erstellt.';
+	}
+}
+
+
+
+
+
+
+
+
+
+if(isset($_VARS['lotteries']) && isset($_VARS['delete'])){
+	echo "<br /><br />Das Gewinnspiel <span style='color:green;'>".$aLotteriesid[0]['title']."</span> und seine Teilnehmer wurden erfolgreich gelöscht.";
+}
+
+
+
+
+
+
+
+
+if(isset($_VARS['lotteries']) && isset($_VARS['truncate'])){
+	echo "<br /><br />Alle Teilnehmer des Gewinnspieles <span style='color:green;'>".$aLotteriesid[0]['title']."</span> wurden erfolgreich gelöscht.";
+}
+
+
+
+
+
+
+
+
+if(isset($_VARS['lotteries']) && isset($_VARS['submit'])){
+	if($iLotteryEntrys == 0){
+		echo '<br /><br />In dem Gewinnspiel "<span style="color:green;">'.$aLotteriesid[0]['title'].'</span>" sind keine Teilnehmer vorhanden.';
+	} else {
+?>
+			<br />
+			<br />
+			<div>Insgesammt haben bei dem Gewinnspiel "<span style="color:green;"><?=$aLotteriesid[0]['title']?></span>", <span style="color:red;"><?=$iMax?></span> Teilnehmer mitgespielt.
+			<div>Der Gewinner lautet:<br />
+			<br />
+			<table>
+				<colgroup>
+  					<col width="150">
+					<col width="*">
+				</colgroup>
+				<tr>
+					<td>Vorname:</td>
+					<td><?=$aLotteryEntrys[$iWinner]['firstname']?></td>
+				</tr>
+				<tr>
+					<td>Nachname:</td>
+					<td><?=$aLotteryEntrys[$iWinner]['lastname']?></td>
+				</tr>
+				<tr>
+					<td>Telefon:</td>
+					<td><?=$aLotteryEntrys[$iWinner]['telephone']?></td>
+				</tr>
+				<tr>
+					<td>E-Mail:</td>
+					<td><?=$aLotteryEntrys[$iWinner]['email']?></td>
+				</tr>
+			</table>
+<?php
+	}
+}
+?>
+
+
+
+
+
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>
+
+<? } ?>

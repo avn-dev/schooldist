@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_journeys_activities` ADD `blocks` SMALLINT NOT NULL AFTER `weeks`;

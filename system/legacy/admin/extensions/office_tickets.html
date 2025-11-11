@@ -1,0 +1,333 @@
+<?php
+
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('office_tickets');
+
+/* ================================================== */ // Create files path on first call
+
+Ext_Office_Tickets::getUploadPath();
+
+/* ==================================================================================================== */
+
+$aConfigData = $mOptions = array();
+
+/* ================================================== */
+
+// Data array for the view
+$aConfigData['layout_data']['filter']['show']			= 1;
+$aConfigData['layout_data']['filter']['search']['title']= L10N::t('Suche');
+$aConfigData['layout_data']['filter']['search']['show']	= 1;
+$aConfigData['layout_data']['filter']['from']['show']	= 0;
+$aConfigData['layout_data']['filter']['to']['show']		= 0;
+$aConfigData['layout_data']['sortable']					= 1;
+$aConfigData['layout_data']['flexible']					= 1;
+$aConfigData['layout_data']['view']						= 0;
+$aConfigData['layout_data']['manual_height']			= 0;
+$aConfigData['layout_data']['pagination']['show']		= 0;
+$aConfigData['layout_data']['icons']['show']			= 1;
+
+$aConfigData['dialog_data']['height']					= '600';
+$aConfigData['dialog_data']['width']					= '800';
+
+/* ================================================== */
+
+// Query data for the list
+$aConfigData['query_data'][0] = "SELECT * FROM #table WHERE `active` = 1 ORDER BY `position`";
+$aConfigData['query_data'][1] = array('table' => 'office_tickets');
+$aConfigData['query_data']['filter']['id']['column']		= "id";
+$aConfigData['query_data']['filter']['id']['alias']			= "";
+$aConfigData['query_data']['filter']['search']['column']	= "title,area";
+
+/* ================================================== */ // Table header
+
+$i = 0;
+
+$sClick = 'onclick="checkCBs(true, \'flag\');"';
+
+$aConfigData['header_data'][$i]['column']	= 'flag';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= '<input type="checkbox" class="flag_Main" id="flag_Main" ' . $sClick . ' />';
+$aConfigData['header_data'][$i]['style']	= 'width:30px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'id';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('ID');
+$aConfigData['header_data'][$i]['style']	= 'width:35px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'created';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Datum');
+$aConfigData['header_data'][$i]['style']	= 'width:110px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'title';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Titel');
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'area';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Bereich');
+$aConfigData['header_data'][$i]['style']	= 'width:150px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'author_id';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Ersteller');
+$aConfigData['header_data'][$i]['style']	= 'width:150px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'user_id';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Bearbeiter');
+$aConfigData['header_data'][$i]['style']	= 'width:150px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'hours';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Schätzung');
+$aConfigData['header_data'][$i]['style']	= 'width:65px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'h_original';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('h-Brutto');
+$aConfigData['header_data'][$i]['style']	= 'width:65px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'h_factored';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('h-Netto');
+$aConfigData['header_data'][$i]['style']	= 'width:65px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'type';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Typ');
+$aConfigData['header_data'][$i]['style']	= 'width:80px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'state';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Status');
+$aConfigData['header_data'][$i]['style']	= 'width:110px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'done';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Fortschritt');
+$aConfigData['header_data'][$i]['style']	= 'width:80px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'system';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('System');
+$aConfigData['header_data'][$i]['style']	= 'width:55px;';
+$i++;
+
+/* ================================================== */ // Data for icons
+
+$i = 0;
+
+$aConfigData['icon_data'][$i]['label']		= L10N::t('Neu:');
+$aConfigData['icon_data'][$i]['action']		= "new";
+$aConfigData['icon_data'][$i]['function']	= "prepareAddDialog();";
+$aConfigData['icon_data'][$i]['icon']		= "/admin/media/page_new.gif";
+$aConfigData['icon_data'][$i]['alt']		= L10N::t('Neu');
+$aConfigData['icon_data'][$i]['title']		= L10N::t('Neu');
+$aConfigData['icon_data'][$i]['separator']	= "";
+$aConfigData['icon_data'][$i]['active']		= "1";
+$i++;
+
+$aConfigData['icon_data'][$i]['label']		= L10N::t('Bearbeiten:');
+$aConfigData['icon_data'][$i]['action']		= "edit";
+$aConfigData['icon_data'][$i]['function']	= "prepareEditDialog(intRowId);";
+$aConfigData['icon_data'][$i]['icon']		= "/admin/media/pencil.png";
+$aConfigData['icon_data'][$i]['alt']		= L10N::t('Bearbeiten');
+$aConfigData['icon_data'][$i]['title']		= L10N::t('Bearbeiten');
+$aConfigData['icon_data'][$i]['separator']	= "";
+$aConfigData['icon_data'][$i]['active']		= "0";
+$i++;
+
+$aConfigData['icon_data'][$i]['label']		= "";
+$aConfigData['icon_data'][$i]['action']		= "delete";
+$aConfigData['icon_data'][$i]['function']	= "deleteRow(intRowId);";
+$aConfigData['icon_data'][$i]['icon']		= "/admin/media/cross.png";
+$aConfigData['icon_data'][$i]['alt']		= L10N::t('Löschen');
+$aConfigData['icon_data'][$i]['title']		= L10N::t('Löschen');
+$aConfigData['icon_data'][$i]['separator']	= "::";
+$aConfigData['icon_data'][$i]['active']		= "0";
+$i++;
+
+$aConfigData['icon_data'][$i]['label']		= L10N::t('Live:');
+$aConfigData['icon_data'][$i]['action']		= "setLive";
+$aConfigData['icon_data'][$i]['function']	= "setLive();";
+$aConfigData['icon_data'][$i]['icon']		= "/admin/extensions/office/images/world_go.png";
+$aConfigData['icon_data'][$i]['alt']		= L10N::t('Live');
+$aConfigData['icon_data'][$i]['title']		= L10N::t('Live');
+$aConfigData['icon_data'][$i]['separator']	= "";
+$aConfigData['icon_data'][$i]['active']		= "1";
+$i++;
+
+/* ================================================== */ // Data for edit dialog
+
+$i = 0;
+
+$aConfigData['edit_data'][$i]['column']		= 'title';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Titel');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:2px;';
+$aConfigData['edit_data'][$i]['type']		= 'input';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'area';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Bereich');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:2px;';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'type';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Typ');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:1px;';
+$aConfigData['edit_data'][$i]['type']		= 'select';
+$aConfigData['edit_data'][$i]['data_array']	= array('ext' => L10N::t('Erweiterung'), 'bug' => L10N::t('Bug'));
+$aConfigData['edit_data'][$i]['preselect']	= 'ext';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'billing';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Abrechnung');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:1px;';
+$aConfigData['edit_data'][$i]['type']		= 'select';
+$aConfigData['edit_data'][$i]['data_array']	= array('1' => L10N::t('Abrechnung nach Aufwand'), '0' => L10N::t('Aufwandschätzung anfragen'));
+$aConfigData['edit_data'][$i]['preselect']	= '1';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'done';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Fortschritt');
+$aConfigData['edit_data'][$i]['style']		= 'width:500px; height:150px; padding:2px;';
+$aConfigData['edit_data'][$i]['type']		= 'textarea';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'description';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Beschreibung');
+$aConfigData['edit_data'][$i]['style']		= 'width:500px; height:150px; padding:2px;';
+$aConfigData['edit_data'][$i]['type']		= 'textarea';
+$i++;
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+$sCode = '';
+
+$sCode .= '<div style="margin:5px; background-color:rgb(238, 238, 238); padding: 0 5px;" id="editRow_notices" class="row_edit">';
+	$sCode .= '<label for="newNotice" style="padding: 4px 0px; width:100px;">Nachrichten:</label>';
+	$sCode .= '<div style="padding: 4px 4px 2px; float:left;" id="noticesList">';
+		
+	$sCode .= '</div>';
+	$sCode .= '<div style="overflow:hidden; clear:both; height:1px;"/></div>';
+$sCode .= '</div>';
+
+$aConfigData['edit_data'][$i]['column']	= '';
+$aConfigData['edit_data'][$i]['value']	= $sCode;
+$aConfigData['edit_data'][$i]['style']	= "";
+$aConfigData['edit_data'][$i]['type']	= "code";
+$i++;
+
+/* ================================================== */
+
+$oTicket	= new Ext_Office_Tickets_Backend($aConfigData);
+$sTicketRS	= $oTicket->sRandString;
+$sTicketHS	= $oTicket->getHash();
+
+/* ==================================================================================================== */
+
+$mOptions['additional'] =
+	'<script type="text/javascript" src="/admin/uploader/AC_OETags.js"></script>';
+$mOptions['additional'] .=
+	'<script type="text/javascript" src="/admin/extensions/office/js/js.tickets.php?hash=' . $sTicketHS . '"></script>';
+
+$oTicket->getAdminHeader($mOptions);
+
+/* ==================================================================================================== */
+
+$aStates	= Ext_Office_Tickets::getStates();
+$aEmployees	= Ext_Office_Tickets::getEmployees();
+$aProjects	= $oTicket->getProjects();
+
+/* ==================================================================================================== */
+
+?>
+
+<script type="text/javascript">
+<!--
+	var iFrontend = 0;
+
+	function <?=$sTicketRS?>_createFilters()
+	{
+		var HTML = '';
+
+		HTML += '<?=L10N::t('Projekt')?>: <select style="width: 100px;" class="txt" id="<?=$sTicketRS?>_search_project" onchange="<?=$sTicketRS?>_loadTableList();">';
+			<? foreach((array)$aProjects as $iKey => $aValue) { ?>
+				HTML += '<option value="<?=$aValue['id']?>"><?=$aValue['title']?></option>';
+			<? } ?>
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Status')?>: <select style="width: 100px;" class="txt" id="<?=$sTicketRS?>_search_state" onchange="<?=$sTicketRS?>_loadTableList();">';
+			HTML += '<option value=""><?=L10N::t('Alle')?></option>';
+			HTML += '<option value="2_8"><?=L10N::t('Aktuell')?></option>';
+			HTML += '<option value="1_5"><?=L10N::t('Bereit zur Umsetzung')?></option>';
+			HTML += '<option value="0_0_0"><?=L10N::t('Aufwandschäzung nötig')?></option>';
+			<? foreach((array)$aStates as $iKey => $sValue) { ?>
+				<? if($iKey > 0) { ?>
+					<?
+						$sSelected = '';
+						if($iKey == 1)
+						{
+							$sSelected = 'selected="selected"';
+						}
+					?>
+					HTML += '<option value="<?=$iKey?>" <?=$sSelected?>><?=$sValue?></option>';
+				<? } ?>
+			<? } ?>
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Typ')?>: <select style="width: 100px;" class="txt" id="<?=$sTicketRS?>_search_type" onchange="<?=$sTicketRS?>_loadTableList();">';
+			HTML += '<option value=""><?=L10N::t('Alle')?></option>';
+			HTML += '<option value="bug"><?=L10N::t('Bugs')?></option>';
+			HTML += '<option value="ext"><?=L10N::t('Erweiterungen')?></option>';
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Ersteller')?>: <select style="width: 100px;" class="txt" id="<?=$sTicketRS?>_search_author" onchange="<?=$sTicketRS?>_loadTableList();">';
+			HTML += '<option value=""><?=L10N::t('Alle')?></option>';
+			<? foreach((array)$aEmployees as $iKey => $sValue) { ?>
+				HTML += '<option value="<?=$iKey?>"><?=$sValue?></option>';
+			<? } ?>
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Bearbeiter')?>: <select style="width: 100px;" class="txt" id="<?=$sTicketRS?>_search_user" onchange="<?=$sTicketRS?>_loadTableList();">';
+			HTML += '<option value=""><?=L10N::t('Alle')?></option>';
+			<? foreach((array)$aEmployees as $iKey => $sValue) { ?>
+				HTML += '<option value="<?=$iKey?>"><?=$sValue?></option>';
+			<? } ?>
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Verrechnet')?>: <input type="checkbox" id="<?=$sTicketRS?>_search_cleared" onclick="<?=$sTicketRS?>_loadTableList();" />';
+
+		$('<?=$sTicketRS?>_filter_search').style.width = '100px';
+
+		var oDIV = $('<?=$sTicketRS?>_filter_search').up();
+
+		oDIV.insert({bottom: HTML});
+
+		Event.observe($('<?=$sTicketRS?>_filter_search'), 'keydown', <?=$sTicketRS?>_checkFilters);
+	}
+-->
+</script>
+
+<div>
+	<div id="ajax_main_content">
+		<?=$oTicket->generateHTML(L10N::t('Tickets'));?>
+	</div>
+</div>
+
+<?=Admin_Html::loadAdminFooter()?>

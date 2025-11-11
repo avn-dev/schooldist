@@ -1,0 +1,108 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+/**
+ * Init GUI
+ */
+$oGui = new Ext_TC_Gui2(md5('tc_admin_communication_emails'), Ext_TC_Factory::getClassName('Ext_TC_Communication_EmailAccount_Gui2_Data'));
+
+$oGui->access = array('core_admin_emailaccounts', '');
+
+$oGui->setWDBasic(Factory::getClassName('Ext_TC_Communication_EmailAccount'));
+$oGui->setTableData('where', array( 'tc_ce.active' => 1));
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_ce.email' => 'ASC'));
+
+$oGui->query_id_column		= 'id';
+$oGui->class_js				= 'CommunicationEmail';
+
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+
+/**
+ * Dialog
+ */
+$oDialog = $oGui->createDialog($oGui->t('E-Mail-Konto "{email}" editieren'), $oGui->t('Neues E-Mail-Konto anlegen'));
+
+/**
+ * Bars
+ */
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('email');
+$oFilter->db_alias		= array('tc_ce');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+
+$oBar = $oGui->createBar();
+
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+
+$oLabelgroup = $oBar->createLabelGroup($oGui->t('Weitere Aktionen'));
+$oBar->setElement($oLabelgroup);
+
+$oIcon= $oBar->createIcon(Ext_TC_Util::getIcon('access'), 'openDialog', $oGui->t('Rechte'));
+$oIcon->action = 'openAccessDialog';
+$oIcon->active = 1;
+$oIcon->visible = 1;
+$oIcon->multipleId = 1;
+$oIcon->label = $oGui->t('Rechte');
+$oBar->setElement($oIcon);
+
+$oGui->getDataObject()->addAdditionalIcons($oBar);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+/**
+ * Columns
+ */
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'email';
+$oColumn->db_alias		= 'tc_ce';
+$oColumn->title			= $oGui->t('E-Mail-Adresse');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+/*
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'smtp';
+$oColumn->db_alias		= 'tc_ce';
+$oColumn->title			= $oGui->t('SMTP-Server verwenden');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->small			= true;
+$oColumn->format		= new Ext_TC_Gui2_Format_YesNo();
+$oGui->setColumn($oColumn);
+*/
+
+$oGui->addDefaultColumns();
+
+$oGui->addJs('js/access_matrix.js', 'tc');
+$oGui->addJs('admin/communication/emailaccount.js', 'tc');
+
+// Hook
+\system::wd()->executeHook('tc_admin_communication_emails', $oGui);
+
+$oGui->display();

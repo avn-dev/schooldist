@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_insurances` ADD `start_day` TINYINT(1) UNSIGNED NOT NULL DEFAULT '6' AFTER `provider_id`;

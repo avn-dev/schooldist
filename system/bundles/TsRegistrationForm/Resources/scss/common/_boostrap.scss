@@ -1,0 +1,34 @@
+@import "node_modules/bootstrap/scss/mixins";
+@import "../variables";
+
+//.btn.btn-xs {
+//	// line-height: ensure proper height of button next to small input
+//	@include button-size($btn-padding-y-xs, $btn-padding-x-xs, $font-size-sm, $input-btn-line-height-xs, $btn-border-radius-sm);
+//}
+
+.custom-file {
+	cursor: pointer;
+}
+
+// Bootstrap 3 behaviour
+.form-control:disabled,
+.input-group-prepend + .form-control:disabled,
+.custom-select:disabled,
+//.form-check-input:disabled,
+//.form-check.disabled,
+.btn[disabled],
+.btn.disabled,
+.custom-control-input:disabled ~ .custom-control-label,
+.custom-control-input[disabled] ~ .custom-control-label,
+.custom-control-input:disabled ~ .custom-control-label::after,
+.custom-control-input[disabled] ~ .custom-control-label::after,
+.custom-file-input[disabled] {
+	cursor: not-allowed;
+}
+
+// form-validation-state-selector uses conditional & so it can't be used in registration-bundle
+// This is also essential if no CSS is loaded at all
+.is-invalid ~ .invalid-feedback,
+.is-invalid ~ .invalid-tooltip {
+	display: block;
+}

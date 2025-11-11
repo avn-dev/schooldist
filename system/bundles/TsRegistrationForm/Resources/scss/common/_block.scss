@@ -1,0 +1,96 @@
+@use "sass:math";
+
+.card-block {
+	margin-bottom: $spacer;
+	height: calc(100% - #{$spacer}); // Same height for all cards in one row
+	transition: border-color 0.3s;
+
+	&.active {
+		border-color: $primary;
+		border-color: var(--primary);
+
+		// Use div chaining for recursive card blocks
+		> div > div > .card-title label {
+			color: $primary;
+			color: var(--primary);
+		}
+	}
+
+	&.disabled .card-title label {
+		cursor: not-allowed;
+	}
+
+	> .card-img {
+		max-height: $spacer * 8;
+		object-fit: cover;
+	}
+
+	.card-control {
+		.custom-control {
+			margin: ($spacer * 1.5) ($spacer * 1.25);
+		}
+	}
+
+	> .row {
+		> .card-body {
+			// .card-body is used within .no-gutters .col
+			padding: $card-spacer-x $card-spacer-x $card-spacer-x 0;
+
+			.card-title label {
+				margin-bottom: 0;
+			}
+
+			p.card-text {
+				margin-bottom: 0;
+			}
+
+			p.card-text ~ div:not(:empty) {
+				margin-top: $spacer;
+			}
+
+			dl {
+				margin-top: $spacer * 1.5;
+				margin-bottom: $spacer * 0.25;
+			}
+		}
+
+		> .card-footer {
+			flex-grow: 1;
+			padding: $spacer * 0.75 $spacer * 2.5;
+		}
+	}
+
+	&.card-block-sm {
+		margin-bottom: math.div($spacer, 2);
+
+		.card-title {
+			margin-bottom: math.div($spacer, 2);
+		}
+
+		> .row > .card-body {
+			padding: ($card-spacer-x * 0.75) ($card-spacer-x * 0.75) ($card-spacer-x * 0.75) 0;
+		}
+
+		.custom-control {
+			margin-top: $spacer;
+		}
+	}
+
+	&.card-block-xs {
+		border: none;
+		margin-bottom: math.div($spacer, 2);
+
+		.card-title {
+			margin-bottom: 0;
+		}
+
+		.custom-control {
+			margin: 0.1rem math.div($spacer, 2);
+		}
+
+		> .row > .card-body {
+			padding: 0;
+		}
+	}
+
+}

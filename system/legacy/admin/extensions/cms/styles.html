@@ -1,0 +1,1423 @@
+<?php
+
+
+/*
+ * -- Neue webDynamics Stilverwaltung --
+ * 11.2006 Björn Goetschke <bg@plan-i.de>
+ * 
+ * copyright by plan-i GmbH
+ */
+
+
+/*
+ * An externen Libraries werden verwendet:
+ * - (PHP) Sajax : /system/includes/sajax.inc.php
+ * - (JS) Prototype : /system/js_includes/prototype.js
+ * - (JS) Scriptaculous : /system/js_includes/scriptaculous.js
+ * 
+ * Zugriffsrechte prüfen:
+ * - bool hasRight($perm) : Benutzer hat das entsprechende Recht, ja/nein?
+ * - Access_Backend::checkAccess($perm) : Abbruch & Fehlermeldung wenn der Benutzer das Recht nicht hat.
+ */
+
+
+// Für die neue Stilverwaltung wird eine eigene Datenbanktabelle für Dateien
+// verwendet, diese kann mit folgendem SQL-Befehl erstellt werden:
+/*
+CREATE TABLE IF NOT EXISTS `cms_styles_files` (
+    `id` int(11) NOT NULL default '0',
+    `changed` timestamp NOT NULL default CURRENT_TIMESTAMP,
+    `created` timestamp NOT NULL default '0000-00-00 00:00:00',
+    `active` tinyint(4) NOT NULL default '1',
+    `name` tinytext NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+*/
+
+
+/*
+ * Noch offene TODO's / Probleme: 
+ * - 11.04.2007 Björn Goetschke <bg@plan-i.de>:
+ *   SQL-Befehl zum Anlegen einer Datei in der Datenbank ist an diversen Stellen im Code vorhanden.
+ *
+ * - 11.04.2007 Björn Goetschke <bg@plan-i.de>:
+ *   Unter "CSS-Dateien verwalten" eine Liste der vorhandenen Dateien von der aus man auch
+ *   Dateien löschen, editieren, usw. kann einfügen. Bisher ist dort (wie in der alten Version)
+ *   nur ein Formular zum hinzufügen von Dateien, ist irgendwie etwas wenig.
+ *
+ * - 11.04.2007 Björn Goetschke <bg@plan-i.de>:
+ *   Code zum Importieren von Styles aus einer bereits vorhandenen CSS-Datei unter dem
+ *   Punkt "CSS-Stile importieren" ($_VARS['task'] == 'importStyles') implementieren.
+ *
+ * - 11.04.2007 Björn Goetschke <bg@plan-i.de>:
+ *   Code zum Editieren einer bereits vorhandenen CSS-Datei als Ganzes (eine Art Export) unter dem
+ *   Punkt "CSS-Datei editieren" ($_VARS['task'] == 'editFile') implementieren.
+ *
+ * - 11.04.2007 Björn Goetschke <bg@plan-i.de>:
+ *   Code der alten Stilverwaltung ist noch am Ende der Datei vorhanden und mit einem "die()"
+ *   abgetrennt.
+ */
+
+
+// Includes & Konfiguration.
+define('STYLES_LOCAL_CMS_ROOT_PATH', realpath(dirname(__FILE__).'/../'));
+require_once(STYLES_LOCAL_CMS_ROOT_PATH.'/admin/includes/main.inc.php');
+require_once(STYLES_LOCAL_CMS_ROOT_PATH.'/system/includes/config.inc.php');
+require_once(STYLES_LOCAL_CMS_ROOT_PATH.'/system/includes/dbconnect.inc.php');
+require_once(STYLES_LOCAL_CMS_ROOT_PATH.'/system/includes/sajax.inc.php');
+$sStylesPermissionName   = 'edit_css';
+$sCSSFilelistTitleWidth  = '120px';
+$sCSSFilelistSelectWidth = '220px';
+$sCSSFilelistButtonWidth = '100px';
+$sCSSOptionsButtonWidth  = '140px';
+$sCSSStylelistWidth      = '500px';
+$sCSSStylelistHeight     = '200px';
+$sCSSStyleeditWidth      = '300px';
+
+
+/*
+ * Über Sajax verfügbare Funktionen.
+ */
+
+// Liste aller verfügbaren Dateien auslesen.
+function sajaxcall_get_filelist() {
+	// Rechte prüfen.
+	global $sStylesPermissionName;
+	if (!hasRight($sStylesPermissionName)) {
+		return array();
+	}
+	// Seit v5 werden die CSS-Dateien nicht mehr im Dateisystem
+	// abgelegt, falls solche Dateien noch vorhanden sind
+	// diese in die Datenbank übernehmen und das Verzeichnis dann
+	// löschen.
+	$sOldCSSDirectory = \Util::getDocumentRoot().'css/';
+	if(is_dir($sOldCSSDirectory)) {
+		$d = dir($sOldCSSDirectory);
+		while($entry = $d->read()) {
+			if(preg_match("/\.css$/i", $entry) && $entry != "admin.css") {
+				// Prüfen ob es zu dieser Datei bereits einen
+				// Eintrag in der Datenbank gibt.
+				$sQuery = "
+					SELECT
+						`id`
+					FROM
+						`cms_styles_files`
+					WHERE
+						`name` = '".\DB::escapeQueryString($entry)."' AND
+						`active` = 1
+				";
+				if (!$rResult = db_query($sQuery)) {
+					continue;
+				}
+				if (!$aRow = get_data($rResult)) {
+					// Nur einen Eintrag in die Datenbank schreiben wenn
+					// noch keiner vorhanden ist.
+					$sQuery = "
+						INSERT INTO
+							`cms_styles_files`
+						(
+							`changed`,
+							`created`,
+							`active`,
+							`name`
+						) VALUES (
+							NOW(),
+							NOW(),
+							1,
+							'".\DB::escapeQueryString($entry)."'
+						)
+					";
+					if (!db_query($sQuery)) {
+						continue;
+					}
+				}
+			}
+			@unlink($sOldCSSDirectory.'/'.$entry);
+		}
+		$d->close();
+		@rmdir($sOldCSSDirectory);
+	}
+	// Zur Sicherheit das bei Updates keine Styles verloren gehen
+	// wird für alle Styles, zu denen die Datei nicht vorhanden ist,
+	// einfach ein Eintrag in die Datei-Tabelle hinzugefügt.
+	$sQuery = "
+		SELECT
+			`s`.`file`
+		FROM
+			`cms_styles` `s`
+		LEFT JOIN
+			`cms_styles_files` `f`
+		ON
+			`s`.`file` = `f`.`name`
+		WHERE
+			`f`.`name` IS NULL
+		GROUP BY
+			`s`.`file`
+	";
+	$rResult = db_query($sQuery);
+	while ($aRow = get_data($rResult)) {
+		$sQuery = "
+			INSERT INTO
+				`cms_styles_files`
+			(
+				`changed`,
+				`created`,
+				`active`,
+				`name`
+			) VALUES (
+				NOW(),
+				NOW(),
+				1,
+				'".\DB::escapeQueryString($aRow['file'])."'
+			)
+		";
+		db_query($sQuery);
+	}
+	// Dateiliste aus der Datenbank auslesen.
+	$arrCss = array();
+	$sQuery = "
+		SELECT
+			`id`,
+			`name`
+		FROM
+			`cms_styles_files`
+		WHERE
+			`active` = 1
+		ORDER BY
+			`name`
+	";
+	$rResult   = db_query($sQuery);
+	$sLastName = '';
+	while ($aRow = get_data($rResult)) {
+		// Wenn ein Dateiname mehrmals vorkommt werden die Überflüsstigen
+		// Einträge gelöscht, Verknüpfung auf die einzelnen Stileinträge
+		// erfolgt über den Dateinamen, dementsprechend sind die eindeutigen
+		// IDs aus der Dateitabelle an dieser Stelle egal.
+		if ($sLastName == $aRow['name']) {
+			$sQuery = "
+				DELETE FROM
+					`cms_styles_files`
+				WHERE
+					`id` = '".\DB::escapeQueryString($aRow['id'])."'
+			";
+			db_query($sQuery);
+			continue;
+		}
+		// Wenn der Dateiname nicht doppelt ist kann er in die Liste
+		// �bernommen werden.
+		$arrCss[]  = htmlentities($aRow['name']);
+		$sLastName = $aRow['name'];
+	}
+	// Dateiliste zurückgeben.
+	return $arrCss;
+}
+
+
+// Eine Datei aus dem System entfernen.
+// >> Return : sajaxcall_get_filelist()
+function sajaxcall_remove_file($sFile) {
+	global $sStylesPermissionName;
+	if(hasRight($sStylesPermissionName) && in_array($sFile, sajaxcall_get_filelist())) {
+
+		$strSql = "
+					SELECT 	
+						*
+					FROM 
+						`cms_styles_files`
+					WHERE
+						`name` = :strFile AND
+						`active` = 1
+					";
+		$arrTransfer = array("strFile"=>$sFile);
+		$arrFile = DB::getPreparedQueryData($strSql, $arrTransfer);
+		if(is_array($arrFile)) {
+			print_r($arrFile);
+			postdeletion('cms_styles_files', $arrFile[0]['id'], $arrFile[0]['name']);
+		}
+
+	}
+	return sajaxcall_get_filelist();
+}
+
+
+// Liste alles Styles einer Datei auslesen.
+function sajaxcall_get_stylelist($sFile) {
+	// Rechte prüfen.
+	global $sStylesPermissionName;
+	if (!hasRight($sStylesPermissionName) || !in_array($sFile, sajaxcall_get_filelist())) {
+		return array();
+	}
+	// Liste der Styles auslesen.
+	$sQuery = "
+		SELECT
+			*
+		FROM
+			`cms_styles`
+		WHERE
+			`file` = '".\DB::escapeQueryString($sFile)."' AND
+			`active` = '1'
+		ORDER BY
+			`name`
+	";
+	$rResult = db_query($sQuery);
+	$aReturn = array();
+	while ($aRow = get_data($rResult)) {
+		$aReturn[] = array(
+			'id'          => htmlentities($aRow['id']),
+			'name'        => htmlentities($aRow['name']),
+			'description' => htmlentities($aRow['description']),
+			'type'        => htmlentities($aRow['type']),
+			'media'       => htmlentities($aRow['media'])
+		);
+	}
+	// Liste der Styles in das entsprechende Format bringen
+	// und zurück geben.
+	return $aReturn;
+}
+
+
+// Styles einer Datei neu sortieren.
+// >> Return : sajaxcall_get_stylelist()
+function sajaxcall_sort_stylelist($sFile, $sList) {
+	global $sStylesPermissionName;
+	if (hasRight($sStylesPermissionName) && in_array($sFile, sajaxcall_get_filelist())) {
+		// Den Übergebenen String zerlegen.
+		$aFinalList = array();
+		while (preg_match("=^styles_list\[\]\=([0-9]+)(\&|)=i", $sList, $aResult)) {
+			$aFinalList[] = $aResult[1];
+			$sList = substr($sList, strlen($aResult[0]));
+		}
+		// Liste in der Datenbank updaten.
+		foreach ($aFinalList as $sCurStylePosition => $sCurStyleID) {
+			$sQuery = "
+				UPDATE
+					`cms_styles`
+				SET
+					`position` = '".\DB::escapeQueryString($sCurStylePosition+1)."'
+				WHERE
+					`id` = '".\DB::escapeQueryString($sCurStyleID)."' AND
+					`file` = '".\DB::escapeQueryString($sFile)."'
+			";
+			db_query($sQuery);
+		}
+	}
+}
+
+
+// Einen neuen Style in die Datei einfügen.
+// >> Return : ID des neuen Eintrags
+function sajaxcall_add_style(
+	$sFile, $sClassname, $sDescription,
+	$sView, $sType, $sContent
+) {
+	if (in_array($sFile, sajaxcall_get_filelist())) {
+		$sQuery = "
+			INSERT INTO
+				`cms_styles`
+			(
+				`name`,
+				`description`,
+				`media`,
+				`type`,
+				`style`,
+				`file`,
+				`active`
+			) VALUES (
+				'".\DB::escapeQueryString($sClassname)."',
+				'".\DB::escapeQueryString($sDescription)."',
+				'".\DB::escapeQueryString($sView)."',
+				'".\DB::escapeQueryString($sType)."',
+				'".\DB::escapeQueryString($sContent)."',
+				'".\DB::escapeQueryString($sFile)."',
+				1
+			)
+		";
+		if (DB::executeQuery($sQuery)) {
+			enterlog(0, 'CSS-Stil wurde hinzugefügt');
+			return htmlentities(DB::fetchInsertID());
+		}
+	}
+	return 0;
+}
+
+
+// Einen einzelnen Style aus dem System entfernen.
+// >> Return : sajaxcall_get_stylelist()
+function sajaxcall_remove_style($sFile, $sID) {
+	if (in_array($sFile, sajaxcall_get_filelist())) {
+		$strSql = "
+					SELECT 	
+						*
+					FROM 
+						`cms_styles`
+					WHERE
+						`id` = :intStyleId AND
+						`active` = 1
+					";
+		$arrTransfer = array("intStyleId"=>$sID);
+		$arrStyle = DB::getPreparedQueryData($strSql, $arrTransfer);
+		if(is_array($arrStyle)) {
+			postdeletion('cms_styles', $sID, $arrStyle[0]['name']);
+		}
+	}
+	return sajaxcall_get_stylelist($sFile);
+}
+
+
+// Daten eines einzelnen Styles aktualisieren.
+// >> Return : sajaxcall_get_stylelist()
+function sajaxcall_set_styledata(
+	$sFile, $sID, $sClassname, $sDescription,
+	$sView, $sType, $sContent
+) {
+	if (in_array($sFile, sajaxcall_get_filelist())) {
+		$sQuery = "
+			UPDATE
+				`cms_styles`
+			SET
+				`name` = '".\DB::escapeQueryString($sClassname)."',
+				`description` = '".\DB::escapeQueryString($sDescription)."',
+				`media` = '".\DB::escapeQueryString($sView)."',
+				`type` = '".\DB::escapeQueryString($sType)."',
+				`style` = '".\DB::escapeQueryString($sContent)."'
+			WHERE
+				`id` = '".\DB::escapeQueryString($sID)."' AND
+				`file` = '".\DB::escapeQueryString($sFile)."'
+		";
+		db_query($sQuery);
+		enterlog(0, 'CSS-Stil wurde aktualisiert');
+	}
+	return sajaxcall_get_stylelist($sFile);
+}
+
+
+// Daten eines einzelnen Styles auslesen.
+function sajaxcall_get_styledata($sFile, $sID) {
+	// Rechte prüfen.
+	global $sStylesPermissionName;
+	if (!hasRight($sStylesPermissionName)) {
+		return array();
+	}
+	// Daten auslesen.
+	$sQuery = "
+		SELECT
+			*
+		FROM
+			`cms_styles`
+		WHERE
+			`file` = '".\DB::escapeQueryString($sFile)."' AND
+			`id` = '".\DB::escapeQueryString($sID)."'
+	";
+	$rResult = db_query($sQuery);
+	$aReturn = array();
+	while ($aRow = get_data($rResult)) {
+		$aReturn[] = array(
+			'id'          => htmlentities($aRow['id']),
+			'name'        => htmlentities($aRow['name']),
+			'description' => htmlentities($aRow['description']),
+			'media'       => htmlentities($aRow['media']),
+			'type'        => htmlentities($aRow['type']),
+			'style'       => htmlentities($aRow['style'])
+		);
+	}
+	return $aReturn;
+}
+// Css String Importieren
+/*
+ * Sajax einrichten und Anfrage annehmen.
+ */
+sajax_init();
+sajax_export(
+	'sajaxcall_get_filelist',
+	'sajaxcall_remove_file',
+	'sajaxcall_sort_stylelist',
+	'sajaxcall_get_stylelist',
+	'sajaxcall_add_style',
+	'sajaxcall_get_styledata',
+	'sajaxcall_set_styledata',
+	'sajaxcall_remove_style'
+);
+if (isset($_VARS['rs'])) {
+	// Alle laufenden Output-Buffer beenden. 
+	while (ob_get_level() > 0) {
+		ob_end_clean();
+	}
+	// Die Sajax-Anfrage annehmen.
+	sajax_handle_client_request();
+}
+
+
+/*
+ * Funktionen für dieses Modul.
+ */
+
+
+// übernommen aus der alten Version.
+function strip_comments($s) {
+    $comment1 = '/\*[^*]*\*+(?:[^/*][^*]*\*+)*/';
+
+    $single = "'[^'\\\]*(?:\\.[^'\\\]*)*'";
+    $double = '"[^"\\\]*(?:\\.[^"\\\]*)*"';
+    $eot = '<<<\s?(\S+)\b.*^\2';
+
+    $other = '[^"\'/\#<]';
+    $r = preg_replace ("#($other+ | 
+                  $single$other* | 
+                  $double$other* | 
+                  $eot$other*)| 
+                  $comment1
+                #msx" ,'\1', $s);
+
+    return $r;
+}
+
+
+/*
+ * Modul-Frontend.
+ */
+
+
+// ++++++++++ Header und Zugriffsprüfung ++++++++++
+Access_Backend::checkAccess($sStylesPermissionName);
+Admin_Html::loadAdminHeader();
+
+
+/*
+ * Javascript-Includes, sind im Backend bei v5 standardmäßig eingebunden.
+ * 
+ * <script type="text/javascript" src="/admin/js/prototype/prototype.js"></script>
+ * <script type="text/javascript" src="/admin/js/scriptaculous/scriptaculous.js"></script>
+ */
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Stilverwaltung', 'CMS')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+<?
+if($_VARS['task'] == 'save_editet_css')
+{
+	__out('noch nicht implementiert');
+	$sFile = $_VARS['file'];
+//	__out($_VARS);
+}
+
+// ---------- 2. Editieren einer bestehenden CSS-Datei (Profi-Modus) ---------- //
+// ============================================================================ //
+if ($_VARS['task'] == 'editFile') {
+?>
+
+
+<script type="text/javascript">
+// ImportFunktion von Profi Editiermodus
+// ================================================================== //	
+	function button_import() {
+		var sCss = document.getElementById('css_textarea').value;
+			sCss = encodeURIComponent(sCss);
+		var sFile = document.getElementById('css_file_name').value;
+		
+		// import new styles / set old styles inactive
+		var url = './includes/styles_ajax.php?task=import&sCss='+sCss+'&sFile='+sFile+'&set_inactive='+sFile;
+		new Ajax.Request(url, {
+			method: 'post',
+			onSuccess: function(transport) {
+				window.location.href="styles.html";
+			}
+		});
+	}
+// ================================================================== //
+</script>
+<h2>CSS-Datei editieren</h2>
+<br />
+<?//__out($_VARS);?>
+<style type="text/css">
+	.css_textarea{
+		width: 100%;
+		height: 500px;
+	}
+</style>
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+	<input type="hidden" name="task" value="save_editet_css" />
+	<input type="hidden" name="file" value="<?=$_VARS['file']?>" />
+	<textarea name="css" id="css_textarea" class="css_textarea" cols="0" rows="0"><?php
+		
+		$aStyleGroup = sajaxcall_get_stylelist($_VARS['file']);
+		foreach($aStyleGroup as $mGroupKey => $mGroupValue)
+		{
+			$aStyle = sajaxcall_get_styledata($_VARS['file'], $mGroupValue['id']);
+			foreach($aStyle as $mStyleKey => $mStyleValue)
+			{
+				echo $mStyleValue['name']."{";
+				echo "\n".str_replace("\t", "", $mStyleValue['style']);
+				echo "\n}\n\n";
+			}
+		}
+	
+	?></textarea>
+	
+	<div style="float:right">
+		<input type="submit" class="btn" value="<?=L10N::t('Speichern', 'CMS')?>" />
+		<input type="button" class="btn" value="<?=L10N::t('Zurück', 'CMS')?>" onclick="history.back();" />
+	</div>
+</form>
+
+
+<?
+}
+
+// ---------- 3. Vorhandene CSS-Dateien verwalten ----------
+// ============================================================================ //
+elseif ($_VARS['task'] == 'manageFiles') {
+?>
+<h2><?=L10N::t('CSS-Dateien verwalten', 'CMS')?></h2>
+<?php
+	$sFileName = \Util::getCleanFileName($_VARS['filename']);
+	$aFileList = sajaxcall_get_filelist();
+	// Neue Datei hinzufügen.
+	if ($_VARS['action'] == 'add' && trim($sFileName) != '') {
+		if (!in_array($sFileName, $aFileList)) {
+			$sQuery = "
+				INSERT INTO
+					`cms_styles_files`
+				(
+					`changed`,
+					`created`,
+					`active`,
+					`name`
+				) VALUES (
+					NOW(),
+					NOW(),
+					1,
+					'".\DB::escapeQueryString($sFileName)."'
+				)
+			";
+			if (!db_query($sQuery)) {
+				?><p><?=L10N::t('Die Datei konnte aufgrund eines Fehlers nicht hinzugef&uuml;gt werden!', 'CMS')?></p><?php
+			} else {
+				?><p><?=L10N::t('Die Datei wurde erfolgreich hinzugef&uuml;gt!', 'CMS')?></p><?php
+			}
+		} else {
+			?><p class="error"><?=L10N::t('Eine Datei mit diesem Namen existiert bereits!', 'CMS')?></p><?php
+		}
+		$aFileList = sajaxcall_get_filelist();
+	}
+	// Eingabemaske zum Hinzufügen von Dateien.
+	?><form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+		<input type="hidden" name="task" value="<?php echo htmlentities($_VARS['task']); ?>" />
+		<input type="hidden" name="action" value="add" />
+		<h3><?=L10N::t('Neue CSS-Datei hinzuf&uuml;gen', 'CMS')?></h3>
+		<b><?=L10N::t('Dateiname', 'CMS')?>:</b><br />
+		<input type="text" class="txt" name="filename" value="<?php echo htmlentities($_VARS['filename']); ?>" /><br />
+		<input type="submit" class="btn" value="<?=L10N::t('Datei hinzuf&uuml;gen', 'CMS')?>" />&nbsp;<input type="button" class="btn" value="<?=L10N::t('Zur&uuml;ck zur Stilverwaltung', 'CMS')?>" onClick="window.location.href='<?php echo htmlentities($_SERVER['PHP_SELF']); ?>';" />
+	</form><?php
+}
+
+
+// ---------- X. Stilverwaltung ----------
+else {
+?><script type="text/javascript">
+
+
+// ----- BEGIN :: Sajax-Funktionen -----
+
+	<?= sajax_get_javascript() ?>
+
+// ----- END :: Sajax-Funktionen -----
+
+
+// ----- BEGIN :: Init und Buttons  -----
+
+
+	// Aktionen beim Laden der Seite.
+	function init_on_load() {
+		button_reload_click();
+	}
+
+	// Aktuell ausgewählte Daten aktualisieren.
+	function button_reload_click() {
+		// Alle Buttons die erstmal nicht gebraucht werden deaktivieren.
+		$('button_edit').disabled         = true;
+		$('button_import').disabled       = true;
+		$('button_delete_file').disabled  = true;
+		if($('button_save')){
+			$('button_save').disabled         = true;
+			$('button_save_as_new').disabled  = true;
+			$('button_delete_style').disabled = true;
+		}
+		// Dateiliste laden.
+		load_file_list();
+	}
+
+	// Wechsel auf die "CSS-Dateien-Verwalten" Seite.
+	function button_manage_click() {
+		window.location.href='<?= htmlentities($_SERVER['PHP_SELF']) ?>?task=manageFiles';
+	}
+
+	var iToggled = 0;
+	function buttonToggleSize()
+	{
+		if(iToggled == 0)
+		{
+			document.getElementById('divStyleArea').style.width = "900px";
+			iToggled = 1;
+		}
+		else
+		{
+			document.getElementById('divStyleArea').style.width = "500px";
+			iToggled = 0;
+		}
+		
+	}
+
+	// Wechsel auf die "CSS-Datei-editieren" Seite.
+	function button_edit_click() {
+		if (filelist_active_file == '') {
+			alert('Dieser Button sollte gar nicht klickbar sein, Aktion abgebrochen!');
+		} else {
+			window.location.href='<?= htmlentities($_SERVER['PHP_SELF']) ?>?task=editFile&file=' + filelist_active_file;
+		}
+	}
+
+	// Wechsel auf die "Importieren einer CSS-Datei" Seite.
+	function button_import_click() {
+		if (filelist_active_file == '') {
+			alert('Dieser Button sollte gar nicht klickbar sein, Aktion abgebrochen!');
+		} else {
+			// window.location.href='<?= htmlentities($_SERVER['PHP_SELF']) ?>?task=importStyles&amp;file=' + filelist_active_file;
+			style_import_view();
+		}
+	}
+	function button_import() {
+		if (filelist_active_file == '') {
+			alert('Dieser Button sollte gar nicht klickbar sein, Aktion abgebrochen!');
+		} else {
+			// window.location.href='<?= htmlentities($_SERVER['PHP_SELF']) ?>?task=importStyles&amp;file=' + filelist_active_file;
+			var sCss = document.getElementById('sCss').value;
+			var sFile = filelist_active_file;
+			sCss = encodeURIComponent(sCss);
+			var url = './includes/styles_ajax.php?task=import&sCss='+sCss+'&sFile='+sFile;
+			new Ajax.Request(url, {
+			  method: 'post',
+			  onSuccess: function(transport) {
+			    var notice = $('css_import');
+			    notice.update('Erfolgreich!').setStyle({ background: '#FFF' });
+			    $('css_right').show();
+				$('css_import').hide();
+				button_reload_click();
+				}
+			
+			});
+		}
+		
+		
+		
+		
+	}
+	// Die ausgewählte Datei löschen.
+	function button_delete_file_click() {
+		
+		var bolConfirm = confirm('Möchten Sie diesen Style wirklich löschen?');
+		if(!bolConfirm) {
+			return false;
+		}
+		
+		if (filelist_active_file == '') {
+			alert('Dieser Button sollte gar nicht klickbar sein, Aktion abgebrochen!');
+		} else {
+			var fileList = $('list_files');
+			// Die Liste leeren.
+			while (fileList.hasChildNodes()) {
+				var child = fileList.lastChild;
+				fileList.removeChild(child);
+			}
+			fileList.options[fileList.length] = new Option('Bitte warten, die Datei wird gelöscht...');
+			// Sajax Call.
+			x_sajaxcall_remove_file(filelist_active_file, write_file_list);
+		}
+	}
+
+	// Den ausgewählten Style speichern.
+	function button_save_click() {
+		// Werte der Eingabefelder auslesen.
+		var sClassname   = $F('style_class');
+		var sDescription = $F('style_description');
+		var sView        = $F('style_media');
+		var sType        = $F('style_type');
+		var sContent     = $F('style_style');
+		// Sajax Call.
+		x_sajaxcall_set_styledata(
+			filelist_active_file,
+			stylelist_active_style,
+			sClassname,
+			sDescription,
+			sView,
+			sType,
+			sContent,
+			write_updated_style_list
+		);
+	}
+
+	// Den ausgewählten Style als neuen Eintrag speichern.
+	function button_save_as_new_click() {
+		// Werte der Eingabefelder auslesen.
+		var sClassname   = $F('style_class');
+		var sDescription = $F('style_description');
+		var sView        = $F('style_media');
+		var sType        = $F('style_type');
+		var sContent     = $F('style_style');
+		// Sajax Call.
+		x_sajaxcall_add_style(
+			filelist_active_file,
+			sClassname,
+			sDescription,
+			sView,
+			sType,
+			sContent,
+			button_save_as_new_click_cb
+		);
+	}
+	function button_save_as_new_click_cb(sResult) {
+		stylelist_active_style = sResult;
+		update_style_list();
+	}
+
+	// Den ausgewählten Style löschen.
+	function button_delete_style_click() {
+		// Sajax Call.
+		x_sajaxcall_remove_style(
+			filelist_active_file,
+			stylelist_active_style,
+			write_updated_style_list
+		);
+	}
+
+// ----- END :: Init und Buttons  -----
+	
+
+// ----- BEGIN :: Dateiauswahl  -----
+
+	// Die aktuell ausgewählte Datei (Option-Value).
+	filelist_active_file = '';
+
+	// Auswahl in der Dateiliste wird geändert.
+	function list_files_change() {
+		var fileList = $('list_files');
+		filelist_active_file = fileList.value;
+		if($('button_save')){
+			$('button_save').disabled         = true;
+			$('button_save_as_new').disabled  = true;
+			$('button_delete_style').disabled = true;	
+		}
+
+		if (filelist_active_file == '') {
+			$('button_edit').disabled        = true;
+			$('button_import').disabled      = true;
+			$('button_delete_file').disabled = true;
+		} else {
+			$('button_edit').disabled        = false; // Nicht implementiert, ansonsten wäre der Wert 'false'
+			$('button_import').disabled      = false; // Nicht implementiert, ansonsten wäre der Wert 'false'
+			$('button_delete_file').disabled = false;
+		}
+		load_style_list();
+	}
+
+	// Dateiliste neu laden.
+	function load_file_list() {
+		var fileList = $('list_files');
+		// Die Liste leeren.
+		while (fileList.hasChildNodes()) {
+			var child = fileList.lastChild;
+			fileList.removeChild(child);
+		}
+		fileList.options[fileList.length] = new Option('Bitte warten, Daten werden geladen...');
+		// Sajax Call.
+		x_sajaxcall_get_filelist(write_file_list);
+	}
+
+	// Sajax-Callback mit der Liste aller verfügbaren Dateien.
+	function write_file_list(aResult) {
+		var fileList = $('list_files');
+		// Die Liste leeren.
+		while (fileList.hasChildNodes()) {
+			var child = fileList.lastChild;
+			fileList.removeChild(child);
+		}
+		// Neue Liste erstellen.
+		if (aResult[0]) {
+			fileList.options[fileList.length] = new Option('(Bitte eine Datei auswählen)');
+			var selected = false;
+			for (i in aResult) {
+				child = new Option(aResult[i], aResult[i]);
+				if (aResult[i] == filelist_active_file) {
+					child.selected = true;
+					selected = true;
+				}
+				fileList.options[fileList.length] = child;
+			}
+		} else {
+			fileList.options[fileList.length] = new Option('(Keine Dateien vorhanden)');
+		}
+		// Wenn die zuvor ausgewählte Datei nicht mehr vorhanden ist
+		// die Auswahl entfernen.
+		if (!selected) {
+			filelist_active_file = '';
+			list_files_change();
+			load_style_list();
+		} else {
+			list_files_change();
+			update_style_list();
+		}
+	}
+
+// ----- END :: Dateiauswahl  -----
+
+
+// ----- BEGIN :: Listenoperationen  -----
+
+	// Der aktuell ausgewählte Style (ID).
+	stylelist_active_style = '';
+
+	// Styleliste für die aktuelle Datei neu laden.
+	function load_style_list() {
+		var styleList = $('styles_list');
+		// Die Liste leeren.
+		while (styleList.hasChildNodes()) {
+			var child = styleList.lastChild;
+			styleList.removeChild(child);
+		}
+		// Statuseintrag in die Liste einfügen.
+		var newDiv = document.createElement('div');
+		newDiv.innerHTML = 'Bitte warten, Styles werden geladen...';
+		styleList.appendChild(newDiv);
+		// Sajax-Call.
+		x_sajaxcall_get_stylelist(filelist_active_file, write_new_style_list);
+	}
+
+	// Sajax-Callback mit den Styles einer Datei (neu).
+	function write_new_style_list(aResult) {
+		var styleList = $('styles_list');
+		// Die Liste leeren.
+		while (styleList.hasChildNodes()) {
+			var child = styleList.lastChild;
+			styleList.removeChild(child);
+		}
+		// Styles in die Liste einfügen.
+		var bSelected = false;
+		if (aResult[0]) {
+			for (i in aResult) {
+				var newDiv = document.createElement('div');
+				newDiv.innerHTML = aResult[i]['name'];
+				if (aResult[i]['description'] != '') {
+					newDiv.innerHTML += ' (' + aResult[i]['description'] + ')';
+				}
+				newDiv.id = 'style_' + aResult[i]['id'];
+				newDiv.onclick = function() {
+					$('button_save').disabled         = true;
+					$('button_save_as_new').disabled  = true;
+					$('button_delete_style').disabled = true;
+					stylelist_active_style = this.id.substr(6);
+					load_style_data();
+				};
+				newDiv.className = 'list_entry';
+				newDiv.style.cursor = 'pointer';
+				styleList.appendChild(newDiv);
+				if (stylelist_active_style == aResult[i]['id']) {
+					bSelected = true;
+				}
+			}
+			//Sortable.create(styleList, {tag: 'div', onUpdate: style_list_changed});
+		}
+		// Statusmeldung wenn keine Styles vorhanden sind.
+		else {
+			var newDiv = document.createElement('div');
+			newDiv.innerHTML = '<?=L10N::t('Keine Styles in der ausgewählten Datei vorhanden', 'CMS')?>';
+			styleList.appendChild(newDiv);
+			//Sortable.destroy(styleList);
+		}
+		if (!bSelected) {
+			stylelist_active_style = '';
+		}
+		load_style_data();
+	}
+
+	// Styleliste für die aktuelle Datei aktualisieren.
+	function update_style_list() {
+		// Sajax-Call.
+		x_sajaxcall_get_stylelist(filelist_active_file, write_updated_style_list);
+	}
+
+	// Sajax-Callback mit den Styles einer Datei (aktualisieren).
+	function write_updated_style_list(aResult) {
+		write_new_style_list(aResult);
+	}
+
+	// Daten des aktuell ausgewählten Styles laden.
+	function load_style_data() {
+		// Sajax-Call.
+		x_sajaxcall_get_styledata(filelist_active_file, stylelist_active_style, write_style_data);
+	}
+
+	// Sajax Callback mit den Daten eines Styles.
+	function write_style_data(aResult) {
+		// Handles für alle nötigen Objekte holen.
+		inputClass       = $('style_class');
+		inputDescription = $('style_description');
+		inputMedia       = $('style_media');
+		inputType        = $('style_type');
+		inputStyle       = $('style_style');
+		buttonSave       = $('button_save');
+		buttonSaveNew    = $('button_save_as_new');
+		buttonDelete     = $('button_delete_style');
+		// Speichern- und Löschen-Button deaktivieren.
+		buttonSave.disabled      = true;
+		buttonDelete.disabled    = true;
+		buttonSaveNew.disabled   = true;
+		inputClass.value         = '';
+		inputDescription.value   = '';
+		inputMedia.selectedIndex = 0;
+		inputType.selectedIndex  = 0;
+		inputStyle.value         = '';
+		// Alle Eingabefelder leeren.
+		// Wenn Daten vorhanden sind diese Eintragen.
+		if (aResult[0]) {
+			inputClass.value       = aResult[0]['name'];
+			inputDescription.value = aResult[0]['description'];
+			if (aResult[0]['media'] == 'screen') {
+				inputMedia.selectedIndex = 1;
+			} else if (aResult[0]['media'] == 'print') {
+				inputMedia.selectedIndex = 2;
+			}
+			if (aResult[0]['type'] == 'system') {
+				inputType.selectedIndex = 0;
+			}
+			inputStyle.value      = aResult[0]['style'];
+			buttonSave.disabled   = false;
+			buttonDelete.disabled = false;
+		}
+		// Wenn eine gültige Datei ausgewählt ist den
+		// "als neue Stilklasse speichern"-Button aktivieren.
+		if (filelist_active_file != '') {
+			buttonSaveNew.disabled = false;
+		}
+	}
+
+	// Sortierung der Styles wurde geändert.
+	function style_list_changed_cb(result) {}
+	function style_list_changed() {
+		var styleList = $('styles_list');
+		var sSerializedList = Sortable.serialize(styleList);
+		x_sajaxcall_sort_stylelist(filelist_active_file, sSerializedList, style_list_changed_cb);
+	}
+
+// ----- END :: Listenoperationen  -----
+
+// ----- START :: Importoperation  -----
+	function style_import_view(){
+		var newDiv = document.createElement('div');
+		var newH3 = document.createElement('h3');
+		var newInput = document.createElement('textarea');
+		var newButton = document.createElement('button');
+		newH3.innerHTML = 'Styles Importieren';
+		newInput.className = 'txt';
+		newInput.rows = '20';
+		newInput.id = 'sCss';
+		newButton.className = 'btn';
+		newButton.id = 'button_import_start';
+		//newButton.setAttribute("onclick",'button_import()');
+		Event.observe(newButton, 'click', button_import);	
+		newButton.innerHTML = 'Importieren';
+		newDiv.appendChild(newH3);
+		newDiv.appendChild(newInput);
+		newDiv.appendChild(newButton);
+		document.getElementById('css_import').innerHTML = '';
+		document.getElementById('css_import').appendChild(newDiv);
+		$('css_right').hide();
+		$('css_import').show();
+	}
+</script>
+<div>
+	<div style="width: <?=$sCSSFilelistTitleWidth?>; float: left; line-height: 22px;">
+		<b><?=L10N::t('Dateien', 'CMS')?>:</b>
+	</div>
+	<div style="float: left; width: 650px;">
+		<select class="txt" id="list_files" style="width: <?= $sCSSFilelistSelectWidth ?>;" onChange="list_files_change();">
+			<option value=""><?=L10N::t('(Seite wird geladen)', 'CMS')?></option>
+		</select>&nbsp;
+		<button class="btn" id="button_reload" style="" onClick="button_reload_click();"><?=L10N::t('Aktualisieren', 'CMS')?></button>&nbsp;
+		<button class="btn" id="button_manage" style="" onClick="button_manage_click();"><?=L10N::t('Verwalten', 'CMS')?></button>
+		<button class="btn" id="button_toggle_size" style="" onClick="buttonToggleSize();"><?=L10N::t('Größe umschalten', 'CMS')?></button>
+	</div>
+</div>
+<div style="clear: both;">
+	<div style="width: <?=$sCSSFilelistTitleWidth?>; float: left; line-height: 22px;">
+		<b><?=L10N::t('Optionen', 'CMS')?>:</b>
+	</div>
+	<div style="float: left; width: 650px;">
+		<button class="btn" id="button_edit" style="" onclick="button_edit_click();"><?=L10N::t('Editieren', 'CMS')?></button>&nbsp;
+		<button class="btn" id="button_import" style="" disabled="disabled" onClick="button_import_click();"><?=L10N::t('Styles importieren', 'CMS')?></button>&nbsp;
+		<button class="btn" id="button_delete_file" style="" disabled="disabled" onClick="button_delete_file_click();"><?=L10N::t('Löschen', 'CMS')?></button>
+	</div>
+</div>
+<div style="clear: both; font-size: 1px; height: 10px;">&nbsp;</div>
+<div id="divStyleArea" style="float: left; width: <?=$sCSSStylelistWidth?>;">
+	<div style="width: 100%;">
+		<b><?=L10N::t('Vorhandene Styles in der ausgew&auml;hlten Datei', 'CMS')?>:</b>
+	</div>
+	<div style="height: 10px;">&nbsp;</div>
+	<div id="styles_list_container" style="height: <?= $sCSSStylelistHeight ?>;">
+		<div id="styles_list" style="width: 98%; height: 351px; overflow: scroll;";>
+			<div>
+				<?=L10N::t('(Seite wird geladen)', 'CMS')?>
+			</div>
+		</div>
+	</div>
+</div>
+<div id='css_import' style="float: left; width: <?= $sCSSStyleeditWidth ?>; display:none;"></div>
+<div id="css_right" style="float: left; width: <?= $sCSSStyleeditWidth ?>;">
+	<div style="width: 100%;">
+		<b><?=L10N::t('Style editieren', 'CMS')?>:</b>
+	</div>
+	<div style="height: 10px;">&nbsp;</div>
+	<div style="width: 100%;">
+		<b><?=L10N::t('Klasse', 'CMS')?></b>
+	</div>
+	<div>
+		<input type="text" class="txt" id="style_class" style="width: 100%;" />
+	</div>
+	<div style="width: 100%;">
+		<b><?=L10N::t('Beschreibung', 'CMS')?></b>
+	</div>
+	<div>
+		<input type="text" class="txt" id="style_description" style="width: 100%;" />
+	</div>
+	<div style="width: 100%;">
+		<b><?=L10N::t('Ausgabe', 'CMS')?></b>
+	</div>
+	<div>
+		<select class="txt" id="style_media" style="width: 100%;">
+			<option value="both" selected="selected"><?=L10N::t('Alle', 'CMS')?></option>
+			<option value="screen"><?=L10N::t('Bildschirm', 'CMS')?></option>
+			<option value="print"><?=L10N::t('Drucker', 'CMS')?></option>
+		</select>
+	</div>
+	<div style="width: 100%;">
+		<b><?=L10N::t('Typ', 'CMS')?></b>
+	</div>
+	<div>
+		<select class="txt" id="style_type" style="width: 100%;">
+			<option value="system" selected="selected"><?=L10N::t('System', 'CMS')?></option>
+			<option value="individuell"><?=L10N::t('Individuell', 'CMS')?></option>
+		</select>
+	</div>
+	<div style="width: 100%;">
+		<b><?=L10N::t('Style', 'CMS')?></b>
+	</div>
+	<div>
+		<textarea class="txt" id="style_style" style="width: 100%;" rows="10"></textarea>
+	</div>
+	<div>
+		<button class="btn" id="button_save" style="width: 100%;" onClick="button_save_click();"><?=L10N::t('Speichern', 'CMS')?></button>
+	</div>
+	<div>
+		<button class="btn" id="button_save_as_new" style="width: 100%;" onClick="button_save_as_new_click();"><?=L10N::t('Als neue Stilklasse speichern', 'CMS')?></button>
+	</div>
+	<div>
+		<button class="btn" id="button_delete_style" style="width: 100%;" onClick="button_delete_style_click();"><?=L10N::t('löschen', 'CMS')?></button>
+	</div>
+</div>
+<div style="clear: both; font-size: 1px;">&nbsp;</div>
+<script type="text/javascript">
+	init_on_load();
+</script><?php
+}
+
+
+// ++++++++++ Footer ++++++++++
+		?></td>
+	</tr>
+</table><?php
+Admin_Html::loadAdminFooter();
+
+
+
+
+/********************************************************************************/
+/********************************************************************************/
+/********************************************************************************/
+/********************************************************************************/
+
+
+die;
+
+/*
+Für Update-Eintrag:
+
+ALTER TABLE `cms_styles` ADD `media` ENUM( 'print', 'screen', 'both' ) DEFAULT 'both'  NOT NULL AFTER `type` ;
+
+ALTER TABLE `cms_styles` ADD INDEX ( `media` ) ;
+*/
+?>
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+
+
+Access_Backend::checkAccess('edit_css');
+//stylesheetverwaltung
+
+if($style_save){
+	//namen umwandeln um ihn als Klassennamen verwenden zu können
+	if($style_type == "system")
+		$style_neu_name = \DB::escapeQueryString($style_neu_name);
+	else
+		$style_neu_name = replace_specialchars(strtolower($style_neu_name));
+	if($style_chg_id > 0){
+		$style_aufgabe = (db_query($db_system, "UPDATE cms_styles SET name = '".($style_neu_name)."', description = '".\DB::escapeQueryString($style_neu_beschr)."', style = '".\DB::escapeQueryString($style_neu_string)."', type = '".\DB::escapeQueryString($style_type)."', media = '".\DB::escapeQueryString($style_media)."' ,file = '".\DB::escapeQueryString($style_file)."' WHERE id = '$style_chg_id'"));
+		echo last_error();
+		enterlog(0,"CSS-Stil \"".$style_neu_name."\" wurde gespeichert.");
+	}else{
+		$style_aufgabe = (db_query($db_system, "INSERT INTO cms_styles (name, description, style, type, media, file, active) VALUES ('".($style_neu_name)."', '".\DB::escapeQueryString($style_neu_beschr)."', '".\DB::escapeQueryString($style_neu_string)."', '".\DB::escapeQueryString($style_type)."', '".\DB::escapeQueryString($style_media)."', '$style_file', 1)"));
+		echo last_error();
+		enterlog(0,"CSS-Stil \"".$style_neu_name."\" wurde erstellt.");
+	}//else
+}//if
+
+if($_VARS['task'] == "import") {
+	$_VARS['sCss'] = strip_comments($_VARS['sCss']);
+	preg_match_all("/([^{]+){([^}]+)}/i",$_VARS['sCss'],$aMatches);
+	foreach($aMatches[0] as $k=>$v) {
+		$style_aufgabe = db_query($db_data['system'], "INSERT INTO cms_styles (name, description, style, type, file, active) VALUES ('".\DB::escapeQueryString(trim($aMatches[1][$k]))."', '', '".\DB::escapeQueryString(trim($aMatches[2][$k]))."', 'system', '".$_VARS['style_file']."', 1)");
+	}
+	enterlog(0,"CSS-Stile wurden importiert.");
+}
+
+if($_VARS['task'] == "create") {
+
+	$sFile = \Util::getCleanFileName($_VARS['sFile']);
+
+	$sContent = '<?
+
+header("Content-type: text/css");
+
+include($_SERVER[\'DOCUMENT_ROOT\']."/system/includes/config.inc.php");
+include($_SERVER[\'DOCUMENT_ROOT\']."/system/includes/dbconnect.inc.php");
+
+//einfügen der Benutzerdefinierten Stylesheets aus der Datenbank
+$style_aufgabe = (db_query($db_data[\'system\'], "SELECT * FROM cms_styles WHERE (file = \''.$sFile.'.css\' OR file = \'\') AND active != 2 AND (`media` =\'".$_REQUEST[\'media\']."\' OR `media` =\'both\' )  ORDER BY position,name"));
+while($style_array = get_data($style_aufgabe))
+{
+	if($style_array[\'type\'] == "individuell")
+		echo "\n.".$style_array[\'name\']." {";
+	else 
+		echo "\n".$style_array[\'name\']." {";
+	echo "\n\t".$style_array[\'style\']."\n}\n";
+}//while
+
+?>
+
+/* ADMIN STYLES */
+
+.adminlink {
+	font-size:10px!important;
+	font-family:Verdana!important;
+	color:#003399!important;
+}
+
+#edittools_active {
+	background-color:#00FF00!important;
+}
+
+#edittools_inactive {
+	background-color:#dededf!important;
+}
+
+#edittools_active td {
+	font-family:Verdana!important;
+	font-size:11px!important;
+	color:#000000!important;
+}
+
+#edittools_inactive td {
+	font-family:Verdana!important;
+	font-size:11px!important;
+	color:#000000!important;
+}
+';
+
+	$sFile = \Util::getDocumentRoot()."css/".$sFile.".css";
+	if(!is_file($sFile)) {
+		$fCss = fopen($sFile, "w");
+		fwrite($fCss, $sContent);
+		fclose($fCss);
+		chmod($sFile,$system_data['chmod_mode_file']);
+	} else {
+		$_VARS['action'] = "file";
+		$sError = "<p class=error>Eine Datei mit diesem Namen existiert bereits</p>";
+	}
+}
+
+
+
+
+
+
+
+
+
+document_write_styleeditcaller();
+?>
+<?
+if(
+	$_VARS['action'] != "import" && 
+	$_VARS['action'] != "files"
+) {
+?>
+<form name="style_form_data" action="" method="POST">
+<?
+}
+?>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<table cellpadding=0 cellspacing=0 border=0 width=100%>
+				<tr>
+					<td align=left valign=middle>
+						<h2><?=L10N::t('Stilverwaltung', 'CMS')?></h2>
+					</td>
+					<td align=right valign=midel>
+<?if($_VARS['action'] != "import" && $_VARS['action'] != "files"){
+								$d = dir(\Util::getDocumentRoot()."css");
+								$arrCss = array();
+								while($entry=$d->read()) {
+									if(preg_match("/\.css$/i",$entry) AND $entry != "admin.css")
+							    		$arrCss[$entry] = $entry;
+									}
+								$d->close();
+?>
+					<select name="filter_file" onChange="global_detail.document.location.href='styles_detail.html?filter_file='+this.options[this.selectedIndex].value">
+						<option value=""><?=L10N::t('Alle CSS-Dateien anzeigen', 'CMS')?></option>
+						<?
+						foreach($arrCss as $v) echo "<option value='$v'".($_VARS['filter_file']==$v?' SELECTED':' dn="'.$_REQUEST['filter_file'].'"').">$v</option>";
+						?>
+					</select>
+<?}?>
+					</td>
+				</tr>
+			</table>
+			<br>
+			
+<?
+
+
+if($_VARS['action'] == "import") {
+?>
+			<form method="POST" action="styles.html">
+			<input type="hidden" name="task" value="import">
+			<input type="hidden" name="filter_file" value="<?=$_VARS['filter_file'];?>">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th><?=L10N::t('Bitte fügen Sie hier den Inhalt Ihrer CSS Datei ein', 'CMS')?>:</th>
+					<td><textarea name="sCss" class="txt" rows="10" style="width:100%;"></textarea></td>
+				</tr>
+				<?
+					$d = dir(\Util::getDocumentRoot()."css");
+					$arrCss = array();
+					while($entry=$d->read()) {
+						if(preg_match("/\.css$/i",$entry) AND $entry != "admin.css")
+				    		$arrCss[$entry] = $entry;
+						}
+					$d->close();
+?>					<?=printFormSelect("Klassendatei","style_file",$arrCss,$_VARS['filter_file'])?>
+			</table>
+			<p align="right">
+			<input type="submit" class="btn" value="<?=L10N::t('Stile importieren', 'CMS')?>">
+			</p>
+			</form>
+<?
+} elseif($_VARS['action'] == "files") {
+?>	
+			<?=$sError?>
+			<form method="POST" action="styles.html">
+			<input type="hidden" name="task" value="create">
+			<input type="hidden" name="filter_file" value="<?=$_VARS['filter_file'];?>">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th><?=L10N::t('Bitte geben Sie hier den Namen der neuen CSS Datei an', 'CMS')?>:</th>
+					<td><input type="text" name="sFile" class="txt"></td>
+				</tr>
+			</table>
+			<p align="right">
+			<input type="submit" class="btn" value="<?=L10N::t('Datei anlegen', 'CMS')?>">
+			</p>
+			</form>
+<?
+} else {
+?>
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tr>
+					<td>
+						<IFRAME src="styles_detail.html?filter_file=<?=$_VARS['filter_file'];?>" style="width:100%;height:230" name="global_detail" id="global_detail" frameborder="1" scrolling="yes"></IFRAME>
+					</td>
+				</tr>
+				<TR height="1">
+					<TD>
+						<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+							<?=printFormText(L10N::t("Klassenname", 'CMS'), "style_neu_name", "")?>
+							<?=printFormSelect(L10N::t("Klassentyp", 'CMS'), "style_type", array("individuell"=>"Individuell","system"=>"System"), "")?>
+							<?=printFormSelect(L10N::t("Ausgabemedium", 'CMS'), "style_media", array("both"=>"Alle","screen"=>"Bildschirm","print"=>"Drucker"), "")?>
+							<?
+								$d = dir(\Util::getDocumentRoot()."css");
+								$arrCss = array();
+								while($entry=$d->read()) {
+									if(preg_match("/\.css$/i",$entry) AND $entry != "admin.css")
+							    		$arrCss[$entry] = $entry;
+									}
+								$d->close();
+?>
+							<?=printFormSelect(L10N::t("Klassendatei", 'CMS'), "style_file", $arrCss, $_VARS['filter_file'])?>
+							<?=printFormText(L10N::t("Beschreibung", 'CMS'), "style_neu_beschr", "")?>
+							<?=printFormTextarea(L10N::t("Style-String", 'CMS').":<br><br><a href=\"javascript:void();\" onClick=\"call_styleeditor('style_form_data', 'style_neu_string');\">Stileditor starten</a>","style_neu_string","")?>
+							<input type="hidden" name="style_chg_id" value="">
+							<input type="hidden" name="topic" value="7">
+							<input type="hidden" name="style_save" value="1">
+							</form>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p align="right">
+						<br>
+						<TABLE cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td align="right">
+								<?make_button(L10N::t("Als neue Stilklasse speichern", 'CMS'), "#", "onclick=\"document.style_form_data.style_chg_id.value=0; document.style_form_data.submit();\"");?>
+								</td>
+								<td>&nbsp;&nbsp;</td>
+								<td align="center">
+								<?make_button(L10N::t("Stilklasse speichern", 'CMS'), "#", "onclick=\"document.style_form_data.submit();\"");?>
+								</td>
+								<td>&nbsp;&nbsp;</td>
+								<td align="left">
+								<?make_button(L10N::t("Stilklasse löschen", 'CMS'), "#", "onclick=\"global_detail.deleteitem();\"");?>
+								</td>
+							</tr>
+						</table>
+						</p>
+						<p align="right">
+						<?make_button(L10N::t("CSS Dateien verwalten", 'CMS'), "#", "onclick=\"document.location.href='styles.html?action=files';\"");?>&nbsp;
+						<?make_button(L10N::t("Stile importieren", 'CMS'), "#", "onclick=\"document.location.href='styles.html?action=import';\"");?>
+						</p>
+					</td>
+				</tr>
+			</table>
+			<?
+			}
+			?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

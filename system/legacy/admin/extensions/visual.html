@@ -1,0 +1,351 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+/* ==================================================================================================== */
+
+// if edit groups
+if(isset($_VARS['task']) && $_VARS['task'] == 'edit_groups')
+{
+	if(isset($_VARS['group_id']))
+	{
+		// if new, insert into db
+		if(trim($_VARS['group_id'][0]) != '')
+		{
+			$aSQL = array(
+				'sName'		=> $_VARS['group_id'][0],
+				'sCreated'	=> date('YmdHis'),
+				'iActive'	=> 1
+			);
+			$sSQL = "
+				INSERT INTO
+					`visual_groups`
+				SET
+					`created`	= :sCreated,
+					`active`	= :iActive,
+					`name`		= :sName
+			";
+			DB::executePreparedQuery($sSQL, $aSQL);
+		}
+	}
+	// delete group
+	if(isset($_VARS['delete_group']))
+	{
+		$iID = (int)$_VARS['delete_group'];
+		if($iID > 0)
+		{
+			$aSQL = array(
+				'iID'	=> $iID
+			);
+			$sSQL = "
+				UPDATE
+					`visual_groups`
+				SET
+					`active` = 0
+				WHERE
+					`id` = :iID
+			";
+			DB::executePreparedQuery($sSQL, $aSQL);
+		}
+	}
+}
+
+// get all visual Groups
+$aVisualGroups = Ext_Visual_Util::getAllVisualGroups();
+
+// Get all domains
+$sSql = "
+	SELECT
+		*
+	FROM
+		`cms_sites`
+	ORDER BY `id`
+";
+$aSystemSiteDomains = DB::getQueryData($sSql);
+
+// ================ Get all Pages of Domain
+if(isset($_VARS['system_site_id']))
+{
+	$iSiteID = (int)$_VARS['system_site_id'];
+} else {
+	$iSiteID = (int)$aSystemSiteDomains[0]['id'];
+}
+$aSql = array(
+	'site_id' => $iSiteID
+);
+$sSql = "
+	SELECT
+		*
+	FROM
+		`cms_pages`
+	WHERE
+		`element`	= 'page' AND
+		`file` 		!= 'index' AND
+		`site_id` 	= :site_id
+	ORDER BY `id`
+";
+$aSystemPages = DB::getPreparedQueryData($sSql, $aSql);
+
+// ================ if no visual group selected, select one
+if(!isset($_VARS['group_id']))
+{
+	foreach((array)$aVisualGroups as $iID => $sName)
+	{
+		$_VARS['group_id'] = $iID;
+		break;
+	}
+}
+
+$bForceGroup = false;
+if(!isset($_VARS['group_id']) || empty($_VARS['group_id']))
+{
+	$bForceGroup = true;
+}
+
+// ================ if no domain selected select first
+
+if(!isset($_VARS['system_site_id']))
+{
+	$_VARS['system_site_id'] = $iSiteID;
+}
+
+// ================ if no page_id selected select first
+
+if(!isset($_VARS['system_page_id']))
+{
+	$_VARS['system_page_id'] = $aSystemPages[0]['id'];
+}
+
+// if module config from site where clicked get actually page into selects and get all elements from
+if(isset($_VARS['page_id']))
+{
+	$iSiteID = Ext_Visual_Util::getSiteIDFromPage($_VARS['page_id']);
+	if($iSiteID !== false)
+	{
+		$_VARS['system_site_id'] = $iSiteID;
+		$_VARS['system_page_id'] = $_VARS['page_id'];
+	}
+}
+
+/* ==================================================================================================== */
+
+// ================ get standart visual of selected SiteID
+
+$sPathOfStandardVisual = Ext_Visual_Util::getStandardSiteVisual($_VARS['system_site_id'], $_VARS['group_id']);
+
+// ================ update / insert new standard visual
+
+if(isset($_VARS['standard_visual']) && $_VARS['standard_visual'] != $sPathOfStandardVisual && trim($_VARS['standard_visual']) != '')
+{
+	if($sPathOfStandardVisual === false && isset($_VARS['task_standard_visual']) && $_VARS['task_standard_visual'] == 'save_standard_visual')
+	{
+		Ext_Visual_Util::saveNewStandardVisual($_VARS['system_site_id'], $_VARS['standard_visual'], $_VARS['group_id']);
+	}
+	else if
+	(isset($_VARS['task_standard_visual']) && $_VARS['task_standard_visual'] == 'save_standard_visual')
+	{
+		Ext_Visual_Util::updateStandardVisual($_VARS['system_site_id'], $_VARS['standard_visual'], $_VARS['group_id']);
+	}
+}
+else if
+// ================ delete / reset old visual
+
+(isset($_VARS['standard_visual']) && trim($_VARS['standard_visual']) == '' && $sPathOfStandardVisual !== false && isset($_VARS['task_standard_visual']) && $_VARS['task_standard_visual'] == 'save_standard_visual')
+{
+	Ext_Visual_Util::resetStandardVisual($_VARS['system_site_id'], $_VARS['group_id']);
+}
+
+// =============== create new element
+
+if(isset($_VARS['task']) && $_VARS['task'] == 'new_element')
+{
+	$iNewVisualID = Ext_Visual_Util::createNewElement($_VARS['system_page_id'], $_VARS['group_id']);
+}
+
+// =============== update all elements
+
+if(isset($_VARS['visuals']))
+{
+	Ext_Visual_Util::updateElements($_VARS['system_page_id'], $_VARS['visuals'], $_VARS['group_id']);
+}
+
+// ================ check if there is no domain change happend last post
+
+$bisSameSite = Ext_Visual_Util::checkParentOfPage($_VARS['system_page_id'], $_VARS['system_site_id']);
+
+// ================ get all visuals of selected page_id
+
+if(isset($_VARS['system_page_id']) && $bisSameSite == true)
+{
+	$iPageID = $_VARS['system_page_id'];
+}
+else
+{
+	$iPageID = $aSystemPages[0]['id'];
+}
+
+$aVisuals = Ext_Visual_Util::getAllElements($iPageID, $_VARS['group_id']);
+if($aVisuals !== false)
+{
+	$iVisualsCount = count($aVisuals);
+} else {
+	$iVisualsCount = 0;
+}
+
+// ================ get standart visual of selected SiteID
+
+$sPathOfStandardVisual = Ext_Visual_Util::getStandardSiteVisual($_VARS['system_site_id'], $_VARS['group_id']);
+
+/* ==================================================================================================== */
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<script type="text/javascript">
+	<!--
+
+		function addNewVisual()
+		{
+			document.getElementById('new_element').value = 'new_element';
+			submit();
+		}
+
+		function updateStandardVisual()
+		{
+			document.getElementById('task_standard_visual').value = 'save_standard_visual';
+			submit();
+		}
+		
+		function editGroups()
+		{
+			go('<?=$_SERVER['PHP_SELF']?>?task=edit_groups');
+		}
+
+		function deleteGroup(iGroupID)
+		{
+			go('<?=$_SERVER['PHP_SELF']?>?task=edit_groups&delete_group=' + iGroupID);
+		}
+		
+		function getBack()
+		{
+			go('<?=$_SERVER['PHP_SELF']?>');
+		}
+
+	-->
+</script>
+
+<div class="divHeader">
+	<h1>Visual</h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+		<? if ($_VARS['page_id'] && $_VARS['element_id'] && $_VARS['content_id']) {
+			if ($_POST['action'] == "config")
+			{
+				$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+				$oConfig->group_id = (int)$_VARS['group_id'];
+				$oConfig->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+			}
+			$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		?>
+			<form method="POST" action="visual.html">
+			<?=printFormHidden('action', 'config')?>
+			<?=printFormHidden('page_id', $_VARS['page_id'])?>
+			<?=printFormHidden('element_id', $_VARS['element_id'])?>
+			<?=printFormHidden('content_id', $_VARS['content_id'])?>
+			<?=printFormHidden('language', $_VARS['language'])?>
+			<?=printTableStart()?>
+			<?=printFormSelect("Gruppe", "group_id", $aVisualGroups, $oConfig->group_id)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+
+		<? } elseif((isset($_VARS['task']) && $_VARS['task'] == 'edit_groups') || $bForceGroup) { ?>
+
+			<form method="post" name="form" action="<?=$_SERVER['PHP_SELF']?>">
+				
+				<input type="hidden" id="" name="task" class="txt w300" value="edit_groups" />
+				
+				<?=printSubmit(L10N::t('Aktualisieren / Speichern'))?>
+				
+				<?=printTableStart()?>
+					<tr>
+						<th><?=L10N::t('Gruppenname');?></th>
+						<th style="width:50px;"><?=L10N::t('Aktion');?></th>
+					</tr>
+
+					<? foreach((array)$aVisualGroups as $iID => $sGroupName) { ?>
+
+						<tr>
+							<td><input type="text" class="txt w300" name="group_id[<?=$iID?>]" value="<?=$sGroupName?>" /></td>
+							<td><img src="/admin/media/delete.png" style="cursor:pointer;" alt="Gruppe löschen" onclick="deleteGroup(<?=$iID?>);" /></td>
+						</tr>
+	
+					<? } ?>
+
+					<tr>
+						<td><input type="text" class="txt w300" name="group_id[0]" value="" /></td>
+						<td>Neu</td>
+					</tr>
+
+				<?=printTableEnd()?>
+				
+				<?=printSubmit(L10N::t('Aktualisieren / Speichern'))?>
+				
+				<?=printSubmit(L10N::t('zurück'), 'onclick="getBack();return false;"')?>
+				
+			</form>
+
+		<? } else { ?>
+
+			<form method="post" name="form" action="<?=$_SERVER['PHP_SELF']?>">
+				<input type="hidden" id="new_element" name="task" class="txt w300" value="" />
+				<input type="hidden" id="task_standard_visual" name="task_standard_visual" class="txt w300" value="" />
+
+				<?=printSubmit(L10N::t('Gruppenpflege'), 'onclick="editGroups();return false;"')?>
+
+				<?=printSubmit(L10N::t('Aktualisieren / Speichern'), 'onclick="updateStandardVisual();"')?>
+
+				<?=printTableStart()?>
+					<?=printFormSelect(L10N::t('Visual Gruppe'), 'group_id', $aVisualGroups, (int)$_VARS['group_id'] ,  'onchange="submit();"')?>
+					<?=printFormSiteSelect(L10N::t('Domainauswahl'), 'system_site_id', $_VARS['system_site_id'], 'onchange="submit();"')?>
+					<?=printFormPageSelect(L10N::t('Seitenauswahl'), 'system_page_id', $_VARS['system_page_id'], 0, 'onchange="submit();"', 1, '', "40", false, (int)$_VARS['system_site_id'])?>
+					<?=printFormMedia(L10N::t('Standard-Visual'), 'standard_visual', $sPathOfStandardVisual)?>
+					<tr><th colspan="2"><hr /></th></tr>
+					<tr><th><?=L10N::t('Elemente auf der Seite:')?></th><th><?=$iVisualsCount?></th></tr>
+					<?
+					if($aVisuals !== false)
+					{
+						foreach($aVisuals as $mKey => $mValue)
+						{
+							printFormMedia(L10N::t('Visual Element ID:').' '.$mValue['id'], 'visuals[visual_id_'.$mValue['id'].']', $mValue['visual_path']);
+						}
+					}
+					else
+					{
+						echo '<tr><td>&nbsp;</td><td>'.L10N::t('Keine Elemente vorhanden').'</td></tr>';
+					}
+					?>
+				<?=printTableEnd()?>
+				
+				<?=printButton(L10N::t('Neues Element hinzufügen'), 'addNewVisual();')?>
+				
+				<?=printSubmit(L10N::t('Aktualisieren / Speichern'), 'onclick="updateStandardVisual();"')?>
+				
+			</form>
+
+		<? } ?>
+
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

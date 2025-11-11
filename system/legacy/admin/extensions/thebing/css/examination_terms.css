@@ -1,0 +1,21 @@
+.GUIDialogRowInputDiv .terms{
+	margin: 15px 0 5px;
+}
+
+.GUIDialogRowInputDiv .terms select, .GUIDialogRowInputDiv .terms input{
+	margin: 0 5px 0 0;
+}
+
+.GUIDialogRowInputDiv .terms select{
+	width: 90px;
+}
+
+.GUIDialogRowInputDiv .terms select.begin_from{
+	width: 120px;
+}
+
+.GUIDialogRowInputDiv .terms input{
+	width: 40px;
+	text-align: right;
+}
+

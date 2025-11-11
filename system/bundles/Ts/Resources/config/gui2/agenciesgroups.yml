@@ -1,0 +1,45 @@
+hash: 17d0c4cc4b303075ad7f93ce795e43ad
+class:
+  wdbasic: Ext_Thebing_Agency_Group
+  data: \Ts\Gui2\Data\AgencyGroup
+access: thebing_marketing_agenciegroups
+orderby:
+  - \Ts\Gui2\Data\AgencyGroup
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\AgencyGroup
+  - getWhere
+id:
+  column: id
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        column: 
+          - id
+          - name
+        searchtype: LIKE 
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\AgencyGroup
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\AgencyGroup
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Name
+    column: name
+    width: name
+    resize: true

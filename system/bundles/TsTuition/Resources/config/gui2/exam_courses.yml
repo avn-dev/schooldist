@@ -1,0 +1,5 @@
+parent: ts_inquiry_journey_courses
+set: exams
+where:
+  - Ext_TS_Inquiry_Journey_Course_Gui2_Data
+  - getListWhereExams

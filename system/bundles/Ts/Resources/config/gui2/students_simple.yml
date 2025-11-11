@@ -1,0 +1,24 @@
+parent: ts_inquiry 
+title: ""
+description: ""
+access: thebing_students_simple_view
+hash: 4810c710cd8500364ca6e68e42164e3e
+leftframe: true
+multiple_selection: true
+where : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getSudentlistWhere
+index:
+  registry: 
+    generate: false
+designer:
+  dialog: ""
+  filter: ts_students_simple
+  flex: student_record
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo
+filter_values:
+  service_period_filter:
+    from: -P7D
+    until: P7D

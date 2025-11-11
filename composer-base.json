@@ -1,0 +1,32 @@
+{
+  "//": "This file will be used as base for core:composer:build. It can also be copied to composer.json for bootstrapping.",
+  "name": "fidelo/framework",
+  "description": "Fidelo Framework",
+  "homepage": "https://fidelo.com",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Fidelo Software GmbH",
+      "email": "support@fidelo.com"
+    }
+  ],
+  "require": {
+    "fidelo-bundle/core": "*"
+  },
+  "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "path",
+      "url": "system/bundles/*"
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true,
+      "pestphp/pest-plugin": false
+    },
+    "discard-changes": true,
+    "lock": false
+  },
+  "scripts": {}
+}

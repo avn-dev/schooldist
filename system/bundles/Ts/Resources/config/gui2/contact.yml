@@ -1,0 +1,115 @@
+class:
+  wdbasic: Ext_TS_Contact
+  data: \Ts\Gui2\Data\Contact
+access: thebing_admin_contacts
+designer:
+  flex: admin_contacts
+id:
+  column: id
+  alias: cdb1 # Muss cdb1 sein, da in Ext_TS_Contact so angegeben
+#where:
+#  - \Ts\Gui2\Data\Contact
+#  - getListWhere
+orderby:
+  - \Ts\Gui2\Data\Contact
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - cdb1
+          - cdb1
+          - tc_ea
+          - tc_cn
+        column:
+          - firstname
+          - lastname
+          - email
+          - number
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Typ
+        label_as_item: true
+        entries:
+          - \Ts\Gui2\Data\Contact
+          - getTypeOptions
+        filter_query:
+          accommodation: " `ts_aptc`.`accommodation_provider_id` IS NOT NULL "
+          enquiry: " `ts_i`.`type` & 1" # 1 = \Ext_TS_Inquiry::TYPE_ENQUIRY bit
+          booking: " `ts_i`.`type` & 2" # 2 = \Ext_TS_Inquiry::TYPE_BOOKING bit
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\Contact
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\Contact
+          - getDialog
+      -
+        element: icon_delete
+# Das wird nirgendwo beachtet!
+#      -
+#        element: icon_deactivate
+columns:
+  -
+    title: Nummer
+    alias: tc_cn
+    column: number
+    width: name
+    resize: false
+    default: false
+  - 
+    visible: true
+    title: Name
+    column: name
+    alias: cdb1
+    sortable_column: lastname
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Name
+    default: true
+  -
+    visible: true
+    title: Nachname
+    column: lastname
+    width: name
+    resize: true
+    default: false
+  -
+    visible: true
+    title: Vorname
+    column: firstname
+    width: name
+    default: false
+  -
+    visible: true
+    title: E-Mail
+    column: email
+    alias: tc_ea
+    width: email
+  -
+    visible: true
+    title: Kontakttyp
+    alias: ts_i # Welcher Alias ist egal, die Werte werden sowieso von der Formatklasse "genommen", der Alias ist zum Gruppieren.
+    column: type
+    format: Ts\Gui2\Format\Contact\Type
+    width: name
+    default: false
+  -
+    visible: false
+    title: Zugehörigkeit zur Schule
+    column: schools
+    width: comment
+    default: false

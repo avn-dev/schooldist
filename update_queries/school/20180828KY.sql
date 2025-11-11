@@ -1,0 +1,1 @@
+ALTER TABLE `ts_teachers` ADD `access_rights` BIT(3) NOT NULL DEFAULT b'111' AFTER `iban`;

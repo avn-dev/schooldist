@@ -1,0 +1,29 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+// Sprachen setzen
+$aLanguages = array(array('iso' => 'de', 'name' => 'Deutsch'));
+
+// Factory vorbereiten
+
+$oFactory = new Ext_TC_Gui2_Designer_Factory();
+
+$oFactory->sL10NPath					= Ext_TC_System_Navigation::tp();
+$oFactory->aLanguages					= $aLanguages;
+
+$oFactory->sDesignTabGuiClass			= 'Ext_TC_Gui2_Design_Tab_Gui2';
+$oFactory->sDesignTabElementGuiClass	= 'Ext_TC_Gui2_Design_Tab_Element_Gui2';
+
+$oFactory->aSectionList					= array(
+												'test' => 'Test Section',
+												'test2' => 'Test Section 2'
+										);
+
+$oFactory->aSectionDataClassList		= array(
+											'test' => 'Ext_TC_Gui2_Designer_Data',
+											'test2' => 'Ext_Test_Data'
+										);
+// Designer starten
+$oFactory->displayPage();
+

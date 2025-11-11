@@ -1,0 +1,921 @@
+class:
+  wdbasic: Ext_TS_Enquiry
+  data: Ext_TS_Enquiry_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+  icon_status: Ext_Thebing_Gui2_Icon_Enquiry_Icon
+  row_style: Ext_Thebing_Gui2_Style_Customer_Row
+  icon_visible: Ext_TS_Enquiry_Gui2_Icon_Visible
+  gui: Ext_Thebing_Gui2
+  js: Enquiry
+leftframe: false
+description: Thebing » Students » Contact
+where : 
+  - Ext_TS_Enquiry_Gui2
+  - getListWhere
+orderby : 
+  - Ext_TS_Enquiry_Gui2
+  - getIndexOrderby
+access:
+    thebing_students_contact_request
+id:
+  column: id
+  alias: 
+designer: 
+  dialog: ""
+  filter: ts_enquiry
+  flex: enquiries_enquiries
+title: Anfragen
+bars:
+    -
+      position: top
+      type: ''
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - Ext_TS_Enquiry_Gui2
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - Ext_TS_Enquiry_Gui2
+          - getDialog
+        -
+          element: icon_delete
+        -
+          element: icon
+          label: In Buchung umwandeln
+          task: openDialog
+          action: convert_enquiry_to_inquiry
+          # wird in der Visible-klasse abgefangen
+          #access: 
+            #- not_thebing_students_contact_gui
+            #- ""
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - convert_item
+        -
+          element: labelgroup
+          label: Kommunikation
+        -
+          element: icon_communication
+          application: enquiry
+    -
+      position: bottom
+      type: legend
+      elements:
+        -
+          element: legend_label
+          label: Anfragen
+        -
+          element: legend_info
+          label: Umgewandelte Angebote
+          info:
+            color: lightgreen
+        -
+          element: legend_info
+          label: Nachhaken
+          info:
+            color: red
+        -
+          element: legend_label
+          label: Angebot
+        -
+          element: legend_info
+          label: Nicht erstellt
+          access: 
+            - thebing_students_contact_gui
+            - ""
+          info:
+            color: red_font
+            background: false
+            
+columns:
+  ###
+  ### HIDDEN
+  ###
+  -
+    visible: false
+    column: id
+    index:
+      call:
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+        analyzer: []
+  -
+    visible: false
+    title: Schule
+    column: school_id
+    access: all_school
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Client
+        - getStaticSchoolListByAccess
+        - false
+    index:
+      call: 
+         - getSchool()
+         - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Agentur
+    column: agency_id
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Abstract
+        - getAgenciesForSelect
+    index:
+      call:
+         - getAgency()
+         - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Agentur
+    column: agency_full_name
+    index:
+      call:
+         - getAgency()
+         - ext_1
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    title: Gruppe
+    column: group_full_name
+    index:
+      call:
+        - getGroup()
+        - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    title: Umgewandelt
+    column: is_converted # Abhängigkeit im Status-Filter
+    index:
+      call:
+        - isConvertedToInquiry()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    title: Angebotsnummer
+    column: offer_document_number
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getOfferDocuments()
+         - getDocumentNumberForIndex()
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    title: Angebot erstellt/nicht erstellt
+    column: has_offers
+    filterset: 
+      type: select 
+      options: [Ext_TS_Enquiry_Gui2, getOfferCreatedOptions]
+    index:
+      call:
+        - hasOffers()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    title: Nationalität
+    column: customer_nationality_original
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Nationality
+        - getNationalities
+        - true
+        - ""
+        - 0
+    index:
+      call:
+         - getFirstTraveller()
+         - nationality
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    title: Land
+    column: customer_country_original
+    format: 
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Country_Search
+        - getLocalizedCountries
+        - false
+        - false
+    index:
+      call: 
+         - country_iso
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    title: Status
+    column: status_filter
+    filterset:
+      type: select 
+      options: 
+        - Ext_TS_Enquiry_Gui2
+        - getStatusOptionsList
+        - false
+      wdsearch:
+        unanswered: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, unanswered]
+        due_follow_up: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, due_follow_up]
+        entered_follow_up: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, entered_follow_up]
+        booked: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, booked]
+    index:
+      add_field: false
+  -
+    visible: false
+    title: Gruppen
+    column: has_group
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getYesNo
+    index:
+      call:
+        - hasGroup()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    title: Kommentar
+    column: comment_full
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - comment
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  -
+    # TODO Wieder mit Ursprungsspalte vereinen, da Filter-I18N-Problem gelöst wurde
+    visible: false
+    column: filter_corresponding_language
+    title: Korrespondenzsprache
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Data
+        - getCorrespondenceLanguages
+        - true
+        - ''
+    index:
+      call:
+        - getFirstTraveller()
+        - corresponding_language
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    group: Persönliche Daten
+    title: Automatische E-Mails
+    column: newsletter_original
+    index:
+      call:
+         - isReceivingAutomaticEmails()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  ###
+  ###
+  ###
+  -
+    visible: true
+    title: Schule
+    column: school_name
+    access: all_school
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Client
+        - getStaticSchoolListByAccess
+        - false
+    index:
+      call: 
+         - getSchool()
+         - getName()
+      mapping:
+        index: false
+        type: text
+  -
+    visible: true
+    title: Name
+    column: customer_name
+    width: name
+    resize: true
+    sortable: true
+    unique_values: true
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: K.Nr.
+    description: Kundennummer
+    column: customerNumber
+    width: name
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getCustomerNumber()
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  -
+    visible: true
+    title: Nachname
+    column: customer_lastname
+    width: name
+    resize: true
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+         - getFirstTraveller()
+         - lastname
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: Vorname
+    column: customer_firstname
+    width: name
+    resize: true
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+         - getFirstTraveller()
+         - firstname
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: [Ext_TS_Enquiry_Gui2, getGroupColumnTitle]
+    column: group
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - group_full_name
+      - true
+    filterset:
+      title: Gruppe (Abkürzung)
+      type: input
+    index:
+      call: 
+         - getGroup()
+         - getShortName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: Gruppennummer
+    column: group_number
+    width: number
+    default: false
+    filterset:
+      type: input 
+    index:
+      call: 
+         - getGroup()
+         - number
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: Vertriebsmitarbeiter
+    access: thebing_invoice_sales_person
+    column: sales_person
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    width: name
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_User
+        - getSalesPersonsForSelect
+    index:
+      add_original: true
+      call:
+        - getSalesPerson()
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    column: language
+    default: false
+    sortable_column: language
+    title: Muttersprache
+    format: Ext_Thebing_Gui2_Format_Language
+    i18n:
+      pass_language: true
+    index:
+      call:
+        - getLanguageData()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    column: corresponding_language
+    sortable_column: corresponding_language
+    title: Korrespondenzsprache
+    default: false
+    i18n:
+      pass_language: true
+      interface: backend
+    index:
+      call: 
+         - getCorrespondingLanguageForIndex()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    title: Agentur
+    column: agency
+    width: short_name
+    resize: false
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - agency_full_name
+      - true
+    index:
+      call: 
+         - getAgency()
+         - getName()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Agenturmitarbeiter
+    column: agency_contact_name
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - getAgencyContact()
+        - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: E-Mail
+    column: email # Abhängigkeit in Ext_TS_System_Cronjob_Update_Emails
+    sortable_column: email_original
+    width: email
+    resize: false
+    sortable: true
+    filterset: 
+      type: input 
+    index:
+      add_original: true
+      call: 
+         - getFirstTraveller()
+         - [getEmailAddresses(), true]
+         - getEmail()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: keyword
+  -
+    visible: true
+    title: Datum der letzten Nachricht
+    column: last_message_date # Abhängigkeit bei automatischen Mails und Status-Filter
+    sortable_column: last_message_date_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    index:
+      add_original: true
+      call: 
+         - getLastMailMessageLog()
+         - created_index
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    title: Benutzer der letzten Nachricht
+    column: last_message_user
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    width: name
+    resize: false
+    sortable: true
+    default: false
+    index:
+      call:
+         - getLastMailMessageLog()
+         - [getValueForIndex(), creator_id]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    title: Nachhaken
+    column: follow_up # Abhängigkeit in Ext_Thebing_Gui2_Style_Customer_Row, automatischen E-Mails und Status-Filter
+    sortable_column: follow_up_original
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    index:
+      add_original: true
+      call:
+        - [getValueForIndex(), follow_up]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    title: Referenz
+    column: referer
+    width: name
+    default: false
+    index:
+      call: 
+         - getReferrer()
+         - getName()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Stadt
+    column: customer_city
+    width: name
+    default: false
+    sortable_column: customer_city_original
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - [getValueForIndex(), city]
+      add_original: true
+      mapping:
+        index: true
+        type: text
+      mapping_original:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: PLZ
+    column: customer_zip
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - [getValueForIndex(), zip]
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  -
+    visible: true
+    title: Adresse
+    column: customer_address
+    sortable_column: customer_address_original
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - address
+      add_original: true
+      mapping:
+        index: true
+        type: text
+      mapping_original:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Land
+    column: customer_country
+    i18n:
+      pass_language: true
+    width: name
+    index:
+      call: 
+         - getCustomer()
+         - getAddress()
+         - getCountry()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Nationalität
+    column: customer_nationality
+    width: name
+    default: false
+    i18n: 
+      pass_language: true
+    index:
+      call: 
+         - getNationality()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Telefonnummer
+    column: customer_phone_private
+    width: name
+    default: false
+    index:
+      call:
+         - [getValueForIndex(), phone_private]
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Fax
+    column: customer_fax
+    width: name
+    default: false
+    index:
+      call:
+         - [getValueForIndex(), fax]
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    title: Schülerstatus
+    column: customer_status
+    format: Ext_Thebing_Gui2_Format_CustomerStatus
+    width: name
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCustomerStatusOptions
+    index:
+      add_original: true
+      call:
+         - [getValueForIndex(), status_id]
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: integer
+  -
+    visible: true
+    title: Gewünschte Kurskategorien
+    column: course_categories
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - course_categories_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - course_category
+      mapping:
+        index: false
+        type: text
+  -
+    visible: true
+    title: Gewünschte Kurslevel
+    column: course_intensities
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - course_intensities_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - course_intensity
+      mapping:
+      index: false
+      type: text
+  -
+    visible: true
+    title: Gewünschte Unterkunftskategorien
+    column: accommodation_categories
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - accommodation_categories_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - accommodation_category
+      mapping:
+      index: false
+      type: text
+  -
+    visible: true
+    title: Gewünschte Unterkunftsraumart
+    column: accommodation_rooms
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - accommodation_rooms_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - accommodation_room
+      mapping:
+      index: false
+      type: text
+  -
+    visible: true
+    title: Gewünschte Verpflegung
+    column: accommodation_meals
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - accommodation_meals_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - accommodation_meal
+      mapping:
+      index: false
+      type: text
+  -
+    visible: true
+    title: Gewünschte Transferart
+    column: transfer_categories
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - transfer_categories_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - transfer_category
+      mapping:
+      index: false
+      type: text
+  -
+    visible: true
+    title: Gewünschte Transferorte
+    column: transfer_locations
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - transfer_locations_full
+      - true
+    width: text
+    default: false
+    index:
+      call:
+        - transfer_location
+      mapping:
+      index: false
+      type: text
+  -
+    visible: true
+    title: Kommentar
+    column: comment
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - comment_full
+      - true
+      - 80
+    width: name
+    index:
+      call: 
+         - comment
+      mapping:
+        index: false
+        type: text
+  -
+    visible: false
+    title: Ersteller
+    column: filter_creator
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCreatorOptions
+    index:
+      call: 
+         - getCreatorIdForIndex()
+      mapping:
+        index: not_analyzed
+        type: integer
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+  - [gui2/studentlists.js, thebing]
+  - [enquiry/convert/gui2.js, ts]
+  - [enquiry/gui2.js, ts]
+  - [js/communication.js, thebing]
+css:
+  - /assets/ts/css/gui2.css
+  
+index:
+  name : ts_enquiry
+  where:
+    - Ext_TS_Enquiry_Gui2
+    - getIndexWhere
+  priority:
+    Ext_TS_Enquiry: 0
+    Ext_TS_Enquiry_Contact_Traveller: 0
+    Ext_TS_Contact: 0
+    Ext_TC_Contact: 0
+    Ext_TC_Address: 0
+    Ext_TC_Contact_Detail: 0
+    Ext_TC_Email_Address: 0

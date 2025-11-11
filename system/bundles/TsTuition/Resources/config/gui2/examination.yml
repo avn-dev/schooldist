@@ -1,0 +1,260 @@
+# Manche Einträge dieser Liste werden einzelnd/nicht richtig sortiert, das liegt an dem UNION in der getListQueryData (WDBasic)
+hash: 7c8174ad7a511dc514b4fc0af3960952
+class:
+  wdbasic: Ext_Thebing_Examination_Version
+  data: Ext_Thebing_Examination_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+  row_style: Ext_Thebing_Tuition_Report_Gui2_Row_style
+  js: Examination
+  icon_status: Ext_Thebing_Gui2_Icon_Examination_Document
+js:
+  - [tuition/js/examination.js, thebing]
+access: thebing_tuition_examination
+export: false
+id:
+  column: inquiry_id
+  alias: result
+limit: 100000
+only_pagecount: true
+multiple_selection: true
+encode_data_id_field: version_id
+encode_data: 
+  - examination_id
+  - template_id
+  - version_id
+  - inquiry_course_id
+  - program_service_id
+  - course_id
+  - examination_date
+  - examination_term_id
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+          - lastname
+          - firstname
+          - customerNumber
+        alias:
+          - result
+          - result
+          - ''
+        id: search
+        searchtype: LIKE
+     -
+        element: seperator
+     -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column: 
+            - from
+          alias:
+            - result
+          default:
+            - Ext_Thebing_Examination_Gui2
+            - getDefaultFilterFrom
+        until:
+          column: 
+            - until
+          alias:
+            - result
+          default: 
+            - Ext_Thebing_Examination_Gui2
+            - getDefaultFilterUntil
+        searchtype: contact
+        text_after: basierend auf Prüfungszeitpunkt
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Kurs
+        label_as_item: true
+        value: ''
+        column: 
+          - course_id
+        alias:
+          - result
+        entries: 
+          - Ext_Thebing_Examination_Gui2
+          - getCourseSelectOptions
+        id: course_filter
+     -
+        element: selectfilter
+        label: Eingecheckt
+        column: checkin
+        value: ''
+        entries:
+          - Ext_TC_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          no: '`checkin` IS NULL'
+          yes: '`checkin` IS NOT NULL'
+        label_as_item: true
+     -
+        element: selectfilter
+        label: Status
+        label_as_item: true
+        value: ''
+        column: 
+          - created
+        alias:
+          - result
+        entries: 
+          - Ext_Thebing_Examination_Gui2
+          - getExaminationStatusSelectOptions
+        filter_query:
+          examen_insterted: '`created` != 0 AND `created` IS NOT NULL'
+          examen_not_insterted: '`created` IS NULL'
+        id: examination_inserted_filter  
+     -
+        element: selectfilter
+        label: Gruppe
+        label_as_item: true
+        entries: 
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`group_id` != 0'
+          no: '`group_id` = 0' 
+  -  
+    position: top
+    elements:
+     -
+      element: icon_new
+      dialog:
+        - Ext_Thebing_Examination_Gui2
+        - getExaminationDialog
+        - false
+     -
+      element: icon_edit
+      dialog:
+        - Ext_Thebing_Examination_Gui2
+        - getExaminationDialog
+        - true
+     -
+        element: icon_delete
+     -
+        element: labelgroup
+        label: Dokumente   
+     - 
+        element: icon
+        label: Zeugnis öffnen
+        task: requestAsUrl
+        action: contract_open
+        img: 
+          - Ext_Thebing_Util
+          - getIcon
+          - pdf
+  -
+    position: bottom
+    type: legend
+    elements:
+     -
+        element: legend_label
+        label: Buchung
+     -
+        element: legend_info
+        label: Storniert
+        info:
+           color: storno
+columns:
+  - 
+    title: K.Nr.
+    column: customerNumber
+    width: customer_number
+    resize: false
+  - 
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    column: short
+    width: group_short
+    data: group_short
+    alias: kg
+    resize: false
+    sortable: false
+  - 
+    title: Schüler
+    column: lastname
+    width: name
+    alias: result
+    resize: true
+    format: Ext_Thebing_Gui2_Format_CustomerName
+  -
+    title: Eingecheckt
+    column: checkin
+    width: datetime
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date_Time
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Checkin
+  -
+    title: Kurs
+    column: course_name
+    width: short_name
+    alias: result
+    resize: false
+  - 
+    title: Prüfung
+    column: template_id
+    width: long_description
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Examination, getTemplates, true]
+  - 
+    title: Kursstart
+    column: from
+    width: date
+    alias: result
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Kursende
+    column: until
+    alias: result
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Kurswoche
+    column: course_week
+    width: courseweek_from_until
+    alias: result
+    resize: false
+    sortable: false
+  - 
+    title: Examendatum
+    column: examination_date
+    alias: result
+    width: date
+    resize: false
+    format: Ext_Thebing_Examination_Gui2_Format_TermTooltip
+    sortable: false
+  - 
+    title: App
+    column: released_student_login
+    width: icon
+    sortable: false
+    inplace_editor: true
+    inplace_editor_start: true
+    db_type: tinyint
+    style: Ext_Thebing_Examination_Gui2_Style_AppCheckbox
+    resize: false
+  - 
+    title: Punkte
+    column: score
+    width: 60
+    format: Ext_Thebing_Examination_Gui2_Format_Empty
+    format_params: Ext_Thebing_Gui2_Format_Int
+    sortable: false
+  - 
+    title: Bestanden
+    column: passed
+    width: yes_no
+    sortable: false
+    format: Ext_Thebing_Examination_Gui2_Format_Empty
+    format_params: Ext_Thebing_Gui2_Format_Int

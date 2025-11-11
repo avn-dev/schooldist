@@ -1,0 +1,295 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sDataClass = Ext_TC_Factory::getClassName('Ext_TC_Pdf_Template_Gui2_Data');
+
+$oGui = new Ext_TC_Gui2(md5('core_admin_pdf_templates'), $sDataClass);
+
+$oGui->access = array('core_admin_templates_pdf_templates', '');
+
+$oGui->setWDBasic(Ext_TC_Pdf_Template::class);
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_pt.name' => 'ASC'));
+
+$oGui->column_sortable				= 1;
+$oGui->row_sortable					= 0;
+$oGui->multiple_selection 			= 0;
+$oGui->query_id_column				= 'id';
+$oGui->query_id_alias				= 'tc_pt';
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+$oGui->class_js						= 'Templates';
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Dialog
+
+$oDialog = $oGui->createDialog(
+	$oGui->t('PDF Vorlage "{name}" bearbeiten'),
+	$oGui->t('Neue PDF Vorlage')
+);
+$oDialog->width		= 1000;
+$oDialog->height	= 650;
+
+$oDialog->save_as_new_button		= true;
+$oDialog->save_bar_options			= true;
+$oDialog->save_bar_default_option	= 'open';
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Tab "Settings"
+
+$oPdfLayout = new Ext_TC_Pdf_Layout;
+$aLayouts	= $oPdfLayout->getArrayList(true);
+$aLayouts	= Ext_TC_Util::addEmptyItem($aLayouts);
+
+$aTypes		= Ext_TC_Factory::executeStatic('Ext_TC_Pdf_Template', 'getApplications');
+$aTypes		= Ext_TC_Util::addEmptyItem($aTypes);
+asort($aTypes);
+
+$aSubObjects = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjects', array(true));
+$sSubObjectLabel = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjectLabel');
+$aLanguages = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getLanguages', array(true));
+
+$aSubObjectsFilter = Ext_TC_Util::addEmptyItem($aSubObjects);
+
+$aPositionTableOptions = Ext_TC_Pdf_Template_Gui2_Data::getPositionTableOptions();
+
+$oTab = $oDialog->createTab($oGui->t('Einstellungen'));
+
+$sText = $oGui->t('Bitte speichern Sie zuerst die Einstellungen, um die sprachabhängigen Texte zu hinterlegen.');
+$oNotification = $oDialog->createNotification($oGui->t('Information'), $sText,'info');
+$oTab->setElement($oNotification);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGui->t('Name'),
+		'input',
+		array(
+			'db_column'			=> 'name',
+			'db_alias'			=> 'tc_pt',
+			'required'			=> 1
+		)
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGui->t('Layout'),
+		'select',
+		array(
+			'db_column'			=> 'layout_id',
+			'db_alias'			=> 'tc_pt',
+			'select_options'	=> $aLayouts,
+			'required'			=> 1,
+			'events'			=> array(
+				array(
+					'event' 		=> 'change',
+					'function' 		=> 'showLayoutChangeWarning',
+					'parameter'		=> 'aDialogData, new Array(1, -1, -2)'
+				)
+			)
+		)
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGui->t('Typ'),
+		'select',
+		array(
+			'db_column'			=> 'type',
+			'db_alias'			=> 'tc_pt',
+			'select_options'	=> $aTypes,
+			'required'			=> 1,
+			'events'			=> array(
+				array(
+					'event' 		=> 'change',
+					'function' 		=> 'reloadDialogTab',
+					'parameter'		=> 'aDialogData.id, new Array(1, -1, -2)'
+				)
+			)
+		)
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$sSubObjectLabel,
+		'select',
+		array(
+			'db_column'			=> 'objects',
+			'multiple'			=> 5,
+			'select_options'	=> $aSubObjects,
+			'jquery_multiple'	=> 1,
+			'searchable'		=> 1,
+			'required'			=> 1
+		)
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGui->t('Sprachen'),
+		'select',
+		array(
+			'db_column'			=> 'languages',
+			'multiple'			=> 5,
+			'select_options'	=> $aLanguages,
+			'jquery_multiple'	=> 1,
+			'searchable'		=> 1,
+			'required'			=> 1
+		)
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGui->t('Rechnungspositionen'),
+		'select',
+		array(
+			'db_column'			=> 'inquirypositions_view',
+			'db_alias'			=> 'tc_pt',
+			'select_options'	=> $aPositionTableOptions,
+			'row_id'			=> 'positions_table_settings'
+		)
+	)
+);
+
+\System::wd()->executeHook('tc_pdf_template_settings_tab', $oGui, $oDialog, $oTab);
+
+$oDialog->setElement($oTab);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Search bar
+
+$oBar						= $oGui->createBar();
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('name');
+$oFilter->db_alias			= array('tc_pt');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oBar->setElement($oBar->createSeperator());
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('type');
+$oFilter->db_alias = '';
+$oFilter->db_operator = '=';
+$oFilter->select_options = Ext_TC_Util::addEmptyItem($aTypes, '--'.$oGui->t('Typen').'--');
+$oFilter->id = 'filter_layout_id';
+$oBar ->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column		 = array('object_id');
+$oFilter->db_alias		 = 'objects';
+$oFilter->db_operator	 = '=';
+$oFilter->select_options = Ext_TC_Util::addEmptyItem($aSubObjectsFilter,'--'.$sSubObjectLabel.'--');
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+$oFilter = $oBar->createValidFilter($oGui->t('Gültigkeit'));
+$oBar->setElement($oFilter);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Icons
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+    $oGui->t('Neuer Eintrag'),
+    $oDialog,
+    $oGui->t('Neuer Eintrag')
+);
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+    $oGui->t('Editieren'),
+    $oDialog,
+    $oGui->t('Editieren')
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon(
+    $oGui->t('Löschen'),
+    $oGui->t('Löschen')
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeactivateIcon(
+    $oGui->t('Deaktivieren'),
+    $oGui->t('Deaktivieren')
+);
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Pagination bar
+
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading					= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // List
+
+
+
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_pt';
+$oColumn->title			= $oGui->t('Name');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column		= 'language_iso';
+$oColumn->db_alias		= 'languages';
+$oColumn->select_column	= 'languages';
+$oColumn->title			= $oGui->t('Sprachen');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('language');
+$oColumn->format		= new Ext_TC_Gui2_Format_Imagelist();
+$oColumn->width_resize	= false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column		= 'layout_id';
+$oColumn->db_alias		= 'tc_pt';
+$oColumn->title			= $oGui->t('Layout');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->format		= new Ext_Gui2_View_Format_Selection($aLayouts);
+$oColumn->width_resize	= false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column		= 'type';
+$oColumn->db_alias		= 'tc_pt';
+$oColumn->title			= $oGui->t('Typ');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->format		= new Ext_Gui2_View_Format_Selection($aTypes);
+$oColumn->width_resize	= false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column		= 'object_id';
+$oColumn->db_alias		= 'objects';
+$oColumn->select_column	= 'objects';
+$oColumn->title			= $sSubObjectLabel;
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->format		= new Ext_TC_Gui2_Format_Multiselect($aSubObjects);
+$oColumn->width_resize	= false;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+$aOptionalInfo = array();
+$aOptionalInfo['js'][]	= '/admin/extensions/tc/admin/js/pdf_templates.js';
+$aOptionalInfo['css'][]	= '/admin/extensions/tc/admin/placeholder/gui2.css';
+
+$oGui->display($aOptionalInfo);

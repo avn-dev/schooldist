@@ -1,0 +1,25 @@
+<?php
+
+// Wegen fehlender Dependency Incection... unsauber lösen über include_ONCE
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+// Zugriff nur bei uns erlauben. Accesschecker klappt nicht wg. spezieller Datenbank
+if(
+	$_SERVER['REMOTE_ADDR'] != '127.0.0.1' &&
+	$_SERVER['HTTP_HOST'] != 'localhost:8080' &&
+	$_SERVER['HTTP_HOST'] != 'school.dev.box' &&
+	$_SERVER['HTTP_HOST'] != 'school.localhost'
+) {
+	die('No access');
+}
+
+//TODO DB Dumperzeugen
+
+include_once(\Util::getDocumentRoot()."phpunit/core/class.loader.php");
+
+$oLoader = new Loader('school');
+if($_VARS['database']){
+	$oLoader->prepareDatabase();
+}
+$oLoader->execute((string)$_VARS['file']);

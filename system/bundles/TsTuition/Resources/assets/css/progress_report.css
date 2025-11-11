@@ -1,0 +1,143 @@
+/**
+ * importiert von /admin/extension/thebing/tuition/css/progress_report.css
+ */
+.data th {
+  text-align: left;
+  padding: 5px 0;
+}
+
+.data td {
+  font-size: 11px;
+  width: 100px;
+  padding: 0 0 0 2px;
+}
+
+.data tr:nth-child(2n) td, .data tr:nth-child(2n) th {
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #555;
+}
+
+.allocation {
+  margin: 0 0 20px 0;
+}
+
+.allocation .first {
+  /*background: #eee;*/
+  padding: 0 5px;
+  border-bottom: 1px solid #555;
+  margin: 2px;
+}
+
+.allocation .second {
+  /*background: #f7f7f7;*/
+  padding: 0;
+  border-bottom: 1px solid #555;
+  margin: 10px;
+}
+
+.allocation div.inner {
+  float: left;
+  width: 250px;
+  margin-right: 10px;
+}
+
+.allocation div.inner-toggle {
+  width: 20px;
+  margin-right: 0;
+}
+
+.allocation div.inner-toggle2 {
+  cursor: pointer;
+  position: relative;
+  top: 3px;
+}
+
+.allocation div.inner-last {
+  width: 100px;
+}
+
+.allocation div.inner img {
+  float: left;
+  padding: 1px 0;
+  cursor: pointer;
+}
+
+.allocation div.inner label {
+  float: left;
+  line-height: 20px;
+  padding: 0;
+}
+
+.allocation .first div.inner label {
+  font-weight: bold;
+}
+
+.allocation .second div.inner label, .allocation .toggle div.inner label {
+  margin: 0 0 0 3px;
+}
+
+.allocation .toggle {
+  margin: 10px 20px;
+}
+
+.allocation div.firstInner {
+  width: 250px !important;
+}
+
+.allocation div.innerLong {
+  width: 406px !important;
+}
+
+.allocation div.inner2 {
+  width: 750px !important;
+  padding: 0 18px;
+}
+
+.allocation div.inner label.day {
+  width: 25px;
+  margin: 0;
+}
+
+.GUIDialogContentPadding fieldset {
+  border-radius: 0.375rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  margin: 5px 0 15px 0;
+  padding: 15px 15px 0 15px;
+}
+
+.GUIDialogContentPadding fieldset label {
+  padding-left: 0;
+}
+
+.GUIDialogContentPadding fieldset .GUIDialogRowInputDiv {
+  padding-right: 0;
+}
+
+.GUIDialogContentPadding fieldset legend {
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+  margin: 7px 0 7px 0;
+  line-height: 17px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+}
+
+.allocation .ui-state-highlight {
+  float: left;
+  cursor: pointer;
+  border: none;
+}

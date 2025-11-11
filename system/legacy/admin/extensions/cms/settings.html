@@ -1,0 +1,88 @@
+<?php
+
+include Util::getDocumentRoot().'system/includes/admin.inc.php';
+
+Access_Backend::checkAccess("page_admin");
+
+Admin_Html::loadAdminHeader();
+
+$system_data = System::getConfig();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?> &raquo; <?=L10N::t('Systemeinstellungen')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		
+			
+<?
+if($_VARS['action'] == "save") {
+
+	foreach($_VARS as $key=>$val) {
+		if($key == "logo") {
+			if(is_file($_FILES['logo']['tmp_name'])) {
+				$strTo = \Util::getDocumentRoot()."system/legacy/admin/media/32_logo.png";
+				saveResizeImage($_FILES['logo']['tmp_name'], $strTo, 500, 60);
+				$strTo = \Util::getDocumentRoot()."system/legacy/admin/media/64_logo.png";
+				saveResizeImage($_FILES['logo']['tmp_name'], $strTo, 500, 90);
+			}
+		} else {
+			System::s($key, $val);
+		}
+	}
+	
+	Log::enterLog(0, "Systemeinstellungen wurden gespeichert.");
+?>
+		<div class="box-body">
+			<h3><?=L10N::t('Die Einstellungen wurden erfolgreich gespeichert.', 'Framework')?></h3>
+		</div>
+		<div class="box-footer">
+			<a href="settings.html" class="btn btn-primary pull-right"><?=L10N::t('Zurück', 'Framework')?></a>
+		</div>
+<?
+} else {
+
+	// Default values
+	if(!array_key_exists('db_query_report_limit', $system_data)) {
+		$system_data['db_query_report_limit'] = 0.2;
+	}
+
+?>
+			<form method="POST" action="settings.html" enctype="multipart/form-data">
+			<input type="hidden" name="action" value="save">
+
+			<div class="box-body">
+			
+			<h3><?=L10N::t('Modul Einstellungen', 'Framework')?></h3>
+			<?=printTableStart()?>
+				<?=printFormCheckbox(L10N::t('Shop aktivieren', 'Framework')."", "shop_active", 1,$system_data['shop_active'],1,36)?>
+				<?=printFormCheckbox(L10N::t('Community aktivieren', 'Framework')."", "community_active", 1,$system_data['community_active'],1,37)?>
+			</table>
+
+			<h3><?=L10N::t('Erweiterte Einstellungen', 'Framework')?></h3>
+			<?=printTableStart()?>
+				<?=printFormSelect(L10N::t("webDynamics Tags", 'Framework'), "wd_vars", array("0"=>"".L10N::t('Aus', 'Framework')."","1"=>"Ein"),$system_data['wd_vars'],"",1,43)?>
+				<?=printFormText(L10N::t('Titel Vorlage', 'Framework')."","title_template",$system_data['title_template'],"",1,38)?>
+				<?=printFormText(L10N::t("Individuelles Script Include", 'Framework'),"include_script",$system_data['include_script'],"",1,51)?>
+				<?=printFormText(L10N::t("Seitenvorlagen &Uuml;bergabeparameter", 'Framework'),"template_manipulation",$system_data['template_manipulation'],"",1,52)?>
+				<?=printFormCheckbox(L10N::t("Zugriffe nicht auf Hauptdomain umleiten", 'Framework'), "no_redirect_to_host", 1 ,$system_data['no_redirect_to_host'],1,0)?>
+				<?=printFormCheckbox(L10N::t("Benutzerinformationen in Statistik erfassen", 'Framework'), "stats_userinfo", 1 ,$system_data['stats_userinfo'],1,0)?>
+				<?=printFormSelect(L10N::t("Neue Seite erstellen", 'Framework'), "insertposition", array("0"=>"".L10N::t('an erster Position', 'Framework')."","999"=>"an letzter Position"),$system_data['insertposition'],"",1,46)?>
+				<?=printFormText(L10N::t('Spy-Übergabeparameter', 'Framework')."","spy_name",$system_data['spy_name'],"",1,50)?>
+			</table>
+			
+		</div>
+		<div class="box-footer">
+			<input type="submit" value="<?=L10N::t('Einstellungen speichern', 'Framework')?>" class="btn btn-primary pull-right" />
+		</div>
+			</form>
+<?
+}
+?>
+
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

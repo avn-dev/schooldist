@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_inquiries_documents_versions` ADD `has_commissionable_items` TINYINT NULL DEFAULT NULL;

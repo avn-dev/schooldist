@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `teacherlogin_attendance_view` ENUM('simple','extended') NOT NULL DEFAULT 'extended' AFTER `teacherlogin_flex_expand`;

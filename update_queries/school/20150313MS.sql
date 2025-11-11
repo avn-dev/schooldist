@@ -1,0 +1,1 @@
+ALTER TABLE  `kolumbus_tuition_templates` ADD  `valid_until` TIMESTAMP NOT NULL DEFAULT  '0000-00-00 00:00:00' AFTER  `position`;

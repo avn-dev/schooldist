@@ -1,0 +1,128 @@
+<?php
+
+/**
+ * 
+ */
+ob_start();
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+addSystemRight("manual", "Handbuch", "manual");
+addSystemRight("manual_admin", "Handbuch &raquo; Administration", "manual");
+
+Access_Backend::checkAccess('manual');
+
+$aOptions = array ();
+$aOptions['additional'] = '
+<link type="text/css" rel="stylesheet" href="/admin/extensions/manual/inestedsortable.css" />
+<script language="JavaScript" type="text/javascript" src="/admin/extensions/manual/manual.js.php"></script>
+';
+
+$oManual = new Ext_Manual_Manual();
+
+?>
+<?=Admin_Html::loadAdminHeader($aOptions)?>
+<?
+
+if($_VARS['action'] == 'edit'){
+
+
+Access_Backend::checkAccess('manual_admin');
+$aPages = $oManual->getPages(1);
+?>
+	<div style="height: 35px;" class="divHeader">
+		<h1><?=L10N::t('Anleitung -  Administration')?></h1>
+	</div>
+	
+	<div class="wrap-admin">
+
+	<div id="loading" style="display:none;">
+		<?=L10N::t('Bitte Warten ... ')?><img src="/admin/media/indicator.gif"/>
+	</div>
+	<ul id="page-list" class="page-list" style="padding-top: 6px; padding-bottom: 6px;">
+		<li  class="clear-element page-item sort-handle left new_page" style="-moz-user-select: none;" id="new_page">
+			<img src="/admin/media/arrow_out.png" alt="" title=""/> <?=L10N::t('Neue Seite')?>
+		</li>
+	</ul>
+	<?=$oManual->display(1);?>
+	
+</div>
+
+ <script language="JavaScript" type="text/javascript">
+  	
+  	new Draggable('new_page',{ constraint: 'vertical',revert:true});
+
+  	makeSortable();
+
+	makeDroppables();
+</script>
+ <?
+} else {
+
+	$sSearch = \Util::convertHtmlEntities($_VARS['s']);
+	$iPage = (int)$_VARS['page'];
+?>
+
+	<div style="height: 35px;" class="divHeader">
+		<h1><?=L10N::t('Anleitung')?></h1>
+	</div>
+	
+	<div class="track">
+		<a href="<?=$_SERVER['PHP_SELF']?>?page=0"><?=L10N::t('Startseite')?></a>
+		<?
+		$sTrack = $oManual->getTrack($iPage);
+		echo $sTrack;
+		?>
+	</div>
+	<?
+	if($iPage <= 0){
+	?>
+	<div class="search">
+		<form id="searchform" name="searchform" action="" >
+ 			<input type="hidden" name="page" value="<?=$iPage?>" size="40" maxlength="40"/>
+			<input class="txt" type="text" name="s" value="<?=$sSearch?>" size="40" /> <button class="btn" onclick="submit();"><?=L10N::t('Search')?></button>
+  		</form>
+	</div>
+	<?
+	}
+	?>
+	<div class="wrap">
+
+<?
+	if($sSearch != ""){
+		
+		$aPages = $oManual->searchPages($sSearch);
+		if(count($aPages)<=0){
+			echo L10N::t('Keine Treffer für')." <i>".$sSearch."</i> ";
+		} else {
+			echo $oManual->display();
+		}
+		
+	} else if ($iPage != 0){
+	$aPages = $oManual->getPages(0,$iPage);
+	$aPage = $oManual->getPageData($iPage);
+	
+?>
+			<h2><?=$aPage['title'];?></h2>
+			<div class="innerContent">
+				<?=$aPage['content'];?>
+			</div>
+			<br/><br/>
+			<?=$oManual->display(0,$aPage['id']);?>
+	
+	
+<?
+	} else {
+			
+		$aPages = $oManual->getPages(2,$iPage);
+		echo $oManual->display();
+	}
+	
+}
+ ?> 
+<?=Admin_Html::loadAdminFooter()?>
+	</div>
+<?
+
+
+ob_end_flush();
+?>

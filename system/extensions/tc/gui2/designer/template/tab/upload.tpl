@@ -1,0 +1,1 @@
+<input class="txt" type="file" disabled="disabled" />

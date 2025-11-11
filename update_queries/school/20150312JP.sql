@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questions` ADD `accommodation_provider` VARCHAR(255) NOT NULL DEFAULT 'not_all_provider';

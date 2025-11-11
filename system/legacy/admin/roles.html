@@ -1,0 +1,148 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("group_admin");
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Benutzerverwaltung')?> &raquo; <?=L10N::t('Rollen')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+
+<?
+
+if($_VARS['action'] == "edit") {
+
+	if($_VARS['id'] > 0) {
+		$my = DB::getQueryRow("SELECT * FROM system_roles WHERE id = ".(int)$_VARS['id']."");
+		$r_res = DB::getQueryRows("SELECT right_id FROM system_roles2rights WHERE role_id=".(int)$_VARS['id']."");
+		foreach($r_res as $right) {
+			$aRights[$right['right_id']]=1;
+		}
+	}
+
+?>
+
+<form name=f1 action="roles.html" method="post" enctype="multipart/form-data">
+	<input type="hidden" name="action" value="save" />
+	<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>" />
+<table class="table table-hover table-striped">
+	<tr>
+		<th>Bezeichnung</th>
+		<td><input type="text" class="txt" name="name" value="<?=$my['name']?>"></td>
+	</tr>
+	<tr>
+		<th>Zugeordnete Benutzer</th>
+		<td>
+		<?
+		$res = (array)DB::getQueryRows("SELECT * FROM system_user WHERE role = ".(int)$_VARS['id']." OR ext_role LIKE '%|".(int)$_VARS['id']."|%' ORDER BY firstname");
+		$first=true;
+		foreach($res as $my) {
+			if(!$first) echo", ";
+  			$first=false;
+			?><a href="benutzer.php?action=edit&id=<?=$my['id']?>"> <?=$my['firstname']?> <?=$my['lastname']?></a><?
+		}
+		if($first) echo"bisher keiner";
+		?>
+		</td>
+	</tr>
+	<tr>
+		<th>Rechte</th>
+		<td>
+<?
+		$res = DB::getQueryRows("SELECT * FROM system_rights ORDER BY description");
+		foreach($res as $my) {
+?>
+			<input type=checkbox name=right[] value='<?=$my['id']?>'<?=($aRights[$my['id']]==1)?' checked="checked"':''?>> <?=$my['description']?><br>
+<?
+		}
+?>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" align="right"><input type="submit" value="Speichern" class="btn btn-primary"></td>
+	</tr>
+</table>
+</form>
+
+<?
+
+// Delete Funktion funktioniert nicht!!
+// weder mit noch ohne Ã„nderungen!
+} elseif($_VARS['action'] == "delete") {
+
+  // PrÃ¼fen, ob die Rolle nicht als undeleteable gekennzeichnet ist
+  $role_is_system= DB::getQueryRow("SELECT system FROM system_roles WHERE id = ".(int)$_VARS['id']." LIMIT 1");
+
+  if($_VARS['id'] > 0 && !$role_is_system['system'])
+  {
+    DB::executeQuery("DELETE FROM system_roles WHERE id = '".(int)$_VARS['id']."' LIMIT 1");
+  }
+  else
+  {
+    die("Dies ist eine Systemgruppe, und kann nicht gel&ouml;scht werden!");
+  }
+?>
+<script>
+self.location.href='roles.html';
+</script>
+<?
+} elseif($_VARS['action'] == "save") {
+
+	if($_VARS['id']) {
+	    DB::executeQuery("UPDATE system_roles SET name='".DB::escapeQueryString($_VARS['name'])."' WHERE id = ".(int)$_VARS['id']."");
+	} else	{
+	    DB::executeQuery("INSERT INTO system_roles SET name='".DB::escapeQueryString($_VARS['name'])."'");
+     	$_VARS['id'] = DB::fetchInsertID();
+    }
+
+	DB::executeQuery("DELETE FROM system_roles2rights WHERE role_id = ".(int)$_VARS['id']."");
+	foreach((array)$_VARS['right'] as $elem) {
+		DB::executeQuery("INSERT INTO system_roles2rights SET role_id = ".(int)$_VARS['id'].", right_id = ".(int)$elem."");
+	}
+
+?>
+<script>
+self.location.href = 'roles.html';
+</script>
+<?
+} else {
+?>
+
+<table class="table table-hover table-striped">
+	<tr>
+		<th width="90%">Bezeichnung</th>
+		<th width="10%">Aktion</th>
+	</tr>
+<?
+$res = DB::getQueryRows("SELECT * FROM system_roles ORDER BY name");
+foreach($res as $my) {
+?>
+	<tr id="tr_<?=$my['id']?>" onmouseout="showRow(<?=$my['id']?>,0)" onmousemove="showRow(<?=$my['id']?>,1);">
+		<td><?=$my['name']?></td>
+		<td align="center" nowrap><a href="roles.html?action=edit&amp;id=<?=$my['id']?>"><img src="media/edit.png" border="0"></a> <a href="javascript:if(confirm('Möchten Sie diesen Eintrag wirklich löschen?')) document.location.href='roles.html?action=delete&category_id=<?=$category_id?>&id=<?=$my['id']?>';"><img src="media/delete.png" border="0"></a></td>
+	</tr>
+<?
+}
+?>	<form method="post">
+	<input type="hidden" name="action" value="edit" />
+	<tr>
+		<td colspan="4" align="center"><input type="submit" value="Hinzuf&uuml;gen" class="btn btn-primary" /></td>
+	</tr>
+	</form>
+</table>
+<?
+}
+?>
+
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

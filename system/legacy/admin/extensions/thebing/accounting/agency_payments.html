@@ -1,0 +1,445 @@
+<?php
+
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sAccess = "thebing_accounting_agency_payments";
+Ext_Thebing_Access::accesschecker($sAccess);
+
+$bIsAllSchools = Ext_Thebing_System::isAllSchools();
+
+$oClient = new Ext_Thebing_Client($user_data['client']);
+$aAgencies = $oClient->getAgencies(true);
+$aSchools = $oClient->getSchools(true);
+
+// OBERE LISTE
+
+$sGuiDescription = 'Thebing » Accounting » Agency Payments';
+
+$sCommunicationApplication = 'agency_payment';
+$sView = 'agency_payment';
+
+$oGuiAgencyPayments = new Ext_Thebing_Gui2(md5($sGuiDescription), 'Ext_Thebing_Accounting_Agency_Payments');
+
+$oGuiAgencyPayments->setWDBasic('Ext_Thebing_Agency_Payment');
+
+$aWhere = array('kaap.active' => 1);
+
+if(!$bIsAllSchools) {
+	$aWhere['kaap.school_id'] = (int)\Core\Handler\SessionHandler::getInstance()->get('sid');
+}
+
+$oGuiAgencyPayments->setTableData('where', $aWhere);
+
+// Listen Optionen
+$oGuiAgencyPayments->column_sortable				= 1; // es geht nur eine sortierart!
+$oGuiAgencyPayments->row_icon_status_active			= new Ext_Thebing_Accounting_Agency_Payment_Gui2_Icon_Active();
+$oGuiAgencyPayments->row_sortable					= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiAgencyPayments->multiple_selection				= 0;
+$oGuiAgencyPayments->query_id_column				= 'id';
+$oGuiAgencyPayments->query_id_alias					= 'kaap';
+
+$oGuiAgencyPayments->calendar_format				= new Ext_Thebing_Gui2_Format_Date();
+$oGuiAgencyPayments->class_js						= 'AgencyPayments';
+
+
+
+
+$oDialog = $oGuiAgencyPayments->createDialog($oGuiAgencyPayments->t('Zahlung bearbeiten'), $oGuiAgencyPayments->t('Neue Zahlung eingeben'));
+
+
+## ENDE DIALOG TAB ##
+
+
+# START - Leiste 1 #
+$oBar = $oGuiAgencyPayments->createBar();
+$oBar->width = '100%';
+
+	$oFilter = $oBar->createFilter('select');
+	$oFilter->id = 'agencies';
+	$oFilter->value = '';
+	$oFilter->db_operator = '=';
+	$oFilter->db_column = 'agency_id';
+	$oFilter->db_alias = 'kaap';
+	$oFilter->select_options = Ext_Gui2_Util::addLabelItem($aAgencies, L10N::t('Agenturen', $oGuiAgencyPayments->gui_description));
+
+	$oBar ->setElement($oFilter);
+
+	$aAgencyPaymentsStatus = array(
+		'prepay' =>	L10N::t('Teilzahlung', $oGuiAgencyPayments->gui_description),
+		'finalpay' => L10N::t('komplett bezahlt', $oGuiAgencyPayments->gui_description)
+	);
+
+    $aOptions = Ext_Thebing_System::getCurrencyList();
+
+    $oFilter = $oBar->createFilter('select');
+    $oFilter->value = '';
+    $oFilter->db_column = 'amount_currency';
+    $oFilter->db_alias = 'kaap';
+    $oFilter->select_options = Ext_Gui2_Util::addLabelItem($aOptions, $oGuiAgencyPayments->t('Währung'));
+
+    $oBar ->setElement($oFilter);
+
+
+	$oFilter = $oBar->createFilter('select');
+	$oFilter->id = 'agency_payment_status';
+	$oFilter->value = '';
+	$oFilter->select_options = Ext_Gui2_Util::addLabelItem($aAgencyPaymentsStatus, L10N::t('Bezahlstatus', $oGuiAgencyPayments->gui_description));
+	$oFilter->filter_query = array(
+		'prepay' => "
+			(`amount_used_with_document_creditnotes` - `amount_used_manual_creditnotes`) > 0 AND
+			(`amount_used_with_document_creditnotes` - `amount_used_manual_creditnotes`) < `kaap`.`amount`
+		",
+		'finalpay' => "
+			(`amount_used_with_document_creditnotes` - `amount_used_manual_creditnotes`) >= `kaap`.`amount`
+		"
+	);
+	$oFilter->filter_part = 'having';
+
+	$oBar ->setElement($oFilter);
+
+	$oGuiAgencyPayments->setBar($oBar);
+# ENDE - Leiste 1 #
+
+# START - Leiste 2 #
+$oBar = $oGuiAgencyPayments->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGuiAgencyPayments->gui_description),
+			$oDialog,
+			L10N::t('Neuer Eintrag', $oGuiAgencyPayments->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oGuiAgencyPayments->gui_description),
+				$oDialog,
+			L10N::t('Editieren', $oGuiAgencyPayments->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(
+			L10N::t('Löschen', $oGuiAgencyPayments->gui_description),
+			L10N::t('Löschen', $oGuiAgencyPayments->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	// Kommunikation
+	$oIcon = $oBar->createCommunicationIcon($oGuiAgencyPayments->t('Agentur informieren'), 'agencies_payments');
+	$oIcon->multipleId			= 1;
+	$oBar ->setElement($oIcon);
+
+	//$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiAgencyPayments->gui_description));
+	//$oBar ->setElement($oIcon);
+
+$oGuiAgencyPayments->setBar($oBar);	
+	
+$oBar = $oGuiAgencyPayments->createBar();
+$oBar->width = '100%';
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelgroup = $oBar->createLabelGroup(L10N::t('Export', $oGuiAgencyPayments->gui_description));
+	$oBar ->setElement($oLabelgroup);
+	
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGuiAgencyPayments->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGuiAgencyPayments->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createExcelExport();
+	$oBar->setElement($oIcon);
+	
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGuiAgencyPayments->setBar($oBar);
+
+
+# ENDE - Leiste 3 #
+
+if($bIsAllSchools) {
+	$oColSchool								= new Ext_Gui2_Head();
+	$oColSchool->db_column					= 'school_id';
+	$oColSchool->db_alias					= '';
+	$oColSchool->select_column				= 'school_id';
+	$oColSchool->title						= L10N::t('Schule', $oGuiAgencyPayments->gui_description);
+	$oColSchool->width						= Ext_Thebing_Util::getTableColumnWidth('school_name');
+	$oColSchool->width_resize				= false;
+	$oColSchool->format						= new Ext_Thebing_Gui2_Format_Select($aSchools);
+
+	$oGuiAgencyPayments->setColumn($oColSchool);
+}
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'agency_name';
+$oColName->title						= L10N::t('Agentur', $oGuiAgencyPayments->gui_description);
+$oColName->width						= Ext_Thebing_Util::getTableColumnWidth('agency_name');
+$oColName->width_resize					= true;
+$oColName->format						= 'Text';
+
+$oGuiAgencyPayments->setColumn($oColName);
+
+$oColDate								= new Ext_Gui2_Head();
+$oColDate->db_column					= 'date';
+$oColDate->db_alias						= 'kaap';
+$oColDate->select_column				= 'date';
+$oColDate->title						= L10N::t('Datum', $oGuiAgencyPayments->gui_description);
+$oColDate->width						= Ext_Thebing_Util::getTableColumnWidth('date');
+$oColDate->width_resize					= false;
+$oColDate->format						= new Ext_Thebing_Gui2_Format_Date();
+
+$oGuiAgencyPayments->setColumn($oColDate);
+
+$oColMethode							= new Ext_Gui2_Head();
+$oColMethode->db_column				    = 'payment_method_name';
+$oColMethode->title						= L10N::t('Methode', $oGuiAgencyPayments->gui_description);
+$oColMethode->width						= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColMethode->width_resize				= false;
+
+
+$oGuiAgencyPayments->setColumn($oColMethode);
+
+$oColAmount								= new Ext_Gui2_Head();
+$oColAmount->db_column					= 'amount';
+$oColAmount->db_alias					= 'kaap';
+$oColAmount->select_column				= 'amount';
+$oColAmount->title						= L10N::t('Betrag', $oGuiAgencyPayments->gui_description);
+$oColAmount->width						= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oColAmount->width_resize				= false;
+$oColAmount->format						= new Ext_Thebing_Gui2_Format_Amount();
+
+$oGuiAgencyPayments->setColumn($oColAmount);
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'currency_id';
+$oColName->title						= L10N::t('Währung', $oGuiAgencyPayments->gui_description);
+$oColName->width						= Ext_Thebing_Util::getTableColumnWidth('short_name');
+$oColName->width_resize					= true;
+$oColName->format						= new Ext_Thebing_Gui2_Format_Currency();
+$oColName->default						= false;
+
+$oGuiAgencyPayments->setColumn($oColName);
+
+$oColFee							= new Ext_Gui2_Head();
+$oColFee->db_column					= 'fee';
+$oColFee->db_alias					= 'kaap';
+$oColFee->select_column				= 'fee';
+$oColFee->title						= L10N::t('Gebühr', $oGuiAgencyPayments->gui_description);
+$oColFee->width						= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oColFee->width_resize				= false;
+$oColFee->format					= new Ext_Thebing_Gui2_Format_Amount();
+
+$oGuiAgencyPayments->setColumn($oColFee);
+
+$oColumn = $oGuiAgencyPayments->createColumn();
+$oColumn->db_column = 'amount_open';
+$oColumn->title = $oGuiAgencyPayments->t('Verfügbarer Betrag');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('amount');
+$oColumn->format = new Ext_Thebing_Agency_Payment_Gui2_Format_Amount();
+$oColumn->sortable = false;
+$oGuiAgencyPayments->setColumn($oColumn);
+
+$oColumn = $oGuiAgencyPayments->createColumn();
+$oColumn->db_column = 'amount_used';
+$oColumn->select_column	= 'amount_used';
+$oColumn->title =  $oGuiAgencyPayments->t('Verwendeter Betrag');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('amount');
+$oColumn->format = new Ext_Thebing_Agency_Payment_Gui2_Format_Amount();
+$oColumn->sortable = false;
+$oGuiAgencyPayments->setColumn($oColumn);
+
+$oColumn = $oGuiAgencyPayments->createColumn();
+$oColumn->db_column = 'amount_credit';
+$oColumn->title = $oGuiAgencyPayments->t('Verwendete Gutschrift');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('amount');
+$oColumn->format = new Ext_Thebing_Agency_Payment_Gui2_Format_Amount();
+$oColumn->sortable = false;
+$oGuiAgencyPayments->setColumn($oColumn);
+
+$oGuiAgencyPayments->addDefaultColumns();
+
+// UNTERE Liste
+$sGuiDescription = 'Thebing » Invoice » Inbox';
+$sCommunicationApplication = 'agencies_payments';
+$sView = 'agency_payment';
+
+$oFactory               = new Ext_Gui2_Factory('ts_students_agency_payments');
+$oGui                   = $oFactory->createGui($sView);
+$oGui->gui_description  = $sGuiDescription;
+$oGui->gui_title        = L10N::t('Buchungen', $oGui->gui_description).' '.$sTitleAddon;
+
+/**
+include_once(Util::getDocumentRoot()."admin/extensions/thebing/students/basic.php");
+
+$oGui->gui_title			= L10N::t('Buchungen', $oGui->gui_description).' '.$sTitleAddon;
+$oGui->multiple_selection	= 1;
+$oGui->sum_row_columns		= array();
+$oGui->row_icon_status_active			= new Ext_Thebing_Gui2_Icon_Accounting_Agency_Payment();
+$oGui->class_js				= 'AgencyPayments';
+*/
+
+// Liste der Zahlung
+$oGuiPayments = new Ext_Thebing_Gui2(md5($sGuiDescription), 'Ext_Thebing_Accounting_Agency_Payment_Bookings');
+$oGuiPayments->setWDBasic('Ext_Thebing_Inquiry_Payment');
+// Listen Optionen
+$oGuiPayments->gui_description				= $sGuiDescription;
+$oGuiPayments->gui_title					= L10N::t('getätigte Zahlungen', $oGuiPayments->gui_description).' '.$sTitleAddon;
+$oGuiPayments->column_sortable				= 1; // es geht nur eine sortierart!
+$oGuiPayments->row_sortable					= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiPayments->multiple_selection			= 0;
+$oGuiPayments->row_icon_status_active		= new Ext_Thebing_Gui2_Icon_NotMultiple();
+$oGuiPayments->query_id_column				= 'id';
+$oGuiPayments->query_id_alias				= 'kip';
+$oGuiPayments->calendar_format				= new Ext_Thebing_Gui2_Format_Date();
+$oGuiPayments->class_js						= 'UtilGui';
+
+## ENDE DIALOG TAB ##
+
+
+# START - Leiste 1 #
+$oBar = $oGuiPayments->createBar();
+$oBar->width = '100%';
+
+	if(Ext_Thebing_Access::hasRight('thebing_invoice_payments_delete')){
+		/*$oLabelgroup = $oBar->createLabelGroup(L10N::t('Aktionen', $oGuiPayments->gui_description));
+		$oBar ->setElement($oLabelgroup);*/
+
+	
+		$oIcon = $oBar->createDeleteIcon(
+					L10N::t('Löschen', $oGuiPayments->gui_description),
+					L10N::t('Löschen', $oGuiPayments->gui_description)
+				);
+		$oBar ->setElement($oIcon);
+	
+	}
+
+$oGuiPayments->setBar($oBar);
+	
+$oBar = $oGuiAgencyPayments->createBar();
+$oBar->width = '100%';	
+	
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oSeperator = $oBar->createSeperator();
+	$oBar ->setElement($oSeperator);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGuiPayments->gui_description),L10N::t('Export CSV', $oGuiPayments->gui_description));
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createExcelExport();
+	$oBar->setElement($oIcon);
+	
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGuiPayments->setBar($oBar);
+
+
+# ENDE - Leiste 3 #
+
+
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'lastname';
+$oCol->db_alias			= 'tc_c';
+$oCol->select_column	= 'lastname';
+$oCol->title			= L10N::t('Kunde', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oCol->width_resize		= true;
+$oCol->format			= new Ext_Thebing_Gui2_Format_CustomerName();
+$oGuiPayments->setColumn($oCol);
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'customerNumber';
+$oCol->db_alias			= '';
+$oCol->select_column	= 'customerNumber';
+$oCol->title			= L10N::t('Kunden Nr.', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('document_number');
+$oCol->width_resize		= false;
+$oGuiPayments->setColumn($oCol);
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'document_numbers';
+$oCol->db_alias			= 'kid';
+$oCol->title			= L10N::t('Rech. Nr.', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('document_number');
+$oCol->width_resize		= false;
+$oGuiPayments->setColumn($oCol);
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'document_amount'; // Rechnungsbetrag (Rechnung vs. Credinote)
+$oCol->db_alias			= '';
+$oCol->select_column	= 'document_amount';
+$oCol->title			= L10N::t('Rech. Betrag', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oCol->width_resize		= false;
+$oCol->format			= new Ext_Thebing_Gui2_Format_Amount();
+$oGuiPayments->setColumn($oCol);
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'document_payed'; // Bezahlter Betrag (richtet sich nach dem Inquiry-Payment)
+$oCol->db_alias			= '';
+$oCol->select_column	= 'document_payed';
+$oCol->title			= L10N::t('Rech. Bezahlt', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oCol->width_resize		= false;
+$oCol->format			= new Ext_Thebing_Gui2_Format_Amount();
+$oGuiPayments->setColumn($oCol);
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'document_balance'; // Offener Betrag (Achtung, Format-Klasse manipuliert Wert wegen Rechnung vs. Creditnote)
+$oCol->db_alias			= '';
+$oCol->select_column	= 'document_balance';
+$oCol->title			= L10N::t('Rech. Offen', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oCol->width_resize		= false;
+$oCol->format			= new Ext_Thebing_Accounting_Agency_Payment_Gui2_Format_PendingAmount();
+$oCol->sortable = false;
+$oGuiPayments->setColumn($oCol);
+
+$oCol					= new Ext_Gui2_Head();
+$oCol->db_column		= 'allocated_amount'; // Zugewiesener Betrag
+$oCol->db_alias			= '';
+$oCol->select_column	= 'allocated_amount';
+$oCol->title			= L10N::t('Zahlungs Betrag', $oGuiPayments->gui_description);
+$oCol->width			= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oCol->width_resize		= false;
+$oCol->format			= new Ext_Thebing_Gui2_Format_Amount('payment_currency_id');
+$oGuiPayments->setColumn($oCol);
+
+$oCol = $oGuiPayments->createColumn();
+$oCol->db_column = 'payment_type_id';
+$oCol->title = L10N::t('Typ der Bezahlung', $oGuiPayments->gui_description);
+$oCol->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oCol->format = new Ext_Thebing_Gui2_Format_Select(Ext_Thebing_Inquiry_Payment::getTypeOptions());
+$oGuiPayments->setColumn($oCol);
+
+// editorId als zweiten Parameter, weil user_id in der Schulversion der _initDefaultColumns sonst hardcoded ist
+$oGuiPayments->setDefaultColumn(new Ext_Thebing_Gui2_DefaultColumn($oGuiPayments->query_id_alias, true));
+$oGuiPayments->addDefaultColumns();
+
+
+#$aOptionalHeaderData = array();
+#$aOptionalHeaderData[] = '<script type="text/javascript" src="/admin/extensions/thebing/gui2/util.js"></script>';
+#$aOptionalHeaderData[] = '<script type="text/javascript" src="/admin/extensions/thebing/gui2/payment.js"></script>';
+#$aOptionalHeaderData[] = '<script type="text/javascript" src="/admin/extensions/thebing/gui2/studentlists.js"></script>';
+#$aOptionalHeaderData[] = '<script type="text/javascript" src="/admin/extensions/thebing/js/communication.js"></script>';
+#$aOptionalHeaderData[] = '<script type="text/javascript" src="/admin/extensions/thebing/accounting/js/agency_payments.js"></script>';
+#$aOptionalHeaderData[] = '<link type="text/css" rel="stylesheet" href="/assets/ts/css/gui2.css"></script>';
+
+$aOptionalHeaderData = array();
+$aOptionalHeaderData['js'] = array();
+$aOptionalHeaderData['js'][] = '/admin/extensions/thebing/gui2/util.js';
+$aOptionalHeaderData['js'][] = '/admin/extensions/thebing/gui2/payment.js';
+$aOptionalHeaderData['js'][] = '/admin/extensions/thebing/gui2/studentlists.js';
+$aOptionalHeaderData['js'][] = '/admin/extensions/thebing/js/communication.js';
+$aOptionalHeaderData['js'][] = '/admin/extensions/thebing/accounting/js/agency_payments.js';
+$aOptionalHeaderData['css'][] = '/assets/ts/css/gui2.css';
+
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGuiAgencyPayments);
+$oPage->setGui($oGui, array('hash' => $oGuiAgencyPayments->hash, 'foreign_key' => 'agency_id', 'parent_primary_key' => 'agency_id', 'reload' => true));
+$oPage->setGui($oGuiPayments, array('hash' => $oGuiAgencyPayments->hash, 'foreign_key_alias'=> 'kaap', 'foreign_key' => 'id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display($aOptionalHeaderData);

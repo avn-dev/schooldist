@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `tuition_automatic_holiday_allocation` TINYINT(1) NOT NULL DEFAULT '0' AFTER `net_email_warning`;

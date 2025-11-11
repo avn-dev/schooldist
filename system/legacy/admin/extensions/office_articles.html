@@ -1,0 +1,201 @@
+<?php
+
+// v1
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess("office_articles");
+
+DB::addField('office_articles', 'month', "int(11) NOT NULL", 'vat');
+
+$aOptions = array();
+$aOptions['additional'] = '<script type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>';
+$aOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/office/js/article.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+if(!$_VARS['task'])
+{
+	$arrOptions['body'] = ' scroll="no"';
+}
+$aOptions['xhtml'] = false;
+Admin_Html::loadAdminHeader($aOptions);
+
+$range = 1000;
+
+?>
+
+<script type="text/javascript">
+
+var selectedRow = 0;
+
+/* ====================================================================== */
+
+function checkRow(e, strId)
+{
+	var objRow = $(strId);
+
+	if(selectedRow && $(selectedRow))
+	{
+		$(selectedRow).className = '';
+	}
+
+	if(!objRow.hasClassName('selectedRow')) {
+		objRow.className = 'selectedRow';
+	} else {
+		objRow.className = '';
+	}
+	selectedRow = strId;
+
+	checkArticlesToolbar(selectedRow.replace(/tr_/, ''));
+}
+
+/* ====================================================================== */
+
+function checkArticlesToolbar(iArticleID)
+{
+	if(parseInt(iArticleID) > 0)
+	{
+		$j('#toolbar_edit').fadeIn();
+		$j('#toolbar_delete').fadeIn();
+	}
+	else
+	{
+		$j('#toolbar_edit').fadeTo(0.2);
+		$j('#toolbar_delete').fadeTo(0.2);
+	}
+}
+
+/* ====================================================================== */
+
+function executeAction(strId, strAction)
+{
+	if(strAction != 'new' && selectedRow == 0)
+	{
+		alert("Diese Aktion ist nicht zulässig!");
+		return false;
+	}
+
+	var iArticleID = 0;
+
+	if(strAction != 'new' && selectedRow)
+	{
+		iArticleID = selectedRow.replace(/tr_/, '');
+	}
+
+	switch(strAction)
+	{
+		case "delete":
+			deleteArticle(iArticleID);
+			break;
+		case "edit":
+			openDialog(iArticleID);
+			break;
+		case "new":
+			openDialog(0);
+			break;
+		default:
+			alert("Diese Aktion ist nicht zulässig!");
+			break;
+	}
+}
+
+</script>
+
+	<div class="divHeader" style="height:65px;">
+		<h1>Artikel</h1>
+
+		<div class="divToolbar divTopLine">
+			<div class="divToolbarLabel">Anlegen:</div>
+			<div class="divToolbarIcon" id="toolbar_new">
+				<img src="/admin/media/page_new.gif" onclick="executeAction(0, 'new');" alt="anlegen" title="anlegen" />
+			</div>
+			<div class="divToolbarSeparator">::</div>
+			<div class="divToolbarLabel">Bearbeitung:</div>
+			<div class="divToolbarIcon" id="toolbar_edit">
+				<img src="/admin/media/pencil.png" onclick="executeAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+			</div>
+			<div class="divToolbarIcon" id="toolbar_delete">
+				<img src="/admin/media/cross.png" onclick="executeAction(0, 'delete');" alt="löschen" title="löschen" />
+			</div>
+			<div class="divToolbarIcon">
+				<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+			</div>
+			<div class="divCleaner"></div>
+		</div>
+
+		<div class="divHeaderBottomGrey"><img src="/admin/media/spacer.gif" height="7" /></div>
+		<div class="divHeaderBottomWhite"><img src="/admin/media/spacer.gif" height="5" /></div>
+
+	</div>
+
+	<table id="tableArticles" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+		<colgroup>
+			<col style="width: 110px;" />
+			<col style="width: 120px;" />
+			<col style="width: auto;" />
+			<col style="width: 60px;" />
+			<col style="width: 70px;" />
+			<col style="width: 110px;" />
+			<col style="width: 110px;" />
+			<col style="width: 60px;" />
+			<col style="width: 120px;" />
+			<col style="width: 120px;" />
+		</colgroup>
+		<thead>
+			<tr>
+				<th>Artikelnummer</th>
+				<th>Artikelgruppe</th>
+				<th>Artikel</th>
+				<th>Einheit</th>
+				<th>Währung</th>
+				<th>Einkaufspreis</th>
+				<th>Verkaufspreis</th>
+				<th>Menge</th>
+				<th>Umsatz pro Jahr</th>
+				<th>Gewinn pro Jahr</th>
+			</tr>
+		</thead>
+		<tbody id="tbl_articles"></tbody>
+	</table>
+
+<script type="text/javascript">
+
+function checkArticlesListHeight()
+{
+	var intHeight = 0;
+	intHeight = window.innerHeight;
+
+	if(!intHeight)
+	{
+		intHeight = document.body.clientHeight;
+	}
+	if(!intHeight)
+	{
+		intHeight = document.documentElement.clientHeight;
+	}
+
+	intHeight = intHeight - 120;
+
+	var objTable = $('tableArticles-body');
+
+	if(objTable)
+	{
+		objTable.style.height = intHeight + 'px';
+	}
+	else
+	{
+		document.write('<style>.scroll-table-body { height: ' + intHeight + 'px; }</style>');
+	}
+}
+
+checkArticlesListHeight();
+checkArticlesToolbar(0);
+
+Event.observe(window, 'load', ScrollableTable.load);
+Event.observe(window, 'load', loadArticlesList);
+Event.observe(window, 'resize', checkArticlesListHeight);
+
+document.body.style.overflow = "hidden";
+
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

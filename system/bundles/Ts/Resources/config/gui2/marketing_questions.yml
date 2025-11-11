@@ -1,0 +1,4 @@
+parent: tc_marketing_questions
+class:
+  wdbasic: Ext_TS_Marketing_Feedback_Question
+  data: Ext_TS_Marketing_Feedback_Question_Gui2_Data

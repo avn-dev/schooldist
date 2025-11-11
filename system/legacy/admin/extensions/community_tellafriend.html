@@ -1,0 +1,97 @@
+<?
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+if($_POST['action'] == "config") {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->tf_from_mail_error	= $_VARS['tf_from_mail_error'];
+	$config->tf_to_mail_error	= $_VARS['tf_to_mail_error'];
+	$config->tf_subject			= $_VARS['tf_subject'];
+	$config->tf_body 			= $_VARS['tf_body'];
+	$config->tf_alreadysend 	= $_VARS['tf_alreadysend'];
+	$config->tf_inblacklist 	= $_VARS['tf_inblacklist'];
+	$config->tf_bl_no_logentry 	= $_VARS['tf_bl_no_logentry'];
+	$config->tf_bl_already_nc	= $_VARS['tf_bl_already_nc'];
+	$config->tf_bl_already_c	= $_VARS['tf_bl_already_c'];
+	$config->tf_bl_subject		= $_VARS['tf_bl_subject'];
+	$config->tf_bl_body			= $_VARS['tf_bl_body'];
+	$config->tf_db_table		= $_VARS['tf_db_table'];
+	$config->tf_db_field_id		= $_VARS['tf_db_field_id'];
+	$config->tf_db_field_text	= $_VARS['tf_db_field_text'];
+	$config->tf_url				= $_VARS['tf_url'];
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Community &raquo; Tell a friend</h1>
+			<p>
+<?
+
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<h2>Verknüpfungseinstellungen</h2>
+			<?=printTableStart()?>
+			<?
+
+				$aTables[0] = "bitte auswählen...";
+				$aItems = DB::listTables();
+				foreach((array)$aItems as $sTable) {
+					$aTables[$sTable] = $sTable;
+				}
+
+				echo printFormSelect("Datenbank","tf_db_table",$aTables,$config->tf_db_table);
+				if($config->tf_db_table) {
+					$rFields = db_query($db_data['system'],"SHOW COLUMNS FROM ".$config->tf_db_table);
+					$aFields[0] = "bitte auswählen...";
+					while ($aField = get_data($rFields)) {
+						$aFields[$aField['Field']] = $aField['Field'];
+					}
+					echo printFormSelect("ID","tf_db_field_id",$aFields,$config->tf_db_field_id);
+					echo printFormSelect("Bezeichnung","tf_db_field_text",$aFields,$config->tf_db_field_text);
+					echo printFormText("Ziel-URL (Platzhalter: #id#)", "tf_url", $config->tf_url);
+				}
+			?>
+			<?=printTableEnd()?>
+			<h2>Benachrichtigungseinstellungen</h2>
+			<?=printTableStart()?>
+			<?=printFormText("Titel der E-Mail Empfehlung", "tf_subject", $config->tf_subject)?>
+			<?=printFormTextarea("E-Mail Vorlage der Empfehlung","tf_body",$config->tf_body,10)?>
+			<?=printFormText("E-Mail Adresse des Versenders ist ungültig", "tf_from_mail_error", $config->tf_from_mail_error)?>
+			<?=printFormText("E-Mail Adresse des Empfängers ist ungültig", "tf_to_mail_error", $config->tf_to_mail_error)?>
+			<?=printFormText("Fehlermeldung, wenn die Empfehlung schon verschickt wurde", "tf_alreadysend", $config->tf_alreadysend)?>
+			<?=printFormText("Fehlermeldung, wenn sich Empfänger und/oder Absender in die Blacklist eingetragen hat", "tf_inblacklist", $config->tf_inblacklist)?>
+			<?=printFormText("Fehlermeldung, wenn man sich versucht in die Blackliste einzutragen, ohne eine Mail bekommen zu haben", "tf_bl_no_logentry", $config->tf_bl_no_logentry)?>
+			<?=printFormText("Fehlermeldung, wenn man bereits in die Blacklist eingetragen ist und die eMail bestätigt hat", "tf_bl_already_nc", $config->tf_bl_already_nc)?>
+			<?=printFormText("Fehlermeldung, wenn man bereits in die Blacklist eingetragen ist und die noch nicht eMail bestätigt hat", "tf_bl_already_c", $config->tf_bl_already_c)?>
+			<?=printFormText("Titel der E-Mail zur Blacklist Eintragung", "tf_bl_subject", $config->tf_bl_subject)?>
+			<?=printFormTextarea("E-Mail Vorlage der Blacklist Eintragung","tf_bl_body",$config->tf_bl_body,10)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>		
+			<p>
+			Platzhalter:<br>
+			<#title#>, <#track#>, <#domain#>, <#recipient#>, <#sender#>, <#url#>, <#enter_blacklist#>, <#blacklistURL#>
+			</p>
+<?
+}
+?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

@@ -1,0 +1,59 @@
+
+body, html, p, input {
+	font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+	text-decoration: none;
+}
+
+#login {
+	width: 350px;
+	margin: 80px auto 0 auto;
+}
+
+#login a {
+	font-size: 12px;
+	color: #0e5da4;
+}
+	
+#login a:hover {
+	color: #1275ce;
+}
+	
+#login .logo {
+	margin-bottom: 30px;
+}
+
+#login input[type=text],
+#login input[type=password]{
+	padding: 4px 8px 4px 12px;
+	font-size: 14px;
+	color: #212121;
+	border: 1px solid rgb(186,186,186);
+	background-color: #ffffff;
+	width: 330px;
+	margin: 0 0 10px;
+}
+
+#login input[type=submit]{
+	font-size: 14px;
+	padding-bottom: 5px;
+	padding-left: 12px;
+	padding-right: 12px;
+	padding-top: 3px;
+	color: #ffffff;
+	background-color: #0e5da4;
+	border: 0;
+}
+
+#login input[type=submit]:hover {
+	background-color: #1275ce;
+}
+
+#login .footer {
+	font-size: 12px;
+	border-top: 1px solid #CCC;
+	padding: 6px 12px;
+	color: #666666;
+}

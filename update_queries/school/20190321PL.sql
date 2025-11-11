@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_journeys_activities` CHANGE `till` `until` DATE NOT NULL;

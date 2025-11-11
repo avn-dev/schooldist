@@ -1,0 +1,99 @@
+class:
+  wdbasic: \Ts\Entity\Special\Code
+  data: \Ts\Gui2\Data\Special\Code
+  row_style: \Ts\Gui2\Style\Special\CodeValidRowStyle
+  icon_status: \Ts\Gui2\Icon\Status\SpecialCodes
+access: thebing_marketing_special
+foreign_key: special_id
+foreign_key_alias: 
+id:
+  column: id
+  alias: ts_spc
+orderby:
+  - \Ts\Gui2\Data\Special\Code
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+          - code
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\Special\Code
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\Special\Code
+          - getEditDialog
+      -
+        element: icon_delete
+      -       
+        element: icon
+        label: Codes generieren
+        task: openDialog        
+        dialog:
+         - \Ts\Gui2\Data\Special\Code
+         - getGenerateDialog
+        action: generate
+        active: 1
+        img: "fa-sync"
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_info
+        label: Code nicht mehr verfügbar
+        info:
+          color: [red,50]
+      -
+        element: legend_info
+        label: Code mindestens einmal verwendet
+        info:
+          color: [ orange,50 ]
+
+columns:
+  - 
+    title: Code
+    column: code
+    width: name
+    resize: true
+  - 
+    title: Gültig von
+    column: valid_from
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Gültig bis
+    column: valid_until
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Verwendet
+    column: usage_count
+    width: name
+    format: Ext_Thebing_Gui2_Format_Int
+  -
+    title: Verwendbar
+    column: usage_limit
+    width: name
+    format: Ts\Gui2\Format\Special\UsageLimit
+
+default_columns:
+  -
+    title: Erstellt
+    column: created
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+    

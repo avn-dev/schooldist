@@ -1,0 +1,2 @@
+INSERT INTO `system_elements` (`id`, `title`, `description`, `element`, `category`, `file`, `version`, `parent`, `image`, `documentation`, `template`, `sql`, `administrable`, `include_backend`, `include_frontend`, `include_mode`, `active`) VALUES (NULL, 'TsHalloAi', 'Hallo.ai API', 'module', 'Fidelo School', 'TsHalloAi', '0.001', '', ' ', ' ', ' ', ' ', 1, '0', '0', 0, 1);
+ALTER TABLE `ts_tuition_courselanguages` ADD COLUMN `language_iso` VARCHAR(255) NULL COLLATE 'utf8mb4_general_ci';

@@ -1,0 +1,12 @@
+class:
+  gui: \AdminTools\Gui2\SettingsGui
+  data: Ext_TC_Config_Gui2_Data
+  wdbasic: Ext_TC_Config
+description: Framework
+pagination: false
+export: false
+options:
+  right: false
+bars: []
+columns: []
+default_columns: []

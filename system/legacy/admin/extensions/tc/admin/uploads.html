@@ -1,0 +1,187 @@
+<?php
+	
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+$oGui = new Ext_TC_Gui2(md5('core_admin_uploads'), 'Ext_TC_Upload_Gui2_Data');
+
+$oGui->access = array('core_admin_templates_uploads', '');
+
+// Datenbasis
+$oGui->setWDBasic('Ext_TC_Upload');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('changed' => 'DESC'));
+
+// Listenoptionen
+$oGui->column_sortable				= 1;
+$oGui->row_sortable					= 0;
+$oGui->multiple_selection			= 0;
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+$oGui->row_icon_status_active		= new Ext_TC_Upload_Gui2_Icon();
+$oGui->row_style					= new Ext_TC_Upload_Gui2_Row(); // Klasse zum formatieren der Zeilen
+
+// Daten
+$aCategories = Ext_TC_Upload_Gui2_Data::getCategories();
+$aCategories = Ext_Gui2_Util::addLabelItem($aCategories, $oGui->t('Kategorie'), '');
+
+$aLanguages = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getLanguages', array(true));
+$aSubObjects = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjects', array(true));
+$sSubObjectLabel = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjectLabel');
+
+$sFilePath = Ext_TC_Upload_Gui2_Data::getUploadPath(false);
+
+// Dialog NEU
+$oDialog			= $oGui->createDialog(L10N::t('Upload "{description}" editieren', $oGui->gui_description), L10N::t('Neuer Upload', $oGui->gui_description));
+$oDialog->height	= 650;
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Bezeichnung', $oGui->gui_description), 'input', array('db_alias'=>'', 'db_column'=>'description', 'required'=>true)));
+$oDialog->setElement($oDialog->createRow(L10N::t('Kategorie', $oGui->gui_description), 'select', array('db_alias'=>'', 'db_column'=>'category', 'select_options'=>$aCategories, 'required'=>true)));
+$oDialog->setElement($oDialog->createRow($sSubObjectLabel, 'select', array('db_alias'=>'', 'db_column'=>'objects', 'select_options'=>$aSubObjects, 'multiple'=> 5, 'jquery_multiple'=> 1, 'searchable' => 1)));
+$oDialog->setElement($oDialog->createRow(L10N::t('Sprachen', $oGui->gui_description), 'select', array('db_alias'=>'', 'db_column'=>'languages', 'select_options'=>$aLanguages, 'multiple'=> 5, 'jquery_multiple'=> 1, 'searchable' => 1)));
+
+$oUpload = new Ext_Gui2_Dialog_Upload($oGui, $oGui->t('Upload'), $oDialog, 'filename', '', $sFilePath);
+$oUpload->bAddColumnData2Filename = 0;
+$oDialog->setElement($oUpload);
+
+// Dialog editieren
+$oDialog2			= $oGui->createDialog(L10N::t('Upload "{description}" editieren', $oGui->gui_description), L10N::t('Neuer Upload', $oGui->gui_description));
+$oDialog2->height	= 650;
+
+$oDialog2->setElement($oDialog2->createRow(L10N::t('Bezeichnung', $oGui->gui_description), 'input', array('db_alias'=>'', 'db_column'=>'description', 'required'=>true)));
+$oDialog2->setElement($oDialog2->createRow($sSubObjectLabel, 'select', array('db_alias'=>'', 'db_column'=>'objects', 'select_options'=>$aSubObjects, 'multiple'=> 5, 'jquery_multiple'=> 1, 'searchable' => true)));
+$oDialog2->setElement($oDialog2->createRow(L10N::t('Sprachen', $oGui->gui_description), 'select', array('db_alias'=>'', 'db_column'=>'languages', 'select_options'=>$aLanguages, 'multiple'=> 5, 'jquery_multiple'=> 1, 'searchable' => true)));
+
+$oUpload = new Ext_Gui2_Dialog_Upload($oGui, $oGui->t('Upload'), $oDialog2, 'filename', '', $sFilePath);
+$oUpload->bAddColumnData2Filename = 0;
+$oDialog2->setElement($oUpload);
+
+// Leiste(n)
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'description');
+$oFilter->db_alias		= array('', '');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+// Kategorien
+$oFilter					= $oBar->createFilter('select');
+$oFilter->id				= 'category_filter';
+$oFilter->value				= '';
+$oFilter->db_column			= 'category';
+$oFilter->select_options	= $aCategories;
+$oBar ->setElement($oFilter);
+
+// Sprache
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('language_iso');
+$oFilter->db_alias = array('languages');
+$oFilter->value = '';
+$oFilter->width = '200px';
+$aLanguages = Ext_Gui2_Util::addLabelItem($aLanguages, L10N::t('Sprachen', $oGui->gui_description), '');
+$oFilter->select_options = $aLanguages;
+$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon(L10N::t('Neuer Eintrag', $oGui->gui_description), $oDialog, L10N::t('Neuer Eintrag', $oGui->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon(L10N::t('Editieren', $oGui->gui_description), $oDialog2, L10N::t('Editieren', $oGui->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar); 
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// Spalten
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'filename';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Datei', $oGui->gui_description);
+$oColumn->width			= 50;
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_TC_Upload_Gui2_Format_Upload();
+$oColumn->sortable = false;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'description';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Bezeichnung', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column		= 'filename';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Dateigröße', $oGui->gui_description);
+$oColumn->width			= 75;
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_TC_Upload_Gui2_Format_Size();
+$oColumn->sortable = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Verwendungszweck', $oGui->gui_description);
+$oColumn->width = Ext_TC_Util::getTableColumnWidth('long_description');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_TC_Upload_Gui2_Format_Usage();
+$oColumn->sortable = false;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'category';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Kategorie', $oGui->gui_description);
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('long_description');
+$oColumn->width_resize	= false;
+$oColumn->format = new Ext_TC_Upload_Gui2_Format_Category();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Sprachen', $oGui->gui_description);
+$oColumn->width = 100;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_TC_Gui2_Format_Imagelist();
+$oColumn->sortable = false;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+$sHtmlLegend = '';
+
+$sHtmlLegend .= '<div style="float: left"><b>' . L10N::t('Status', $oGui->gui_description) . ': </b>&nbsp;</div>';
+$sHtmlLegend .= '<div style="float: left">' . L10N::t('wird verwendet', $oGui->gui_description) . '</div> <div class="colorkey" style="background-color: ' . Ext_TC_Util::getColor('lightgreen') . '" ></div>';
+
+$oBarLegend = new Ext_Gui2_Bar($oGui);
+$oBarLegend->position = 'bottom';
+$oHtml = $oBarLegend->createHtml($sHtmlLegend);
+$oBarLegend ->setElement($oHtml);
+$oGui->setBar($oBarLegend);
+
+$aOptionalInfo = array();
+
+// Anzeige
+$oGui->display($aOptionalInfo);

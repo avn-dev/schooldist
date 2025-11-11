@@ -1,0 +1,2 @@
+/* VARCHAR(767): #1071 - Specified key was too long; max key length is 767 bytes */
+ALTER TABLE `tc_frontend_combinations_items` CHANGE `item_value` `item_value` VARCHAR(767) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL;

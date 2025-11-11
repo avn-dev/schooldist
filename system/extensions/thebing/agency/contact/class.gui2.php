@@ -1,0 +1,7 @@
+<?php
+
+class Ext_Thebing_Agency_Contact_Gui2 extends Ext_Thebing_Gui2_Data
+{
+
+
+}

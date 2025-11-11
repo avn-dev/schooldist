@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_templates` CHANGE `type` `type` ENUM('email','sms','app') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'email';

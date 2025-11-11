@@ -1,0 +1,316 @@
+<?php
+
+require_once(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+Ext_Thebing_Access::accesschecker("thebing_pickup_resources_companies");
+
+$oGuiCompanies			= new Ext_Thebing_Gui2(md5('thebing_pickup_companies'), 'Ext_Thebing_Pickup_Service_Gui2_Data');
+$oGuiDrivers			= new Ext_Thebing_Gui2(md5('thebing_pickup_company_drivers'));
+$aOptionalInfo			= array();
+$aOptionalInfo['css'][]	= '/assets/ts/css/gui2.css';
+
+$aTitles = Ext_Thebing_Util::getPersonTitles();
+
+$iSessionSchoolId = \Core\Handler\SessionHandler::getInstance()->get('sid');
+
+// Datenbasis
+$oGuiCompanies->setWDBasic('Ext_Thebing_Pickup_Company');
+$oGuiCompanies->setTableData('where', array('idClient' => (int)$user_data['client'], 'idSchool' => (int)$iSessionSchoolId, 'active' => 1));
+$oGuiCompanies->setTableData('limit', 30);
+$oGuiCompanies->setTableData('orderby', array('name' => 'ASC'));
+
+// Listenoptionen
+$oGuiCompanies->row_icon_status_active		= new Ext_Thebing_Pickup_Company_Gui2_Icon_Active();
+$oGuiCompanies->column_sortable				= 1;
+$oGuiCompanies->row_sortable				= 0;
+$oGuiCompanies->multiple_selection			= 0;
+$oGuiCompanies->class_js					= 'CompanyGui';
+$oGuiCompanies->sSection					= 'transfer_providers';
+$oGuiCompanies->include_jquery				= true;
+$oGuiCompanies->include_jquery_multiselect	= true;
+#$oGuiCompanies->class_js = 'CoreGUI';
+
+// Dialog
+$oDialog						= $oGuiCompanies->createDialog(L10N::t('Transfergesellschaft editieren', $oGuiCompanies->gui_description).' - {name}', L10N::t('Neuen Transfergesellschaft anlegen', $oGuiCompanies->gui_description));
+$oDialog->width					= 900;
+$oDialog->height				= 650;
+$aPaymentMethods				= Ext_Thebing_Data::getPaymentList(true);
+$aTransfers	= Ext_TS_Transfer_Location::getLocations(true, $iSessionSchoolId);
+$oSchool						= Ext_Thebing_School::getSchoolFromSession();
+$aTransfersAcc					= $oSchool->getTransferLocations();
+
+$oTab = $oDialog->createTab(L10N::t('Informationen', $oGuiCompanies->gui_description));
+
+// Flex Felder in diesem Tab anzeigen
+$oTab		->aOptions = array(
+		'section' => $oGuiCompanies->sSection
+);
+
+$aCountries						= Ext_Thebing_Data::getCountryList(true,'');
+$oTab->setElement($oDialog->createRow(L10N::t('Bezeichnung', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'name','required' => 1)));
+$oH3							= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Zahlungsmethode', $oGuiCompanies->gui_description));
+$oTab->setElement($oH3);
+$oTab->setElement($oDialog->createRow(L10N::t('Zahlungsmethode', $oGuiCompanies->gui_description), 'select', array('db_alias' => '', 'db_column'=> 'payment', 'select_options' => $aPaymentMethods)));
+$oH3							= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Kontaktdaten', $oGuiCompanies->gui_description));
+$oTab->setElement($oH3);
+$oTab->setElement($oDialog->createRow(L10N::t('Anrede', $oGuiCompanies->gui_description), 'select', array('db_alias' => '', 'db_column'=>'title', 'select_options' => $aTitles, 'required' => 1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Vorname', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'firstname', 'required' => 1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Nachname', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'lastname', 'required' => 1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Telefon', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'tel')));
+$oTab->setElement($oDialog->createRow(L10N::t('Handy', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'handy')));
+$oTab->setElement($oDialog->createRow(L10N::t('Fax', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'fax')));
+$oTab->setElement($oDialog->createRow(L10N::t('E-Mail', $oGuiCompanies->gui_description), 'input', array('db_alias' => 'kco', 'db_column'=>'email','required' => 1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Adresse', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'street')));
+$oTab->setElement($oDialog->createRow(L10N::t('Ort', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'city')));
+$oTab->setElement($oDialog->createRow(L10N::t('PLZ', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'plz')));
+$oTab->setElement($oDialog->createRow(L10N::t('Bundesland', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'state')));
+$oTab->setElement($oDialog->createRow(L10N::t('Land', $oGuiCompanies->gui_description), 'select', array('db_alias' => '', 'db_column'=> 'country_iso', 'select_options' => $aCountries)));
+$oH3							= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Transferorte', $oGuiCompanies->gui_description));
+$oTab->setElement($oH3);
+$oTab->setElement($oDialog->createRow(L10N::t('Startorte', $oGuiCompanies->gui_description), 'select', array('db_alias' => '', 'db_column'=>'from_airports', 'select_options' => $aTransfers, 'style'=>'height:110px;', 'multiple'=>5, 'jquery_multiple'=>1, 'searchable'=>1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Zielorte', $oGuiCompanies->gui_description), 'select', array('db_alias' => '', 'db_column'=>'to_airports', 'select_options' => $aTransfers, 'style'=>'height:110px;', 'multiple'=>5, 'jquery_multiple'=>1, 'searchable'=>1)));
+$oTab->setElement(
+	$oDialog->createRow(
+		L10N::t('Abholung von allen Anbietern', $oGuiCompanies->gui_description),
+		'select',
+		array(
+			'db_alias'			=> '',
+			'db_column'			=> 'from_all_accommodations',
+			'select_options'	=> Ext_TC_Util::getYesNoArray()
+		)
+	)
+);
+$oTab->setElement(
+	$oDialog->createRow(
+		L10N::t('Startorte Unterkünfte', $oGuiCompanies->gui_description),
+		'select',
+		array(
+			'db_alias' => '',
+			'db_column'=>'from_accommodations',
+			'select_options' => $aTransfersAcc,
+			'style'=>'height:110px;',
+			'multiple'=>5,
+			'jquery_multiple'=>1,
+			'searchable'=>1
+		)
+	)
+);
+$oTab->setElement(
+	$oDialog->createRow(
+		L10N::t('Fährt alle Anbieter an', $oGuiCompanies->gui_description),
+		'select',
+		array(
+			'db_alias'			=> '',
+			'db_column'			=> 'to_all_accommodations',
+			'select_options'	=> Ext_TC_Util::getYesNoArray()
+		)
+	)
+);
+$oTab->setElement(
+	$oDialog->createRow(
+		L10N::t('Zielorte Unterkünfte', $oGuiCompanies->gui_description),
+		'select',
+		array(
+			'db_alias' => '',
+			'db_column'=>'to_accommodations',
+			'select_options' => $aTransfersAcc,
+			'style'=>'height:110px;',
+			'multiple'=>5,
+			'jquery_multiple'=>1,
+			'searchable'=>1
+		)
+	)
+);
+
+$oDialog->setElement($oTab);
+
+$oTab = $oDialog->createTab(L10N::t('Bankdaten', $oGuiCompanies->gui_description));
+$oTab->setElement($oDialog->createRow(L10N::t('Kontoinhaber', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'bank_account_holder')));
+$oTab->setElement($oDialog->createRow(L10N::t('Kontonummer', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'bank_account_number')));
+$oTab->setElement($oDialog->createRow(L10N::t('BLZ', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'bank_code')));
+$oTab->setElement($oDialog->createRow(L10N::t('Name der Bank', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'bank_name')));
+$oTab->setElement($oDialog->createRow(L10N::t('Adresse der Bank', $oGuiCompanies->gui_description), 'input', array('db_alias' => '', 'db_column'=>'bank_address')));
+$oDialog->setElement($oTab);
+
+// Leiste(n)
+$oBar					= $oGuiCompanies->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'name');
+$oFilter->db_alias		= array('', '');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGuiCompanies->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+$oFilter = $oBar->createValidFilter($oGuiCompanies->t('Gültigkeit'), array('db_alias' => 'kco'));
+$oBar->setElement($oFilter);
+
+$oGuiCompanies->setBar($oBar);
+
+$oBar			= $oGuiCompanies->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon(L10N::t('Neuer Eintrag', $oGuiCompanies->gui_description), $oDialog, L10N::t('Neuer Eintrag', $oGuiCompanies->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon(L10N::t('Editieren', $oGuiCompanies->gui_description), $oDialog, L10N::t('Editieren', $oGuiCompanies->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiCompanies->gui_description), L10N::t('Löschen', $oGuiCompanies->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeactivateIcon(L10N::t('Deaktivieren', $oGuiCompanies->gui_description), L10N::t('Deaktivieren', $oGuiCompanies->gui_description), array('db_alias' => 'kco'));
+$oBar->setElement($oIcon);
+$oIcon = $oBar->createIcon(
+	Ext_Thebing_Util::getIcon('complaint'),
+	'openDialog',
+	L10N::t('Beschwerden ansehen')
+);
+$oIcon->label = L10N::t('Beschwerden ansehen');
+$oIcon->action = 'transfer_complaint';
+$oIcon->access = 'thebing_pickup_resources_complaints';
+$oIcon->dialog_data = \TsComplaints\Gui2\Data\Complaint::getComplaintDialog($oGuiCompanies, false);
+$oBar->setElement($oIcon);
+$oGuiCompanies->setBar($oBar);
+
+$oBar			= $oGuiCompanies->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiCompanies->setBar($oBar);
+
+// Spalten
+$oColumn				= $oGuiCompanies->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Bezeichnung', $oGuiCompanies->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oColumn->inplaceEditor	= 0;
+$oGuiCompanies->setColumn($oColumn);
+
+$oColumn				= $oGuiCompanies->createColumn();
+$oColumn->db_column		= 'tel';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Telefon', $oGuiCompanies->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oGuiCompanies->setColumn($oColumn);
+
+$oColumn				= $oGuiCompanies->createColumn();
+$oColumn->db_column		= 'handy';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Handy', $oGuiCompanies->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oGuiCompanies->setColumn($oColumn);
+
+$oColumn				= $oGuiCompanies->createColumn();
+$oColumn->db_column		= 'email';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('E-Mail', $oGuiCompanies->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oGuiCompanies->setColumn($oColumn);
+
+$oGuiCompanies->addDefaultColumns();
+
+
+// ------------------------------ Neue Liste ------------------------------
+
+// Datenbasis
+$oGuiDrivers->setWDBasic('Ext_Thebing_Pickup_Company_Driver');
+$oGuiDrivers->setTableData('where', array('idClient' => $user_data['client'], 'idSchool' => $iSessionSchoolId, 'active' => 1));
+$oGuiDrivers->setTableData('limit', 30);
+$oGuiDrivers->setTableData('orderby', array('name' => 'ASC'));
+
+// Listenoptionen
+$oGuiDrivers->gui_description		= 'Thebing » Pickup » Companies';
+$oGuiDrivers->gui_title				= L10N::t('Fahrer', $oGuiDrivers->gui_description);
+$oGuiDrivers->column_sortable		= 1;
+$oGuiDrivers->row_sortable			= 0;
+$oGuiDrivers->multiple_selection	= 0;
+
+// Dialog
+$oDialog						= $oGuiDrivers->createDialog(L10N::t('Fahrer editieren', $oGuiDrivers->gui_description).' - {name}', L10N::t('Neuen Fahrer anlegen', $oGuiDrivers->gui_description));
+$oDialog->width					= 900;
+$oDialog->height				= 650;
+$aPaymentMethods				= Ext_Thebing_Data::getPaymentList(true);
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Bezeichnung', $oGuiDrivers->gui_description), 'input', array('db_alias' => '', 'db_column'=>'name','required' => 1)));
+$oDialog->setElement($oDialog->createRow(L10N::t('Notfallnummer', $oGuiDrivers->gui_description), 'input', array('db_alias' => '', 'db_column'=>'emergency_number')));
+
+// Leiste(n)
+$oBar					= $oGuiDrivers->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'name');
+$oFilter->db_alias		= array('', '');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGuiDrivers->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oGuiDrivers->setBar($oBar);
+
+$oBar			= $oGuiDrivers->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon(L10N::t('Neuer Eintrag', $oGuiDrivers->gui_description), $oDialog, L10N::t('Neuer Eintrag', $oGuiDrivers->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon(L10N::t('Editieren', $oGuiDrivers->gui_description), $oDialog, L10N::t('Editieren', $oGuiDrivers->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiDrivers->gui_description), L10N::t('Löschen', $oGuiDrivers->gui_description));
+$oBar->setElement($oIcon);
+
+$oGuiDrivers->setBar($oBar);
+
+$oBar			= $oGuiDrivers->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiDrivers->setBar($oBar);
+
+// Spalten
+$oColumn				= $oGuiDrivers->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Bezeichnung', $oGuiDrivers->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oColumn->inplaceEditor	= 0;
+$oGuiDrivers->setColumn($oColumn);
+
+$oColumn				= $oGuiDrivers->createColumn();
+$oColumn->db_column		= 'emergency_number';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Notfallnummer', $oGuiDrivers->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->inplaceEditor	= 0;
+$oGuiDrivers->setColumn($oColumn);
+
+$oGuiDrivers->addDefaultColumns();
+
+$aOptionalInfo = array();
+$aOptionalInfo['css'][] = '/assets/ts/css/gui2.css';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/gui2/util.js';
+$aOptionalInfo['js'][]	= '/admin/extensions/thebing/pickup/js/company.js';
+
+// Anzeige
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGuiCompanies);
+$oPage->setGui($oGuiDrivers, array('hash' => $oGuiCompanies->hash, 'foreign_key' => 'companie_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display($aOptionalInfo);

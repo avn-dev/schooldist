@@ -1,0 +1,39 @@
+
+// Vue transition
+.fade-enter-active {
+	transition: 0.5s ease;
+}
+
+.fade-leave-active {
+	transition: opacity 0.5s ease;
+	position: absolute;
+
+	.btn {
+		// Buttons verlieren beim Übergang ggf. Position und das sieht dann merkwürdig aus
+		visibility: hidden;
+	}
+}
+
+.fade-enter,
+.fade-leave-to {
+	opacity: 0;
+	//transform: translateY(10px);
+}
+
+.fade-move {
+	transition: 0.5s ease;
+}
+
+//.fade-out-in-enter-active,
+//.fade-out-in-leave-active {
+//	transition: opacity .5s;
+//}
+//
+//.fade-out-in-enter-active {
+//	transition-delay: .5s;
+//}
+//
+//.fade-out-in-enter,
+//.fade-out-in-leave-to {
+//	opacity: 0;
+//}

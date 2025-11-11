@@ -1,0 +1,129 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("office_config");
+Admin_Html::loadAdminHeader();
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['form_action']) && $_VARS['form_action'] == 'save') {
+	foreach((array)$_VARS['config_data'] as $sKey => $sValue) {
+		$sSQL = "
+			REPLACE
+				`office_config`
+			SET
+				`key`	= :sKey,
+				`value`	= :sValue
+		";
+		$aSQL = array('sKey' => $sKey, 'sValue' => $sValue);
+		DB::executePreparedQuery($sSQL, $aSQL);
+	}
+}
+
+/* ==================================================================================================== */
+
+$oProjectConfig = new Ext_Office_Project('office_projects');
+$aProjectConfig = $oProjectConfig->config;
+
+/* ==================================================================================================== */
+
+if(!isset($aProjectConfig['pro_database']))
+{
+	$_VARS['action'] == 'pro_database';
+}
+
+if($_VARS['form_action'] == 'load_fields' || isset($aProjectConfig['pro_database']))
+{
+	$iDatabase = $aProjectConfig['pro_database'];
+	if(isset($_VARS['config_data']['pro_database']))
+	{
+		$iDatabase = (int)$_VARS['config_data']['pro_database'];
+	}
+	$aEmployeesFields = CustomerDb\Helper\Functions::getCustomerFields($iDatabase, 'name', 1);
+	$aProjectConfig['pro_database'] = $iDatabase;
+}
+
+/* ==================================================================================================== */
+
+// Load available customer_dbs
+$sSQL = "SELECT `id`, `db_name` FROM `customer_db_config` WHERE `active` = 1";
+$aDBs = DB::getQueryPairs($sSQL);
+
+if(!isset($aProjectConfig['pro_database']))
+{
+	$aDBs = array_merge(array('0' => 'bitte wählen'), $aDBs);
+}
+
+// Load available groups
+$sSQL = "SELECT `id`, `name` FROM `customer_groups` WHERE `db_nr` = :iDB_NR";
+$aGroups = (array)\DB::getQueryPairs($sSQL, array('iDB_NR' => (int)$aProjectConfig['pro_database']));
+
+/* ==================================================================================================== */
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Mitarbeiterdatenbank', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+	<script type="text/javascript">
+		function setAction(sAction)
+		{
+			document.getElementById('form_action').value = sAction;
+		}
+	</script>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="form_action" id="form_action" value="save" />
+		<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+			<?=printFormSelect('Mitarbeiterdatenbank', 'config_data[pro_database]', $aDBs, $aProjectConfig['pro_database'], 'onchange="setAction(\'load_fields\'); this.form.submit();"')?>
+			<? if($_VARS['form_action'] == 'load_fields' || isset($aProjectConfig['pro_database'])) { ?>
+				<?=printFormSelect('Gruppe der Projektleiter', 'config_data[pro_master_group]', $aGroups, $aProjectConfig['pro_master_group'])?>
+			<? } ?>
+		</table>
+
+		<? if(isset($aEmployeesFields)) { ?>
+			<br />
+			<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+				<?=printFormSelect("Anrede", "config_data[pro_field_sex]", $aEmployeesFields, $aProjectConfig['pro_field_sex']);?>
+				<?=printFormSelect("Vorname", "config_data[pro_field_firstname]", $aEmployeesFields, $aProjectConfig['pro_field_firstname']);?>
+				<?=printFormSelect("Nachname", "config_data[pro_field_lastname]", $aEmployeesFields, $aProjectConfig['pro_field_lastname']);?>
+				<?=printFormSelect("Geburtstag", "config_data[pro_field_date_o_b]", $aEmployeesFields, $aProjectConfig['pro_field_date_o_b']);?>
+				<?=printFormSelect("Staatsangehörigkeit", "config_data[pro_field_nationality]", $aEmployeesFields, $aProjectConfig['pro_field_nationality']);?>
+
+				<?=printFormSelect("Kreditinstitut", "config_data[pro_field_bank_name]", $aEmployeesFields, $aProjectConfig['pro_field_bank_name']);?>
+				<?=printFormSelect("Kontoinhaber", "config_data[pro_field_bank_holder]", $aEmployeesFields, $aProjectConfig['pro_field_bank_holder']);?>
+				<?=printFormSelect("Kontonummer", "config_data[pro_field_bank_number]", $aEmployeesFields, $aProjectConfig['pro_field_bank_number']);?>
+				<?=printFormSelect("BLZ", "config_data[pro_field_bank_code]", $aEmployeesFields, $aProjectConfig['pro_field_bank_code']);?>
+
+				<?=printFormSelect("E-Mail", "config_data[pro_field_email]", $aEmployeesFields, $aProjectConfig['pro_field_email']);?>
+				<?=printFormSelect("Webseite", "config_data[pro_field_web]", $aEmployeesFields, $aProjectConfig['pro_field_web']);?>
+				<?=printFormSelect("Telefon", "config_data[pro_field_phone]", $aEmployeesFields, $aProjectConfig['pro_field_phone']);?>
+				<?=printFormSelect("Telefax", "config_data[pro_field_fax]", $aEmployeesFields, $aProjectConfig['pro_field_fax']);?>
+				<?=printFormSelect("Mobil", "config_data[pro_field_mobile]", $aEmployeesFields, $aProjectConfig['pro_field_mobile']);?>
+
+				<?=printFormSelect("Firma", "config_data[pro_field_company]", $aEmployeesFields, $aProjectConfig['pro_field_company']);?>
+				<?=printFormSelect("Abteilung", "config_data[pro_field_sektion]", $aEmployeesFields, $aProjectConfig['pro_field_sektion']);?>
+				<?=printFormSelect("Position", "config_data[pro_field_position]", $aEmployeesFields, $aProjectConfig['pro_field_position']);?>
+				<?=printFormSelect("Street", "config_data[pro_field_street]", $aEmployeesFields, $aProjectConfig['pro_field_street']);?>
+				<?=printFormSelect("PLZ", "config_data[pro_field_zip]", $aEmployeesFields, $aProjectConfig['pro_field_zip']);?>
+				<?=printFormSelect("Ort", "config_data[pro_field_city]", $aEmployeesFields, $aProjectConfig['pro_field_city']);?>
+				<?=printFormSelect("Land", "config_data[pro_field_country]", $aEmployeesFields, $aProjectConfig['pro_field_country']);?>
+
+				<?=printFormSelect("Notiz", "config_data[pro_field_notice]", $aEmployeesFields, $aProjectConfig['pro_field_notice']);?>
+				<?=printFormSelect("Lebenslauf", "config_data[pro_field_resume]", $aEmployeesFields, $aProjectConfig['pro_field_resume']);?>
+				<?=printFormSelect("1. Datei", "config_data[pro_field_file1]", $aEmployeesFields, $aProjectConfig['pro_field_file1']);?>
+				<?=printFormSelect("2. Datei", "config_data[pro_field_file2]", $aEmployeesFields, $aProjectConfig['pro_field_file2']);?>
+				<?=printFormSelect("3. Datei", "config_data[pro_field_file3]", $aEmployeesFields, $aProjectConfig['pro_field_file3']);?>
+			</table>
+		<? } ?>
+		<?=printSubmit('Speichern')?>
+	</form>
+
+</td></tr></table>
+
+<?=Admin_Html::loadAdminFooter()?>

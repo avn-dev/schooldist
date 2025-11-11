@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` CHANGE `net_email_warning` `net_email_warning` ENUM('always','never','main_reception_field','recipient_is_sender') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'always';

@@ -1,0 +1,110 @@
+hash: 5b09488cfaaf0c30d5a5ce8bcaaf69ca
+description: 'x'
+class:
+  wdbasic: Ext_Thebing_Email_Template
+  data: Ext_Thebing_Email_Template_Gui2
+  js: EmailLayouts
+js:
+  - [gui2/util.js, thebing]
+  - [admin/js/emaillayouts.js, thebing]
+access: thebing_admin_email_templates
+orderby:
+  - Ext_Thebing_Email_Template_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Email_Template_Gui2
+  - getWhere
+limit: 30
+limit_selection: false
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - id
+          - name
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Verfügbarkeit
+        label_as_item: true
+        searchtype: =
+        column:
+          - application
+        alias:
+          - applications
+        id: application
+        entries:
+          - Ext_Thebing_Email_Template_Gui2
+          - getApplicationSelectOptions
+      -
+        element: selectfilter
+        label: Schulen
+        label_as_item: true
+        searchtype: =
+        column:
+          - school_id
+        alias:
+          - join_schools
+        entries:
+          - Ext_Thebing_Email_Template_Gui2
+          - getSchoolSelectOptions
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Email_Template_Gui2
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Email_Template_Gui2
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ket
+    width: 300
+    resize: true
+  -
+    title: Sprachen
+    column: languages
+    width: language
+    format: Ext_TC_Gui2_Format_Imagelist
+    resize: false
+  -
+    title: Verfügbarkeit
+    column: applications
+    alias: ket
+    width: 400
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Email_Template_Gui2, getFormatParamsApplicationColumn1]
+  -
+    title: HTML
+    column: html
+    alias: ket
+    width: 50
+    format: Ext_Thebing_Gui2_Format_YesNo
+  -
+    title: Schulen
+    column: schools
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Email_Template_Gui2, getSchoolSelectOptions]
+    order_settings:
+        schools: ASC

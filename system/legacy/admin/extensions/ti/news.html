@@ -1,0 +1,144 @@
+<?php
+
+/**
+ * 1
+ */
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+$oGui = new Ext_TC_Gui2(md5('tc_news'));
+
+$aReleaseOptions = Ext_TC_Licence_Gui2::getReleaseOptions();
+
+### NEW - DIALOG ############################################################################################
+//
+$oDialog = $oGui->createDialog($oGui->t('Ankündigung "{title}" bearbeiten'), $oGui->t('Neue Ankündigung anlegen'));
+
+$oRow = $oDialog->createRow(
+	$oGui->t('Release'), 
+	'select', 
+	array(
+		'db_alias' => 'tl', 
+		'db_column' => 'release', 
+		'select_options' => $aReleaseOptions, 
+		'multiple' => 5, 
+		'jquery_multiple' => 1,
+		'style' => 'width: 600px;'
+	)
+);
+$oDialog->setElement($oRow);
+
+$oRow = $oDialog->createRow(
+	$oGui->t('Lizenz'), 
+	'select', 
+	array(
+		'db_alias' => 'tl', 
+		'db_column' => 'license', 
+		'selection' => new Ext_TI_News_LicenseSelection, 
+		'searchable' => true,
+		'multiple' => 5, 
+		'jquery_multiple' => 1,
+		'dependency' => array(
+			array(
+				'db_alias' => 'tl',
+				'db_column' => 'release'
+			)
+		),
+		'style' => 'width: 600px;'
+	)
+);
+$oDialog->setElement($oRow);
+
+$oRow = $oDialog->createRow($oGui->t('Titel'), 'input', array('db_column' => 'title', 'required' => 1));
+$oDialog->setElement($oRow);
+$oRow = $oDialog->createRow($oGui->t('Inhalt'), 'html', array('db_column' => 'content', 'style'=>'width: 600px; height: 300px;'));
+$oDialog->setElement($oRow);
+
+#############################################################################################################
+
+$oDialog->height = 750;
+
+// Listen Optionen
+$oGui->gui_description				= $oGui->gui_description;
+$oGui->gui_title					= L10N::t('Ankündigungen', $oGui->gui_description);
+$oGui->column_sortable				= 1; // es geht nur eine sortierart!
+$oGui->row_sortable					= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGui->multiple_selection			= 0;
+$oGui->query_id_column				= 'id';
+$oGui->query_id_alias				= '';
+$oGui->calendar_format				= Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+
+$oGui->setWDBasic('Ext_TI_News');
+$oGui->setTableData('orderby', array('created'=>'DESC'));
+
+## ENDE DIALOG TAB ##
+
+# START - Leiste 1 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oLabelgroup = $oBar->createLabelGroup(L10N::t('Suche', $oGui->gui_description));
+	$oBar ->setElement($oLabelgroup);
+
+	$oFilter = $oBar->createFilter();
+	$oFilter->db_column = array('title');
+	$oFilter->db_alias = array();
+	$oFilter->id = 'search';
+	$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+# ENDE - Leiste 1 #
+# START - Leiste 2 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(L10N::t('Neuer Eintrag', $oGui->gui_description), $oDialog, L10N::t('Neuer Eintrag', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(L10N::t('Editieren', $oGui->gui_description), $oDialog, L10N::t('Editieren', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+# ENDE - Leiste 3 #
+
+$oColumn				= new Ext_Gui2_Head();
+$oColumn->db_column		= 'title';
+$oColumn->db_alias		= '';
+$oColumn->title			= $oGui->t('Ankündigung');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'release';
+$oColumn->title			= $oGui->t('Release');
+$oColumn->width			= 100;
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_Gui2_View_Format_Selection($aReleaseOptions);
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+$oGui->display();

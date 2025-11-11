@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_accommodations_allocations` ADD `bed` TINYINT UNSIGNED NOT NULL AFTER `room_id`;

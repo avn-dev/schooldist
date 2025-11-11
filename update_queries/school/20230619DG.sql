@@ -1,0 +1,13 @@
+UPDATE `kolumbus_forms_translations` SET `field` = 'title' WHERE `field` = 'trans';
+UPDATE `kolumbus_forms_translations` SET `field` = 'type' WHERE `field` = 'transType';
+UPDATE `kolumbus_forms_translations` SET `field` = 'origin' WHERE `field` = 'transFrom';
+UPDATE `kolumbus_forms_translations` SET `field` = 'destination' WHERE `field` = 'transTo';
+UPDATE `kolumbus_forms_translations` SET `field` = 'airline' WHERE `field` = 'transLine';
+UPDATE `kolumbus_forms_translations` SET `field` = 'flight_number' WHERE `field` = 'transNr';
+UPDATE `kolumbus_forms_translations` SET `field` = 'date' WHERE `field` = 'transDate';
+UPDATE `kolumbus_forms_translations` SET `field` = 'time' WHERE `field` = 'transTime';
+UPDATE `kolumbus_forms_translations` SET `field` = 'comment' WHERE `field` = 'transNotice';
+UPDATE `kolumbus_forms_translations` SET `field` = 'no_transfer' WHERE `field` = 'transNo';
+UPDATE `kolumbus_forms_translations` SET `field` = 'arrival' WHERE `field` = 'transArr';
+UPDATE `kolumbus_forms_translations` SET `field` = 'departure' WHERE `field` = 'transDep';
+UPDATE `kolumbus_forms_translations` SET `field` = 'arrival_departure' WHERE `field` = 'transArrDep';

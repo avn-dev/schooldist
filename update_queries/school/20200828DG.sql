@@ -1,0 +1,1 @@
+ALTER TABLE `ts_enquiries_combinations_courses` CHANGE `units` `units` DECIMAL(5,2) NOT NULL DEFAULT '0.00';

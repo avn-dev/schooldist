@@ -1,0 +1,30 @@
+{
+    "env": {
+        "browser": true,
+        "es2022": true
+    },
+    "extends": [
+        "plugin:vue/vue3-recommended",
+        "eslint:recommended",
+        "@vue/eslint-config-typescript/recommended"
+    ],
+    "parser": "vue-eslint-parser",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "parser": "@typescript-eslint/parser",
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "globalReturn": false,
+            "impliedStrict": false,
+            "jsx": false
+        }
+    },
+    "rules": {
+        "indent": ["warn", "tab", { "SwitchCase": 1 }],
+        "semi": ["warn", "never"],
+        "@typescript-eslint/ban-ts-comment": "off",
+        "vue/html-indent": ["warn", "tab"],
+        // https://github.com/vuejs/eslint-plugin-vue/issues/1779
+        "vue/multi-word-component-names": "off"
+    }
+}

@@ -1,0 +1,100 @@
+<?
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("languages");
+
+set_time_limit(3600);
+ignore_user_abort(true);
+
+if($_VARS['task'] == 'charset') {
+
+	$aTables = DB::listTables();
+	foreach((array)$aTables as $sTable) {
+
+		$rFields = DB::executeQuery("SHOW COLUMNS FROM ".$sTable);
+
+		if($_VARS['function'] == 'collation') {
+
+			$strSql = "ALTER TABLE `".$sTable."` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci";
+			DB::executeQuery($strSql);
+			echo DB::fetchLastErrorMessage();
+		
+		}
+		
+		while ($aField = get_data($rFields)) {
+
+			if($_VARS['function'] == 'collation') {
+
+				if(strpos($aField['Type'], "text") !== false || strpos($aField['Type'], "char") !== false) {
+					$strSql = "ALTER TABLE `".$sTable."` CHANGE `".$aField['Field']."` `".$aField['Field']."` ".$aField['Type']." CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ";
+					db_query($strSql);
+					echo mysql_error();
+				}
+
+			} elseif($_VARS['function'] == 'encoding') {
+
+				$resData = db_query("SELECT id, ".$aField['Field']." as data FROM ".$sTable."");
+				while($arrData = get_data($resData)) {
+
+					if($_VARS['charset'] == 'latin1') {
+
+						$arrData['data'] = utf8_encode($arrData['data']);
+
+					} elseif($_VARS['charset'] == 'utf-8') {
+
+						$arrData['data'] = utf8_decode($arrData['data']);
+
+					}
+
+					$strSql = "UPDATE ".$sTable." SET ".$aField['Field']." = '".\DB::escapeQueryString($arrData['data'])."' WHERE id = '".intval($arrData['id'])."' LIMIT 1";
+					db_query($strSql);
+					echo mysql_error();
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?> &raquo; <?=L10N::t('Datenbank')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+<?
+			$arrSelectFunction 	= array("collation"=>L10N::t('Datenbankstruktur anpassen', 'Framework'), "encoding"=>L10N::t('Inhalte kodieren', 'Framework'));
+			$arrSelectCharset 	= array("utf-8"=>"UTF-8", "latin1"=>"Latin1");
+?>			
+
+			<h2><?=L10N::t('Funktionen für die Umstellung von Zeichensätzen', 'Framework')?></h2>
+
+			<form method="post" action="databases.html">
+			<input type="hidden" name="task" value="charset" />
+			<?=printTableStart()?>
+			<?=printFormSelect(L10N::t('Art der Umstellung ', 'Framework'), "function", $arrSelectFunction)?>
+			<?=printFormSelect(L10N::t('Zeichensatz', 'Framework'), "charset", $arrSelectCharset)?>
+			<?=printTableEnd()?>
+			<p><?=L10N::t('Bitte machen Sie vor dem Verwenden dieser Funktion ein Datenbank-Backup.', 'Framework')?></p>
+			<?=printSubmit(L10N::t('Funktion ausführen', 'Framework'))?>
+			</form>
+			
+<?
+
+
+?>
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

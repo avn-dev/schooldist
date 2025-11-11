@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_accommodations_allocations` CHANGE `inquiry_accommodation_id` `inquiry_accommodation_id` INT(11) NULL DEFAULT NULL;
+ALTER TABLE `kolumbus_accommodations_allocations` ADD `reservation` TEXT NULL DEFAULT NULL;

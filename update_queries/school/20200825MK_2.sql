@@ -1,0 +1,2 @@
+INSERT INTO `kolumbus_statistic_cols_definitions` (`id`, `changed`, `created`, `active`, `creator_id`, `group_id`, `title`, `group_by`, `detail`, `sum`, `settings`, `max_by`) VALUES (208, NOW(), NOW(), '1', '', '1', 'Inbox', '0', '1', '0', '0', '0');
+INSERT INTO `kolumbus_statistic_cols_definitions_access` (`id`, `x_id`, `y_id`, `type`) VALUES (NULL, '1', '208', '2');

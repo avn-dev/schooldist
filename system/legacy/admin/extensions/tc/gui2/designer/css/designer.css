@@ -1,0 +1,280 @@
+
+.elementBox {
+	width: 180px;
+}
+
+.accordion h3 {
+	width: 186px;
+}
+
+.accordion ul {
+	padding: 0;
+	margin: 0;
+}
+
+.infoBox {
+	margin-top:			5px;
+}
+
+.accordionContent {
+	padding: 3px !important;
+	margin: 0px !important;
+}
+
+.floatLeft {
+	float: left; 
+}
+
+.floatRight {
+	float: right;
+}
+
+.fix_elements {
+	background-color: #FFE99B !important;
+}
+
+#form_pages_content {
+	float:				left;
+	margin-left:		10px;
+	margin-top:			5px;
+}
+
+#form_pages_tabs {
+	height:				20px;
+	line-height:		20px;
+	float:				left;
+	
+}
+
+.form_pages_tab {
+	float:				left;
+	margin-right:		5px;
+	border:				1px solid #CCC;
+	border-bottom:		0;
+	padding:			2px 5px;
+	background-color:	#EEE;
+	cursor:				e-resize;
+	
+	background: url("/admin/extensions/tc/images/th_bck.gif") repeat-x scroll 0 0 #FFFFFF;
+    border-left: 1px solid #CCCCCC;
+    color: #666666;
+    padding: 5px 10px;
+}
+
+#form_pages_tabs .form_pages_tab_active {
+	background-color:	#DEDEDE;
+}
+
+#form_pages_tabs .form_pages_tab .form_tab_title {
+	float:				left;
+}
+
+#form_pages_tabs .form_pages_tab .form_tab_icons {
+	margin-left:		10px;
+	float:				right;
+}
+
+.form_pages_tab i.fa {
+	display:			block;
+	float:				left;
+	margin-left:		3px;
+	margin-top:			2px;
+	cursor:				pointer;
+}
+
+#form_pages_filter_rows {
+	width: 100%;
+}
+
+.form_pages_filter_row th {
+	width: 100px;	
+	margin-right:		5px;
+	padding:			2px 5px;
+	cursor:				n-resize;
+	vertical-align:	top;
+	background-color: #FBFCFE;
+}
+
+#form_pages_filter_rows .form_pages_filter_row .form_filter_row_title {
+	float:				left;
+}
+
+#form_pages_filter_rows .form_pages_filter_row .form_filter_row_icons {
+	margin-left:		10px;
+	float:				right;
+}
+
+.form_pages_tab i.fa {
+	display:			block;
+	float:				left;
+	margin-left:		3px;
+	margin-top:			2px;
+	cursor:				pointer;
+}
+
+
+#form_pages_contents {
+	width:				980px; /* 700 passt nichtmehr sobald n scrollbalken da ist */
+	border:				1px solid #CCC;
+}
+
+#form_pages_contents ul {
+	margin: 0;
+	width: auto;
+}
+
+#form_pages_contents ul li {
+	list-style-type: none;
+}
+
+#form_pages_contents i.fa {
+	cursor: pointer;
+}
+
+.form_pages_content {
+	padding:			15px;
+}
+
+.accordion {
+	margin-top: 5px;
+}
+
+
+
+#form_pages_filter {
+	padding: 15px;
+    width: 680px;
+	float: left;
+}
+
+#form_pages_filter img {
+	cursor: pointer;
+}
+
+.infoBox {
+	padding:			3px;
+	padding-bottom:		1px;
+	width:				194px;
+}
+
+.filter_col, .filter_element_list {
+	cursor:				move;
+    margin:				1px;
+    overflow:			hidden;
+    padding:			3px 4px;
+    background-color:	#EEE;
+    margin-bottom:		3px;
+    border:				1px solid #DEDEDE;
+	width:				169px;
+}
+
+.filter_col_disabled {
+	cursor:				auto;
+    background-color:	#DEDEDE;
+}
+
+.accept_element {
+	background-color:	yellow !important;
+}
+
+.areas {
+	width:				100%;
+	border:				1px solid #CCC;
+	border-spacing:		0px;
+	border-collapse:	collapse;
+	background-color:	#FFF;
+	margin:				2px 0;
+}
+
+.areas td {
+	border:				1px solid #CCC;
+	background-color:	#FFF;
+	padding:			15px;
+	vertical-align:		top;
+}
+
+.areas th {
+	float:				auto;
+	background-color:	#EEE;
+	font-weight:		normal;
+	text-align:			left;
+	padding:			2px 5px;
+	border:				1px solid #CCC;
+	cursor:				move;
+}
+
+.areas th .floatLeft {
+	height:				20px;
+	line-height:		20px;
+}
+
+.areas th img {
+	display:			block;
+	float:				left;
+	margin-left:		3px;
+	margin-top:			2px;
+	cursor:				pointer;
+}
+
+.areas td p {
+	font-size:			12px;
+	margin:				0;
+}
+
+.areas h2, .areas h3 {
+	margin:				0;
+	padding:			0;
+}
+
+.form_pages_content .ui-sortable-placeholder {
+	height:				10px !important;
+	visibility:			visible !important;
+	background-color:	yellow;
+}
+
+.form_pages_content .ui-sortable-helper {
+	height:				auto !important;
+	overflow:			hidden !important;
+	width:				auto !important;
+}
+
+.form_pages_content .ui-sortable-helper td {
+	display:			none !important;
+}
+
+.filter_row_content .ui-sortable-placeholder {
+	height:				10px !important;
+	visibility:			visible !important;
+	background-color:	yellow;
+}
+
+.filter_row_content .ui-sortable-helper {
+	height:				auto !important;
+	width:				5px !important;
+	float:				left;
+}
+
+.filter_row_content .ui-sortable-helper td {
+	display:			none !important;
+}
+
+.filter_row_content {
+	padding: 5px;
+}
+
+.filter_row_element {
+	float: none;
+	cursor: move;
+}
+
+.designer_parent_check_success {
+	background-image: url(/admin/extensions/gui2/bg_hatching.png) !important;
+	background-color: green !important;
+}
+
+.designer_parent_check_failed {
+	background-image: url(/admin/extensions/gui2/bg_hatching.png) !important;
+	background-color: #B81900 !important;
+}
+
+

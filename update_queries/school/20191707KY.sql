@@ -1,0 +1,2 @@
+INSERT INTO `system_elements` (`title`, `description`, `element`, `category`, `file`, `version`, `parent`, `image`, `documentation`, `template`, `sql`, `administrable`, `include_backend`, `include_frontend`, `include_mode`, `active`)
+VALUES ('TsTuition', '', 'modul', 'Fidelo', 'tstuition', '0.01', '', '', '', '', '', '1', '0', '0', '0', '1');

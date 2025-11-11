@@ -1,0 +1,1 @@
+ALTER TABLE `ts_placementtests` CHANGE `placementtest_accuracy_in_percent` `placementtest_accuracy_in_percent` FLOAT UNSIGNED NULL DEFAULT NULL;

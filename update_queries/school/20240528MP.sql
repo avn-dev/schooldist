@@ -1,0 +1,1 @@
+ALTER TABLE `ts_placementtests_results` ADD `course_language_id` INT(11) NOT NULL AFTER `questions_answered_correct`;

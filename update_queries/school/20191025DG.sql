@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_coursecategories` CHANGE `active` `active` TINYINT NOT NULL DEFAULT '1';

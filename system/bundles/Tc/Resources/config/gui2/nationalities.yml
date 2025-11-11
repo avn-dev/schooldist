@@ -1,0 +1,100 @@
+class:
+  wdbasic: Ext_Thebing_Nationality
+  data: \Tc\Gui2\Data\Nationalities
+id:
+  column: id
+  alias:
+access:
+  - core_admin_nationalities
+  -
+orderby:
+  - \Tc\Gui2\Data\Nationalities
+  - getOrderby
+export: false
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - cn_official_name_en
+          - cn_short_en
+          - cn_short_de
+          - nationality_de
+          - nationality_en
+          - cn_iso_2
+          - cn_iso_3
+          - cn_iso_nr
+      -
+        element: icon_new
+        dialog:
+          - \Tc\Gui2\Data\Nationalities
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: ISO2
+    column: cn_iso_2
+    width: name
+    resize: true
+  -
+    title: ISO3
+    column: cn_iso_3
+    width: name
+    resize: true
+  -
+    title: ISO-Nummer
+    column: cn_iso_nr
+    width: name
+    resize: true
+  -
+    title: Offizieller lokaler Name
+    column: cn_official_name_local
+    width: name
+    inplace_editor: true
+  -
+    title: Offizieller englischer Name
+    column: cn_official_name_en
+    width: name
+    inplace_editor: true
+  -
+    title: Hauptstadt
+    column: cn_capital
+    width: name
+    inplace_editor: true
+  -
+    title: Tldomain
+    column: cn_tldomain
+    width: name
+    inplace_editor: true
+  -
+    title: WährungsISO3
+    column: cn_currency_iso_3
+    width: name
+    inplace_editor: true
+  -
+    title: Währungsnummer
+    column: cn_currency_iso_nr
+    width: name
+    inplace_editor: true
+  -
+    title: Telefon
+    column: cn_phone
+    width: name
+    inplace_editor: true
+  -
+    title: EU-Mitglied
+    column: cn_eu_member
+    width: name
+    inplace_editor: true
+  -
+    title: Lokaler Name (Kurzform)
+    column: cn_short_local
+    width: name
+    inplace_editor: true
+
+#   weitere Spalten: siehe \Tc\Gui2\Data\Nationalities prepareColumnListByRef() -> wegen den vielen Spalten

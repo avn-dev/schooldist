@@ -1,0 +1,55 @@
+hash: 29479d6a70501f74f1e354555993fd8b
+class:
+  wdbasic: Ext_TC_Communication_Category
+  data: \Tc\Gui2\Data\CommunicationCategory
+access: core_admin_communication_category
+sortable: true
+only_pagecount: true
+orderby:
+  - \Tc\Gui2\Data\CommunicationCategory
+  - getOrderby
+where:
+  - \Tc\Gui2\Data\CommunicationCategory
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        id: search
+        alias:
+          - tc_cc
+        column:
+          - name
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Tc\Gui2\Data\CommunicationCategory
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Tc\Gui2\Data\CommunicationCategory
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_cc
+    width: name
+    resize: true
+  -
+    title: Farbcode
+    column: code
+    alias: tc_cc
+    width: name
+    small: true
+    style: Ext_Gui2_View_Style_Color

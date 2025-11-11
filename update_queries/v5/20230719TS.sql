@@ -1,0 +1,1 @@
+UPDATE `data_countries` SET `nationality_de` = 'Chinesisch (Hongkong)' WHERE `cn_iso_2` = 'HK';

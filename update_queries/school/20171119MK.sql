@@ -1,0 +1,1 @@
+UPDATE `system_config` SET `c_value` = 'Fidelo School' WHERE `c_key` = 'project_name';

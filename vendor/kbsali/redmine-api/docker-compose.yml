@@ -1,0 +1,64 @@
+services:
+    php:
+        build: # Info to build the Docker image
+            context: ./.docker # Specify where the Dockerfile is located (e.g. in the root directory of the project)
+            dockerfile: PHP-Dockerfile # Specify the name of the Dockerfile
+        ports:
+            - 8111:80
+        depends_on:
+            - redmine-dev
+        volumes:
+            - ./:/var/www/project/ # Location of the project for php-fpm. Note this should be the same for NGINX.*
+
+    redmine-dev:
+        image: redmine:6.0.5
+        ports:
+            - "3000:3000"
+        environment:
+            # Workaround: Remove secret for Rails 7.2 so it will be generated automatically
+            # @see https://github.com/docker-library/redmine/issues/349#issuecomment-2516634932
+            # REDMINE_SECRET_KEY_BASE: supersecretkey
+            REDMINE_PLUGINS_MIGRATE: true
+        volumes:
+            - ./.docker/redmine-dev_data/files:/usr/src/redmine/files
+            - ./.docker/redmine-dev_data/sqlite:/usr/src/redmine/sqlite
+
+    # Make sure the following services are configured in:
+    # - /tests/Behat/behat.yml
+
+    redmine-60005:
+        image: redmine:6.0.5
+        ports:
+            - "5060:3000"
+        environment:
+            # Workaround: Remove secret for Rails 7.2 so it will be generated automatically
+            # @see https://github.com/docker-library/redmine/issues/349#issuecomment-2516634932
+            # REDMINE_SECRET_KEY_BASE: supersecretkey
+            REDMINE_PLUGINS_MIGRATE: true
+        volumes:
+            - ./.docker/redmine-60005_data/files:/usr/src/redmine/files
+            - ./.docker/redmine-60005_data/sqlite:/usr/src/redmine/sqlite
+
+    redmine-50108:
+        image: redmine:5.1.8
+        user: "1000:1000"
+        ports:
+            - "5051:3000"
+        environment:
+            REDMINE_SECRET_KEY_BASE: supersecretkey
+            REDMINE_PLUGINS_MIGRATE: true
+        volumes:
+            - ./.docker/redmine-50108_data/files:/usr/src/redmine/files
+            - ./.docker/redmine-50108_data/sqlite:/usr/src/redmine/sqlite
+
+    redmine-50012:
+        image: redmine:5.0.12
+        user: "1000:1000"
+        ports:
+            - "5050:3000"
+        environment:
+            REDMINE_SECRET_KEY_BASE: supersecretkey
+            REDMINE_PLUGINS_MIGRATE: true
+        volumes:
+            - ./.docker/redmine-50012_data/files:/usr/src/redmine/files
+            - ./.docker/redmine-50012_data/sqlite:/usr/src/redmine/sqlite

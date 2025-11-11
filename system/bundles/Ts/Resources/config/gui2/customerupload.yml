@@ -1,0 +1,71 @@
+hash: 70ac7b638979fd80c838ccabb7f7b1e2
+class:
+  wdbasic: Ext_Thebing_School_Customerupload
+  data: \Ts\Gui2\Data\CustomerUpload
+  js: AccessMatrixGui
+access: thebing_admin_customerupload
+js:
+  - [admin/js/form.js, thebing]
+  - [js/access_matrix.js, tc]
+css: 
+  - [admin/css/form.css ,thebing]
+sortable: true
+orderby:
+  - \Ts\Gui2\Data\CustomerUpload
+  - getOrderby
+pagination: false
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        id: search
+        label: Suche
+        column:
+          - id
+          - name
+        searchtype: LIKE 
+  -
+    position: top
+    elements: 
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\CustomerUpload
+          - getDialog 
+     -       
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\CustomerUpload
+          - getDialog 
+     -
+        element: icon_delete
+     -
+        element: labelgroup
+        label: Code
+     -       
+        element: icon
+        label: Rechte
+        task: openDialog
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - access   
+        visible: true
+        active: true
+        action: openAccessDialog
+columns:
+  - 
+    title: Name
+    column: name
+    width: name
+    resize: true
+  - 
+    title: Schulen	
+    column: schools
+    alias: kf
+    width: name
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]

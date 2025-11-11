@@ -1,0 +1,51 @@
+class:
+  wdbasic: \TsTuition\Entity\Course\Program
+  data: \TsTuition\Gui2\Data\Course\Program
+  date_format: Ext_Thebing_Gui2_Format_Date
+  icon_status: TsTuition\Gui2\Icon\Course\Program
+access: ""
+#access:
+#    - thebing_tuition_resources_courses_programs
+#    - ""
+foreign_key: course_id
+foreign_key_alias: ts_tcp
+id:
+  column: id
+  alias: ts_tcp
+orderby:
+  - \TsTuition\Gui2\Data\Course\Program
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsTuition\Gui2\Data\Course\Program
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsTuition\Gui2\Data\Course\Program
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    visible: true
+    title: Startdatum
+    column: start_date
+    width: date
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    visible: true
+    title: Enddatum
+    column: end_date
+    width: date
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Date
+

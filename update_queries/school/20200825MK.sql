@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `teacherlogin_reportcard_template` INT(11) NULL DEFAULT NULL;

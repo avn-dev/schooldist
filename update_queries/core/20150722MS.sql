@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questionaries_processes` CHANGE `follow_up` `follow_up` DATE NULL DEFAULT NULL;

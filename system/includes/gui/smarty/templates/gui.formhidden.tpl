@@ -1,0 +1,1 @@
+<input type="hidden"{if $sName != ''} name="{$sName|escape:"htmlall"}"{/if}{if $sID != ''} id="{$sID|escape:"htmlall"}"{/if} {if $sValue != ''} value="{$sValue|escape:"htmlall"}"{/if}{if $sOnClick != ''} onclick="{$sOnClick|escape:"htmlall"}"{/if} />

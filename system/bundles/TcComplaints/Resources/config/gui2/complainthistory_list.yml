@@ -1,0 +1,5 @@
+class:
+  wdbasic: \TcComplaints\Entity\ComplaintHistory
+  gui: Ext_TC_Gui2
+  date_format: Ext_TC_Gui2_Format_Date
+  icon_status: \TcComplaints\Gui2\Icon\ComplaintHistory

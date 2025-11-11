@@ -1,0 +1,10 @@
+{
+  "name": "fidelo-bundle/admin",
+  "version": "1.0.1",
+  "require": {
+    "bjeavons/zxcvbn-php": "1.4.*",
+    "sabre/xml": "4.0.*",
+    "sonata-project/google-authenticator": "2.3.*",
+    "web-auth/webauthn-lib": "5.2.*"
+  }
+}

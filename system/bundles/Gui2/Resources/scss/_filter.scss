@@ -1,0 +1,68 @@
+// vue-select
+// TODO Wieder src/ einbinden: https://github.com/sagalbot/vue-select/issues/1691
+//@import "vue-select/src/scss/vue-select.scss";
+@import "vue-select/dist/vue-select.css";
+
+.v-select {
+	@apply bg-white;
+}
+
+.gui-filter-toolbar {
+	height: auto !important; // element.style
+}
+
+.gui-filter-bar {
+	@apply flex flex-wrap items-center gap-1.5;
+	list-style: none;
+	margin: 3px 0;
+
+	/*> * {
+		height: 21px;
+	}*/
+	
+	> .divToolbarLabelGroup {
+		margin: 0 0 0 5px;
+		line-height: 21px;
+	}
+
+	.form-control-feedback {
+		@apply absolute -right-1 z-10;
+	}
+
+	.gui-sidebar-filter-additional {
+		vertical-align: top;
+		margin-left: 2px;
+	}
+	
+}
+
+.gui-sidebar-query {
+	.alert-info {
+		margin-top: 10px;
+		padding: 10px;
+	}
+}
+
+.gui-sidebar-filter {
+	// Inline-Filter (z.B. Klassenliste)
+	@at-root .gui-filter-bar .gui-sidebar-filter {
+		display: flex;
+		align-items: baseline;
+		margin-left: 5px;
+		flex-wrap: nowrap;
+
+		select {
+			margin-top: 0; // gui2.css reset
+		}
+
+		.gui-sidebar-filter-additional {
+			display: inline-block;
+		}
+	}
+
+	@at-root .gui-sidebar .gui-sidebar-filter {
+		.gui-sidebar-filter-additional {
+			margin-top: 10px;
+		}
+	}
+}

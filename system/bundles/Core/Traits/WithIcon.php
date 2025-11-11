@@ -1,0 +1,19 @@
+<?php
+
+namespace Core\Traits;
+
+trait WithIcon
+{
+	private ?string $icon = null;
+
+	public function icon(string $icon): static
+	{
+		$this->icon = $icon;
+		return $this;
+	}
+
+	public function getIcon(): ?string
+	{
+		return $this->icon;
+	}
+}

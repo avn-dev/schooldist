@@ -1,0 +1,1 @@
+ALTER TABLE `ts_accommodations_payments_groupings` ADD `number` VARCHAR(50) NULL DEFAULT NULL AFTER `amount_school_currency_id`, ADD `numberrange_id` INT UNSIGNED NULL DEFAULT NULL AFTER `number`;

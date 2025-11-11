@@ -1,0 +1,229 @@
+<?
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+//strtotimestamp
+switch(TRUE)
+{
+	case ($_VARS['task'] == 'activateEntry');
+		if(1 || hasRight("publish_glossary"))
+		{	
+			if ($_VARS['idActivate'] != '' and $_VARS['idActivate'] < 0)
+			{
+				db_query($db_data['module'],"UPDATE glossary SET active = '0' WHERE id = '".abs($_VARS['idActivate'])."'");
+			}
+			elseif ($_VARS['idActivate'] != '' and $_VARS['idActivate'] > 0)
+			{
+				db_query($db_data['module'],"UPDATE glossary SET active = '1' WHERE id = '".$_VARS['idActivate']."'");
+			}
+		}
+	break;
+	
+	case ($_VARS['Entry'] == '0');
+		$sAddEntry  = "INSERT INTO glossary (word, description, keywords, active)";
+		$sAddEntry .= "VALUES ('".$_VARS['word']."','".$_VARS['description']."','".$_VARS['keywords']."','0')";
+		db_query($db_data['module'], $sAddEntry);
+	break;
+	
+	case ($_VARS['Entry'] != '');
+		db_query($db_data['module'],"UPDATE glossary SET word = '".$_VARS['word']."', description = '".$_VARS['description']."', keywords = '".$_VARS['keywords']."' WHERE id = '".$_VARS['Entry']."'");
+	break;
+
+		
+	case ($_VARS['idEntry'] != '' and $_VARS['task'] == 'deleteEntry');
+		if(1 || hasRight("publish_glossary"))
+		{
+			db_query($db_data['module'],"DELETE FROM glossary WHERE id = '".$_VARS['idEntry']."'");
+		}
+	break;
+}
+
+
+if($_VARS['action'] == "config") {
+	foreach((array)$_VARS['glossary'] as $key=>$val) {
+		db_query($db_data['module'],"REPLACE system_config SET c_value = '".\DB::escapeQueryString($val)."', c_key = 'glossary_".\DB::escapeQueryString($key)."'");
+	}
+}
+
+
+$strSql = "
+			SELECT
+				*
+			FROM
+				system_config
+			WHERE 
+				c_key LIKE 'glossary_%'
+			";
+$arrData = DB::getQueryData($strSql);
+foreach($arrData as $arrItem) {
+	$arrConfig[$arrItem['c_key']] = $arrItem['c_value'];
+}
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Glossar</h1>
+			
+			<form method="post" action="glossary.html">
+			<input class="txt" type="hidden" name="action" value="config" />
+
+			<?=printTableStart()?>
+			<?=printFormSelect("Automatisch Glossarverkn&uuml;pfung", "glossary[function]", array("0"=>"Aus","1"=>"Ein"), $arrConfig['glossary_function'])?>
+			<?=printFormText(  "HTML-Glossarersatz (<#word#> als Tag f&uuml;r das Wort)","glossary[replace]", $arrConfig['glossary_replace'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Änderungen speichern")?>
+			</form>
+			
+<?
+
+if($_VARS['task'] == "editEntry") {
+
+	if($_VARS['idEntry'] > 0) {
+		$aEntry = get_data(db_query($db_data['module'],"SELECT * FROM glossary WHERE id = '".$_VARS['idEntry']."'"));
+	}
+
+?>
+
+		<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="Entry" value="<? if ($_VARS['idEntry'] != '') { echo $_VARS['idEntry']; } else { echo '0'; }?>" />
+		<?=printTableStart()?>
+			<?=printFormText("Wort","word",$aEntry['word'])?>
+			<?=printFormTextarea("Beschreibung","description",$aEntry['description'],5)?>
+			<?=printFormTextarea("Stichwörter","keywords",$aEntry['keywords'],3)?>
+		<?=printTableEnd()?>
+		<?=printSubmit("Eintrag speichern")?>
+		</form>
+
+<?
+
+} 
+elseif($_VARS['task'] == "new_index" AND hasRight("publish_glossary"))		
+{
+	ignore_user_abort();
+	set_time_limit(0);
+	
+	// Lade alle veröffentlichten Seiten im System & bearbeite den Content
+	$sSQL="SELECT c.id, c.content FROM `cms_content` c LEFT JOIN `cms_pages` p ON c.page_id = p.id WHERE (p.locked=0 OR p.locked IS NULL) AND c.uptodate=1 AND c.active=1";
+	$rResult=db_query($sSQL);
+	
+	while($my = get_data($rResult))
+	{
+			//$my['content'] = glossary($my['content']);
+			$sUpdateSQL="UPDATE cms_content SET public = '".\DB::escapeQueryString($my['content'])."' WHERE id = '".$my['id']."'";
+			db_query($db_data['system'],$sUpdateSQL);
+			
+			$res_block = db_query($db_data['system'],"SELECT * FROM cms_blockdata WHERE content_id = '".$my['id']."'");
+			
+			while($my_block = get_data($res_block)) 
+			{
+				if($page_data['emailcoding'] == 1) $my_block['content'] = encodeHtmlEmail($my_block['content']);
+				//$my_block['content'] = glossary($my_block['content']);
+				db_query($db_data['system'],"UPDATE cms_blockdata SET public = '".\DB::escapeQueryString($my_block['content'])."' WHERE id = '".$my_block['id']."'");
+			}
+	}	
+	//enterlog(0,"alle aktiven Seiteninhalte wegen Glossar neu indiziert!");
+}
+
+
+
+
+
+
+
+
+
+
+if($_VARS['task'] != "editEntry") {
+
+
+?>
+
+	<table cellpadding="4" cellspacing="0" width="100%" border="0" class="table">		
+		<tr>
+			<th>Wort</th>
+			<th>Beschreibung</th>
+			<th>Stichwörter</th>
+			<th>Erstellungsdatum</th>
+<?
+		if(1 || hasRight("publish_glossary"))
+		{
+?>			
+			<th width="5%">Aktiv</th>
+<?
+		}
+?>
+			<th width="15%">Aktionen</th>
+		</tr>
+		
+		<?
+		$rEntries = db_query($db_data['module'],"SELECT *,UNIX_TIMESTAMP(created) created FROM glossary ORDER BY word");
+		while($aEntries = get_data($rEntries))
+		{
+		?>
+
+		<tr id="tr_<?=$aEntries['id']?>" onmouseout="showRow(<?=$aEntries['id']?>,0)" onmousemove="showRow(<?=$aEntries['id']?>,1);">
+			<td><?=$aEntries['word']?></td>
+			<td><?=substr(substr($aEntries['description'],0,90), 0, strlen(strrchr(substr($aEntries['description'],0,90),' '))*(-1))."..."?></td>
+			<td><?=$aEntries['keywords']?>&nbsp;</td>
+			<td><?=strftime("%x", $aEntries['created'])?></td>
+<?
+			if(1 || hasRight("publish_glossary"))
+			{
+?>	
+				<td align="center">
+<?
+				
+
+				if($aEntries['active']) {
+				?>
+				<a href="<?=$_SERVER['PHP_SELF']?>?task=activateEntry&idActivate=-<?=$aEntries['id']?>"><img src="/admin/media/sitemap_active.gif" border="0"></a>
+				<?
+				} else {
+				?>
+				<a href="<?=$_SERVER['PHP_SELF']?>?task=activateEntry&idActivate=<?=$aEntries['id']?>"><img src="/admin/media/sitemap_inactive.gif" border="0"></a>
+				<?
+				}
+				?>
+			</td>
+				<?
+			}
+				?>			
+			<td align="center"><a href="<?=$_SERVER['PHP_SELF']?>?task=editEntry&idEntry=<?=$aEntries['id']?>"><img src="/admin/media/edit.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=deleteEntry&idEntry=<?=$aEntries['id']?>"><img src="/admin/media/delete.png" border="0"></a></td>
+		</tr>
+		<?
+		}
+		?>
+		</table>
+		
+		<form name="editform" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="editEntry">
+		
+		<p align="right">
+<?
+		if(1 || hasRight("publish_glossary"))
+		{
+			?>
+			<button class="btn" name="new_index" OnClick='if(confirm(unescape("Eine Indizierung kann unter Umst%E4nden mehrere Minuten in Anspruch nehmen!%0ADabei werden alle ver%F6ffentlichten Seiten indiziert, alle nichtver%F6ffentlichten Seiten werden bei der Ver%F6ffentlichung automatisch indiziert."))){document.editform.task.value="new_index";document.editform.submit();}'>Neu Indizieren</button>
+			&nbsp;&nbsp;&nbsp;
+			<?
+		}
+?>
+			<input class="btn" type="submit" name="submitter" value="Eintrag hinzuf&uuml;gen">
+		</p>
+		</form>
+<?
+}
+
+?>
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

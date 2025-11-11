@@ -1,0 +1,1 @@
+ALTER TABLE `form_options` ADD `file` VARCHAR(255) NULL DEFAULT NULL AFTER `class`;

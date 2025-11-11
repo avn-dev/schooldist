@@ -1,0 +1,69 @@
+.divToolbarPdfTable {
+    background: none;
+    border: none;
+    margin: 10px 0;
+    width: 100%;
+	float: none;
+}
+
+.divToolbarPdfTable .divToolbarPdfTableLanguage {
+    float: left;
+    margin: 3px 0 0;
+}
+
+.divToolbarPdfTable .guiBarElement {
+	float: right;
+}
+
+.pdfTable {
+    border: 1px solid #B2B2B2;
+	width: 100%;
+    border-collapse: collapse;
+}
+
+/* Match each second TD after layer of first TH and TH */
+.pdfTable tr:nth-child(2n+3) td, .pdfTable tr th {
+    background-color: #FCC;
+}
+
+.pdfTable tr:nth-child(n+3) td.firstCol, .pdfTable th {
+    color: #965051;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.pdfTable td, .pdfTable th {
+	border: 1px solid #CCC;
+	padding: 5px;
+}
+
+/* Match first two TDs in position table */
+.pdfTable tr:nth-child(-n+2) td {
+    font-size: 0.9em;
+}
+
+.pdfTable td img, .pdfTable th img {
+	cursor: pointer;
+	margin: 2px;
+}
+
+.pdfTable .left {
+	float: left;
+}
+
+.pdfTable .right {
+	float: right;
+}
+
+.pdfTable .firstCol {
+	width: 100px;
+}
+
+.pdfTable .widthCols {
+	text-align: center;
+}
+
+.pdfTable .widthCols input {
+	width: 50px;
+	text-align: center;
+}

@@ -1,0 +1,67 @@
+hash: fc338df240160b41c3b5b0b6b8e4e929
+class:
+  wdbasic: Ext_Thebing_Contract_Template
+  data: Ext_Thebing_Contract_Template_Gui2
+access: thebing_admin_contract_templates
+orderby:
+  - Ext_Thebing_Contract_Template_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Contract_Template_Gui2
+  - getWhere
+limit: 30
+limit_selection: false
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - id
+          - name
+          - number
+        id: search
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Contract_Template_Gui2
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Contract_Template_Gui2
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Bezeichnung
+    column: name
+    alias: kcontt
+    width: name
+    resize: true
+  -
+    title: Nummer
+    column: number
+    width: 250
+    resize: false
+  -
+    title: Art
+    column: type
+    alias: kcontt
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Contract_Type
+  -
+    title: Verwendung
+    column: usage
+    alias: kcontt
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Contract_Usage

@@ -1,0 +1,214 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("office_config");
+
+Admin_Html::loadAdminHeader();
+
+/* ==================================================================================================== */
+
+$iYear = date('Y');
+if(isset($_VARS['year']))
+{
+	$iYear = $_VARS['year'];
+}
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['action']) && ($_VARS['action'] == 'edit' || $_VARS['action'] == 'new'))
+{
+	$oHoliday = new Ext_Office_Timeclock('office_timeclock_holidays', $_VARS['holiday_id']);
+}
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'save')
+{
+	$oHoliday = new Ext_Office_Timeclock('office_timeclock_holidays', $_VARS['holiday_id']);
+
+	$iDate = mktime(0,0,0, $_VARS['date']['month'], $_VARS['date']['day'], $_VARS['date']['year']);
+
+	$oHoliday->title 	= $_VARS['title'];
+	$oHoliday->notice 	= $_VARS['notice'];
+	$oHoliday->date 	= $iDate;
+	$oHoliday->active 	= 0;
+	$oHoliday->repeat	= 0;
+
+	if(isset($_VARS['active']))
+	{
+		$oHoliday->active 	= 1;
+	}
+	if(isset($_VARS['repeat']))
+	{
+		$oHoliday->repeat 	= 1;
+	}
+	$oHoliday->save();
+
+	unset($_VARS['action'], $_VARS['holiday_id']);
+}
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'delete')
+{
+	$oHoliday = new Ext_Office_Timeclock('office_timeclock_holidays', $_VARS['holiday_id']);
+	$oHoliday->remove(true);
+
+	unset($_VARS['action'], $_VARS['holiday_id']);
+}
+
+/* ==================================================================================================== */
+
+$oTimeclock		= new Ext_Office_Timeclock('office_timeclock_holidays');
+$aHolidays		= $oTimeclock->getHolidaysList($iYear);
+$aHolidayYears	= $oTimeclock->getHolidayYears();
+
+/* ==================================================================================================== */
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Feiertage', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+		<tr>
+			<td valign="top">
+
+<? if(isset($_VARS['action']) && ($_VARS['action'] == 'edit' || $_VARS['action'] == 'new')) { ?>
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>?action=save">
+		<input type="hidden" name="holiday_id" value="<?=$_VARS['holiday_id']?>" />
+		<input type="hidden" name="year" value="<?=$iYear?>" />
+		<? if($oHoliday->date == null) { ?>
+			<input type="hidden" name="date[year]" value="<?=$iYear?>" />
+		<? } else { ?>
+			<input type="hidden" name="date[year]" value="<?=date('Y', $oHoliday->date)?>" />
+		<? } ?>
+		<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+			<tr>
+				<th style="width: 20%;">Name</th>
+				<td>
+					<input type="text" name="title" class="txt" value="<?=$oHoliday->title?>" />
+				</td>
+			</tr>
+			<tr>
+				<th>Beschreibung</th>
+				<td>
+					<textarea name="notice" class="txt"><?=$oHoliday->notice?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<th>Datum</th>
+				<td>
+					<input type="text" name="date[day]" class="txt" value="<?=date('d',$oHoliday->date)?>" />
+					/
+					<input type="text" name="date[month]" class="txt" value="<?=date('m',$oHoliday->date)?>" />
+					(TT / MM)
+				</td>
+			</tr>
+			<tr>
+				<th>Jedes Jahr wiederholen</th>
+				<td>
+					<input type="checkbox" name="repeat" class="txt" value="1" <? if($oHoliday->repeat == 1) { ?>checked="checked"<? } ?> />
+				</td>
+			</tr>
+			<tr>
+				<th>Aktiv</th>
+				<td>
+					<input type="checkbox" name="active" class="txt" value="1" <? if($oHoliday->active == 1) { ?>checked="checked"<? } ?> />
+				</td>
+			</tr>
+			<tr>
+				<th>Erstellungsdatum</th>
+				<td>
+					<? if($oHoliday->created == null) { ?>
+						neuer Eintrag
+					<? } else { ?>
+						<?=date('d.m.Y',$oHoliday->created)?>
+					<? } ?>
+				</td>
+			</tr>
+		</table>
+			<div style="float:left;">
+				<input type="button" class="btn" value="zurück" onclick="javascript:history.back()" />
+			</div>
+			<div style="float:right;">
+				<input type="submit" class="btn" value="Speichern" />
+			</div>
+	</form>
+<? } ?>
+<? if(!isset($_VARS['holiday_id']) && !isset($_VARS['action'])) { ?>
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+			<tr>
+				<th colspan="4">
+					Jahr auswählen:&nbsp;
+					<select name="year" onchange="this.form.submit()">
+						<? foreach((array)$aHolidayYears as $iKey => $iValue) { ?>
+							<option value="<?=$iKey?>" <? if($iKey == $iYear) { ?>selected="selected"<? } ?>><?=$iValue?></option>
+						<? } ?>
+					</select>
+				</th>
+			</tr>
+		</table>
+		<br />
+		<br />
+		<div style="float:right;">
+			<input type="submit" value="Neuen Eintrag hinzufügen" class="btn" onclick="newEntry(); return false;" style="margin-bottom:5px;"/>
+		</div>
+		<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+			<? if(count($aHolidays) > 0) { ?>
+				<tr>
+					<th style="width:20%;">Datum</th>
+					<th style="width:30%;">Titel</th>
+					<th style="width:40%;">Notiz</th>
+					<th style="width:10%;">&nbsp;</th>
+				</tr>
+				<? foreach((array)$aHolidays as $iKey => $aValue) { 
+					if(empty($aValue['notice']))
+					{
+						$aValue['notice'] = '&nbsp;';
+					}
+				?>
+					
+					<tr>
+						<td>
+							<?=date('d.m', $aValue['date'])?>.<?=$iYear?>
+							<? if($aValue['repeat'] == 1) { ?>*<? } ?>
+						</td>
+						<td><?=$aValue['title']?></td>
+						<td><?=$aValue['notice']?></td>
+						<td style="text-align:center;">
+							<a href="?action=edit&amp;holiday_id=<?=$aValue['id']?>">
+								<img src="/admin/media/edit.png" border="0" alt="Bearbeiten"/>
+							&nbsp;
+							<a href="?action=delete&amp;holiday_id=<?=$aValue['id']?>">
+								<img src="/admin/media/delete.png" border="0" alt="löschen"/></a>
+						</td>
+					</tr>
+				<? } ?>
+			<? } else { ?>
+				<tr>
+					<td>Keine Einträge vorhanden</td>
+				</tr>
+			<? } ?>
+		</table>
+		<div style="float:right">
+			<input type="submit" value="Neuen Eintrag hinzufügen" class="btn" onclick="newEntry(); return false;"/>
+		</div>
+		* Jährlich
+	</form>
+<? } ?>
+		</td>
+	</tr>
+</table>
+<script type="text/javascript">
+
+	function newEntry()
+	{
+		self.location.href='<?=$_SERVER["PHP_SELF"]?>?action=new&year=<?=$iYear?>';
+	}
+
+</script>
+<?=Admin_Html::loadAdminFooter()?>

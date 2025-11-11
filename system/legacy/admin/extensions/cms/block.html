@@ -1,0 +1,177 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("block_admin");
+
+// Instantiate a CodeEditor\Editor Object
+$oCodeEditor = new Codemirror\Service\EditorService();
+
+// Editor must be configurated before including the resources - css/js -, because of the dependency between a configuration and a resource
+$oCodeEditor->mode("text/html", true);
+$oCodeEditor->enableFullscreen();
+$oCodeEditor->lineNumbers(true);
+$oCodeEditor->tabSize(4);
+
+$sAdditional = $oCodeEditor->getResources();
+Admin_Html::loadAdminHeader($sAdditional);
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?> &raquo; <?=L10N::t('Blockverwaltung')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+<?
+
+if(
+	$_VARS['task'] == "new" ||
+	$_VARS['task'] == "edit"
+) {
+	$my_block = DB::getQueryRow("SELECT * FROM cms_blocks WHERE id = ".(int)$_VARS['b_id']."");
+?>
+			<form name="formular" method="POST" action="block.html">
+			<input type="hidden" name="task" value="save">
+			<input type="hidden" name="b_id" value="<?=$_VARS['b_id']?>">
+			<?=printTableStart()?>
+			<?=printFormText(L10N::t('Blocktitel', 'CMS')."","title",$my_block['title'],"",1, 4)?>
+<?
+	if($_VARS['task'] == "new") {
+?>
+			<?=printFormText(L10N::t('Blockname', 'CMS')."","block",$my_block['block'],'',1,5) ?>
+<?
+	} else {
+?>
+			<tr>
+				<th><?=L10N::t('Blockname', 'CMS')?></th>
+				<td><?=$my_block['block']?></td>
+			</tr>
+<?
+	}
+?>
+			<?=printFormTextarea(L10N::t('Beschreibung', 'CMS')."","description",($my_block['description']),3)?>
+			<?
+			$arrModules = array();
+			$arrModules[''] = L10N::t('Keine Erweiterung', 'CMS');
+			$res_modules = DB::getQueryRows("SELECT * FROM system_elements WHERE (element = 'modul') AND active = 1 ORDER BY category,title");
+			foreach($res_modules as $my_modules) {
+				$arrModules[$my_modules['file']] = ($my_modules['category'])?$my_modules['category']." &raquo; ".$my_modules['title']:$my_modules['title'];
+			}
+			?>
+			<?=printFormSelect(L10N::t('Erweiterung', 'CMS'),"file", $arrModules, $my_block['file'],"",1, 6)?>
+			<?=printFormCheckbox(L10N::t('Inpage-Bearbeitung', 'CMS'), 'inpage_editable', 1, $my_block['inpage_editable'])?>
+			<?=printFormTextarea(L10N::t('Quelltext', 'CMS'), "content", ($my_block['content']), 10, 'id="codemirror_editor"', 1, 7)?>
+			<?=printTableEnd()?>
+			<?=printSubmit(L10N::t('Änderungen speichern', 'CMS')."")?>
+			</form>
+
+			<div class="panel box box-primary">
+				<div class="box-header with-border">
+				  <h4 class="box-title">
+					<a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+					  <?=L10N::t('Verfügbare Platzhalter', 'CMS')?>
+					</a>
+				  </h4>
+				</div>
+				<div id="collapseOne" class="panel-collapse collapse">
+				  <div class="box-body">
+					<?=L10N::t('Ein Platzhalter besteht aus mindestens vier Teilen die durch ein ":" separiert sind und durch ein "#" geöffnet und wieder geschlossen werden. Der erste Teil ist immer gleich und steht für einen Platzhalter in den Blöcken. Der zweite Teil beschreibt den Typ des Platzhalters. Der dritte Teil ist eine innerhalb des Blocks fortlaufende, eindeutige Nummer. Der fünfte Teil ist eine freie Beschreibung des Platzhalters.
+<br />
+Innerhalb eines Blockes können beliebig viele Platzhalter verwendet werden.
+<br />
+<br />
+<strong>Beispiel:</strong><br />
+#block:html:3:Formatierbarer Text#<br />
+<br />
+<strong>Typen:</strong><br />
+html: Per WYSIWYG Editor editierbarer Text<br />
+text: Einfacher Text, Umbrüche werden in HTML Umbrüche umgewandelt<br />
+script: Einfacher Text (Für HTML, JavaScript, etc.)<br />
+image: Bildauswahl über die Medienverwaltung<br />
+link: Interner oder externer Link<br />
+page: Pfad einer internen Seite über Drop-Down-Auswahl<br />
+imgbuilder: Generiertes Bild<br />
+table: Tabelle<br />
+content: Weiterer Inhaltsbereich<br />', 'CMS')?>
+				  </div>
+				</div>
+			  </div>
+			
+			
+			<p align="right">
+				<button class="btn" onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>';"><?=L10N::t('Zurück', 'CMS')?></button>
+			</p>
+<?php
+
+echo '<script>';
+echo $oCodeEditor->getJavaScriptCode('codemirror_editor');
+echo '</script>';
+
+} elseif($_VARS['task'] == "save") {
+
+	$aSql = [
+		'inpage_editable' => $_VARS['inpage_editable'],
+		'content' => $_VARS['content']
+	];
+	
+	if($_VARS['b_id'] > 0) {
+		$strSql = "UPDATE cms_blocks SET title = '".\DB::escapeQueryString($_VARS['title'])."', description = '".\DB::escapeQueryString($_VARS['description'])."', `inpage_editable` = :inpage_editable, file = '".\DB::escapeQueryString($_VARS['file'])."', content = :content WHERE id = '".$_VARS['b_id']."'";
+		DB::executePreparedQuery($strSql, $aSql);
+		Log::enterLog(0,"Block '".$_VARS['title']."' wurde geändert.");
+	} else {
+		$_VARS['block'] = \Util::getCleanFileName($_VARS['block']);
+		$strSql = "INSERT INTO cms_blocks SET title = '".\DB::escapeQueryString($_VARS['title'])."', description = '".\DB::escapeQueryString($_VARS['description'])."', `inpage_editable` = :inpage_editable, block = '".\DB::escapeQueryString($_VARS['block'])."', file = '".\DB::escapeQueryString($_VARS['file'])."', content = :content, active = 1";
+		DB::executePreparedQuery($strSql, $aSql);
+		$_VARS['b_id'] = DB::fetchInsertID();
+		Log::enterLog(0,"Block '".$_VARS['title']."' wurde erstellt.");
+	}
+
+?>
+			<h2><?=L10N::t('Der Block wurde erfolgreich gespeichert', 'CMS')?>.</h2>
+			<p><button onclick="go('block.html');" class="btn"><?=L10N::t('Zurück zur Übersicht', 'CMS')?></button>&nbsp;<button onclick="go('block.html?task=edit&b_id=<?=$_VARS['b_id']?>');" class="btn"><?=L10N::t('Zurück zum Element', 'CMS')?></button></p>
+<?
+} elseif($_VARS['task'] == "delete") {
+	$my_block = DB::getQueryRow($db_data['system'],"SELECT * FROM cms_blocks WHERE id = '".$_VARS['b_id']."'");
+	postdeletion("cms_blocks",$_VARS['b_id'],$my_block['title']);
+	enterlog(0,"Block '".$my_block['title']."' wurde gelöscht.");
+?>
+			<h2><?=L10N::t('Der Block wurde erfolgreich gelöscht', 'CMS')?></h2>
+			<p><button onclick="go('block.html');" class="btn"><?=L10N::t('Zurück zur Übersicht', 'CMS')?></button>&nbsp;<button onclick="go('block.html?task=edit&b_id=<?=$_VARS['b_id']?>');" class="btn"><?=L10N::t('Zurück zum Element', 'CMS')?></button></p>
+<?
+} else {
+?>
+			<table class="table table-hover table-striped">
+				<thead>
+				<tr>
+					<th width="30%"><?=L10N::t('Blockname', 'CMS')?></th>
+					<th width="60%"><?=L10N::t('Beschreibung', 'CMS')?></th>
+					<th width="10%"><?=L10N::t('Aktionen', 'CMS')?></th>
+				</tr>
+				</thead>
+				<tbody>
+				<?
+				$res_block = (array)DB::getQueryRows("SELECT * FROM cms_blocks WHERE active = 1 ORDER BY title");
+				foreach($res_block as $my_block) {
+				?>
+				<tr id="tr_<?=$my_block['id']?>">
+				<?
+					echo "<td>".$my_block['title']."</td><td>".$my_block['description']."&nbsp;</td><td align=\"center\"><a href=\"block.html?task=edit&b_id=".$my_block['id']."\"><img src=\"/admin/media/edit.png\" alt=\"".L10N::t('Block editieren', 'CMS')."\" border=\"\"></a>&nbsp;<a href=\"javascript:if(confirm('".L10N::t('Möchten Sie diesen Block löschen?', 'CMS')."')) document.location.href='block.html?task=delete&b_id=".$my_block['id']."';\"><img src=\"/admin/media/delete.png\" alt=\"".L10N::t('Block löschen', 'CMS')."\" border=\"\"></td></tr>";
+				}
+				?>
+					</tbody>
+			</table>
+		</div>
+		<div class="box-footer">
+			<button class="btn btn-primary pull-right" onClick="document.location.href='block.html?task=new&b_id=0';"><?=L10N::t('Neuen Block anlegen', 'CMS')?></button>
+			</div>
+<?
+}
+?>
+
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

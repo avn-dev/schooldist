@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_reports` ADD `border_style` VARCHAR(100) NOT NULL DEFAULT '1px solid #aaaaaa';

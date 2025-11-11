@@ -1,0 +1,1 @@
+ALTER TABLE `ts_booking_stacks` ADD `agency_id` INT NOT NULL;

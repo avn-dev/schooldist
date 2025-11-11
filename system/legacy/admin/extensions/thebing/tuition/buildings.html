@@ -1,0 +1,171 @@
+<?php
+
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_tuition_resources_buildings");
+
+$oGui					= new Ext_Thebing_Gui2(md5('thebing_tuition_resources_buildings'));
+
+//Daten
+$oSchool	= Ext_Thebing_School::getSchoolFromSession();
+$iSchoolId	= $oSchool->id;
+
+// WdBasic
+$oGui->setWDBasic('Ext_Thebing_Tuition_Buildings');
+$oGui->setTableData('where', array('school_id' => $iSchoolId, 'active' => 1));
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('title' => 'ASC'));
+
+// Listenoptionen
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= '';
+
+// Dialog
+$oDialog					= $oGui->createDialog(L10N::t("Gebäude \"{title}\" editieren", $oGui->gui_description), L10N::t('Neues Gebäude anlegen', $oGui->gui_description));
+$oDialog->width				= 900;
+$oDialog->height			= 650;
+
+$oDialog->save_as_new_button		= true;
+$oDialog->save_bar_options			= true;
+$oDialog->save_bar_default_option	= 'new';
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Bezeichnung'), 'input', array(
+		'db_alias'			=> '',
+		'db_column'			=> 'title',
+		'required'			=> 1,
+)));
+
+// Toggle
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+// Suche
+
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('id', 'title');
+$oFilter->db_alias			= array('', '');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+// Buttons
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+// Paginator
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+$oBar->position				= 'top';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading					= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+//Spalten
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'title';
+$oColumn->db_alias		= '';
+$oColumn->title			= $oGui->t('Bezeichnung');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+########### Liste 2 ##############
+
+$oGui2					= new Ext_Thebing_Gui2(md5('thebing_tuition_resources_floors'));
+$oGui2->gui_description	= 'Thebing » Tuition » Resources » Floors';
+
+// WdBasic
+$oGui2->setWDBasic('Ext_Thebing_Tuition_Floors');
+$oGui2->setTableData('where', array('ksf.active' => 1));
+$oGui2->setTableData('limit', 30);
+$oGui2->setTableData('orderby', array('ksf.title' => 'ASC'));
+
+// Listenoptionen
+$oGui2->gui_title			= $oGui->t('Etagen');
+$oGui2->column_sortable		= 1;
+$oGui2->row_sortable		= 0;
+$oGui2->multiple_selection	= 0;
+$oGui2->query_id_column		= 'id';
+$oGui2->query_id_alias		= 'ksf';
+
+// Dialog
+$oDialog2					= $oGui2->createDialog($oGui->t("Etage \"{title}\" editieren"), $oGui->t('Neue Etage anlegen'));
+$oDialog2->width			= 900;
+$oDialog2->height			= 650;
+
+$oDialog2->save_as_new_button		= true;
+$oDialog2->save_bar_options			= true;
+$oDialog2->save_bar_default_option	= 'new';
+
+$oDialog2->setElement($oDialog2->createRow($oGui->t('Bezeichnung'), 'input', array(
+	'db_alias'			=> 'ksf',
+	'db_column'			=> 'title',
+	'required'			=> 1,
+)));
+
+// Toggle
+$oBar						= $oGui2->createBar();
+$oBar->width				= '100%';
+
+// Suche
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('id', 'title');
+$oFilter->db_alias			= array('ksf', 'ksf');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';;
+$oBar->setElement($oFilter);
+$oGui2->setBar($oBar);
+
+// Buttons
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog2, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog2, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui2->setBar($oBar);
+
+// Paginator
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+$oBar->position				= 'top';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading					= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui2->setBar($oBar);
+
+//Spalten
+$oColumn				= $oGui2->createColumn();
+$oColumn->db_column		= 'title';
+$oColumn->db_alias		= 'ksf';
+$oColumn->title			= $oGui->t('Bezeichnung');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui2->setColumn($oColumn);
+
+$oGui2->addDefaultColumns();
+
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGui2,		array('hash' => $oGui->hash, 'foreign_key' => 'building_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display();

@@ -1,0 +1,98 @@
+class:
+  wdbasic: \TsAccounting\Entity\Company\TemplateReceiptText
+  gui: Ext_Thebing_Gui2
+  data: \TsAccounting\Gui2\Data\CompanyTemplateReceiptText
+  date_format: Ext_Thebing_Gui2_Format_Date
+  js: ReceiptText
+description: Thebing » Admin » Firmeneinstellungen » Vorlageneinstellungen für Belegtexte
+access: thebing_company_template_receipttext
+id:
+  column: id
+  alias: ts_ctrt
+title: 
+  - Ext_TS_System_Navigation
+  - t
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          alias:
+            - ts_ctrt
+          column: 
+            - name
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \TsAccounting\Gui2\Data\CompanyTemplateReceiptText
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \TsAccounting\Gui2\Data\CompanyTemplateReceiptText
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    title: Firmen
+    column: company_names
+    width: long_description
+    resize: false
+  -
+    title: Schule
+    column: school_names
+    width: long_description
+    resize: false
+  -
+    title: Inbox
+    column: inbox_names
+    width: long_description
+    resize: false
+
+default_columns:
+  -
+    title: Ersteller
+    column: creator_id
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    sortable: true
+  -
+    title: Erstellt
+    alias: ts_ctrt
+    column: created
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+  -
+    title: Bearbeiter
+    alias: ts_ctrt
+    column: editor_id
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    sortable: true
+  -
+    title: Verändert
+    alias: ts_ctrt
+    column: changed
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+ 
+js:
+  - [company/template/js/receipttext/gui2.js, ts]

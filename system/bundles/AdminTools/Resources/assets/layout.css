@@ -1,0 +1,60 @@
+/*.main-header .logo,*/
+.navbar-brand {
+	font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+.navbar-collapse.pull-right.in {
+	float: none!important;
+}
+
+.content-wrapper {
+	padding-top: 0;
+}
+
+.content-header,
+.content {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.overview-buttons .info-box {
+	display: flex;
+	align-items: center;
+}
+
+.info-box-content {
+	margin: 0;
+}
+
+.overview-buttons button {
+	margin: 0 0 0 10px;
+	width: 90px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.overview-buttons button i {
+	margin-bottom: 5px;
+}
+
+.overview-actions .form-group {
+	margin-bottom: 5px;
+}
+
+.log-viewer table {
+	table-layout: fixed;
+}
+
+.log-viewer .context-actions {
+	text-align: center;
+}
+
+.log-viewer .context-row div {
+	font-family: Menlo, Monaco, Consolas, "Courier New", monospace; /* BS3 hat keine Text-Klasse dafür */
+	/*overflow: auto;*/
+	word-wrap: break-word;
+}
+
+.log-viewer .context-row div.pre {
+	white-space: pre;
+}

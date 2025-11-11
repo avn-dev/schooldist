@@ -1,0 +1,16 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oPage = new Ext_Gui2_Page();
+
+$oGenerator = new Ext_Gui2_Factory('tc_marketing_questionnaires');
+$oGui = $oGenerator->createGui();
+
+$oGeneratorQuestions = new Ext_Gui2_Factory('tc_marketing_questionnaires_questions');
+$oGuiQuestions = $oGeneratorQuestions->createGui();
+
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiQuestions, array('hash' => $oGui->hash, 'foreign_key' => 'questionnaire_id',  'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display();

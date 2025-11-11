@@ -1,0 +1,203 @@
+<?php
+
+/**
+ * 
+ */
+include_once(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('office_employees');
+
+/* ==================================================================================================== */
+
+$aOptions = array();
+$aOptions['additional']  = '<script type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+if(!isset($_VARS['task']) || $_VARS['task'] = false) {
+	$aOptions['body'] = ' scroll="no"';
+}
+$aOptions['xhtml'] = false;
+Admin_Html::loadAdminHeader($aOptions);
+
+/* ==================================================================================================== */
+
+$oEmployee = new Ext_Office_Employee();
+
+/* ==================================================================================================== */
+ 
+// Set filter function and input style
+$aConfig['onKeyUp']	= 'prepareLoadEmployeesList(this);';
+$aConfig['css'] 	= "txt";
+$aConfig['style']	= 'width: 150px;';
+$aConfig['name']	= 'employee_search';
+$aConfig['id'] 		= 'employee_search';
+$aConfig['value']	= $_SESSION['employee_search'];
+$objSelect			= new GUI_FormText($aConfig);
+$sProjectSearch		= $objSelect->generateHTML();
+
+unset($aConfig['style']);
+
+$aSigns = $oEmployee->getNameSigns();
+if(!isset($_SESSION['employee_sign']))
+{
+	$_SESSION['employee_sign'] = $aSigns[0];
+}
+$aConfig['onChange']	= 'prepareLoadEmployeesList(this);';
+$aConfig['css'] 	    = "txt";
+$aConfig['name']		= 'employee_sign';
+$aConfig['id'] 			= 'employee_sign';
+$aConfig['options']		= (array)$aSigns;
+$aConfig['selected']	= $_SESSION['employee_sign'];
+$oSelect				= new GUI_FormSelect($aConfig);
+$sSigns					= $oSelect->generateHTML();
+
+$aLimits = array(
+	50		=> 50,
+	100		=> 100,
+	500		=> 500,
+	1000	=> 1000
+);
+if(!isset($_SESSION['employee_limit']))
+{
+	$_SESSION['employee_limit'] = 100;
+}
+$aConfig['onChange']	= 'prepareLoadEmployeesList(this);';
+$aConfig['css'] 	    = "txt";
+$aConfig['name']		= 'employee_limit';
+$aConfig['id'] 			= 'employee_limit';
+$aConfig['options']		= (array)$aLimits;
+$aConfig['selected']	= $_SESSION['employee_limit'];
+$oSelect				= new GUI_FormSelect($aConfig);
+$sLimit					= $oSelect->generateHTML();
+
+$aTmpGroups = $oEmployee->getGroups();
+$aGroups= array('' => 'Alle');
+foreach((array)$aTmpGroups as $aValue) {
+	$aGroups[$aValue['id']] = $aValue['name'];
+}
+
+if(!isset($_SESSION['employee_group'])) {
+	foreach((array)$aGroups as $iKey => $sValue) {
+		$_SESSION['employee_group'] = $iKey;
+		break;
+	}
+}
+
+$aConfig['onChange']	= 'prepareLoadEmployeesList(this);';
+$aConfig['css'] 	    = "txt";
+$aConfig['name']		= 'employee_group';
+$aConfig['id'] 			= 'employee_group';
+$aConfig['options']		= (array)$aGroups;
+$aConfig['selected']	= $_SESSION['employee_group'];
+$oSelect				= new GUI_FormSelect($aConfig);
+$sGroups				= $oSelect->generateHTML();
+
+/* ==================================================================================================== */
+
+$sAddons = '';
+\System::wd()->executeHook('display_employee_rate_icon', $sAddons);
+
+/* ==================================================================================================== */
+
+?>
+
+<script type="text/javascript" src="/admin/extensions/office/js/employee.js"></script>
+<script type="text/javascript" src="/admin/extensions/office/uploader/AC_OETags.js"></script>
+
+<div class="divHeader" style="height:92px;">
+	<h1>Mitarbeiter</h1>
+
+	<div class="divToolbar">
+		<div class="divToolbarLabel">Filter:</div>
+		<div class="divToolbarFormItem">
+			Gruppe <?=$sGroups?>
+		</div>
+		<div class="divToolbarFormItem">
+			Name (Anfangsbuchstabe) <?=$sSigns?>
+		</div>
+		<div class="divToolbarFormItem">
+			Limit <?=$sLimit?>
+		</div>
+		<div class="divToolbarFormItem">
+			Suche <?=$sProjectSearch?>
+		</div>
+		<div class="divToolbarIcon">
+			<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+		</div>
+		<div class="divToolbarIcon">
+			<img src="/admin/media/spacer.gif" style="height:16px; width:1px;" alt="" />
+		</div>
+		<div class="divCleaner"></div>
+	</div>
+
+	<div class="divToolbar divTopLine">
+		<div class="divToolbarLabel">Anlegen:</div>
+		<div class="divToolbarIcon" id="toolbar_new">
+			<img src="/admin/media/page_new.gif" onclick="executeEmployeeAction(0, 'new');" alt="anlegen" title="anlegen" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Bearbeitung:</div>
+		<div class="divToolbarIcon" id="toolbar_edit">
+			<img src="/admin/media/pencil.png" onclick="executeEmployeeAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+		</div>
+		<div class="divToolbarIcon" id="toolbar_delete">
+			<img src="/admin/media/cross.png" onclick="executeEmployeeAction(0, 'delete');" alt="löschen" title="löschen" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Abwesenheit:</div>
+		<div class="divToolbarIcon" id="toolbar_holiday">
+			<img src="/admin/media/status_offline.gif" onclick="executeEmployeeAction(0, 'holiday');" alt="bearbeiten" title="bearbeiten" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Zeiterfassung:</div>
+		<div class="divToolbarIcon" id="toolbar_timeclock">
+			<img src="/admin/media/time.png" onclick="executeEmployeeAction(0, 'timeclock');" alt="ansehen" title="ansehen" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Faktoren:</div>
+		<div class="divToolbarIcon" id="toolbar_factors">
+			<img src="/admin/media/time.png" onclick="executeEmployeeAction(0, 'factors');" alt="bearbeiten" title="bearbeiten" />
+		</div>
+		<?=$sAddons?>
+		<div class="divCleaner"></div>
+	</div>
+
+	<div class="divHeaderBottomGrey"><img src="/admin/media/spacer.gif" height="7" /></div>
+	<div class="divHeaderBottomWhite"><img src="/admin/media/spacer.gif" height="5" /></div>
+</div>
+
+<table id="tableEmployees" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+	<colgroup>
+		<col style="width:50px;" />
+		<col style="width:50px;" />
+		<col />
+		<col style="width:120px;" />
+		<col style="width:150px;" />
+		<col style="width:150px;" />
+		<col />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>ID</th>
+			<th>M / W</th>
+			<th>Name</th>
+			<th>Geburtsdatum</th>
+			<th>Telefon</th>
+			<th>Mobil</th>
+			<th>E-Mail</th>
+			<th>Abteilung</th>
+		</tr>
+	</thead>
+	<tbody id="tbl_employees"></tbody>
+</table>
+
+<script type="text/javascript">
+	checkEmployeesListHeight();
+
+	Event.observe(window, 'load', ScrollableTable.load);
+	Event.observe(window, 'load', loadEmployeesList);
+	Event.observe(window, 'resize', checkEmployeesListHeight);
+
+	document.body.style.overflow = 'hidden';
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

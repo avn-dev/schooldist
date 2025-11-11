@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_statistic_statistics` ADD `inquiry_group_filter` VARCHAR(255) NOT NULL DEFAULT 'all' ;

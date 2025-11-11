@@ -1,0 +1,1 @@
+ALTER TABLE `tc_uploader` ADD `object_id` INT NOT NULL AFTER `path` 

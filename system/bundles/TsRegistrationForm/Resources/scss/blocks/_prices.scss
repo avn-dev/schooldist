@@ -1,0 +1,63 @@
+@import "../variables";
+
+div[component="block-prices"] {
+	margin-bottom: $spacer;
+
+	// list-group
+	.price-list {
+		.list-group-item {
+			display: flex;
+			justify-content: space-between;
+			padding: $spacer 0;
+
+			&:first-child {
+				padding-top: 0;
+			}
+
+			&:last-child {
+				padding-bottom: 0;
+			}
+		}
+	}
+
+	.price-list-no-lines {
+		.list-group-item {
+			border: 0;
+			padding-top: 0;
+			padding-bottom: ($spacer * 0.25);
+		}
+	}
+
+	.price-block {
+		margin-top: $spacer;
+
+		h5 {
+			font-size: $h6-font-size;
+			font-weight: bold;
+		}
+
+		.card-body {
+			padding: 1rem; // from 1.25rem
+		}
+	}
+
+	//// .price-list-no-lines.list-group-item would have higher priority without .list-group-item
+	//.list-group-item.price-list-item-total {
+	//	padding-bottom: ($spacer * 0.5);
+	//}
+
+	.price-list-item-total {
+		font-size: $h5-font-size;
+		font-weight: bold;
+	}
+
+	.price-list-item-deposit {
+		padding-top: ($spacer * 0.5) !important;
+		padding-bottom: ($spacer * 0.5) !important;
+	}
+
+	.price-description {
+		@include font-size($small-font-size);
+		color: $text-muted;
+	}
+}

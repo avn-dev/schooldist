@@ -1,0 +1,218 @@
+<?
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+Admin_Html::loadAdminHeader();
+
+//aktivieren/deaktivieren bearbeiten
+if($_VARS['discussions_active_id'] > 0) {
+	$discussions_aufgabe = db_query("UPDATE community_forum_data SET active = ".(int)$_VARS['discussions_active'].", created = created WHERE id = ".(int)$_VARS['discussions_active_id']."");
+}//if
+
+//Einträge löschen
+if($_VARS['discussions_loesch_id']){
+	//id's extrahieren
+	$_VARS['discussions_loesch_id'] = explode("|", $_VARS['discussions_loesch_id']);
+	for($i=0; $i <= count($_VARS['discussions_loesch_id']); $i++) {
+		if($_VARS['discussions_loesch_id'][$i] > 0) {
+			$discussions_aufgabe = db_query("DELETE FROM community_forum_data WHERE id = ".(int)$_VARS['discussions_loesch_id'][$i]."");
+		}//if
+	}//for
+}//if
+
+?>
+<style>
+.newfolder {
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+.select_on {
+	background-color: buttonface;
+	border-bottom: 1px solid buttonhighlight;
+	border-right: 1px solid buttonhighlight;
+	border-top: 1px solid buttonshadow;
+	border-left: 1px solid buttonshadow;
+}
+.select_off {
+	background-color: buttonface;
+	border-top: 1px solid buttonhighlight;
+	border-left: 1px solid buttonhighlight;
+	border-bottom: 1px solid buttonshadow;
+	border-right: 1px solid buttonshadow;
+}
+</style>
+<script>
+
+var folder = "<? echo $folder; ?>";
+/**
+ * Sets/unsets the pointer in browse mode
+ *
+ * @param   object   the table row
+ * @param   object   the color to use for this row
+ * @param   object   the background color
+ *
+ * @return  boolean  whether pointer is set or not
+ */
+var delete_media = new Array();
+ 
+function setPointer(theRow, thePointerColor, theNormalBgColor) {
+ 
+	for (var i=0;i<document.getElementsByTagName("tr").length;i++) {
+		var a = eval("document.getElementsByTagName('tr')["+i+"];");
+		if(a.id != "") {
+		    var theCells = null;
+		
+		    if(thePointerColor == '' || typeof(a.style) == 'undefined') {
+		        return false;
+		    }
+		    if(typeof(document.getElementsByTagName) != 'undefined') {
+		        theCells = a.getElementsByTagName('td');
+		    } else if (typeof(theRow.cells) != 'undefined') {
+		        theCells = a.cells;
+		    } else {
+		        return false;
+		    }
+		    var rowCellsCnt  = theCells.length;
+		    var currentColor = null;
+		    var newColor     = null;
+			var newTextColor = 'HIGHLIGHTTEXT';
+		    // Opera does not return valid values with "getAttribute"
+			currentColor = theCells[0].style.backgroundColor;
+	        newColor     = theNormalBgColor;
+	        newTextColor = 'INFOTEXT';
+	        delete_media[a.id] = '0';
+
+	        for (var c = 0; c < rowCellsCnt; c++) {
+				theCells[c].style.backgroundColor = newColor;
+				theCells[c].style.color = newTextColor;
+	        } // end for
+		}
+	}
+
+    var theCells = null;
+
+    if (thePointerColor == '' || typeof(theRow.style) == 'undefined') {
+        return false;
+    }
+
+	if (typeof(document.getElementsByTagName) != 'undefined') {
+        theCells = theRow.getElementsByTagName('td');
+    } else if (typeof(theRow.cells) != 'undefined') {
+        theCells = theRow.cells;
+    } else {
+        return false;
+    }
+
+    var rowCellsCnt  = theCells.length;
+    var currentColor = null;
+    var newColor     = null;
+	var newTextColor = 'HIGHLIGHTTEXT';
+    // Opera does not return valid values with "getAttribute"
+	currentColor = theCells[0].style.backgroundColor;
+    newColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                 ? theNormalBgColor
+                 : thePointerColor;
+    newTextColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                 ? 'INFOTEXT'
+                 : 'HIGHLIGHTTEXT';
+    delete_media[theRow.id] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                 ? 0
+                 : 1;
+    for (var c = 0; c < rowCellsCnt; c++) {
+		theCells[c].style.backgroundColor = newColor;
+		theCells[c].style.color = newTextColor;
+    } // end for
+
+    return true;
+} // end of the 'setPointer()' function
+
+function upd_file_prefs(entry_id){
+	top.frames[0].document.discussions_form_1.entry_id.value = entry_id;
+}
+
+function deleteitem() {
+	var count = 0;
+	var loeschen = "|";
+	for(i=0;i<=delete_media.length;i++) {
+		if(delete_media[i] == 1) {
+			count++;
+			loeschen +=  i + "|";
+		}
+	}
+	if(count>1) {
+		var text = "Möchten Sie diese " + count + " Beiträge wirklich aus dem Forum entfernen?";
+		var check = confirm(text);
+	} 
+	if(count==1) {
+		var text = "Möchten Sie diesen Beitrag wirklich aus dem Forum entfernen?";
+		var check = confirm(text);
+	}
+	if(count==0) {
+		var text = "Es ist kein Beitrag markiert!";
+		alert(text);
+	}  
+	if(check) {
+		document.location.href='<?=$_SERVER['PHP_SELF']?>?forum_id=<?=(int)$_VARS['forum_id']?>&discussions_loesch_id=' + loeschen;
+	}
+}
+
+function upd_form_data(entry_id){
+	parent.document.discussions_form_1.entry_id.value = entry_id;
+}
+</script>
+<script for="document" event="onkeydown()" language="JScript" type="text/jscript">
+<!--
+ {
+ if(window.event.keyCode == "46") {
+	deleteitem();
+  }
+ }
+//-->
+</script>
+<script>
+
+var loading;
+var imagetypes = "jpg|png|gif|tif|bmp";
+
+</script>
+
+<table cellpadding="1" cellspacing="0" border="0" width="100%" style="table-layout : fixed;">
+	<tr style="cursor:pointer;">
+		<td width=60% class=select_off>Betreff</td>
+		<td width=30% class=select_off>Autor</td>
+		<td width=10% class=select_off>Aktiv</td>
+	</tr>
+<?
+
+	$discussions_abfrage = (db_query($db_data['module'], "SELECT * FROM community_forum_init WHERE forum_id = '".(int)$_VARS['forum_id']."'"));
+	$discussions_array = get_data($discussions_abfrage);
+	$discussions_id = $discussions_array['id'];
+
+//Daten holen
+$discussions_abfrage = (db_query($db_data['module'], "SELECT *, UNIX_TIMESTAMP(created) as created FROM community_forum_data WHERE forum_id = '".(int)$_VARS['forum_id']."' ORDER BY created DESC"));
+while($discussions_array = get_data($discussions_abfrage)) {
+
+	//Grafik und Link für active/deactive
+	if($discussions_array['active'] == 1){
+		$discussions_active_gra = "sitemap_active.gif";
+		$discussions_active_link = $PHP_SELF."?forum_id=".(int)$_VARS['forum_id']."&discussions_active_id=".$discussions_array[id]."&discussions_active=2";
+	}else{
+		$discussions_active_gra = "sitemap_inactive.gif";
+		$discussions_active_link = $PHP_SELF."?forum_id=".(int)$_VARS['forum_id']."&discussions_active_id=".$discussions_array[id]."&discussions_active=1";
+	}//else
+
+	//Listeneinträge erzeugen
+	echo "<tr style=\"cursor:default;\" id=\"".$discussions_array[id]."\" onclick=\"setPointer(this, 'ACTIVECAPTION', '#FFFFFF'); upd_form_data('".$discussions_array['id']."');\">";
+	echo "<td nowrap>".$discussions_array['subject']."</td>";
+	echo "<td nowrap>".strftime("%X %x",$discussions_array['created'])."</td>";
+	echo "<td nowrap align=\"center\"><a href=\"".$discussions_active_link."\"><img src=\"/admin/media/$discussions_active_gra\" border=0 align=absmiddle></a></td>";
+
+}//while
+?>	
+</table>
+<?=Admin_Html::loadAdminFooter()?>
+

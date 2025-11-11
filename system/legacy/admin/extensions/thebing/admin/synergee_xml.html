@@ -1,0 +1,110 @@
+<?
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_admin_synergee_xml");
+
+Admin_Html::loadAdminHeader();
+
+$oClient = Ext_Thebing_Client::getFirstClient();
+
+if($_VARS['task'] == 'save') {
+
+	$sBadMail = '';
+
+	// sydergee E-Mail Report Mail und POP3 Mail dürfen nicht identisch sein
+	if($_VARS['synergee_email'] != $_VARS['synergee_pop3_server']){
+		$oClient->synergee_email = $_VARS['synergee_email'];
+		$oClient->synergee_pop3_server = $_VARS['synergee_pop3_server'];
+		$oClient->synergee_username = $_VARS['synergee_username'];
+		$oClient->synergee_password = $_VARS['synergee_password'];
+		$oClient->synergee_flex_course = (int)$_VARS['synergee_flex_course'];
+		$oClient->synergee_flex_accommodation = (int)$_VARS['synergee_flex_accommodation'];
+
+		$oClient->save();
+	}else{
+		$sBadMail =  '<p style="color: red;">' . L10N::t('E-Mail Adressen dürfen nicht übereinstimmen', 'Thebing » Admin » Synergee XML Import') . '</p>';
+
+	}
+	
+}
+
+?>
+
+<div class="divHeader">
+	<h1><?=Ext_TS_System_Navigation::t()?></h1>
+</div>
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+<?php 
+if($_VARS['task'] == 'import') {
+
+	$oSynergee = new Ext_Thebing_ThirdParty_Synergee($oClient);
+	
+	$sFeedback = $oSynergee->processImport();
+	
+	if($sFeedback == 'success') {
+		$aReport = $oSynergee->getReport();
+		__pout($aReport);
+		echo '<p>'.sprintf(L10N::t('Es wurden %s Buchungen aus %s E-Mails erfolgreich importiert.', 'Thebing » Admin » Synergee XML Import'), (int)$aReport['success'], count($aReport['mails'])).'</p>';
+	} else {
+		echo '<p>'.L10N::t('Es konnte keine Verbindung zum POP3-Server aufgebaut werden. Bitte kontrollieren Sie Ihre Einstellungen.', 'Thebing » Admin » Synergee XML Import').'</p>';
+	}
+?>
+	<p style="text-align: right;">
+		<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>');"><?=L10N::t('zurück', 'Thebing » Admin » Synergee XML Import')?></button>
+	</p>
+<?php 
+} else {
+
+	$aFlexFields = array();
+	$aEmpty = array(0=>'');
+	$aFlexFields['course'] = Ext_Thebing_Flexibility::getFields('student_record_course');
+	$aFlexFields['accommodation'] = Ext_Thebing_Flexibility::getFields('student_record_accommodation');
+
+	$aFlexFields['course'] = Ext_Thebing_Util::convertArrayForSelect($aFlexFields['course'], 'title', 'id');
+	$aFlexFields['accommodation'] = Ext_Thebing_Util::convertArrayForSelect($aFlexFields['accommodation'], 'title', 'id');
+
+	$aFlexFields['course'] = $aEmpty + $aFlexFields['course'];
+	$aFlexFields['accommodation'] = $aEmpty + $aFlexFields['accommodation'];
+	
+?>
+
+	<?
+
+	echo $sBadMail;
+?>
+		<p><?=L10N::t('Die XML-Dateien werden automatisch alle fünf Minuten von dem unten eingestellten POP3-Konto abgerufen. Eine Rückmeldung erfolgt ebenfalls per E-Mail an die unten angegebene E-Mail-Adresse.', 'Thebing » Admin » Synergee XML Import')?></p>
+
+		<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<?=printFormHidden('task', 'save')?>
+			<h2><?=L10N::t("E-Mail-Adresse für die Rückmeldung", 'Thebing » Admin » Synergee XML Import')?></h2>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t("E-Mail-Adresse (nicht identisch mit pop3 Adresse)", 'Thebing » Admin » Synergee XML Import'), 'synergee_email', $oClient->synergee_email)?>
+			<?=printTableEnd()?>
+			<h2><?=L10N::t("Konto-Einstellungen", 'Thebing » Admin » Synergee XML Import')?></h2>
+			<?=printTableStart()?>
+				<?=printFormText(L10N::t("POP3-Server", 'Thebing » Admin » Synergee XML Import'), 'synergee_pop3_server', $oClient->synergee_pop3_server)?>
+				<?=printFormText(L10N::t("Benutzername", 'Thebing » Admin » Synergee XML Import'), 'synergee_username', $oClient->synergee_username)?>
+				<?=printFormText(L10N::t("Passwort", 'Thebing » Admin » Synergee XML Import'), 'synergee_password', $oClient->synergee_password)?>
+			<?=printTableEnd()?>
+			<h2><?=L10N::t("Import-Einstellungen", 'Thebing » Admin » Synergee XML Import')?></h2>
+			<?=printTableStart()?>
+				<?=printFormSelect(L10N::t("Kursdaten in dynamisches Feld schreiben", 'Thebing » Admin » Synergee XML Import'), 'synergee_flex_course', $aFlexFields['course'], $oClient->synergee_flex_course)?>
+				<?=printFormSelect(L10N::t("Unterkunftsdaten in dynamisches Feld schreiben", 'Thebing » Admin » Synergee XML Import'), 'synergee_flex_accommodation', $aFlexFields['accommodation'], $oClient->synergee_flex_accommodation)?>
+			<?=printTableEnd()?>
+			<?=printSubmit(L10N::t('Speichern', 'Thebing » Admin » Synergee XML Import'))?>
+		</form>
+		<p style="text-align: right;">
+			<button class="btn" onclick="go('?&task=import');"><?=L10N::t('XML Import jetzt ausführen', 'Thebing » Admin » Synergee XML Import')?></button>
+		</p>
+<?php 
+}
+?>
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

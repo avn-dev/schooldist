@@ -1,0 +1,132 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("office_config");
+
+echo Admin_Html::loadAdminHeader();
+
+/* ==================================================================================================== */
+
+$oEmployee = new Ext_Office_Employee();
+
+/* ==================================================================================================== */
+
+$bResult = true;
+if(isset($_VARS['action']) && $_VARS['action'] == 'delete')
+{
+	$bResult = $oEmployee->deleteGroup($_VARS['group_id']);
+}
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['task']) && $_VARS['task'] == 'save')
+{
+	if(trim($_VARS['name']) != '')
+	{
+		$oEmployee->saveGroup($_VARS['name'], $_VARS['description'], (int)$_VARS['id'], $_VARS['absence']);
+	}
+}
+
+/* ==================================================================================================== */
+
+$aEmployeesGroups = $oEmployee->getGroups();
+
+/* ==================================================================================================== */
+
+if($_VARS['task'] == 'edit' || $_VARS['form_action'] == 'save')
+{
+	if($_VARS['id'] > 0)
+	{
+		$aGroup = $oEmployee->get_grouptoedit((int)$_VARS['id']);
+	}
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Gruppen', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="save"/>
+			<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>"/>
+			<?=printTableStart()?>
+				<?=printFormText("Name", "name", $aGroup['name'])?>
+				<?=printFormTextarea("Beschreibung", "description", $aGroup['description'], 3, 3)?>
+				<?=printFormCheckbox("In Abwesenheitsliste anzeigen", "absence", 1, $aGroup['absence'])?>
+			<?=printTableEnd()?>
+			<div style="clear:both;"></div>
+			<div style="float:left;"><input type="button" class="btn" value="zurück" onclick="javascript:history.back()" /></div>
+			<div style="float:right;"><?=printSubmit("speichern")?></div>
+			
+			</form>
+		</td>
+	</tr>
+</table>
+
+<? } else { /*======================================================*/ ?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Mitarbeitergruppen', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%"><tr><td valign="top">
+	<script type="text/javascript">
+		function confirmDelete()
+		{
+			if(confirm("Möchten Sie wirklich diese Gruppe löschen?\nAchtung! Die Zugehörigkeit aller Mitarbeiter dieser Gruppe wird aufgehoben."))
+			{
+				return true;
+			}
+			return false;
+		}
+	</script>
+	<? if(!$bResult) { ?>
+		<div style="color:red;">
+			<b>Die Gruppe der Projektleiter kann nicht gelöscht werden!</b>
+		</div>
+	<? } ?>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="form_action" id="form_action" value="save" />
+		<div style="clear:both;">
+			<input type="submit" class="btn" value="Neue Gruppe hinzufügen" style="float:right; margin-bottom:5px;" />
+		</div>
+		<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+			<tr>
+				<th style="width:25%;">Gruppenname</th>
+				<th style="width:5%;">Mitglieder</th>
+				<th>Beschreibung</th>
+				<th style="width:10%;">Aktionen</th>
+			</tr>
+			<? if(!empty($aEmployeesGroups)) { ?>
+				<? foreach((array)$aEmployeesGroups as $iKey => $aValue) { ?>
+					<?
+						if(empty($aValue['description']))
+						{
+							$aValue['description'] = '&nbsp;';
+						}
+					?>
+					<tr>
+						<td><?=$aValue['name']?></td>
+						<td>(<?=$aValue['count']?>)</td>
+						<td><?=$aValue['description']?></td>
+						<td align="center">
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&amp;id=<?=$aValue['id']?>"><img src="/admin/media/edit.png" border="0" alt="Eintrag editieren"/></a>
+							<a href="<?=$_SERVER['PHP_SELF']?>?action=delete&amp;group_id=<?=$aValue['id']?>" onclick="return confirmDelete();"><img src="/admin/media/delete.png" alt="Löschen"></a>
+						</td>
+					</tr>
+				<? } ?>
+			<? } ?>
+		</table>
+		<div style="clear:both;">
+			<input type="submit" class="btn" value="Neue Gruppe hinzufügen" style="float:right; margin-bottom:5px;" />
+		</div>
+	</form>
+</td></tr></table>
+<?php
+}
+?>
+<?=Admin_Html::loadAdminFooter()?>

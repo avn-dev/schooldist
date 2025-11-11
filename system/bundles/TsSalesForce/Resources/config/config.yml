@@ -1,0 +1,3 @@
+parallel_processing_mapping:
+    sales-force-transfer:
+       class: TsSalesForce\Handler\ParallelProcessing\SalesForceTransfer

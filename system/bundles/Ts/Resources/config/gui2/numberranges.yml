@@ -1,0 +1,4 @@
+parent: tc_numberranges
+extend:
+  js:
+    - [js/numberrange/allocation.js, ts]

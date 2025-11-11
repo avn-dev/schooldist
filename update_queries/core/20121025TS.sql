@@ -1,0 +1,1 @@
+ALTER TABLE `tc_gui2_designs_tabs_elements` ADD `placeholder` VARCHAR( 100 ) NOT NULL 

@@ -1,0 +1,1 @@
+UPDATE `system_elements` SET `include_backend` = '1' WHERE `file` = 'tshubspot';

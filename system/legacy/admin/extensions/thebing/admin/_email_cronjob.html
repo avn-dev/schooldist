@@ -1,0 +1,242 @@
+<?php
+
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_admin_email_templates_cronjob");
+$iSessionSchoolId = \Core\Handler\SessionHandler::getInstance()->get('sid');
+$oTemplate		= new Ext_Thebing_Email_Template(0);
+$aTemplates		= $oTemplate->getList(true, $iSessionSchoolId, 'cronjob', null);
+$aTypes			= Ext_Thebing_Util::getMailTypes();
+$aHours			= Ext_Thebing_Util::getHours();
+$aEvents		= Ext_Thebing_Util::getMailTemplateEvents();
+$aAdditional	= Ext_Thebing_Util::getMailTemplateAdditional();
+$aDates			= Ext_Thebing_Util::getMailTemplateDates();
+
+
+$oGui = new Ext_Thebing_Gui2(md5('thebing_admin_email_templates_cronjob'));
+
+$oGui->setWDBasic('Ext_Thebing_Email_TemplateCronjob');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('where', array('ketc.client_id'=>(int)$user_data['client']));
+$oGui->setTableData('groupby', 'ketc.id');
+
+// Listen Optionen
+$oGui->column_sortable				= 1;
+$oGui->row_sortable					= 0;
+$oGui->multiple_selection			= 0;
+$oGui->query_id_column				= 'id';
+$oGui->query_id_alias				= 'ketc';
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+$oGui->class_js						= 'TemplatecronjobGui';
+
+# START Dialog 1 #
+
+$oDialog = $oGui->createDialog(L10N::t('E-Mail-Vorlage "{name}"', $oGui->gui_description), L10N::t('Neue E-Mail-Vorlage', $oGui->gui_description));
+$oTab = $oDialog->createTab(L10N::t('Einstellungen', $oGui->gui_description));
+
+$oTab->setElement($oDialog->createRow(L10N::t('Name', $oGui->gui_description), 'input', array('db_column'=>'name', 'db_alias' => 'ketc' ,'required'=>1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Vorlage', $oGui->gui_description), 'select', array('db_column'=>'layout_id', 'db_alias' => 'ketc', 'select_options' => $aTemplates, 'required'=>1)));
+$oTab->setElement($oDialog->createRow(L10N::t('Typ', $oGui->gui_description), 'select', array('db_column'=>'type_id', 'db_alias' => 'ketc', 'select_options' => $aTypes, 'required'=>1)));
+
+$oTab->setElement('<div id="cronjob_container_1">');
+	$oTab->setElement($oDialog->createRow(L10N::t('Ausführungszeit', $oGui->gui_description), 'select', array('db_column'=>'execution_time','db_alias' => 'ketc', 'select_options' => $aHours, 'required'=>1)));
+	$oTab->setElement($oDialog->createRow(L10N::t('Ausgehend von', $oGui->gui_description), 'select', array('db_column'=>'event_id', 'db_alias' => 'ketc','select_options' => $aEvents, 'required'=>1)));
+	$oTab->setElement($oDialog->createRow(L10N::t('Zusatz', $oGui->gui_description), 'select', array('db_column'=>'additional_id','db_alias' => 'ketc', 'select_options' => Ext_Thebing_Util::addEmptyItem($aAdditional))));
+	$oTab->setElement($oDialog->createRow(L10N::t('Tage', $oGui->gui_description), 'input', array('db_column'=>'days','db_alias' => 'ketc', 'class'=>'w50 txt')));
+	$oTab->setElement($oDialog->createRow(L10N::t('Termin', $oGui->gui_description), 'select', array('db_column'=>'date_id','db_alias' => 'ketc', 'select_options' => $aDates)));
+	$oTab->setElement($oDialog->createRow(L10N::t('Datum', $oGui->gui_description), 'calendar', array('db_column'=>'date','db_alias' => 'ketc', 'format' => new Ext_Thebing_Gui2_Format_Date())));
+$oTab->setElement('</div>');
+
+$oTab->setElement('<div id="cronjob_container_2">');
+	$oTab->setElement(
+		$oDialog->createRow(
+			$oGui->t('Kunde'),
+			'checkbox',
+			array(
+				'db_column'	=> 'to_customer',
+				'db_alias' => 'ketc',
+			)
+		)
+	);
+	$oTab->setElement(
+		$oDialog->createRow(
+			$oGui->t('Zusätzlicher Empfänger'),
+			'input',
+			array(
+				'db_column'			=> 'email',
+				'db_alias' => 'ketc',
+			)
+		)
+	);
+	$oTab->setElement(
+		$oDialog->createRow(
+			$oGui->t('CC'),
+			'input',
+			array(
+				'db_column'			=> 'cc',
+				'db_alias' => 'ketc',
+			)
+		)
+	);
+	$oTab->setElement(
+		$oDialog->createRow(
+			$oGui->t('BCC'),
+			'input',
+			array(
+				'db_column'			=> 'bcc',
+				'db_alias' => 'ketc',
+			)
+		)
+	);
+$oTab->setElement('</div>');
+
+$oDialog->setElement($oTab);
+
+$oDialog->width = 950;
+$oDialog->height = 560;
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('id', 'name');
+$oFilter->db_alias = array('ketc', 'ketc');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+// Leisten erzeugen
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+                        L10N::t('Neuer Eintrag', $oGui->gui_description),
+                        $oDialog,
+                        L10N::t('Neuer Eintrag', $oGui->gui_description)
+                    );
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+                        L10N::t('Editieren', $oGui->gui_description),
+                        $oDialog,
+                        L10N::t('Editieren', $oGui->gui_description)
+                    );
+$oBar ->setElement($oIcon);
+
+
+$oIcon = $oBar->createDeleteIcon(
+                        L10N::t('Löschen', $oGui->gui_description),
+                        L10N::t('Löschen', $oGui->gui_description)
+                    );
+$oBar ->setElement($oIcon);
+
+// Leiste der Gui Zuweisen
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oPagination = $oBar->createPagination();
+$oBar ->setElement($oPagination);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Name', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'html';
+$oColumn->db_alias = 'template';
+$oColumn->title = L10N::t('HTML', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('yes_no');
+$oColumn->width_resize = false;
+$oColumn->small = true;
+$oColumn->format = new Ext_Thebing_Gui2_Format_YesNo();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'type_id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Typ', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email_Type();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'execution_time';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Zeit', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('time');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email_Hour();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'days';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Tage', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('yes_no');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email_Days();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'additional_id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Zusatz', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email_Additional();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'event_id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Ausgehend von', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email_Event();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'date_id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Termin', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('comment');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email_Date();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'date';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Datum', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('date');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Date();
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+$aOptionalInfo				= array();
+$aOptionalInfo['js'][]		= '/admin/extensions/thebing/gui2/util.js';
+$aOptionalInfo['js'][]		= '/admin/extensions/thebing/admin/js/templatecronjob.js';
+
+$aOptionalInfo['css'][]		= '/assets/ts/css/gui2.css';
+
+$oGui->display($aOptionalInfo);

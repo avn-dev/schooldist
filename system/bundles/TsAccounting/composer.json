@@ -1,0 +1,7 @@
+{
+    "name": "fidelo-bundle/tsaccounting",
+    "version": "1.0.0",
+    "require": {
+        "fidelo-software/verifactu":"~1.0.0"
+    }
+}

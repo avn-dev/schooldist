@@ -1,0 +1,169 @@
+<?php
+
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('office_absence');
+
+/* ==================================================================================================== */
+
+$oConfig = Ext_Office_Config::getInstance();
+$oAbsence = new Ext_Office_Absence();
+
+/* ==================================================================================================== */
+
+if(
+	isset($_VARS['action']) &&
+	$_VARS['action'] == 'get_worktimes_list'
+) {
+	$aParams = array(
+		'month_from' => $_VARS['month_from'],
+		'year_from' => $_VARS['year_from'],
+		'month_till' => $_VARS['month_till'],
+		'year_till' => $_VARS['year_till']
+	);
+	$aData = $oAbsence->getWorktimesList($aParams);
+	echo json_encode($aData);
+	exit;
+}
+
+if(
+	isset($_VARS['action']) &&
+	$_VARS['action'] == 'get_worktimes_graphic'
+) {
+	$aData = $oAbsence->getMonthGraph($_VARS['employee_id'], $_VARS['month'], $_VARS['year']);
+	echo json_encode($aData);
+	exit;
+}
+
+/* ==================================================================================================== */
+
+$aYears = $aMonths = array();
+$oDate = new WDDate(0);
+for($i = date('Y') - 2; $i <= date('Y'); $i++) {
+	$aYears[$i] = $i;
+}
+for($i = 1; $i <= 12; $i++) {
+	$oDate->set($i, WDDate::MONTH);
+	$aMonths[$i] = strftime('%B', $oDate->get(WDDate::TIMESTAMP));
+}
+
+/* ==================================================================================================== */
+
+$sParams = '<link rel="stylesheet" href="/admin/extensions/office/office.css"></link>';
+$sParams .= '<script type="text/javascript" src="/admin/extensions/office/js/worktimes.js"></script>';
+$sParams .= '<style type="text/css">body { overflow:hidden; scroll:no-scroll; }</style>';
+
+$aParams = array('additional' => $sParams);
+
+Admin_Html::loadAdminHeader($aParams);
+
+?><style type="text/css">
+    .tblTimes, .tblTimes tr, .tblTimes th, .tblTimes td {
+        /*border: 1px solid #CCC;*/
+        border-collapse: collapse;
+        border-spacing: 0;
+        padding: 0;
+        margin: 0;
+    }
+    .tblTimes thead {
+        position: sticky;
+        top: 0;
+    }
+    .tblTimes,
+    .tblTimes td {
+        box-shadow: inset 1px -1px #CCC;
+    }
+    .tblTimes thead th {
+        box-shadow: inset 1px 1px #CCC, 0 1px #CCC;
+    }
+    .tblTimes tbody th {
+        border-bottom:			1px solid #CCC;
+    }
+    .tblTimes th {
+        padding: 4px 3px;
+        background-color: #EEE;
+        color: #29527A;
+    }
+    .tblTimes td {
+        padding: 4px 3px;
+        text-align: right;
+        font-size: 11px;
+    }
+</style>
+
+<script type="text/javascript">
+	Event.observe(window, 'load', loadWorktimesList);
+    Event.observe(window, 'resize', resize);
+</script>
+
+
+<section class="content custom-gui">
+
+<div class="divHeader" style="height:52px; margin-bottom:5px; border-bottom:1px solid #CCC;">
+
+	<div class="divToolbar">
+		<div class="divToolbarFormItem">
+			<b>Datum:</b>
+			<select id="filter_month_from" class="txt" onchange="loadWorktimesList();">
+				<?php foreach((array)$aMonths as $iKey => $sMonth) { ?>
+					<option value="<?=$iKey?>" <?php if(1 == $iKey) { ?>selected="selected"<?php } ?>><?=$sMonth?></option>
+				<?php } ?>
+			</select>
+		</div>
+		<div class="divToolbarFormItem">
+			<select id="filter_year_from" class="txt" onchange="loadWorktimesList();">
+				<?php foreach((array)$aYears as $iYear) { ?>
+					<option value="<?=$iYear?>" <?php if(date('Y') == $iYear) { ?>selected="selected"<?php } ?>><?=$iYear?></option>
+				<?php } ?>
+			</select>
+		</div>
+		<div class="divToolbarFormItem">
+			<b>-</b>
+			<select id="filter_month_till" class="txt" onchange="loadWorktimesList();">
+				<?php foreach((array)$aMonths as $iKey => $sMonth) { ?>
+					<option value="<?=$iKey?>" <?php if(date('m') == $iKey) { ?>selected="selected"<?php } ?>><?=$sMonth?></option>
+				<?php } ?>
+			</select>
+		</div>
+		<div class="divToolbarFormItem">
+			<select id="filter_year_till" class="txt" onchange="loadWorktimesList();">
+				<?php foreach((array)$aYears as $iYear) { ?>
+					<option value="<?=$iYear?>" <?php if(date('Y') == $iYear) { ?>selected="selected"<?php } ?>><?=$iYear?></option>
+				<?php } ?>
+			</select>
+		</div>
+		<div class="divToolbarIcon">
+			<img id="loader" alt="" src="/admin/media/indicator.gif" style="display:none;" />
+		</div>
+
+		<div class="divToolbarFormItem" style="float:right;">
+			<div style="margin: 0 2px; padding: 0 2px;" id="infoDates"></div>
+		</div>
+
+		<div style="clear:both;"></div>
+	</div>
+</div>
+
+<div id="divTimes" style="overflow-x: auto;">
+	<table class="tblTimes" style="width:100%;">
+		<thead>
+			<tr>
+				<th>Mitarbeiter</th>
+				<th style="width:100px;">Über-/Fehl-Stunden</th>
+				<th style="width:100px;">Ist</th>
+				<th style="width:100px;">Pflicht</th>
+				<th style="width:100px;">Soll</th>
+				<th style="width:100px;">Urlaub</th>
+				<th style="width:100px;">Krankheit</th>
+				<th style="width:100px;">Überstunden (Frei)</th>
+				<th style="width:100px;">Überstunden (€)</th>
+			</tr>
+		</thead>
+		<tbody id="tblTimes"></tbody>
+	</table>
+</div>
+
+</section>
+	<?php
+
+Admin_Html::loadAdminFooter();

@@ -1,0 +1,158 @@
+
+.reporting-app {
+	.modal-dialog {
+		/*display: flex;
+		align-items: center;
+		justify-content: center;*/
+
+		.modal-body {
+			max-height: calc(100vh - 200px);
+			overflow-y: auto;
+		}
+
+		.filter-element {
+			display: flex;
+			flex-wrap: wrap;
+			padding: 0 10px 10px;
+
+			label {
+				flex-basis: 100%;
+			}
+
+			> div {
+				flex-grow: 1;
+			}
+
+			> a {
+				color: #444;
+				padding-left: 10px;
+				cursor: pointer;
+				align-self: center;
+			}
+		}
+	}
+
+	.view-not-loaded {
+		min-height: 10vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+
+		pre {
+			//overflow: auto;
+			width: 100%;
+		}
+	}
+
+	.view-loaded {
+		overflow: auto;
+	}
+
+	.actions-bar {
+		display: flex;
+		list-style: none;
+		//align-content: flex-start;
+		gap: 5px 5px;
+		flex-wrap: wrap;
+		padding: 0;
+
+		> li {
+			min-height: 30px;
+
+			.btn {
+				height: 100%;
+			}
+		}
+
+		// Analog zu .btn
+		.filter-element {
+			color: #444;
+			border: 1px solid #ddd;
+			background-color: #f4f4f4;
+			border-radius: 3px;
+			display: flex;
+			justify-content: center;
+			//align-items: center;
+			//flex-wrap: wrap;
+
+			// Analog zu btn-sm
+			font-size: 12px;
+			line-height: 1.5;
+
+			a {
+				color: #444;
+				padding: 0 5px;
+				cursor: pointer;
+				align-self: center;
+			}
+
+			label {
+				padding: 0 10px;
+				margin-bottom: 0;
+				font-weight: normal;
+				align-self: center;
+			}
+
+			.v-select {
+				min-height: 100%;
+				display: inline-block;
+				background-color: #fff;
+				position: static; // Absolutes Dropdown mit .filter-element-required statt .v-select relativieren
+
+				.vs__dropdown-toggle {
+					min-height: 100%;
+					border-top: none;
+					border-bottom: none;
+				}
+			}
+
+			&.filter-element-select {
+				position: relative; // Siehe .v-select
+			}
+
+			&.filter-element-required {
+				border-right: none;
+			}
+
+			.vc-inputs {
+				//display: flex;
+
+				input {
+					width: 100px;
+					border-top: none;
+					border-bottom: none;
+				}
+
+				div:first-of-type input {
+					border-right: none;
+				}
+			}
+		}
+	}
+
+	.filter-element {
+		.vc-inputs {
+			display: flex;
+
+			//> div {
+			//	width: 50%;
+			//}
+		}
+
+		.v-select {
+			.vs__dropdown-option--selected {
+				display: none;
+			}
+
+			&.vs--single.vs--open .vs__selected {
+				opacity: 1;
+				position: static; // Select nicht zusammenfallen lassen
+			}
+		}
+	}
+
+	table td.sum {
+		background-color: #ecf6fb; // 50% heller als .info von BS3
+	}
+}

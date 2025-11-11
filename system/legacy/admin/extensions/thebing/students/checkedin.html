@@ -1,0 +1,24 @@
+<?php
+
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+//$sAccess = "thebing_students_welcome_list";
+//Ext_Thebing_Access::accesschecker($sAccess);
+//
+//$sGuiDescription = 'Thebing » Invoice » Inbox';
+//$sCommunicationApplication = 'arrival_list';
+//$sView = 'arrival_list';
+//$bAddIconAdditionalFiles = true;
+//
+//include_once(Util::getDocumentRoot()."admin/extensions/thebing/students/basic.php");
+//
+//$oGui->display($aOptionalInfo);
+
+$sView = 'students_checkedin';
+
+$oFactory		= new Ext_Gui2_Factory('ts_students_checkedin');
+$oGui			= $oFactory->createGui($sView);
+$oGui->sView	= $sView;
+
+$oGui->display();

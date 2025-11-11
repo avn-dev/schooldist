@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/codemirror",
+  "version": "1.0.0",
+  "require": {
+    "thebingservices/codemirror": "v5.*"
+  }
+}

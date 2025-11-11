@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_cheque_payment` CHANGE `print_user_created` `print_user_created` TIMESTAMP NULL DEFAULT NULL;
+UPDATE `kolumbus_cheque_payment` SET `changed` = `changed`, `print_user_created` = NULL WHERE `print_user_created` = '0000-00-00 00:00:00';

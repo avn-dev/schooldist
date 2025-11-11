@@ -1,0 +1,1 @@
+UPDATE kolumbus_tuition_courses SET minimum_duration = NULL, maximum_duration  = NULL, fix_duration = NULL, changed = changed WHERE avaibility NOT IN (1, 3);

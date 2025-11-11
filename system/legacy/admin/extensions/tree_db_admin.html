@@ -1,0 +1,563 @@
+<?
+
+// Kunden Baum-DB-Modul
+// Dieses Modul administriert die Baumdatenbanken
+
+
+// nötige Tabellen:
+// customer_db_definition - speichert die Namen der Felder in den "Datenbanken"
+// customer_db_values - speichert die Optionen aller Auswahlfelder
+
+include($DOCUMENT_ROOT."/admin/includes/main.inc.php");
+require ($DOCUMENT_ROOT."/admin/extensions/customer_db/customer_db_class.inc.php");
+require ($DOCUMENT_ROOT."/admin/extensions/customer_db/customer_db_functions.inc.php");
+require ($DOCUMENT_ROOT."/admin/extensions/customer_db/tree_db_functions.inc.php");
+//include ($DOCUMENT_ROOT."/system/includes/config.inc");
+//include ($DOCUMENT_ROOT."/system/includes/dbconnect.inc");
+
+
+// Daten( später in config.inc auslagern! )
+$tree_identifier="tree_db";
+#$tree_table="tree_db_1";
+$tree_table="tree_db_1";
+$identifier="customer_db_";
+$definition_table=$identifier."definition";
+$value_table=$identifier."values";
+$SQL_handler = new customer_db;
+
+global $db_data;
+$db_name=$db_data['module'];
+
+//echo "DB : $db_name";
+global $allowed_depth;
+if (!$allowed_depth) {$allowed_depth=5;}
+
+
+#var_dump($_POST);
+#echo "<br><br><br>";
+#var_dump($_GET);
+#echo "<br><br><br>";
+var_dump($_VARS);
+echo "<br><br><br>";
+
+/*
+if ($form_action=="Zurück")
+{
+  if ($current_status==$last_status)
+  {
+	$form_action="Abbrechen";
+  }
+  else
+  {
+    $current_status=$last_status;
+    $form_action=$current_status;
+  }
+}
+else
+{
+  $last_status=$current_status;
+  $current_status=$form_action;
+}
+*/
+
+
+/*
+if ($last_status=="Datensatz hinzufügen")
+{
+ $auswahl=0;
+}
+
+if ($form_action2=="Baumstruktur bearbeiten" OR $form_action2=="Baum löschen" OR $form_action2=="Kategorie löschen" OR $form_action2=="Kategorie löschen incl. Unterkategorien")
+{
+  $form_action=$form_action2;
+  $form_action2="";
+}
+*/
+
+
+//echo "<br><br>Action ist : $form_action !<br>";
+
+
+////////////////////////////////////////////////
+////////////   Beginn Hauptteil   //////////////
+////////////////////////////////////////////////
+
+//<form name=formular1 method=get enctype="multipart/form-data" action=<?=$PHP_SELF>>
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+
+<form name="formular1" method=post enctype="multipart/form-data">
+
+<!--<input type="hidden" name="action2" value="">-->
+<input type="hidden" name="form_action" value="<?=$form_action?>">
+<input type="hidden" name="selected_tree" value="<?=$selected_tree?>">
+
+<input type="hidden" name="selected_option" value="<?=$selected_option?>">
+<input type="hidden" name="selected_value" value="<?=$selected_value?>">
+<input type="hidden" name="field_id" value="<?=$field_id?>">
+<input type="hidden" name="last_status" value="<?=$last_status?>">
+<input type="hidden" name="current_status" value="<?=$current_status?>">
+<input type="hidden" name="field" value="<?=$field?>">
+<input type="hidden" name="auswahl" value="<?=$auswahl?>">
+<input type="hidden" name="file_field" value="<?=$file_field?>">
+<input type="hidden" name="path" value="<?=$current_display?>">
+<!---------------------------------------------------------------->
+
+<h1>Baum-Datenbank-Administration</h1>
+<br>
+
+<?
+echo "<input type=\"hidden\" name=\"category_select\" value=\"".$category_select."\">";
+#if($form_action2) $form_action="";
+
+if (($form_action=="overview" OR $form_action=="" OR $form_action=="cancel") )#AND $form_action2=="") //
+{
+
+
+  echo "<table border=0 class=table cellpadding=4 cellspacing=0>";
+
+  $result=show_trees($db_name,$tree_table);
+  if(mySQL_num_rows($result)==0)
+  {
+    echo "Noch keine Baum-Datenbank vorhanden!<br><br>";
+  }
+
+  echo "<tr>";
+  ?>
+
+      <td colspan="2" align="center">
+        <input type=button name=action value="neue Baum-Datenbank anlegen" class="btn" OnClick='document.formular1.form_action.value="new_tree";document.formular1.submit();'>
+      </td>
+
+  <?
+  echo "</tr></table>";
+
+  //<input type=submit name=action value="Datenbank auswählen">&nbsp&nbsp&nbsp&nbsp
+
+} // ende if $form_action = start
+
+
+
+if ($form_action=="new_tree")
+{
+  // freie Nummer finden
+  $result=db_query($db_name,"SELECT * FROM $tree_table WHERE active=1 GROUP BY tree_number");
+  //var_dump($result);
+  $new=0;
+  $i=1;
+  while (!$new AND $data=get_data($result))
+  {
+    if ($data[tree_number]!=$i)
+    {
+      $new=$i;
+    }
+    //echo "treenum: ".$data[tree_number]." i :$i<br>";
+    $i++;
+  }
+  if ($new==0) $new=mySQL_num_rows($result)+1;
+
+  // Wurzeleintrag erzeugen
+  $result=db_query($db_name,"INSERT INTO $tree_table SET active='1', depth='0', tree_number='$new', name=\"Wurzel\", parent_ID=0");
+
+//  echo "<br>Baum $new neu angelegt!<br><br>";
+//  echo "<input type=submit name=\"action\" value=\"Fertig\" class=\"btn\">";
+
+?>
+    <script>
+        self.location.href='<?=$PHP_SELF?>';
+    </script>
+<?
+
+}
+
+
+
+if ($form_action=="delete_tree")
+{
+  db_query($db_name, "UPDATE $tree_table SET active='0' WHERE tree_number=$selected_tree");
+//  echo "Baum $selected_tree wurde gelöscht!<br><br>";
+//  echo "<input type=submit name=\"action\" value=\"Zur Übersicht\" class=\"btn\">";
+
+?>
+    <script>
+        self.location.href='<?=$PHP_SELF?>';
+    </script>
+<?
+
+}
+
+
+
+if ($form_action=="edit_tree" )#OR $form_action=="Fertig" OR $form_action=="Zurück")
+{
+    $max_depth=get_data(db_query($db_name,"SELECT depth FROM $tree_table WHERE tree_number=".intval($selected_tree)." GROUP BY depth DESC"));
+    #var_dump($max_depth);
+
+    $result=get_data(db_query($db_name,"SELECT * FROM $tree_table WHERE depth=0 AND name='Wurzel' AND tree_number=".intval($selected_tree)));
+    #echo "SELECT * FROM $tree_table WHERE depth=0 AND name='Wurzel' AND tree_number=".intval($selected_tree);
+    //echo "<input type=\"hidden\" name=\"category_select\" value=\"".$result['ID']."\">";
+    
+    ?>
+        <script>
+            document.formular1.category_select.value=<?=$result['ID']?>;
+        </script>
+    <?
+
+
+        echo "<iframe width=600 height=50 scrolling='no' marginheight='0' marginwidth='0' frameborder='0'";
+        echo "id='0' src='customer_db/category.ifr.php?db_name=$db_name&tree_table=$tree_table&selected_tree=$selected_tree&id=".$result['ID']."&frame_id=0'>";
+        echo "</iframe>";
+    #new_select_category($db_name,$tree_table, $selected_tree,$result['ID'],1);
+
+    for($frame_number=1;$frame_number<$max_depth['depth'];$frame_number++)
+    {
+
+        echo "<br>";
+        echo "<iframe width=600 height=50 scrolling='no' marginheight='0' marginwidth='0' frameborder='0'";
+        echo "id='".$frame_number."' src=''>"; #customer_db/category.ifr.php?db_name=$db_name&tree_table=$tree_table&selected_tree=$selected_tree&id=38&frame_id=$frame_number
+        echo "</iframe>";
+    }
+
+    ## unsichtbares Frame, das die letzte Unterebene 'auffängt'
+    #$frame_number++;
+    #echo $frame_number;
+    echo "<iframe style='visibility:hidden' width=600 height=1 scrolling='no' marginheight='0' marginwidth='0' frameborder='0'";
+    echo "id='".$frame_number."' src=''>";
+    echo "</iframe>";
+
+
+
+        #new_select_category($db_name,$tree_table, $selected_tree,$result['ID']+1, $groupmarker);
+
+    // Optionen :
+    // löschen / mit Unterkats
+    // bearbeiten
+    // neu hinzufügen
+    // verschieben
+    echo "<br><br><br>";
+    echo "<input type=\"button\"  value=\"Neue Kategorie\" class=\"btn\" OnClick='document.formular1.form_action.value=\"new_cat\";document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=\"button\"  value=\"Kategorie verschieben\" class=\"btn\" OnClick='document.formular1.form_action.value=\"move_cat\";document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=\"button\"  value=\"Kategorie umbenennen\" class=\"btn\" OnClick='document.formular1.form_action.value=\"rename_cat\";document.formular1.submit();'><br><br>";
+
+    echo "<input type=\"button\"  value=\"Kategorie löschen\" class=\"btn\" OnClick='document.formular1.form_action.value=\"delete_cat\";document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=\"button\"  value=\"Kategorie löschen incl. Unterkategorien\" class=\"btn\" OnClick='document.formular1.form_action.value=\"delete_cat_and_sub\";document.formular1.submit();'><br><br><br>";
+
+    echo "<input type=\"button\"  value=\"Zur Übersicht\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";document.formular1.submit();'>";
+
+}
+
+#echo"HIER!!".$form_action;
+
+if ($form_action=="move_cat")
+{
+  #echo "TERST";
+  $result=db_query($db_name, "SELECT * FROM $tree_table WHERE ID='".intval($category_select)."'");
+  $cat_name=get_data($result);
+//  var_dump($cat_name);
+  if($cat_name['name']=="Wurzel" AND $cat_name['parent_ID']==0)
+  {
+    echo "Die Wurzel kann nicht verschoben werden!<br><br>";
+    echo "<input type=buttom  value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+  }
+  else
+  {
+    echo "Bitte neuen Platz wählen für ".$cat_name['name'].":<br><br>";
+    echo "<input type=\"hidden\" name=\"old_category_select\" value=".$category_select.">";
+
+
+
+    $max_depth=get_data(db_query($db_name,"SELECT depth FROM $tree_table WHERE tree_number=".intval($selected_tree)." GROUP BY depth DESC"));
+    #var_dump($max_depth);
+
+    $result=get_data(db_query($db_name,"SELECT * FROM $tree_table WHERE depth=0 AND name='Wurzel' AND tree_number=".intval($selected_tree)));
+    #echo "SELECT * FROM $tree_table WHERE depth=0 AND name='Wurzel' AND tree_number=".intval($selected_tree);
+    ?>
+        <script>
+            document.formular1.category_select.value=<?=$result['ID']?>;
+        </script>
+    <?
+
+
+        echo "<iframe width=600 height=50 scrolling='no' marginheight='0' marginwidth='0' frameborder='0'";
+        echo "id='0' src='customer_db/category.ifr.php?db_name=$db_name&tree_table=$tree_table&selected_tree=$selected_tree&id=".$result['ID']."&frame_id=0'>";
+        echo "</iframe>";
+    #new_select_category($db_name,$tree_table, $selected_tree,$result['ID'],1);
+
+    for($frame_number=1;$frame_number<$max_depth['depth'];$frame_number++)
+    {
+        echo "<br>";
+        echo "<iframe width=600 height=50 scrolling='no' marginheight='0' marginwidth='0' frameborder='0'";
+        echo "id='".$frame_number."' src=''>"; #customer_db/category.ifr.php?db_name=$db_name&tree_table=$tree_table&selected_tree=$selected_tree&id=38&frame_id=$frame_number
+        echo "</iframe>";
+    }
+
+    ## unsichtbares Frame, das die letzte Unterebene 'auffängt'
+    echo "<iframe style='visibility:hidden' width=600 height=1 scrolling='no' marginheight='0' marginwidth='0' frameborder='0'";
+    echo "id='".$frame_number."' src=''>";
+    echo "</iframe>";
+
+ 
+    echo "<br><br><input type=button  value=\"Verschieben\" class=\"btn\" OnClick='document.formular1.form_action.value=\"move_cat_confirmed\";       document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=button  value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+  }
+}
+
+if ($form_action=="move_cat_confirmed")
+{
+    // Prüfen, ob erlaubte Datenbank-tiefe nicht überschritten wird! Unterkategorien!!
+  $temp_ID=$category_select;
+
+ while (!$fertig)
+ {
+  $result=db_query($db_name,"SELECT * FROM $tree_table WHERE ID=$temp_ID");
+  $data=get_data($result);
+
+  // 1. prüfen, ob Ziel Kategorie nicht Unterkat zu sich selber ist!
+  $destination_parent=$data[parent_ID];
+  if ($destination_parent==0)
+  {
+    // fertig, alles OK
+    $Ziel_OK=true;
+    $fertig=true;
+
+  }
+  else
+  {
+    if ($destination_parent==$old_category_select OR $temp_ID==$old_category_select)
+    {
+      // Nicht erlaubt (Kat kann nicht Unterkat zu sich selber werden! )
+      $Ziel_OK=false;
+      $fertig=true;
+    }
+    else
+    {
+      // wiederhole
+      $fertig=false;
+      $temp_ID=$destination_parent;
+    }
+
+  }
+ } // Ende while !OK
+
+  // 2. Tiefe überprüfen ( aktuelle Tiefe und Ziel Kat-Tiefe )
+  if($Ziel_OK)
+  {
+    $result=db_query($db_name,"SELECT * FROM $tree_table WHERE ID=$category_select");
+    $data=get_data($result);
+    $destination_depth=$data[depth];
+
+    $result=db_query($db_name,"SELECT * FROM $tree_table WHERE ID=$old_category_select");
+    $data=get_data($result);
+    $source_depth=$data[depth];
+
+    $max_depth=max_child_depth($db_name, $tree_table, $old_category_select);
+
+    $depth=$max_depth+$destination_depth-$source_depth;
+    //echo "Summe Tiefe : ".$depth."<br>";
+    if ( $depth < $allowed_depth )
+    {
+      $Tiefe_OK=true;
+    }
+    else
+    {
+      $Tiefe_OK=false;
+    }
+  }
+
+
+  // 3. Ausgabe "neues Ziel wählen ( Grund )" oder "Fertig"
+
+
+
+  if ($Ziel_OK AND $Tiefe_OK)
+  {
+    db_query($db_name,"UPDATE $tree_table SET parent_ID=$category_select WHERE ID=$old_category_select");
+    recalculate_depth($db_name,$tree_table);
+//    echo "<input type=submit name=\"action\" value=\"Fertig\" class=\"btn\">";
+
+?>
+    <script>
+        self.location.href='<?=$PHP_SELF?>?form_action=cancel&selected_tree=<?=$selected_tree?>';
+    </script>
+<?
+
+  }
+  else
+  {
+    if($Ziel_OK)
+    {
+      echo "Diese Aktion kann nicht durchgeführt werden, weil sonst die maximal erlaubte<br>";
+      echo "Baum-Tiefe überschritten werden würde! Bitte wählen Sie ein anderes Ziel! <br><br>";
+      echo "<input type=button  value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+    }
+    else
+    {
+      echo "Diese Aktion kann nicht durchgeführt werden, weil eine Kategorie nicht<br>";
+      echo "Unterkategorie zu sich selber werden kann! Bitte wählen Sie ein anderes Ziel!<br><br>";
+      echo "<input type=button  value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+    }
+  }
+}
+
+
+if ($form_action=="delete_cat")
+{
+  $result=db_query($db_name, "SELECT * FROM $tree_table WHERE ID='$category_select'");
+  $cat_data=get_data($result);
+
+  if($cat_data['name']=="Wurzel" AND $cat_data['parent_ID']==0)
+  {
+    echo "Die Wurzel kann nicht gelöscht werden!<br><br>";
+    echo "Wenn sie den kompletten Baum löschen möchten, <br>kehren Sie bitte zur Übersicht zurück!<br><br>";
+    echo "<input type=button  value=\"Zur Übersicht\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=button  value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+  }
+  else
+  {
+    $result=db_query($db_name, "SELECT * FROM $tree_table WHERE parent_ID='".$cat_data['ID']."' AND tree_number=$selected_tree");
+    while($move=get_data($result))
+    {
+      db_query($db_name,"UPDATE $tree_table SET parent_ID=".$cat_data['parent_ID']." WHERE ID=".$move['ID']." AND tree_number=$selected_tree");
+    }
+    db_query($db_name,"UPDATE $tree_table SET active=0 WHERE ID=".$cat_data['ID']."");
+
+    recalculate_depth($db_name,$tree_table);
+
+?>
+    <script>
+        self.location.href='<?=$PHP_SELF?>?action=Fertig&selected_tree=<?=$selected_tree?>';
+    </script>
+<?
+  }
+}
+
+
+if ($form_action=="delete_cat_and_sub")
+{
+  $result=db_query($db_name, "SELECT * FROM $tree_table WHERE ID='$category_select'");
+  $cat_data=get_data($result);
+
+  if($cat_data['name']=="Wurzel" AND $cat_data['parent_ID']==0)
+  {
+    echo "Die Wurzel kann nicht gelöscht werden!<br><br>";
+    echo "Wenn sie den kompletten Baum löschen möchten, <br>kehren Sie bitte zur Übersicht zurück!<br><br>";
+    echo "<input type=button  value=\"Zur Übersicht\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=button  value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+  }
+  else
+  {
+    $result=db_query($db_name, "SELECT * FROM $tree_table WHERE parent_ID='".$cat_data[ID]."' AND tree_number=$selected_tree AND active=1");
+
+    $res_gruppen[0] = db_query($db_name, "SELECT * FROM $tree_table WHERE active='1' AND parent_ID='".$cat_data[ID]."'");
+    $level=0;//$cat_data[depth];
+    while($level!=-1)
+    {
+
+      $my_gruppen[$level] = get_data($res_gruppen[$level]);
+      // wenn daten: zeile de-active, level erhöhen, und selecten
+      if($my_gruppen[$level])
+      {
+        //db_query($db_name, "UPDATE $selected_tree SET depth='$level' WHERE active='1' AND parent_ID='0'");
+        $level++;
+        //var_dump($new_gruppen);
+        db_query($db_name,"UPDATE $tree_table SET active=0 WHERE AND ID='".($my_gruppen[$level-1][ID])."'");
+        $res_gruppen[$level] = db_query($db_name, "SELECT * FROM $tree_table WHERE active='1' AND parent_ID='".($my_gruppen[$level-1][ID])."'");
+      }
+      // wenn keine daten: level verringern
+      else
+      {
+        $level--;
+      }
+    }
+    db_query($db_name,"UPDATE $tree_table SET active=0 WHERE ID=".$cat_data[ID]."");
+    recalculate_depth($db_name,$tree_table);
+//    echo "<input type=submit name=\"action\" value=\"Fertig\" class=\"btn\">";
+
+?>
+    <script>
+        self.location.href='<?=$PHP_SELF?>?action=Fertig&selected_tree=<?=$selected_tree?>';
+    </script>
+<?
+
+  }
+}
+
+
+if ($form_action=="rename_cat")
+{
+  $result=db_query($db_name, "SELECT * FROM $tree_table WHERE ID='".intval($category_select)."'");
+  $cat_data=get_data($result);
+
+  if($cat_data['name']=="Wurzel" AND $cat_data['parent_ID']==0)
+  {
+    echo "Die Wurzel kann nicht umbenannt werden!<br><br>";
+    echo "<input type=button value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";document.formular1.submit();'>";
+  }
+  else
+  {
+    echo "<input type=text class=txt size = 40 name=new_cat_name value=\"".$cat_data['name']."\">";
+    echo "<br><input type=button value=\"Name speichern\" class=\"btn\" OnClick='document.formular1.form_action.value=\"save_cat_name\";document.formular1.submit();'>&nbsp;&nbsp;";
+    echo "<input type=button value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";document.formular1.submit();'>";
+  }
+
+}
+
+
+if ($form_action=="save_cat_name")
+{
+  db_query($db_name, "UPDATE $tree_table SET name=\"$new_cat_name\" WHERE ID=".intval($category_select));
+  echo "Neuer Kategoriename gespeichert!<br><br>";
+//  echo "<input type=submit name=\"action\" value=\"Fertig\" class=\"btn\">";
+  recalculate_depth($db_name,$tree_table);
+/*
+? >
+    <script>
+        self.location.href='<?=$PHP_SELF? >?action=Fertig&selected_tree=<?=$selected_tree? >';
+    </script>
+<?
+*/
+}
+
+if ($form_action=="new_cat")
+{
+  // Prüfen, ob erlaubte DB Tiefe nicht Überschritten wird!!
+  $result=db_query($db_name,"SELECT * FROM $tree_table WHERE ID=".intval($category_select));
+  $data=get_data($result);
+  if($data['depth']>$allowed_depth-1)
+  {
+    echo "Diese Unterkategorie würde die maximal erlaubte Kategorietiefe überschreiten!!<br>";
+    echo "Bitte wählen sie eine andere Oberkategorie!<br>";
+  }
+  else
+  {
+    echo "<input type=\"hidden\" name=\"old_category_select\" value=".$category_select.">";
+    echo "Bitte Namen eingeben : <br><br>";
+    echo "<input type=text class=txt size = 40 name=new_cat_name value=\"\">";
+    echo "<br><input type=button value=\"Kategoriename speichern\" class=\"btn\" OnClick='document.formular1.form_action.value=\"save_new_cat\";       document.formular1.submit();'>&nbsp;&nbsp;";
+  }
+  echo "<input type=button value=\"Zurück\" class=\"btn\" OnClick='document.formular1.form_action.value=\"cancel\";       document.formular1.submit();'>";
+}
+
+if ($form_action=="save_new_cat")
+{
+  //echo "INSERT INTO $tree_table SET active=1, name=\"$new_cat_name\", parent_ID=$old_category_select, tree_number=$selected_tree";
+  db_query($db_name, "INSERT INTO $tree_table SET active=1, name=\"$new_cat_name\", parent_ID=$old_category_select, tree_number=$selected_tree");
+  recalculate_depth($db_name,$tree_table);
+//  echo "Neuer Kategoriename gespeichert!<br><br>";
+//  echo "<input type=submit name=\"action\" value=\"Fertig\" class=\"btn\">";
+
+?>
+    <script>
+        self.location.href='<?=$PHP_SELF?>?action=Fertig&selected_tree=<?=$selected_tree?>';
+    </script>
+<?
+}
+?>
+     </form>
+</table>
+<?

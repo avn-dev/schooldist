@@ -1,0 +1,42 @@
+@import "../variables";
+
+.input-field {
+	&.input-field-radio {
+		> .row {
+			margin-top: $input-padding-y;
+		}
+	}
+
+	&.input-field-datepicker {
+		.vc-popover-content-wrapper {
+			// PayPal buttons have z-index 100, so show above
+			z-index: 900;
+		}
+	}
+
+	&.input-field-upload {
+		.input-group-append .btn {
+			// There is no matching button for .custom-file border
+			border-color: $custom-file-border-color;
+
+			// Hack for .is-invalid as border button is not styled and overwrites border of label button
+			// This should only be visible for a server validation error on file inputs
+			&.is-invalid {
+				border-color: $form-feedback-invalid-color
+			}
+		}
+
+		// It's not possible to translate "Browse" in HTML directly and it's impossible to select pseudo elements in JS
+		// So the trick is to replace the CSS variable in parent element with JS to change the label
+		.custom-file-label {
+			--label: "Browse";
+			&::after {
+				content: var(--label);
+			}
+		}
+
+		.progress {
+			margin-top: ($spacer * 0.5);
+		}
+	}
+}

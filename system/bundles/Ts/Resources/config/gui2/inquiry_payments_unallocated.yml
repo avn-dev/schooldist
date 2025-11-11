@@ -1,0 +1,127 @@
+class:
+  wdbasic: Ext_TS_Inquiry_Payment_Unallocated
+  data: Ext_TS_Inquiry_Payment_Unallocated_Gui2_Data
+  icon_status: Ext_TS_Inquiry_Payment_Unallocated_Gui2_IconStatus
+  row_style: Ext_TS_Inquiry_Payment_Unallocated_Gui2_RowStyle
+access:
+orderby:
+  - Ext_TS_Inquiry_Payment_Unallocated_Gui2_Data
+  - getOrderBy
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - transaction_code
+          - comment
+          - firstname
+          - lastname
+  -
+    position: top
+    elements:
+      -
+        element: icon
+        label: Zuweisen
+        task: openDialog
+        action: edit
+        additional: allocate
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - allocate
+        dialog:
+          - Ext_TS_Inquiry_Payment_Unallocated_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+  -
+    position: top
+    last: true
+    elements:
+      -
+        element: icon
+        task: openDialog
+        action: settings
+        active: 1
+        label: Einstellungen
+        title: Einstellungen
+        img: fa-cog
+        dialog:
+          - Ext_TS_Inquiry_Payment_Unallocated_Gui2_Data
+          - getSettingsDialog
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Zahlung
+      -
+        element: legend_info
+        label: Zahlung ausstehend
+        info:
+          color: inactive
+          italic: true
+          text: true
+columns:
+  -
+    sortable: true
+    title: Transaktion
+    column: transaction_code
+    width: name
+  -
+    sortable: true
+    title: Kommentar
+    column: comment
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Nl2br
+  -
+    sortable: true
+    title: Vorname
+    column: firstname
+    width: name
+  -
+    sortable: true
+    title: Nachname
+    column: lastname
+    width: name
+  -
+    sortable: true
+    title: Betrag
+    column: amount
+    width: amount
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params:
+      - amount_currency
+  -
+    sortable: true
+    title: Zahlungsdatum
+    column: payment_date
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    sortable: true
+    title: Bezahlmethode
+    column: payment_method_id
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Admin_Payment, getPaymentMethods, true]
+  -
+    sortable: true
+    title: Status
+    column: status
+    width: name
+    default: false
+default_columns:
+  -
+    title: Erstellt
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: created
+    width: date
+    sortable: true

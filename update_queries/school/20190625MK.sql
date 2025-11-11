@@ -1,0 +1,1 @@
+INSERT INTO `kolumbus_currency` (`id`, `name`, `iso4217`, `iso4217_num`, `sign`, `changed`, `created`) VALUES (NULL, 'New Taiwan dollar', 'TWD', '901', 'NT$', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

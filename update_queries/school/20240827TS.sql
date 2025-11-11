@@ -1,0 +1,1 @@
+ALTER TABLE `ts_booking_stack_histories` ADD `last_download` VARCHAR(50) NULL DEFAULT NULL AFTER `file_export`;

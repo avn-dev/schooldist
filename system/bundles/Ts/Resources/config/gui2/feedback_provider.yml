@@ -1,0 +1,145 @@
+class:
+  wdbasic: Ext_TS_Marketing_Feedback_Questionary_Process
+  data: Ext_TS_Marketing_Feedback_Provider_Gui2_Data
+id:
+  alias: tc_fqp
+orderby:
+  - Ext_TS_Marketing_Feedback_Provider_Gui2_Data
+  - getOrderby
+access:
+bars:
+  -
+    position: top
+    elements:
+    -
+      element: inputfilter
+      label: Suche
+      alias:
+        - tc_cn
+        - tc_c
+        - tc_c
+        - kg
+        - kg
+        - tc_fqp
+      column:
+        - number
+        - firstname
+        - lastname
+        - name
+        - short
+        - email
+    -
+      element: seperator
+    -
+      element: timefilter
+      format: Ext_TC_Gui2_Format_Date
+      from:
+        alias:
+          - tc_fqp
+        column:
+          - invited
+        default:
+          - Ext_Gui2_Factory_Default
+          - getDefaultFilterFrom
+          - true
+          - year
+      until:
+        alias:
+          - tc_fqp
+        column:
+          - invited
+        default:
+          - Ext_Gui2_Factory_Default
+          - getDefaultFilterUntil
+          - true
+      searchtype: contact
+      based_on:
+       answered:
+         alias: tc_fqp
+         column: answered
+         title: Beantwortet
+       service_from:
+         alias: ts_i
+         column: service_from
+         title: Globales Startdatum
+       service_until:
+         alias: ts_i
+         column: service_until
+         title: Globales Enddatum
+  -
+    position: top
+    elements:
+      -
+        element: icon
+        label: Auswertung ansehen
+        task: openDialog
+        action: edit
+        img:
+         - Ext_TC_Util
+         - getIcon
+         - refresh
+        dialog:
+         - Ext_TS_Marketing_Feedback_Provider_Gui2_Data
+         - getDialog
+      -
+        element: labelgroup
+        label: Export
+  -
+    position: top
+    last: true
+    elements:
+      -
+        element: icon
+        label: Erweiterter Export
+        task: requestAsUrl
+        action: extended_export
+        active: 1
+        img:
+         - Ext_TC_Util
+         - getIcon
+         - csv
+columns:
+  -
+    title: Kundennummer
+    column: number
+    alias: tc_cn
+    data: customer_number
+    sortable: true
+    width: number
+    resize: false
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: short
+    alias: kg
+    data: group_short
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+        - group_name
+        - true
+  -
+    title: Name
+    column: customer_name
+    width: name
+    sortable: true
+    resize: true
+  -
+    title: Nationalität
+    column: nationality
+    width: name
+    sortable: true
+    resize: false
+  -
+    title: Fragebogen
+    column: questionary_name
+    width: name
+    sortable: true
+  -
+    title: Datum
+    column: answered
+    width: datetime
+    format: Ext_TC_Gui2_Format_Date_Time
+    sortable: true
+default_columns: []

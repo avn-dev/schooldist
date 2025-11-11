@@ -1,0 +1,50 @@
+.calendarSheet table {
+	margin: 10px;
+	float: left;
+	margin: 2px;
+	border-collapse: collapse;
+}
+.calendarSheet table caption {
+	font-weight: bold;
+	padding-bottom: 5px;
+}
+.calendarSheet table th,
+.calendarSheet table td {
+	height: 20px;
+	width: 20px;
+	text-align: center;
+	vertical-align: middle;
+	font-size: 11px;
+	border: 1px solid #CCC;
+}
+.calendarSheet table td.day:hover {
+	background-color: #EEE;
+    outline: 1px solid #AAA;
+}
+.calendarSheet > div {
+	clear: left;
+}
+.calendarSheet .head,
+.calendarSheet table th {
+	background-color: #F0F0F0;
+}
+.calendarSheet .dayGray {
+	color: gray;
+}
+.calendarSheet .dayToday {
+	font-weight: bold;
+	outline: 1px solid #CCC;
+}
+.calendarSheet .active {
+	background-color: #B3FFB3;
+}
+.calendarSheet .divTooltip {
+	position: absolute;
+	border: 1px solid #ccc;
+	background-color: #f7f7f7;
+	border-radius: 3px;
+   -moz-border-radius: 3px;
+   padding: 3px 4px;
+   z-index: 9999;
+   max-width: 300px;
+}

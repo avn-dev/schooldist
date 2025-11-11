@@ -1,0 +1,92 @@
+hash: 6b106c5c773436ed5d0bc7c767303a5d
+class:
+  wdbasic: Ext_Thebing_Tuition_Report
+  data: Ext_Thebing_Tuition_Report_Gui2
+  js: ReportGui
+access: thebing_tuition_overview
+id:
+  column: id
+  alias: ktr
+orderby:
+  - Ext_Thebing_Tuition_Report_Gui2  
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        id: search
+        searchtype: LIKE
+        alias:
+          - ktr
+          - ktr
+        column:
+          - id
+          - title
+  -
+    position: top
+    elements:
+     -
+      element: icon_new
+      dialog: 
+          - Ext_Thebing_Tuition_Report_Gui2  
+          - getDialog
+     -
+      element: icon_edit
+      dialog:
+          - Ext_Thebing_Tuition_Report_Gui2  
+          - getDialog
+     -
+      element: icon_delete
+columns:
+  -  
+    title: Name
+    column: title
+    alias: ktr
+    width: name
+    resize: true
+  -
+    title: Gruppierung
+    column: group_by
+    alias: ktr
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+        - [Ext_Thebing_Tuition_Report_Gui2, getGroups ]
+  -
+    title: Ausgehend von
+    column: start_with
+    alias: ktr
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+        - [Ext_Thebing_Gui2_Selection_Tuition_Report, getAllOptions ]
+  -
+    title: Aufteilung 
+    column: break
+    alias: ktr
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+        - [Ext_Thebing_Tuition_Report_Gui2, getBreaks ]
+  -
+    title: Schulen
+    column: school_id
+    data: schools
+    alias: school_settings
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]
+css:
+    - /assets/ts-reporting/css/reporting_legacy.css
+js: 
+    - [tuition/js/report.js, thebing]
+
+

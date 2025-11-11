@@ -1,0 +1,489 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("new_page");
+
+\System::wd()->executeHook('newpage', $_VARS);
+
+if(empty($_VARS['site_id'])) {
+
+	$_VARS['site_id'] = \Cms\Helper\Data::getSessionSiteId();
+	
+	if(empty($_VARS['site_id'])) {
+
+		$objWebDynamicsDAO = new \Cms\Helper\Data;
+		$aSites = (array)$objWebDynamicsDAO->getSites();
+		
+		$_VARS['site_id'] = reset(array_keys($aSites));
+		
+		\Cms\Helper\Data::setSessionSiteId($_VARS['site_id']);
+
+	}
+	
+}
+
+$oSite = \Cms\Entity\Site::getInstance($_VARS['site_id']);
+
+if($_VARS['language_np']) {
+	$my_language = $oSite->getLanguage($_VARS['language_np']);
+}
+
+\Admin_Html::loadAdminHeader("", 0, "", $my_language['charset']);
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Neue Seite erstellen', 'CMS')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<form method="post" enctype="multipart/form-data" name="formular" id="formular" class="form-horizontal">
+		<div class="box-body">
+
+<?php
+
+if($_VARS['step'] == "2") { //überprüfen, ob Dialog vollständig ausgefüllt, sonst auf step 2 mit fehlermeldungen zurückswitchen
+
+	// "einfache Fehler"
+	if(
+		$_VARS['pagetype'] == "category" && 
+		$_VARS['catname'] == ""
+	) {
+		$_VARS['step'] = "1";
+		$catname_error = L10N::t('Bitte geben Sie den Titel der neuen Kategorie an!', 'CMS');
+	}
+
+	if($_VARS['pagename'] == "") {
+		$_VARS['step'] = "1";
+		$pagename_error = L10N::t('Bitte geben Sie den Titel der neuen Seite an!', 'CMS');
+	}
+
+	// Angriffe durch Manipulation des Pfades abfangen
+	if(!empty($_VARS['where'])) {
+		$sSql = "
+			SELECT 
+				* 
+			FROM 
+				`cms_pages` 
+			WHERE 
+				`site_id` = :site_id AND 
+				(
+					`language` = '' OR
+					`language` = :language 
+				) AND 
+				`path` = :path AND 
+				`file` = 'index' AND 
+				`element` = 'page'
+		";
+		$aSql = [
+			'site_id' => $_VARS['site_id'],
+			'language' => $_VARS['language_np'],
+			'path' => $_VARS['where']
+		];
+		$aCheckDir = DB::getQueryRow($sSql, $aSql);
+		if(empty($aCheckDir)) {
+			$_VARS['step'] = "1";
+			$where_error = L10N::t('Das Verzeichnis ist nicht vorhanden!', 'CMS');
+		}
+	}
+
+	// schon mal ein bissel vorarbeit leisten, um den Dateinamen zu bestimmen:
+	if($_VARS['pagetype'] == "category") {
+		$folder_name = \Util::getCleanFileName($_VARS['catname'], $oSite->url_separator);
+		$folder_name = $_VARS['where'] . $folder_name . "/";
+		$is_index=1;
+	} else {
+		$folder_name = $_VARS['where'];
+		$is_index=0;
+	}
+
+	// den Seitennamen fürs Dateisystem bereinigen
+	$file_name = \Util::getCleanFileName($_VARS['pagename'], $oSite->url_separator);
+
+	// �berpr�fen, ob eine gleichnamige Seite schon angelegt ist
+	$my_exists = \DB::getQueryRow("SELECT * FROM cms_pages WHERE site_id = ".intval($_VARS['site_id'])." AND path='".$folder_name."' AND file='".$file_name."' AND element != 'template' AND language = '".$_VARS['language_np']."'");
+	if(!empty($my_exists)) { // Datei ist bereits in DB eingetragen
+		$_VARS['step'] = "1";
+		$pagename_error = L10N::t('An dieser Stelle existiert bereits eine Datei mit gleichem Namen!', 'CMS');
+	}
+
+	if($_VARS['pagetype'] == "category") {
+		// �berpr�fen, ob eine gleichnamige Kategorie schon angelegt ist
+		$my_exists = \DB::getQueryRow("SELECT * FROM cms_pages WHERE site_id = ".intval($_VARS['site_id'])." AND path='$folder_name' AND language = '".$_VARS['language_np']."'");
+		if(!empty($my_exists)) { // Datei ist bereits in DB eingetragen
+			$_VARS['step'] = "1";
+			$catname_error = L10N::t('An dieser Stelle existiert bereits ein Verzeichnis mit gleichem Namen!', 'CMS');
+		}
+	}
+}
+
+?>
+<script>
+function sendform() {
+	document.formular.submit();
+}
+</script>
+
+<?
+
+if($_VARS['pagetype'] == "template") {
+	$title = L10N::t('Seitenvorlage', 'CMS');
+} else {
+	$title = L10N::t('Seite', 'CMS');
+}
+
+if($_VARS['step'] == "1") {
+
+	// wenn kategorie
+	if($_VARS['pagetype'] == "category") {
+		Admin_Html::printFormText(L10N::t('Titel der Kategorie', 'CMS'), 'catname', $_VARS['catname'], null, $catname_error);
+	}
+	
+	Admin_Html::printFormText(L10N::t('Titel', 'CMS'), 'pagename', $_VARS['pagename'], null, null, $pagename_error);
+
+if($_VARS['pagetype'] != "template") {
+?>
+
+			<div class="form-group<?=((!empty($where_error))?' has-error':'')?>">
+				<label for="where" class="col-sm-2 control-label"><?=L10N::t('Erstellungsort', 'CMS')?></label>
+				<div class="col-sm-10">
+					<input type="text" id="where" name="where" readonly class="txt form-control">
+					
+<?php
+
+global $showflags, $structure, $extended, $target, $intSiteId;
+
+					$structure = "new";
+					$showlang  = "no";
+					$showflags = "no";
+					$target = "document.formular.where";
+					$extended = "on";
+					$slanguage = $_VARS['language_np'];
+					$intSiteId = intval($_VARS['site_id']);
+
+					$system_data['sitemap_start_open'] = 1;
+					$system_data['sitemap_save'] = 0;
+
+					include("./sitemap.inc.php");
+					?>
+
+					<?php
+					if(is_string($where_error)) {
+					?>
+					<span class="help-block"><?=$where_error?></span>
+					<?php
+					}
+					?>
+				</div>
+			</div>
+
+<?
+}
+
+if(
+	$_VARS['pagetype'] != "template" && 
+	$_VARS['pagetype'] != "copy"
+) {
+	
+	$aTemplates = DB::getQueryPairs("SELECT file, title FROM cms_pages WHERE element = 'template' AND active = 1 ORDER BY title");
+	
+	Admin_Html::printFormSelect(L10N::t('Seitenvorlage', 'CMS'), 'template', $aTemplates, $_VARS['template']);
+
+	if(!$_VARS['type']) {
+		$_VARS['type'] = "page"; 
+	}
+		
+	Admin_Html::printFormSelect(L10N::t('Seitentyp', 'CMS'), "type", $admin_data['elements'], $_VARS['type']);
+
+} elseif($_VARS['pagetype'] == "copy") {
+
+	$arrPageSelectOptions = array('site_id'=>$_VARS['site_id'], 'value_type'=>1);
+
+	Admin_Html::printFormPageSelect(L10N::t('Kopie von Seite', 'CMS'), "idPage", 0, $arrPageSelectOptions);
+
+} elseif($_VARS['pagetype'] == "template") {
+	
+	$aTemplates = (array)DB::getQueryPairs("SELECT file, title FROM cms_pages WHERE element = 'template' ORDER BY title");
+	$aTemplates = array_merge([0=>'Keine'], $aTemplates);
+	Admin_Html::printFormSelect(L10N::t('Übergeordnete Vorlage', 'CMS'), "where", $aTemplates, $_VARS['where']);
+
+} 
+
+?>
+
+<input type="hidden" name="site_id" value="<?=intval($_VARS['site_id'])?>" />
+<input type="hidden" name="step" value="2" />
+<input type="hidden" name="pagetype" value="<?=$_VARS['pagetype']?>" />
+<?
+if($_VARS['pagetype'] != "template") { 
+?>
+<input type=hidden value="<? echo $_VARS['language_np']; ?>" name="language_np" />
+<? 
+} else { 
+?>
+<input type=hidden value="template" name="type" />
+<?
+}
+?>
+
+	</div>
+	<div class="box-footer">
+		<button type="submit" onclick="sendform(); return false;" class="btn btn-primary pull-right"><?=L10N::t('Erstellen', 'CMS')?></button>
+		<button type="button" onclick="history.back(); return false;" class="btn btn-default"><?=L10N::t('Zurück', 'CMS')?></button>
+	</div>
+
+<?
+
+} elseif ($_VARS['step'] == "2") {
+
+	if($_VARS['pagetype'] != "copy") {
+
+		//level bestimmen
+		$arr = explode("/",$folder_name);
+		$level = count($arr);
+
+		// Individuellen Inhalt importieren
+		if($individuell_name) {
+
+			$file = implode("",file($individuell));
+			// body-bereich ausschneiden, wenn es einen vollst�ndigen gibt
+			$begin=strpos('#'.$file, "<body");
+			if(!$begin)
+			 	$begin=strpos('#'.$file, "<BODY");
+			if($begin) {
+				$begin=strpos($file, '>', $begin-1);
+				$end=strpos($file, '</body', $begin);
+				if(!$end)
+					$end=strpos($file, "</BODY", $begin);
+				if($end>$begin)
+					$file=substr($file, $begin+1, $end-$begin-1);
+			}
+			$content=$file;
+		} else {
+			$content= "Hier können Sie Ihre Inhalte einfügen.";
+		}
+
+		// ein Template hat kein Template (keine rekursionen oder aufrufketten!)
+		if($_VARS['type'] == "template") {
+
+			Access_Backend::checkAccess('pagetemplates');
+
+			$_VARS['template'] = "<#content001#>";
+			$window = "normal";
+			$level = 0;
+		} else {
+			if($_VARS['type'] == "popup")			$window = "popup";
+			else if($_VARS['type'] == "fullscreen")	$window = "fullscreen";
+			else							$window = "normal";
+		}
+
+		// Kategorie eintragen
+		if(
+			$_VARS['pagetype'] == "category"
+		) {	// Index eintragen
+			
+			Access_Backend::checkAccess('edit_add_category');
+			
+			$data = array(	
+				'path' =>	(string)$folder_name,
+				'file' =>		'index',
+				'site_id' =>	intval($_VARS['site_id']),
+				'element' =>	'page',
+				'active' =>		'1',
+				'author' =>		$user_data['id'],
+				'template' =>	'',
+				'title' =>		$_VARS['catname'],
+				'language' =>	(string)$_VARS['language_np'],
+				'css'		=>	'styles.css',
+				'level' =>		$level,
+				'position' => System::d('insertposition'),
+				'menue' =>	    '1',
+				'indexpage' =>	'0',
+				'stats' =>	'1',
+				'created' => date("YmdHis")
+			);
+			$cat_id = DB::insertData("cms_pages", $data);
+			enterlog($cat_id, \Cms\Helper\Log::LOG_CATEGORIE_CREATED);
+		}
+
+		// Seite eintragen
+		$data = array(	
+			'path' =>		(string)$folder_name,
+			'file' =>		$file_name,
+			'site_id' =>	intval($_VARS['site_id']),
+			'element' =>	$_VARS['type'],
+			'layout' =>		'block',
+			'active' =>		'0',
+			'author' =>		$user_data['id'],
+			'template' =>	$_VARS['template'],
+			'title' =>		$_VARS['pagename'],
+			'language' =>	(string)$_VARS['language_np'],
+			'css'		=>	'styles.css',
+			'level' =>		$level,
+			'position' => System::d('insertposition'),
+			'menue' =>	    '1',
+			'indexpage' =>	$is_index,
+			'stats' =>	'1',
+			'created' => date("YmdHis")
+		);
+		$page_id = DB::insertData("cms_pages", $data);
+
+		if(
+			$_VARS['pagetype'] == "category" || 
+			$_VARS['pagetype'] == "page"
+		) {
+			enterlog($page_id, \Cms\Helper\Log::LOG_PAGE_CREATED);
+		} elseif(
+			$_VARS['pagetype'] == "template"
+		) {
+			enterlog($page_id, \Cms\Helper\Log::LOG_TEMPLATE_CREATED);
+		}
+
+	// Seitenkopie erstellen
+	} else {
+
+		$page_id = copyPage($_VARS['idPage'], $_VARS['language_np'], $folder_name, $file_name, $_VARS['pagename'], $_VARS['site_id']);
+		enterlog($page_id, \Cms\Helper\Log::LOG_PAGE_COPY);
+
+	}
+
+	if(!empty($cat_id)) {
+		$oNewCategory = \Cms\Entity\Page::getInstance($cat_id);
+		$oNewCategory->setLevel();
+		$oNewCategory->save();
+	}
+	
+	$oNewPage = \Cms\Entity\Page::getInstance($page_id);
+	$oNewPage->setLevel();
+	$oNewPage->save();
+
+	// Routen aktualisieren
+	$oRoutingService = new \Core\Service\RoutingService();
+	$bSuccess = $oRoutingService->buildRoutes();
+
+?>
+			<div class="alert alert-success"><?=$title?> <?=L10N::t('erfolgreich erstellt!', 'CMS')?></div>
+
+	</div>
+	<div class="box-footer">
+		<button type="submit" onclick="document.location.href = '<?=$_VARS['PHP_SELF']?>'; return false;" class="btn btn-primary pull-right"><?=L10N::t('Weitere Seite anlegen', 'CMS')?></button>
+		<button type="button" onclick="history.back(); return false;" class="btn btn-default"><?=L10N::t('Zurück', 'CMS')?></button>
+	</div>
+
+<script>
+if(
+	parent &&
+	parent.Page
+) {
+	parent.Page.loadStructure();
+}
+</script>
+<?
+
+} else {
+
+	$objWebDynamicsDAO = new \Cms\Helper\Data;
+
+	$aSites = (array)$objWebDynamicsDAO->getSites();
+	
+	foreach($aSites as $iSiteId=>&$aSite) {
+		$aSite = $aSite['name'];
+	}
+
+	Admin_Html::printFormSelect(L10N::t("Internetauftritt", 'CMS'), "site_id", $aSites, $_VARS['site_id'], 'onchange="this.form.step.value=0; this.form.submit();"');
+
+?>
+
+						<div class="form-group">
+							<label class="col-sm-2 control-label"><?=L10N::t("Erstellungssprache", 'CMS')?></label>
+							<div class="col-sm-10">
+<?php
+$oSite = \Cms\Entity\Site::getInstance($_VARS['site_id']);
+$arrLanguages = $oSite->getLanguages();
+
+$i=0;
+$checked='checked="checked"';
+foreach($arrLanguages as $arrLanguage) {
+?>
+								<div class="radio">
+								  <label for="<?=$arrLanguage['code']?>">
+									<input type="radio" name="language_np" value="<?=$arrLanguage['code']?>" id="<?=$arrLanguage['code']?>" <?=$checked?>/>
+									<?=$arrLanguage['name']?>
+								  </label>
+								</div>
+<?php
+	$checked='';
+	$i++;
+}
+?>
+
+								<div class="radio">
+								  <label for="all">
+									<input type="radio" name="language_np" value="" id="all" />
+									<?=L10N::t('Sprachübergreifende Seite', 'CMS')?>
+								  </label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="col-sm-2 control-label"><?=L10N::t("Seitentyp", 'CMS')?></label>
+							<div class="col-sm-10">
+								<div class="radio">
+								  <label for="page">
+									<input type="radio" name="pagetype" value="page" id="page" checked="checked" />
+									<?=L10N::t("Seite in vorhandener Kategorie erstellen", 'CMS')?>
+								  </label>
+								</div>
+								<div class="radio">
+								  <label for="copy">
+									<input type="radio" name="pagetype" value="copy" id="copy" />
+									<?=L10N::t('Kopie einer vorhandenen Seite erstellen') ?>
+								  </label>
+								</div>
+<?
+	if(hasRight('edit_add_category')) {
+?>
+						 
+							<div class="radio">
+							  <label for="category">
+								<input type="radio" name="pagetype" value="category" id="category" />
+								<?=L10N::t("Seite in neuer Kategorie anlegen", 'CMS')?>
+							  </label>
+							</div>
+<?
+	}
+	if(hasRight('pagetemplates')) {
+?>
+							<div class="radio">
+								<label for="template">
+									<input type="radio" name="pagetype" value="template" id="template" />
+									<?=L10N::t("Neue Seitenvorlage erstellen", 'CMS')?>
+								</label>
+							</div>
+<?
+	}
+?>
+						</div>
+					</div>
+
+				</div>		
+				<div class="box-footer">
+					<button type="submit" onclick="sendform(); return false;" class="btn btn-primary pull-right"><?=L10N::t('Weiter', 'CMS')?></button>
+				</div>
+				<input type="hidden" value="1" name="step" />
+			</form>
+<?
+}
+?>
+
+		</div>
+	</section>
+<?php
+
+$sAdditional = "<script>parent.Page.hideActions();</script>";
+
+Admin_Html::loadAdminFooter($sAdditional);
+?>

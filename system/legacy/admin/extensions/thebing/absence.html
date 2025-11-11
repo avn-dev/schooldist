@@ -1,0 +1,490 @@
+<?php
+
+$sWdBasic = 'Ext_Thebing_Absence';
+
+if(
+	isset($_VARS) && 
+	isset($_VARS['item'])
+) {
+	$sVarItem = $_VARS['item'];
+} elseif(isset($_REQUEST['item'])) {
+	$sVarItem = $_REQUEST['item'];
+} else {
+	$sVarItem = null;
+}
+
+if($sVarItem == 'holiday') {
+	// Schulferien
+	include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+	Ext_Thebing_Access::accesschecker("thebing_marketing_school_holidays");
+
+	$_VARS['item'] = $_SESSION['thebing']['absence']['item'] = $_GET['item'];
+	$sL10NDescription = 'Thebing » Marketing » School Holiday';
+
+	$sItemKey = 'thebing_school_holidays';
+	$sGuiHash = md5($sItemKey);
+	$sItem = $_SESSION['thebing']['absence'][$sGuiHash]['item'] = 'holiday';
+
+
+	$aItems		= array();
+
+	$sItemLabel = 'Schule';
+
+	$bShowHeadline = false;
+
+} elseif($sVarItem == 'accommodation') {
+	// Unterkunft abwesenheit
+
+	Ext_Thebing_Access::accesschecker("thebing_accommodation_accommodations");
+
+	$_SESSION['thebing']['absence']['item']  = $_VARS['item'];
+
+	// Datei wird includiert!
+	$sL10NDescription = $sDescription;
+	$sItemKey = 'thebing_absence_accommodation';
+	$sGuiHash = md5($sItemKey);
+	$sItem = $_SESSION['thebing']['absence'][$sGuiHash]['item'] = 'accommodation';
+
+	$oSchool = Ext_Thebing_School::getSchoolFromSession();
+	$aItems = array();
+
+	$sItemLabel = 'Unterkunft';
+
+	$bShowHeadline = false;
+
+} else {
+	// Lehrer Abwesenheit
+	include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+	Ext_Thebing_Access::accesschecker("thebing_tuition_resource_teachers_absence");
+
+	$_SESSION['thebing']['absence']['item']  = 'teacher';
+
+	$sL10NDescription = 'Thebing » Tuition » Teachers » Absence';
+
+	$sItemKey = 'thebing_absence_teacher';
+	$sGuiHash = md5($sItemKey);
+	$sItem = $_SESSION['thebing']['absence'][$sGuiHash]['item'] = 'teacher';
+
+	$oSchool = Ext_Thebing_School::getSchoolFromSession();
+	$aItems = $oSchool->getTeacherList(true);
+
+	$sItemLabel = 'Lehrer';
+
+	$bShowHeadline = false;
+}
+
+/* ==================================================================================================== */
+
+$aCategories		= Ext_Thebing_Absence_Category::getList();
+$aCategoriesSelect	= Ext_Thebing_Absence_Category::getList(false);
+$aCategoriesSelect	= Ext_Thebing_Util::convertArrayForSelect($aCategoriesSelect);
+
+if($_VARS['item'] == 'holiday'){
+	$aCategoriesSelect	= Ext_Thebing_Absence_Category::getList(true);
+	$aCategoriesSelect	= Ext_Thebing_Util::convertArrayForSelect($aCategoriesSelect);
+	$aCategoriesSelect = array(-2 => $aCategoriesSelect[-2]);
+}
+/* ==================================================================================================== */
+
+$aYears = $aMonths = array();
+
+$oDate = new WDDate(time());
+$oDate->set(1, WDDate::DAY);
+	
+for($i = date('Y') - 3; $i <= date('Y') + 2; $i++) {
+	$aYears[$i] = $i;
+}
+for($i = 1; $i <= 12; $i++) {
+	$oDate->set($i, WDDate::MONTH);
+	$aMonths[$i] = strftime('%B', $oDate->get(WDDate::TIMESTAMP));
+}
+
+/* ==================================================================================================== */
+
+$sParams = '';
+$sParams .= '<link rel="stylesheet" href="/admin/extensions/gui2/simple-dialog.css" />';
+$sParams .= '<link rel="stylesheet" href="/admin/extensions/gui2/gui2.css" />';
+$sParams .= '<link rel="stylesheet" href="/assets/gui/css/gui2.css" />';
+$sParams .= '<link rel="stylesheet" href="/admin/js/calendar/calendar.css" />';
+$sParams .= '<link rel="stylesheet" href="/admin/extensions/thebing/css/ac.css" />';
+$sParams .= '<link rel="stylesheet" href="/assets/ts/css/gui2.css" />';
+
+$sParams .= '<link rel="stylesheet" href="/admin/extensions/thebing/css/absence.css" />';
+
+$sParams .= '';
+$sParams .= '<style type="text/css">body { overflow:hidden; scroll:no-scroll; }</style>';
+
+$sParams .= '
+
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/jquery-ui.min.css" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/jquery-ui.structure.min.css" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/jquery-ui.theme.min.css" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/ui.multiselect.css" />';
+
+$aParams = array('additional' => $sParams, 'xhtml'=>true);
+$iSessionSchoolId = \Core\Handler\SessionHandler::getInstance()->get('sid');
+		
+
+		$oInnerGui = new Ext_Thebing_Gui2($sGuiHash, 'Ext_Thebing_Absence_Gui2');
+		$oInnerGui->query_id_column		= 'id';
+		$oInnerGui->query_id_alias		= '';
+		//$oInnerGui->foreign_key			= 'item_id';
+		$oInnerGui->foreign_key_alias	= '';
+		//$oInnerGui->parent_hash			= $oGui->hash;
+		$oInnerGui->parent_primary_key	= 'id';
+		$oInnerGui->load_admin_header	= false;
+		$oInnerGui->multiple_selection  = false;
+		$oInnerGui->calendar_format		= new Ext_Thebing_Gui2_Format_Date();
+
+		$oInnerGui->include_jquery				= true;
+		$oInnerGui->include_jquery_multiselect	= true;
+
+		$oInnerGui->class_js			= 'Absence';
+
+		$oInnerGui->setWDBasic($sWdBasic);
+		$oInnerGui->setTableData('limit', 30);
+		$oInnerGui->setTableData('where', array('school_id'=>(int)$iSessionSchoolId, 'active'=>1, 'item'=>$sItem));
+
+		/**
+		 * New Dialog
+		 */
+
+		$oInnerDialog = $oInnerGui->createDialog($oInnerGui->t('Abwesenheit eintragen'), $oInnerGui->t('Abwesenheit eintragen'));
+
+		$oInnerDialog->setElement($oInnerDialog->createRow(L10N::t($sItemLabel, $oInnerGui->gui_description), 'select', array(
+			'db_column'			=> 'item_id',
+			'multiple'			=> 5,
+			'jquery_multiple'	=> 1, 
+			'searchable'		=> true,
+			'required'			=> 1,
+            'inputdiv_style'    => 'width: 100%;',
+			'selection'			=> new Ext_Thebing_Gui2_Selection_Absence()
+		)));
+
+		$oInnerDialog->setElement($oInnerDialog->createRow(L10N::t('Kategorie', $oInnerGui->gui_description), 'select', array(
+			'db_column'			=> 'category_id',
+			'select_options'	=> $aCategoriesSelect
+		)));
+		$oInnerDialog->setElement($oInnerDialog->createRow(L10N::t('Startdatum', $oInnerGui->gui_description), 'calendar', array(
+			'db_column'			=> 'from',
+			'format'			=> new Ext_Thebing_Gui2_Format_Date(),
+			'events' => array(
+				array(
+					'function'	=> 'calculateUntil',
+					'event'		=> 'keyup'
+				)
+			)
+		)));
+		$oInnerDialog->setElement($oInnerDialog->createRow(L10N::t('Anzahl an Tagen', $oInnerGui->gui_description), 'input', array(
+			'db_column'			=> 'days',
+			'events' => array(
+				array(
+					'function'	=> 'calculateUntil',
+					'event'		=> 'keyup'
+				)
+			)
+		)));
+		$oInnerDialog->setElement($oInnerDialog->createRow(L10N::t('Enddatum', $oInnerGui->gui_description), 'calendar', array(
+			'db_column'			=> 'until',
+			'format'			=> new Ext_Thebing_Gui2_Format_Date(),
+			'events' => array(
+				array(
+					'function'	=> 'calculateDays',
+					'event'		=> 'keyup'
+				)
+			)
+		)));
+		$oInnerDialog->setElement($oInnerDialog->createRow(L10N::t('Kommentar', $oInnerGui->gui_description), 'textarea', array(
+			'db_column'			=> 'comment'
+		)));
+
+		$oInnerDialog->width = 900;
+		$oInnerDialog->height = 500;
+		$oInnerDialog->aOptions['close_after_save'] = true;
+
+		/**
+		 * Edit Dialog
+		 */
+
+		$sDialogTitle = 'Abwesenheit von "{name}" bearbeiten';
+		if($_VARS['item'] == 'accommodation') {
+			$sDialogTitle = 'Abwesenheit bearbeiten';
+		}elseif($_VARS['item'] == 'holiday'){
+			$sDialogTitle = 'Schulferien bearbeiten';
+		}
+
+		$oEditDialog = $oInnerGui->createDialog($oInnerGui->t($sDialogTitle), $oInnerGui->t($sDialogTitle));
+
+		$oEditDialog->setElement($oEditDialog->createRow(L10N::t('Kategorie', $oInnerGui->gui_description), 'select', array('db_column'=>'category_id', 'select_options'=>$aCategoriesSelect)));
+		$oEditDialog->setElement($oEditDialog->createRow(L10N::t('Startdatum', $oInnerGui->gui_description), 'calendar', array('db_column' => 'from','format' => new Ext_Thebing_Gui2_Format_Date(),
+			'events' => array(
+				array(
+					'function'	=> 'calculateUntil',
+					'event'		=> 'keyup'
+				)
+			)
+		)));
+		$oEditDialog->setElement($oEditDialog->createRow(L10N::t('Anzahl an Tagen', $oInnerGui->gui_description), 'input', array(
+			'db_column'=>'days',
+			'events' => array(
+				array(
+					'function'	=> 'calculateUntil',
+					'event'		=> 'keyup'
+				)
+			)
+		)));
+		$oEditDialog->setElement($oEditDialog->createRow(L10N::t('Enddatum', $oInnerGui->gui_description), 'calendar', array(
+			'db_column'=>'until',
+			'format' => new Ext_Thebing_Gui2_Format_Date(),
+			'events' => array(
+				array(
+					'function'	=> 'calculateDays',
+					'event'		=> 'keyup'
+				)
+			)
+		)));
+		$oEditDialog->setElement($oEditDialog->createRow(L10N::t('Kommentar', $oInnerGui->gui_description), 'textarea', array('db_column'=>'comment')));
+
+		$oEditDialog->width = 900;
+		$oEditDialog->height = 500;
+
+		$aButton = array(
+			'label'			=> L10N::t('Löschen', $oInnerGui->gui_description),
+			'task'			=> 'deleteRow',
+			'action'		=> 'closeDialog'
+		);
+		
+		$oEditDialog->aButtons = array($aButton);
+
+		# START - Leiste 2 #
+		$oBar = $oInnerGui->createBar();
+		$oBar->width = '100%';
+
+		$oIcon = $oBar->createNewIcon(
+								'',
+								$oInnerDialog,
+								''
+							);
+		$oBar ->setElement($oIcon);
+
+		$oIcon = $oBar->createEditIcon(
+								'',
+								$oEditDialog,
+								''
+							);
+		$oBar ->setElement($oIcon);
+
+		$oInnerGui->setBar($oBar);
+		# ENDE - Leiste 2 #
+
+		ob_start();
+		$oInnerGui->display();
+		$aBarList = $oInnerGui->getBarList();
+		foreach((array)$aBarList as $iKey => $oBar){
+			$oBar->getRequestBarData(array(), $aData['body'], $oInnerGui);
+		}
+		$oInnerGui->save();
+		ob_end_clean();
+		
+		if($_VARS['item'] != 'accommodation') {
+			Admin_Html::loadAdminHeader($aParams, strBody: 'data-mode="light"', tailwind: true);
+		}
+
+?>
+
+<style type="text/css">
+<?php
+	foreach((array)$aCategories as $aCategory) {
+?>
+	.c<?=$aCategory['id']?> {
+		background-color: <?=$aCategory['color']?>;
+	}
+<?php
+	}
+?>
+</style>
+
+<script type="text/javascript">
+
+	var sGuiHash = '<?=$sGuiHash?>';
+
+	if(!aGUI){
+		var aGUI = [];
+	}
+
+	function initAbsencePage() {
+		
+		var sParentGuiHash = '<?=($_VARS['parent_hash'] ?? '')?>';
+		
+		aGUI['<?=$sGuiHash?>'] = new Absence('<?=$sGuiHash?>', 1);
+		aGUI['<?=$sGuiHash?>'].instance_hash = '<?=$oInnerGui->instance_hash?>';
+		aGUI['<?=$sGuiHash?>'].sLanguage = '<?=\System::getInterfaceLanguage()?>';
+
+		if(sParentGuiHash != "") {
+
+			var sJsonPageData = '{"config":{"height":50}}';
+			aGUI['<?=$sGuiHash?>'].aPageData = sJsonPageData.evalJSON();
+			aGUI['<?=$sGuiHash?>'].sParentGuiHash = sParentGuiHash;
+
+			var oParentGui = aGUI[sParentGuiHash];
+
+			oParentGui.aChildGuiHash[oParentGui.aChildGuiHash.length] = '<?=$sGuiHash?>';
+
+		} else {
+			aGUI['<?=$sGuiHash?>'].resize();
+		}
+
+<?
+if($_VARS['item'] != 'accommodation') {
+?>
+		sAbsenceHash = '<?=$sGuiHash?>';
+		loadAbsencesList();
+		aGUI['<?=$sGuiHash?>'].request('&task=translations');
+<?
+} else {
+	?>
+		sAbsenceHash = '<?=$sGuiHash?>';
+		aGUI['<?=$sGuiHash?>'].request('&task=translations');
+		aGUI['<?=$sGuiHash?>'].sParentGuiHash = '<?=$oGuiAccommodation->hash?>';
+	<?
+}
+?>
+	}
+
+</script>
+
+<div>
+    <div class="divHeader clearfix" id="divAbsenceHeader_<?=$sGuiHash?>">
+        <?
+        if($bShowHeadline) {
+            ?>
+            <h1><?=Ext_TS_System_Navigation::t();?></h1>
+            <?
+        }
+
+        if($_VARS['item'] == 'accommodation')
+        {
+            ?>
+            <style type="text/css">
+                .guiScrollBody {
+                    overflow-x: auto;
+                }
+            </style>
+            <script type="text/javascript">
+                var bGlobalLocation = 'accommodation';
+            </script>
+            <?
+
+        }
+
+        ?>
+        <div>
+
+            <div style="width: 100%; height: 36px;" class="divToolbar form-inline" id="divToolbar_0">
+                <div class="grow">
+                    <div class="elements-container">
+
+                        <label class="divToolbarLabelGroup"><?=L10N::t('Filter', $sL10NDescription)?></label>
+
+                        <div class="guiBarFilter">
+                            <select id="filter_month" class="txt form-control input-sm" onchange="prepareLoadAbsencesList();">
+                                <? foreach((array)$aMonths as $iKey => $sMonth) { ?>
+                                    <option value="<?=$iKey?>" <? if(date('m') == $iKey) { ?>selected="selected"<? } ?>><?=$sMonth?></option>
+                                <? } ?>
+                            </select>
+                        </div>
+                        <div class="guiBarFilter">
+                            <select id="filter_year" class="txt form-control input-sm" onchange="prepareLoadAbsencesList();">
+                                <? foreach((array)$aYears as $iYear) { ?>
+                                    <option value="<?=$iYear?>" <? if(date('Y') == $iYear) { ?>selected="selected"<? } ?>><?=$iYear?></option>
+                                <? } ?>
+                            </select>
+                        </div>
+
+                        <div class="divToolbarIcon">
+                            <img height="16" width="1" alt="" src="/admin/media/spacer.gif">
+                            <img style="display: none;" alt="" src="/admin/media/indicator.gif" id="loading_indicator">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="divCleaner"></div>
+        </div>
+    </div>
+
+    <div class="divBody" id="divDays">
+        <div id="guiTableHead_<?=$sGuiHash?>" style="overflow:hidden;">
+            <table id="tblTableHead" class="tblAbsences">
+                <thead>
+                <tr>
+                    <td id="teacher_column_head">&nbsp;</td>
+                    <th id="1_Month">&nbsp;</th>
+                    <th id="2_Month">&nbsp;</th>
+                    <th id="3_Month">&nbsp;</th>
+                </tr>
+                <tr id="daysHeader">
+                    <td>&nbsp;</td>
+                    <td class="monthDays">&nbsp;</td>
+                    <td class="monthDays">&nbsp;</td>
+                    <td class="monthDays">&nbsp;</td>
+                </tr>
+                </thead>
+            </table>
+        </div>
+        <div id="guiScrollBody" class="guiScrollBody">
+            <div id="guiScrollBodyContainer" style="overflow:hidden;">
+                <table id="tblScrollBody" class="tblAbsences">
+                    <tbody id="tblAbsences"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="divFooter" id="divFooter_<?=$sGuiHash?>">
+        <div id="guiTableBarsBottom">
+            <div style="width: 100%; height: 26px;" class="divToolbar" id="divToolbar_1">
+                <div class="guiBarElement">
+                    <div class="divToolbarHtml">
+                        <?
+                        foreach((array)$aCategories as $aCategory) {
+                            $oStyle = new Ext_Gui2_View_Style_Color();
+                            $sStyle = $oStyle->getStyle($aCategory['color'], $oDummy, $aDummy);
+                            echo '<div style="float:left; margin: 0 2px 0 2px; padding: 0 2px; width:100px; text-align:center; border: 1px solid #CCC;'.$sStyle.'">'.  \Util::convertHtmlEntities($aCategory['name']).'</div>';
+                        }
+                        ?>
+                        <div class="divCleaner"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="divCleaner"></div>
+    </div>
+</div>
+
+<?
+if($_VARS['item'] != 'accommodation') {
+
+	$sAdditional = '
+		<script>
+			jQuery.fn.bootstrapDatePicker = jQuery.fn.datepicker.noConflict();
+			jQuery.fn.bootstrapTooltip = jQuery.fn.tooltip.noConflict();
+		</script>
+		<script type="text/javascript" src="/admin/extensions/gui2/simple-dialog.js"></script>
+		<script type="text/javascript" src="/admin/extensions/gui2/gui2.js"></script>
+		<script type="text/javascript" src="/admin/extensions/tc/gui2/gui2.js"></script>
+		<script type="text/javascript" src="/admin/extensions/thebing/gui2/util.js"></script>
+		<script type="text/javascript" src="/admin/extensions/thebing/js/absence.js"></script>
+		<script type="text/javascript" src="/admin/extensions/thebing/absence/js/gui2.js"></script>
+	    <script src="/assets/adminlte/components/jquery-ui/jquery-ui.min.js"></script>
+	    <script src="/admin/extensions/gui2/jquery/ui/ui.multiselect.js"></script>
+		<script>
+			initAbsencePage();
+		</script>';
+
+	Admin_Html::loadAdminFooter($sAdditional);
+}
+?>

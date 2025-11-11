@@ -1,0 +1,174 @@
+<?php
+
+//Module wahlweise einem ausgewählten Kurs zuweisen
+require_once(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_tuition_resources_modules");
+
+//Daten
+$oSchool			= Ext_Thebing_School::getSchoolFromSession();
+$iSchoolId			= $oSchool->id;
+$aSchoolLanguages	= $oSchool->getLanguageList(true);
+$sInterfaceLanguage = $oSchool->getInterfaceLanguage();
+
+$oGui = new Ext_Thebing_Gui2(md5('thebing_tuition_resources_modules'), 'Ext_Thebing_Tuition_Module_Gui2');  //append helper class if required!
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+
+$oData	= $oGui->getDataObject(); // Tabulator #no 2
+
+$oGui->setWDBasic('Ext_Thebing_Tuition_Module');
+$oGui->setTableData('where', array('school_id' => (int)$iSchoolId, 'active' => 1));
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('name_'.$sInterfaceLanguage => 'ASC'));
+
+$oGui->setOption('interface_language', $sInterfaceLanguage); //hiermit werden Variablen/Objekte dem GUI Objekt mitgeteilt!!
+$oGui->setOption('school_languages', $aSchoolLanguages);
+
+//Dialog
+$sName = $oGui->t('Modul "{name}" bearbeiten');
+$sName = str_replace("{name}", "{name_".$sInterfaceLanguage."}", $sName);
+
+$oDialog = $oGui->createDialog($sName, $oGui->t('Modul anlegen')); //todo
+$oDialog->width = 700;
+$oDialog->height = 300;
+
+
+//erster Reiter des Dialogfensters (Module anlegen)
+$oTab = $oDialog->createTab($oGui->t("Eigenschaften"));
+
+
+$aSearchFields = array();
+
+if(!empty($aSchoolLanguages))
+{
+	foreach((array)$aSchoolLanguages as $sCode	=>	$sLanguage)
+	{
+		$oTab->setElement($oDialog->createRow($oGui->t("Name"). ' ('.$sLanguage.')', 'input', array(
+			'db_alias'	=>	'ktm',
+			'db_column'	=>	'name_' . $sCode,
+			'required'	=>	1
+		)));
+		$aSearchFields[] = 'name_' . $sCode;
+	}
+}
+
+$oTab->setElement($oDialog->createRow(
+		$oGui->t('Lektionen pro Woche'),
+			'input',
+			array(
+				'db_column'=> 'courses_per_week',
+				'db_alias'=> 'ktm',
+				'format'=>new Ext_Thebing_Gui2_Format_Float()
+			))
+		);
+
+$oTab->setElement($oDialog->createRow(
+		$oGui->t('Maximale Schüleranzahl'),
+			'input',
+			array(
+				'db_column'=> 'max_students',
+				'db_alias'=> 'ktm',
+				'format'=>new Ext_Thebing_Gui2_Format_Int()))
+		);
+
+$oTab->setElement($oDialog->createRow(
+		$oGui->t('Dauer einer Lektion'),
+			'input',
+			array('db_column'=> 'courses_duration',
+				'db_alias'=> 'ktm',
+				'format'=>new Ext_Thebing_Gui2_Format_Int()))
+		);
+
+
+$oDialog->setElement($oTab);
+
+
+//zweiter Tab ( Niveau/s einem bestimmten Modul zuweisen )
+
+$oTab = $oDialog->createTab($oGui->t('Niveaus'));
+$oTab->setElement($oData->getLevelGui());
+$oDialog->setElement($oTab);
+
+
+//todo: niveau anticken (checkbox und dann einen neuen Reiter innerhalb des aktives Fensters aufmachen)
+//$oDialog->setElement($oDialog->createRow($oGui->t('Lektionsniveau'), 'checkbox' , array('db_column' => '', 'db_alias' => '')  ));
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+//Suchfeld
+
+$oFilter = $oBar->createFilter();  // how to set second db for filter ?
+$oFilter->db_column   = $aSearchFields;  // which tables and columns should be affected?
+$oFilter->db_operator = 'LIKE';
+$oFilter->id		  = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+
+//Aktionen (Anlegen/Edit/Löschen) werden weitere benötigt?
+
+$oIconNew	 = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oIconEdit	 = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oIconDelete = $oBar->createDeleteIcon($oGui->t('Löschen'),$oGui->t('Löschen'));
+
+$oBar->setElement($oIconNew);
+$oBar->setElement($oIconEdit);
+$oBar->setElement($oIconDelete);
+
+$oGui->setBar($oBar);
+
+//Paginator
+$oBar							= $oGui->createBar();
+$oBar->width					= '100%';
+$oBar->position					= 'top';
+$oPagination					= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading                       = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+//Columns
+$oColumn					 = $oGui->createColumn();
+$oColumn->db_column		  	 = 'name_'.$sInterfaceLanguage;
+$oColumn->title			  	 = $oGui->t('Name');
+$oColumn->width				 = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize			= true;
+$oGui->setColumn($oColumn);
+
+$oColumn					= $oGui->createColumn();
+$oColumn->db_column			= 'courses_per_week';
+$oColumn->title				= $oGui->t('Lektionen pro Woche');
+$oColumn->width				= Ext_Thebing_Util::getTableColumnWidth('number');
+$oColumn->small				= true;
+$oColumn->format			= new Ext_Thebing_Gui2_Format_Float();
+$oGui->setColumn($oColumn);
+
+$oColumn					= $oGui->createColumn();
+$oColumn->db_column			= 'max_students';
+$oColumn->title				= $oGui->t('Max. Schüleranzahl');
+$oColumn->width				= Ext_Thebing_Util::getTableColumnWidth('number');
+$oColumn->small				= true;
+$oColumn->format			= new Ext_Thebing_Gui2_Format_Int();
+$oGui->setColumn($oColumn);
+
+$oColumn					= $oGui->createColumn();
+$oColumn->db_column			= 'courses_duration';
+$oColumn->title				= $oGui->t('Dauer Lektionen');
+$oColumn->width				= Ext_Thebing_Util::getTableColumnWidth('number');
+$oColumn->width_resize		= false;
+$oColumn->format			= new Ext_Thebing_Gui2_Format_Int();
+
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+$oGui->display();
+
+?>

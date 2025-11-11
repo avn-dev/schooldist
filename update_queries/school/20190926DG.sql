@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_attendance` ADD `excused` BIT(7) NOT NULL DEFAULT b'0' AFTER `so`;

@@ -1,0 +1,43 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sAccess = "thebing_pickup_confirmation";
+Ext_Thebing_Access::accesschecker($sAccess);
+
+$sGuiDescription = 'Thebing » Pickup » Confirmation';
+
+$sView = 'transfer';
+
+include_once(Util::getDocumentRoot()."system/legacy/admin/extensions/thebing/students/basic.php");
+
+$oGui->name = 'ts_transfer';
+$oGui->sum_row_columns = array();
+$oGui->multiple_selection = 1;
+$oGui->encode_data = array('inquiry_transfer_id', 'transfer_inquiry_id');
+$oGui->encode_data_id_field = 'transfer_inquiry_id';
+$oGui->setOption('decode_inquiry_id_additional_documents', 'transfer_inquiry_id');
+$oGui->setOption('only_documents_from_same_gui', true);
+$oGui->setOption('selected_object_from_encoded_data', 'accommodation');
+$oGui->setOption('communication_model_class', \Ext_TS_Inquiry_Journey_Transfer::class);
+$oGui->setOption('communication_encode_model_id', 'inquiry_transfer_id');
+$oGui->sSection = '';
+$oGui->additional_sections = [[
+	'section' => 'student_record',
+	'primary_key' => 'transfer_inquiry_id'
+]];
+
+$oInquiryAdditionalDocuments = new Ext_Thebing_Inquiry_Document_Additional();
+$oInquiryAdditionalDocuments->add_label_group = false;
+$oInquiryAdditionalDocuments->icons_bar_position = 2;
+$oInquiryAdditionalDocuments->add_label_group = true;
+$oInquiryAdditionalDocuments->use_template_type = 'document_transfer_additional_pdf';
+$oInquiryAdditionalDocuments->access_document_edit = 'thebing_pickup_confirmation_documents';
+$oInquiryAdditionalDocuments->access_document_open = 'thebing_pickup_confirmation_display_pdf';
+$oInquiryAdditionalDocuments->icon_status_active = $oGui->row_icon_status_active;
+$oInquiryAdditionalDocuments->allow_multiple = $oGui->multiple_selection;
+$oInquiryAdditionalDocuments->corresponding_language_column = false;
+
+$oGui->addAdditionalDocumentsOptions($oInquiryAdditionalDocuments);
+
+$oGui->display();

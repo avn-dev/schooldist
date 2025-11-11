@@ -1,0 +1,46 @@
+hash: 630afe46ea86deb3bba3ee4808186aef
+class:
+  wdbasic: Ext_TC_Communication_Template_Email_Layout
+  data: Ext_TC_Communication_Template_Email_Layout_Gui2_Data
+  js: CommunicationTemplateGui
+js:
+  - [admin/template/template.js, tc]
+css:
+  - [admin/template/template.css, tc]
+access: core_admin_templates_email_layouts
+orderby:
+  - Ext_TC_Communication_Template_Email_Layout_Gui2_Data
+  - getOrderby
+limit: 30
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Communication_Template_Email_Layout_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Communication_Template_Email_Layout_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_ctel
+    width: name
+    resize: true

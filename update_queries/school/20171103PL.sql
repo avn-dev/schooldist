@@ -1,0 +1,2 @@
+INSERT INTO `system_config` (`c_id`, `c_key`, `c_value`, `c_description`) VALUES (NULL, 'wishlist_project_key', 'IonNwk1eE7', '');
+INSERT INTO `system_config` (`c_id`, `c_key`, `c_value`, `c_description`) VALUES (NULL, 'wishlist_jwt_secret', 'yNkb5BNescShqtrEaig0XF1FsHPbd8We', '');

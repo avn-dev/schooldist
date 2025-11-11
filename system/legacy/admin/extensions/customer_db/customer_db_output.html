@@ -1,0 +1,74 @@
+<?
+/////////////////////////////////////////////////////
+////// Moduladministration Login-Eingabefeld ////////
+/////////////////////////////////////////////////////
+// Dieses Script administriert das Ausgabefeld Modul
+// Hier kann man festlegen, zu welchem
+// Datenbankfeld es gehört, etc
+///////////////////////////////////////////////
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+include(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+include(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_functions.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+$my_parent = get_data(db_query($db_data['system'],"SELECT * FROM cms_content WHERE page_id = '".$_VARS['page_id']."' AND content LIKE '%<#content".(str_pad($_VARS['element_id'], 3, "0", STR_PAD_LEFT))."#>%'"));
+$aParent = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+// Abspeichern der eingegebenen Daten
+if($_VARS['task'] == "save" && $_VARS['page_id'] > 0 && $_VARS['element_id'] > 0) {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->field_name		= $_VARS['field_name'];
+	$config->default_class	= $_VARS['default_class'];
+	$config->link_name		= $_VARS['link_name'];
+	$config->no_file		= $_VARS['no_file'];
+
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+
+// Laden der vorhandenen Daten
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+?>
+
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+    <tr>
+        <td valign="top">
+            <h1>Konfiguration Ausgabefeld</h1>
+            <form name="formular1" method="POST" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+                <input type='hidden' name="task" value="save">
+                <input type='hidden' name="page_id" value=<?=$page_id?>>
+                <input type='hidden' name="element_id" value=<?=$element_id?>>
+                <input type='hidden' name="field_name" value=<?=$field_name?>>
+                <?=printTableStart()?>
+					<?=printFormSelect("Bitte zugehöriges Datenbank-Feld auswählen","field_name",CustomerDb\Helper\Functions::getCustomerFields($aParent->idDatabase),$config->field_name)?>
+					<?=printFormText("Bitte geben sie zus&auml;tzliche Parameter ein","default_class",$config->default_class)?>
+					<?
+					$sType = getCustomerFieldType($config->field_name, $aParent->idDatabase);
+					if($sType == "Datei" OR $sType == "ProtectedDatei") {
+					?>
+					<?=printFormText("Name des Links","link_name",$config->link_name)?>					
+					<?=printFormText("Datei nicht vorhanden","no_file",$config->no_file)?>					
+					<?
+					} elseif($sType == "image") {
+					?>
+					<?=printFormText("Parameter","default_class",$config->default_class)?>					
+					<?=printFormText("Datei nicht vorhanden","no_file",$config->no_file)?>					
+					<?
+					}
+					?>
+				<?=printTableEnd()?>
+				<?=printSubmit("Konfiguration speichern")?>
+			</form>
+
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

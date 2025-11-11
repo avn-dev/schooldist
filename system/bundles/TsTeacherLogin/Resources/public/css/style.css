@@ -1,0 +1,145 @@
+.system-logo {
+	max-height: 50px;
+}
+
+.fc-event {
+	cursor: pointer;
+}
+
+#timetableModalBtn.loading, #submit-btn.loading{
+	position: relative;
+	color: #3c8dbc;
+}
+
+#timetableModalBtn i, #submit-btn i {
+	display: none;
+}
+
+#timetableModalBtn.loading i, #submit-btn.loading i {
+	display: inline;
+	position: absolute;
+	color: #ffffff;
+	top: 9px;
+}
+
+#timetableModalBtn.loading i {
+	left: 48%;
+}
+
+.box-comments {
+	background: none !important;
+}
+
+#submit-btn.loading i {
+	left: 45%;
+}
+
+.dropzone {
+	padding: 0;
+	min-height: 0;
+	border: none;
+	background: none;
+}
+
+.dropzone-previews {
+	background: #f7f7f7;
+	border: 1px dashed #ccc;
+	cursor: pointer;
+}
+
+.dropzone.dz-clickable textarea, .dropzone.dz-clickable input{
+	cursor: text;
+}
+
+.student-name {
+	font-weight: bold !important;
+	color: #3c8dbc;
+	margin-right: 20px;
+}
+
+.student-name-simple {
+	margin-top: 10px;
+}
+
+#qr-code {
+	text-align: center;
+}
+
+.logo-mini img {
+	max-height: 30px;
+}
+
+.logo-lg img {
+	max-height: 40px;
+	margin-bottom: 5px;
+}
+
+.login-logo img {
+	width: 60%;
+	min-width: 200px;
+}
+
+.header-tooltip .tooltip-inner {
+	min-width: 300px;
+	max-width: 100%;
+	text-align: left;
+}
+
+.student-name .tooltip-inner {
+	text-align: left;
+}
+
+.attendance-student .checkbox {
+	margin-top: 0;
+}
+
+
+.box-body > .box-tools {
+	position: absolute;
+	right: 10px;
+	top: 5px;
+	z-index: 999;
+}
+
+.students-modal-row .tooltip.in {
+	opacity: 1;
+}
+
+.students-modal-row .tooltip-inner {
+	max-width: 100%;
+	text-align: left;
+	background-color: #000;
+	color: #fff;
+}
+
+.students-modal-row .tooltip-inner .table {
+	background-color: inherit;
+}
+
+#reportcards_table tbody tr {
+	cursor: pointer;
+}
+
+.students-info-icon {
+	cursor: pointer;
+}
+
+#timetable_details_table tbody td {
+	white-space: pre-wrap;
+}
+
+@media only screen and (max-width: 500px) {
+	.fc-left, .fc-right, .fc-center {
+		width: 100%;
+		margin: 5px auto;
+	}
+}
+
+.main-header .sidebar-toggle:before {
+	font-family: "Font Awesome 5 Free";
+	font-weight: bold;
+}
+
+.no-bold {
+	font-weight: normal;
+}

@@ -1,0 +1,65 @@
+hash: a4f8fd2c6839f15fda9309df362dec13
+class:
+  wdbasic: Ext_Thebing_Admin_Payment
+  data: \Ts\Gui2\Data\PaymentMethods
+access: thebing_admin_payment_methods
+id:
+  column: id
+  alias: kpm
+sortable: true
+only_pagecount: true
+orderby:
+  - Ts\Gui2\Data\PaymentMethods  
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: 
+          - kpm
+          - kpm
+        searchtype: LIKE
+        column:
+          - id
+          - name
+     -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog: 
+          - \Ts\Gui2\Data\PaymentMethods  
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\PaymentMethods  
+          - getDialog
+     -
+        element: icon_delete
+        dialog:
+          - \Ts\Gui2\Data\PaymentMethods  
+          - getDialog
+     -
+        element: icon_deactivate
+columns:
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true
+    inplace_editor: 0
+  - 
+    title: Schulen	
+    column: schools
+    width: name
+    access: thebing_admin_payment_methods
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]

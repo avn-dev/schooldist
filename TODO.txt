@@ -1,0 +1,8 @@
+# 1.4
+- Alle .php Dateien aus public raus und durch Routen ersetzen (Favicon, Robots und /media/secure im Bootstrapper abfangen)
+- Nicht mehr benötigte Dateien wie access.inc.php, backend.inc.php, frontend.inc.php, variables.inc.php löschen
+- Notification anzeigen wenn PP-Stack-Eintrag fertig und falls online.
+- Bei der Neuinstallation muss man schauen, das eine composer.json mit bestimmten Libs schon vorhanden ist.
+- CMS komplett trennen
+- Alle Legacy-Verzeichnisse manuell bereinigen
+- 

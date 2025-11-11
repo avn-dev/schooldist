@@ -1,0 +1,1 @@
+INSERT INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES ('58', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '1', 'Administration » Vorlagen » PDF Vorlagen', 'pdf_templates', 'pdf_templates');

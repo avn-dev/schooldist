@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * 
+ */
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+echo Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("modules_admin");
+
+
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if(trim($_REQUEST['task'])=="save")
+{
+	$config->iUserCdb		= intval($_REQUEST['user_cdb']);
+	$config->iIdForm		= $_REQUEST['id_form'];
+ 
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+
+?>
+<h1>DB-Admin</h1>
+<style>
+ .desc {
+ 	width:200px;
+ }
+</style>
+			<form name="customer_db_form" method=post enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="save">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+  
+  
+<span class='desc'>Benutzer-Datenbank-Nr:</span><input type='text' name='user_cdb' value='<?=htmlspecialchars($config->iUserCdb);?>'><br>
+<span class='desc'>ID des Formulars:</span><input type='text' name='id_form' value='<?=htmlspecialchars($config->iIdForm);?>'><br>
+<input type=submit value="speichern">
+</form>
+<?
+/*
+function getTime()
+{
+	
+}
+
+
+sajax_init();
+#$sajax_debug_mode = 1;
+sajax_export("getTime");
+sajax_handle_client_request();
+
+?>
+    <script language="javascript" type="text/javascript" src="/system/js_includes/prototype.js" ></script>
+    <script language="javascript" type="text/javascript" src="/system/js_includes/scriptaculous.js" ></script>
+	<script language="javascript" type="text/javascript">
+	<!--
+	<?sajax_show_javascript();?>
+	
+	function doInsert(sHTML)
+	{
+		document.getElementById('out').innerHTML=sHTML;
+	}
+	
+	function refresh() 
+	{
+		x_getTime(doInsert)
+		var rTimeOut = window.setTimeout("refresh()", 1000);
+	}
+	
+	refresh();
+
+	-->
+	</script>
+	<h1>Datenbanken</h1>
+	<br />
+	<br />
+	<ul id="liste" style="width:400px;">
+<?php
+	// Liste der Datenbanken ausgeben:
+	$rDatenbanken= db_query("SELECT * FROM `db_databases` WHERE `active`='1' ORDER BY position ASC");
+	while($aMy = get_data($rDatenbanken))
+	{
+		echo "<li id='$aMy[id]'><a href=''>$aMy[name]</a></li>";		
+	}
+
+
+
+?>
+	</ul>
+	<div id="out" style="font-family:verdana;font-size:110px"></div>
+*/

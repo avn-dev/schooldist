@@ -1,0 +1,140 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("help");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+
+// Einstellungen
+$sServer = System::d('update_server');
+$sUrl = "/faq.php";
+$sParameter = "version=".System::d('version')."&key=".System::d('license')."&host=".\Util::getHost();
+
+// Kategorien
+
+$sContent = getUrlContent($sUrl, $sParameter."&task=categories", $sServer);
+
+$aCategories = array();
+$aData = explode("||",$sContent);
+foreach($aData as $sVal) {
+	$aTemp = explode("|",$sVal);
+	if($aTemp[1]) {
+		$aCategories[$aTemp[0]] = $aTemp[1];
+	}
+}
+
+?>
+
+<script type="text/javascript">
+//Verlinkung der Selectbox
+function Go (value) {
+  if (value != "") {
+    document.location.href = value;
+	}
+}
+</script>
+
+<section class="content-header">
+	<h1><?=L10N::t('Hilfe')?> &raquo; <?=L10N::t('FAQ')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<div class="box-body">
+			<?
+			//DROP-DOWN-AUSWAHL ANFANG
+			?>
+			
+					<form action="" class="form-inline">
+						<select class="form-control" name="DropDown" onChange="Go(this.form.DropDown.options[this.form.DropDown.options.selectedIndex].value)" size="1">
+							<option value=""><?=L10N::t('Bitte wählen', 'Framework')?></option>
+							<option value="">---</option>
+				<?
+				foreach($aCategories as $k=>$v) {
+				?>
+
+						<option value="?idCategory=<?=$k?>" <?=(($_VARS['idCategory']==$k)?"selected":"")?>><?=$v?></option>
+				<?
+				}
+				//DROP-DOWN-AUSWAHL ENDE
+				?>
+						</select>
+					 </form>
+				
+			
+			<?
+			//FAQ-FRAGEN-TABELLE ANFANG
+			IF(isset($_VARS['idCategory'])){
+
+				?>
+					<table cellpadding="5" cellspacing="0" border="0" width="100%" class="table">
+						<tr>
+							<th><a href="faq.html">FAQ</a> &raquo; <a href="?idCategory=<?=$_VARS['idCategory']?>"><?=$aCategories[$_VARS['idCategory']]?></a></th>
+						</tr>
+				<?
+				//KATEGROY ODER DETAILSEITE???
+				if(!$_VARS['frage_id']) {
+
+					$sContent = getUrlContent($sUrl, $sParameter."&task=entries&idCategory=".$_VARS['idCategory'], $sServer);
+
+					$aEntries = array();
+					$aData = explode("||||||||",$sContent);
+					foreach($aData as $sVal) {
+						$aTemp = explode("|||||||",$sVal);
+						if($aTemp[1]) {
+							$aEntries[$aTemp[0]] = array($aTemp[1],$aTemp[2]);
+						}
+					}
+
+					if(count($aEntries) > 0) {
+						foreach($aEntries as $id=>$aVal){
+?>							<tr>
+								<td><a href="?idCategory=<?=$_VARS['idCategory']?>&frage_id=<?=$id?>"><?=$aVal[0]?></a></td>
+							</tr>
+				<?
+						}
+					} else {
+				?>
+					<tr>
+						<td><h3>Keine Fragen in dieser Kategorie.<br> Benutzen Sie das Supportformular.</h3></td>
+					</tr>
+				<?
+					}
+				} else {
+				//GENERIERUNG DER DETAILSEITE ANFANG
+					$sContent = getUrlContent($sUrl, $sParameter."&task=detail&id=".$_VARS['frage_id'], $sServer);
+
+					$aData = explode("|||||||",$sContent);
+
+				?>
+					<tr>
+						<td><?=$aData[1]?></td>
+					</tr>
+					<tr>
+						<td><pre><?=htmlspecialchars($aData[2])?></pre></td>
+					</tr>
+				<?
+				//GENERIERUNG DER DETAILSEITE ENDE
+				}
+				//FAQ-FRAGEN-TABELLE ENDE
+				?>
+			</table>
+		<?
+		} else {
+		//Standard Text
+		?>
+			<br>
+			<div class="alert alert-info">Wählen Sie die Rubrik zu der Sie Hilfe brauchen im Drop-Down-Menü aus.</div>
+		<?
+		}
+		?>
+		</div>
+	</div>
+</section>
+
+<?=Admin_Html::loadAdminFooter()?>

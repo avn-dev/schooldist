@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `activity_starttime` VARCHAR(5) NOT NULL DEFAULT '09:00' AFTER `teacherlogin_attendance_view`, ADD `activity_endtime` VARCHAR(5) NOT NULL DEFAULT '20:00' AFTER `activity_starttime`;

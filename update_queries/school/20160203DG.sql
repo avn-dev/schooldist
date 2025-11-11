@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_journeys_courses_tuition_index` CHANGE `allocated_lessons` `allocated_lessons` FLOAT(11,2) UNSIGNED NOT NULL;

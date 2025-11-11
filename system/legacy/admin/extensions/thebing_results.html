@@ -1,0 +1,83 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker('thebing_management_reports');
+
+$oClient = Ext_Thebing_Client::getInstance();
+
+/* ==================================================================================================== */
+
+$sDescription = Ext_Thebing_Management_Statistic::$_sDescription;
+
+if(isset($_VARS['page_id']))
+{
+	if($_VARS['page_id'] == 'system') // Get the page ID of the system statistic
+	{
+		
+		Ext_Thebing_Access::accesschecker('thebing_management_reports_standard');
+		
+		$sSQL = "
+			SELECT
+				`id`
+			FROM
+				`kolumbus_statistic_pages`
+			WHERE
+				`system` = 1
+			LIMIT
+				1
+		";
+		$iPageID = (int)DB::getQueryOne($sSQL);
+	}
+	else
+	{
+		$iPageID = (int)$_VARS['page_id'];
+	}
+}
+else
+{
+	$iPageID = (int)$_VARS['page_id'];
+}
+
+$aStatistics = array();
+
+if($iPageID == 0)
+{
+	$sPageTitle = L10N::t('Übersicht', $sDescription);
+
+	$oStatistic = new Ext_Thebing_Management_Statistic();
+
+	$aStatistics = $oStatistic->getListByUserRight();
+}
+else
+{
+	$oPage = new Ext_Thebing_Management_Page($iPageID);
+
+	$sPageTitle = $oPage->title;
+
+	if($_VARS['page_id'] == 'system')
+	{
+		$sPageTitle = L10N::t("Standardstatistiken 1", 'Thebing » Management');
+	}
+}
+
+/* ==================================================================================================== */
+
+//Admin_Html::loadAdminHeader(Ext_Thebing_Management_Statistic_Gui2::getAdminHeaderOptions());
+
+$oSmarty = new SmartyWrapper();
+
+$oGuiHtml = new Ext_Gui2_Html(new Ext_Thebing_Gui2()); // Ext_Thebing_Gui2 benötigt wegen JS-Includes für statistic.js
+$oSmarty->assign('aOptions', $oGuiHtml->generateHtmlHeader());
+$oSmarty->assign('sDateFormat', (new \Ext_Thebing_Gui2_Format_Date())->format_js);
+$oSmarty->assign('aTranslations', Ext_Thebing_Management_Statistic_Gui2::getInterfaceTranslations());
+$oSmarty->assign('aStatistics', $aStatistics);
+$oSmarty->assign('sPageTitle', Ext_TS_System_Navigation::t());
+$oSmarty->assign('iPageID', $iPageID);
+$oSmarty->assign('sJs', $oGuiHtml->getJsFooter());
+
+$oSmarty->display(Ext_Thebing_Management_PageBlock::getTemplatePath() . 'pages.tpl');
+
+/* ==================================================================================================== */
+
+//Admin_Html::loadAdminFooter();

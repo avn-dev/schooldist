@@ -1,0 +1,46 @@
+hash: 7b8e1853056d1658856a6cb106581c06
+class:
+  wdbasic: Ext_Thebing_Admin_Agency_Category
+  data: \Ts\Gui2\Data\AgencyCategory
+access: thebing_admin_agency_categories
+orderby:
+  - \Ts\Gui2\Data\AgencyCategory
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\AgencyCategory
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        column: 
+          - id
+          - name
+        searchtype: LIKE 
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\AgencyCategory
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\AgencyCategory
+          - getDialog
+     -
+        element: icon_delete
+        dialog:
+          - \Ts\Gui2\Data\AgencyCategory
+          - getDialog
+columns:
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true

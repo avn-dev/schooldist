@@ -1,0 +1,315 @@
+hash: 9624f8122202e4c0ae8eb26368954cac
+class:
+  wdbasic: Ext_Thebing_Accounting_Incorrectaccounting
+  js: StudentlistGui
+#  icon_status: Ext_Thebing_Gui2_Icon_Inbox
+access: thebing_accounting_incorrect_accounting
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+  - [gui2/studentlists.js, thebing]
+css:
+  - [gui2/gui2.css ,thebing]
+id:
+  column: id
+  alias: ts_i
+orderby:
+  - Ext_Thebing_Gui2_Data
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        label: Suche
+        column:
+          - lastname
+          - firstname
+          #- document_number
+          - number
+          - short
+          - name
+          - number
+        alias:
+          - tc_c
+          - tc_c
+          #- kid
+          - tc_cn
+          - kg
+          - kg
+          - ts_an
+      -
+        element: seperator
+      -
+        element: selectfilter
+        id: students_or_agencys
+        label: Buchungstyp
+        entries:
+          - Ext_Thebing_Gui2_Data
+          - getBookingType
+        filter_query:
+          customer: '`ts_i`.`agency_id` <= 0'
+          agency: '`ts_i`.`agency_id` > 0'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Agentur
+        column:
+          - agency_id
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_Gui2_Data
+          - getAgencies
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        label: Währung
+        column:
+          - currency_id
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_System
+          - getCurrencyList
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        label: Land
+        column:
+          - country_iso
+        alias:
+          - tc_a
+        entries:
+          - Ext_Thebing_Data
+          - getCountryList
+        searchtype: =
+        label_as_item: true
+      -
+        element: selectfilter
+        column:
+          - nationality
+        alias:
+          - tc_c
+        label: Nationalität
+        entries:
+          - Ext_Thebing_Nationality
+          - getNationalities
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        label: Inbox
+        column:
+          - inbox
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_Gui2_Data
+          - getInboxes
+        label_as_item: true
+      -
+        element: selectfilter
+        id: group_filter
+        label: Gruppe
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ts_i`.`group_id` != 0'
+          no: '`ts_i`.`group_id` = 0'
+        label_as_item: true
+  -
+    position: top
+    elements:
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - payment
+        label: Bezahlen
+        active: 0
+        task: openDialog
+        action: payment
+        additional: inquiry
+        access: thebing_invoice_overpayments
+columns:
+  -
+    group: Persönliche Daten
+    title: Vorname
+    column: firstname
+    alias: tc_c
+    width: name
+  -
+    group: Persönliche Daten
+    title: Nachname
+    column: lastname
+    alias: tc_c
+    width: name
+  -
+    group: Persönliche Daten
+    title: K.Nr.
+    column: number
+    data: customer_number
+    alias: tc_cn
+    width: name
+  -
+    group: Persönliche Daten
+    title: Re. Nr.
+    column: document_number
+    alias: kid
+    width: name
+    sortable: false
+  -
+    title: Agentur
+    column: ext_1
+    data: agency_name
+    alias: k_a
+    width: name
+  -
+    title: Agenturnummer
+    column: number
+    data: agency_number
+    alias: ts_an
+    width: name
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: group_short
+    width: short_name
+  -
+    title: Zahlungsmethode
+    column: payment_method
+    data: payment_method
+    width: amount
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Agency, getAgencyPaymentMethods]
+  -
+    title: Inbox
+    column: inbox
+    alias: ts_i
+    width: name
+    small: true
+    default: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_System, getInboxList, true, true]
+  -
+    group: Kurs
+    title: Kurs
+    column: course_names_short
+    data: course_names_short
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+  -
+    group: Kurs
+    title: Beginn
+    column: course_dates_from
+    data: course_dates_from
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+  -
+    group: Kurs
+    title: Ende
+    column: course_dates_until
+    data: course_dates_until
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+  -
+    group: Unterkunft
+    title: Unterkunft
+    column: accommodation_names_short
+    data: accommodation_names_short
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Unterkunft
+    title: Beginn
+    column: accommodation_dates_from
+    data: accommodation_dates_from
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Unterkunft
+    title: Ende
+    column: accommodation_dates_until
+    data: accommodation_dates_until
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Bezahlung
+    title: Überbezahlung
+    column: overpayment_amount
+    data: overpayment_amount
+    width: name
+    format: Ext_Thebing_Gui2_Format_Amount
+  -
+    group: Bezahlung
+    title: Kurs
+    column: course_amount
+    data: course_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Unterkunft
+    column: accommodation_amount
+    data: accommodation_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Transfer
+    column: transfer_amount
+    data: transfer_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Versicherung
+    column: insurance_amount
+    data: insurance_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Kurs Zusatzgebühren
+    column: additional_course_amount
+    data: additional_course_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Unterkunft Zusatzgebühren
+    column: additional_accommodation_amount
+    data: additional_accommodation_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Generelle Zusatzgebühren
+    column: additional_general_amount
+    data: additional_general_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: nicht zugewiesen
+    column: not_assigned_amount
+    data: not_assigned_amount
+    width: name
+    format: Ext_TS_Accounting_Overpayment_Format_Data
+    sortable: false

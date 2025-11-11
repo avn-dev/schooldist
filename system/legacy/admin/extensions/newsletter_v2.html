@@ -1,0 +1,1996 @@
+<?php
+
+$_GET['rs'] = true;
+
+include("../includes/main.inc.php");
+
+while(ob_get_level()) {
+	ob_end_clean();
+}
+
+Access_Backend::checkAccess("modules_admin");
+
+/* ==================================================================================================== */
+
+/* ==================================================================================================== */
+
+$aRecipientsTitles	= Ext_Newsletter::getRecipientsTitles();
+$sNewsletterUrl		= Ext_Newsletter::getNewsletterUrl();
+$sNewsletterPath	= Ext_Newsletter::getNewsletterPath();
+
+Ext_Newsletter::checkDirectory();
+
+$objWebDynamicsDAO = new \Cms\Helper\Data();
+
+/* ==================================================================================================== */
+
+if ($_VARS['task'] == 'deleteList') {
+
+	Ext_Newsletter::deleteList($_VARS['id']);
+	$_VARS['task'] = false;
+
+} elseif ($_VARS['task'] == "deleteMail") {
+
+	Ext_Newsletter::deleteMail($_VARS['id']);
+	$_VARS['task'] = false;
+
+}
+
+/* ==================================================================================================== */
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1>Newsletter</h1>
+</section>
+
+<section class="content">
+
+<?php
+	/* ==================================================================================================== */
+
+	if ($_VARS['page_id'] && $_VARS['element_id']) {
+
+		if ($_POST['action'] == "config") {
+
+			$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+			$config->newsletter_id = $_VARS['newsletter_id'];
+			$config->optin_flag = $_VARS['optin_flag'];
+			$config->optin_subject = $_VARS['optin_subject'];
+			$config->optin_text = $_VARS['optin_text'];
+			$config->optin_target = $_VARS['optin_target'];
+            $config->optin_terms_flag = $_VARS['optin_terms_flag'];
+			$config->optout_flag = $_VARS['optout_flag'];
+			$config->optout_subject = $_VARS['optout_subject'];
+			$config->optout_text = $_VARS['optout_text'];
+			$config->optout_all = $_VARS['optout_all'];
+
+			$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+
+		}
+
+		if(class_exists('\\Cms\\Helper\\ExtensionConfig')) {
+			$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		} else {
+			$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		}
+
+		$aNewsletter = Ext_Newsletter::getListsList();
+?>
+		<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+
+			<?=printTableStart()?>
+				<?=printFormSelect("Newsletter", "newsletter_id", $aNewsletter, $config->newsletter_id)?>
+                <?=printFormCheckbox("Anmeldung: Nutzungsbedingungen", "optin_terms_flag", 1, $config->optin_terms_flag)?>
+				<?=printFormCheckbox("Anmeldung: Double Opt-In", "optin_flag", 1, $config->optin_flag)?>
+
+				<?php if($config->optin_flag) { ?>
+					<?=printFormText("Anmeldung: E-Mail Betreff", "optin_subject", $config->optin_subject)?>
+					<?=printFormTextarea("Anmeldung: E-Mail Text", "optin_text", $config->optin_text)?>
+					<?=printFormPageSelect("Anmeldung: Zielseite", "optin_target", $config->optin_target, array('value_type' => 1, 'empty'=>array(''=>'Aktuelle Seite')))?>					
+				<?php } ?>
+
+				<?=printFormCheckbox("Abmeldung: von allen Newslettern abmelden", "optout_all", 1, $config->optout_all)?>
+				<?=printFormCheckbox("Abmeldung: Double Opt-Out", "optout_flag", 1, $config->optout_flag)?>
+
+				<?php if($config->optout_flag) { ?>		
+					<?=printFormText("Abmeldung: E-Mail Betreff", "optout_subject", $config->optout_subject)?>
+					<?=printFormTextarea("Abmeldung: E-Mail Text", "optout_text", $config->optout_text)?>
+				<?php } ?>
+
+			<?=printTableEnd()?>
+
+			<?=printSubmit("Konfiguration speichern")?>
+		</form>
+
+		<div class="divBoxContainer">
+			<div class="divBoxHeader" onclick="switchBox('divPlaceHolders');">Verfügbare Platzhalter &raquo;</div> 
+			<div class="divBoxContent" id="divPlaceHolders">
+				<div>
+					Vorname: <#firstname#>
+					<br />
+					Nachname: <#lastname#>
+					<br />
+					E-Mail: <#email#>
+					<br />
+					Aktivierungslink: <#link#>
+					<br />
+					Deaktivierungslink: <#deactivation_link#>
+				</div>
+			</div>
+		</div>
+
+		<script language="JavaScript" type="text/javascript">
+  			Element.hide('divPlaceHolders');
+		</script>
+
+	<?php } else { ?>
+
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+if (!$_VARS['task']) {
+
+?>
+		
+		
+		<div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Empfängerlisten</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body table-responsive no-padding">
+              <table class="table table-striped table-hover">
+               <tr>
+					<th>Name</th>
+					<th width="10%">Empfänger</th>
+					<th width="15%">Aktionen</th>
+				</tr>
+
+				<?php
+					$aLists = Ext_Newsletter::getListsList(false);
+
+					foreach((array)$aLists as $aList)
+					{
+						$sSQL = "
+							SELECT
+								COUNT(*)
+							FROM
+								`newsletter2_recipients`
+							WHERE
+								`idList` = :iListID AND
+								`active` = 1
+						";
+						$aSQL = array('iListID' => $aList['id']);
+						$iTotal = DB::getQueryOne($sSQL, $aSQL);
+				?>
+
+					<tr>
+						<td>
+							<a href="/admin/extensions/newsletter/recipients.html?list_id=<?=$aList['id']?>">
+								<?=$aList['name']?>
+							</a>
+						</td>
+						<td align="right">&nbsp;<?=$iTotal?></td>
+						<td align="center">
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=exportRecipients&id=<?=$aList['id']?>"><img src="/admin/media/export.png" title="Empfänger exportieren" border="0"></a>&nbsp;
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=importRecipients&id=<?=$aList['id']?>"><img src="/admin/media/import.png" title="Empfänger importieren" border="0"></a>&nbsp;
+
+							<?php if($aList['connect_customer'] > 0) { ?>
+								<a href="<?=$_SERVER['PHP_SELF']?>?task=reloadRecipients&id=<?=$aList['id']?>"><img src="/admin/media/reload.png" title="Empfänger mit Kundendatenbank abgleichen" border="0"></a>&nbsp;
+							<?php } else if($aList['connect_table'] != '') { ?>
+								<a href="<?=$_SERVER['PHP_SELF']?>?task=reloadRecipients&id=<?=$aList['id']?>"><img src="/admin/media/reload.png" title="Empfänger mit Datenbank-Tabelle abgleichen" border="0"></a>&nbsp;
+							<?php } ?>
+
+							<a href="/admin/extensions/newsletter/recipients.html?list_id=<?=$aList['id']?>">
+								<img src="/admin/media/user.png" title="Empfänger editieren" border="0"></a>&nbsp;
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=editList&id=<?=$aList['id']?>"><img src="/admin/media/edit.png" title="Eigenschaften editieren" border="0"></a>&nbsp;
+							<a href="#" onclick="if(confirm('Möchten Sie diese Empfängerliste wirklich löschen?')) document.location.href='<?=$_SERVER['PHP_SELF']?>?task=deleteList&id=<?=$aList['id']?>';"><img src="/admin/media/delete.png" border="0"></a>
+						</td>
+					</tr>
+				<?php } ?>
+			  </table>
+            </div>
+            <!-- /.box-body -->
+			<div class="box-footer">
+				<button class="pull-right btn btn-primary" onclick="self.location.href='<?=$_SERVER['PHP_SELF']?>?task=editList';">Empfängerliste hinzufügen</button>
+			</div>
+          </div>
+
+			<div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Newsletter</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body table-responsive no-padding">
+              <table class="table table-striped table-hover">
+				<tr>
+					<th>Name</th>
+					<th>Betreff</th>
+					<th width="15%">Aktionen</th>
+				</tr>
+
+				<?php
+					$aMails = Ext_Newsletter::getMailsList(false);
+
+					foreach((array)$aMails as $aMail)
+					{
+						
+				?>
+					<tr>
+						<td><a href="<?=$_SERVER['PHP_SELF']?>?task=sendMail&id=<?=$aMail['id']?>"><?=$aMail['name']?></a></td>
+						<td><?=$aMail['subject']?></td>
+						<td align="center">
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=sendMail&id=<?=$aMail['id']?>"><img src="/admin/media/send.png" border="0"></a>&nbsp;
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=editMail&id=<?=$aMail['id']?>"><img src="/admin/media/edit.png" border="0"></a>&nbsp;
+							<a href="#" onclick="if(confirm('Möchten Sie diesen Newsletter wirklich löschen?')) document.location.href='<?=$_SERVER['PHP_SELF']?>?task=deleteMail&id=<?=$aMail['id']?>';"><img src="/admin/media/delete.png" border="0"></a></td>
+					</tr>
+				<?php } ?>
+			</table>
+            </div>
+            <!-- /.box-body -->
+			<div class="box-footer">
+				<button class="pull-right btn btn-primary" onclick="self.location.href='<?=$_SERVER['PHP_SELF']?>?task=editMail';">Newsletter hinzufügen</button>
+			</div>
+          </div>
+
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == "reloadRecipients") {
+
+	/**
+	 * Bereinigen
+	 * die Kombination auf idList und email darf nur einmal vorkommen
+	 */
+//	try {
+//		
+//		if(method_exists('Util', 'backupTable')) {
+//			Util::backupTable('newsletter2_recipients');
+//		}
+//		
+//		$sSql = "
+//			SELECT
+//				`idList`,
+//				`email`,
+//				`id`
+//			FROM
+//				`newsletter2_recipients`
+//			";
+//		$aItems = DB::getQueryRows($sSql);
+//		$aCheck = array();
+//		foreach($aItems as $aItem) {
+//
+//			if(!isset($aCheck[$aItem['idList'].'_'.$aItem['email']])) {
+//
+//				$aCheck[$aItem['idList'].'_'.$aItem['email']] = 1;
+//
+//				$sSql = "
+//					DELETE FROM
+//						`newsletter2_recipients`
+//					WHERE
+//						`email` = :email AND
+//						`idList` = :list_id AND
+//						`id` != :id
+//
+//					";
+//				$aSql = array(
+//					'id' => (int)$aItem['id'],
+//					'list_id' => (int)$aItem['idList'],
+//					'email' => $aItem['email'],
+//				);
+//				DB::executePreparedQuery($sSql, $aSql);
+//
+//			}
+//
+//		}
+//
+//		$sSql = "ALTER TABLE `newsletter2_recipients` 
+//			CHANGE `name` `name` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+//			CHANGE `firstname` `firstname` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+//			CHANGE `email` `email` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ";
+//		DB::executeQuery($sSql);
+//
+//		$sSql = "ALTER TABLE `newsletter2_recipients` ADD UNIQUE `nr_unique` (`idList` , `email` )";
+//		DB::executeQuery($sSql);
+//
+//	} catch(Exception $e) {
+//		__out($e);
+//	}
+
+	flush();
+	ignore_user_abort(true);
+	set_time_limit(7200);
+
+	if ($_VARS['id'] > 0) {
+
+		$aList = Ext_Newsletter::getListData($_VARS['id']);
+
+		$aFilter = unserialize($aList['filter']);
+		$_VARS['iFilter']	= $aFilter['field'];
+		$_VARS['sFilter']	= $aFilter['filter'];
+		$_VARS['iMode']		= $aFilter['mode'];
+		$_VARS['iOpen']		= $aFilter['open'];
+		$_VARS['iOperator']	= $aFilter['operator'];
+		$_VARS['iClose']	= $aFilter['close'];
+
+	}
+
+	$sWhere = "";
+	foreach ((array)$_VARS['iFilter'] as $k=>$v) {
+		if (is_numeric($_VARS['iFilter'][$k])) {
+			$_VARS['iFilter'][$k] = "ext_".$_VARS['iFilter'][$k];
+		} elseif (!empty($_VARS['iFilter'][$k])) {
+			$_VARS['iFilter'][$k] = $_VARS['iFilter'][$k];
+		}
+
+		// '('
+		if (isset($_VARS['iOpen'][$k]) && $_VARS['iOpen'][$k] == 1) {
+			$sWhere .= " ( ";
+		}
+
+		switch ($_VARS['iMode'][$k]) {
+			case "1":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` LIKE '%".$_VARS['sFilter'][$k]."%' ";
+				break;
+			case "2":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` = '".$_VARS['sFilter'][$k]."' ";
+				break;
+			case "6":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` > '".$_VARS['sFilter'][$k]."' ";
+				break;
+			case "7":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` < '".$_VARS['sFilter'][$k]."' ";
+				break;
+			case "8":
+				$sWhere .= " (`".$_VARS['iFilter'][$k]."` != '' OR `".$_VARS['iFilter'][$k]."` != 0) ";
+				break;
+			case "10":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` > SUBDATE(NOW(),INTERVAL ".intval($_VARS['sFilter'][$k])." DAY) ";
+				break;
+			case "11":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` < SUBDATE(NOW(),INTERVAL ".intval($_VARS['sFilter'][$k])." YEAR) ";
+				break;
+			case "12":
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` LIKE '".$_VARS['sFilter'][$k]."%' ";
+				break;
+			default:
+				$sWhere .= " `".$_VARS['iFilter'][$k]."` LIKE '%".$_VARS['sFilter'][$k]."%' ";
+				break;
+		}
+
+		// ')'
+		if (
+			isset($_VARS['iClose'][$k]) && 
+			$_VARS['iClose'][$k] == 1
+		) {
+			$sWhere .= " ) ";
+		}
+
+		// AND / OR
+		switch ($_VARS['iOperator'][$k]) {
+			case "AND":
+				$sWhere .= " AND";
+				break;
+			case "OR":
+			default:
+				$sWhere .= " OR";
+				break;
+		}
+
+	}
+
+	if (empty($sWhere)) {
+		$sWhere = " 1 OR ";
+	}
+
+	if (!empty($aList['connect_customer'])) {
+		$sSQL = "
+			SELECT
+				`id`,
+				`email` `e`,
+				`ext_" . $aList['sex'] . "` `s`,
+				`ext_" . $aList['firstname'] . "` `f`,
+				`ext_" . $aList['lastname'] . "` `l`,
+				`active`
+			FROM
+				`customer_db_" . (int)$aList['connect_customer'] . "`
+		";
+		$aCustomers = DB::executeQuery($sSQL);
+	} elseif (!empty($aList['connect_table'])) {
+		$sSQL = "
+			SELECT
+				`id`,
+				`" . $aList['email'] . "` `e`,
+				`" . $aList['sex'] . "` `s`,
+				`" . $aList['firstname'] . "` `f`,
+				`" . $aList['lastname'] . "` `l`
+			FROM
+				`" . $aList['connect_table'] . "`
+		";
+		$aCustomers = DB::executeQuery($sSQL);
+	}
+
+	$iCustomers = count($aCustomers);
+
+	if ($iCustomers > 0) {
+		$factor = 400 / $iCustomers;
+	}
+?>
+			<p>Fortschritt:</p>
+
+			<table id="table1" cellpadding="0" cellspacing="0" border="0" style="height:10px;width:400px;border:1px solid #29527A;table-layout:fixed;margin-top:5px;">
+				<tr>
+					<td id="td1" style="width:1px;background-color:#dededf;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+					<td id="td2" style="width:399px;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+				</tr>
+			</table>
+
+			<p>Aktueller Stand:</p>
+			<span id="spanStatus">0</span>
+		</td>
+	</tr>
+</table>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<?php
+				$i = 0;
+
+				foreach($aCustomers as $aCustomer) {
+
+					if (!empty($aList['connect_customer'])) {
+						$sTable = "`customer_db_" . (int)$aList['connect_customer'] . "`";
+					} elseif (!empty($aList['connect_table'])) {
+						$sTable = "`" . $aList['connect_table'] . "`";
+					}
+
+					/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+					$sQuery = "
+						SELECT
+							`id`
+						FROM
+							" . $sTable . "
+						WHERE
+							`id` = " . (int)$aCustomer['id'] . " AND
+							(" . $sWhere . " 0)
+						LIMIT
+							1
+					";
+
+					/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+					$aCheck = DB::getQueryRow($sQuery);
+
+					/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // E-Mail validation
+
+					if (!checkEmailMx($aCustomer['e'])) {
+						$aCheck = null;
+					}
+
+					/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+					if (
+						!empty($aList['connect_customer']) &&
+						$aCheck['id'] > 0 &&
+						$aCustomer['active'] == 1
+					) {
+						$sSQL = "
+							SELECT
+								`id`
+							FROM
+								`newsletter2_recipients`
+							WHERE
+								`idList` = " . (int)$_VARS['id'] . " AND
+								(
+									(
+										`email` = '" . \DB::escapeQueryString($aCustomer['e']) . "' AND
+										`idUser` = 0
+									) OR
+									(
+										`idUser` > 0 AND
+										`idUser` = " . (int)$aCustomer['id'] . " AND
+										`idTable` = " . (int)$aList['connect_customer'] . "
+									)
+								)
+							LIMIT
+								1
+						";
+						$iRecipientID = DB::getQueryOne($sSQL);
+
+						if ($iRecipientID > 0) {
+							$sQuery = "
+								UPDATE
+									`newsletter2_recipients`
+								SET
+									`name`		= '" . \DB::escapeQueryString($aCustomer['l']) . "',
+									`firstname`	= '" . \DB::escapeQueryString($aCustomer['f']) . "',
+									`email`		= '" . \DB::escapeQueryString($aCustomer['e']) . "',
+									`sex`		= '" . \DB::escapeQueryString($aCustomer['s']) . "',
+									`idUser`	= " . (int)$aCustomer['id'] . ",
+									`idTable`	= " . (int)$aList['connect_customer'] . "
+								WHERE
+									`id` = '" . (int)$iRecipientID . "'
+							";
+						} else {
+							$sQuery = "
+								INSERT INTO
+									`newsletter2_recipients`
+								SET
+									`idList`	= '" . $_VARS['id'] . "',
+									`name`		= '" . \DB::escapeQueryString($aCustomer['l']) . "',
+									`firstname`	= '" . \DB::escapeQueryString($aCustomer['f']) . "',
+									`email`		= '" . \DB::escapeQueryString($aCustomer['e']) . "',
+									`sex`		= '" . \DB::escapeQueryString($aCustomer['s']) . "',
+									`idUser`	= '" . \DB::escapeQueryString($aCustomer['id']) . "',
+									`idTable`	= '" . \DB::escapeQueryString($aList['connect_customer']) . "',
+									`table`		= '" . \DB::escapeQueryString('customer_db_' . $aList['connect_customer']) . "',
+									`active`	= 1
+							";
+						}
+					} elseif (
+						!empty($aList['connect_table']) &&
+						$aCheck['id'] > 0
+					) {
+						$sSQL = "
+							SELECT
+								`id`
+							FROM
+								`newsletter2_recipients`
+							WHERE
+								`idList` = " . (int)$_VARS['id'] . " AND
+								`email` = '" . \DB::escapeQueryString($aCustomer['e']) . "'
+							LIMIT
+								1
+						";
+						$iRecipientID = DB::getQueryOne($sSQL);
+
+						if ($iRecipientID > 0) {
+							$sQuery = "
+								UPDATE
+									`newsletter2_recipients`
+								SET
+									`name`		= '" . \DB::escapeQueryString($aCustomer['l']) . "',
+									`firstname`	= '" . \DB::escapeQueryString($aCustomer['f']) . "',
+									`email`		= '" . \DB::escapeQueryString($aCustomer['e']) . "',
+									`sex`		= '" . \DB::escapeQueryString($aCustomer['s']) . "'
+								WHERE
+									`id` = " . (int)$iRecipientID . "
+							";
+						} else {
+							$sQuery = "
+								INSERT INTO
+									`newsletter2_recipients`
+								SET
+									`idList`	= " . (int)$_VARS['id'] . ",
+									`name`		= '" . \DB::escapeQueryString($aCustomer['l']) . "',
+									`firstname`	= '" . \DB::escapeQueryString($aCustomer['f']) . "',
+									`email`		= '" . \DB::escapeQueryString($aCustomer['e']) . "',
+									`sex`		= '" . \DB::escapeQueryString($aCustomer['s']) . "',
+									`idUser`	= " . (int)$aCheck['id'] . ",
+									`idTable`	= 0,
+									`table`		= '" . \DB::escapeQueryString($aList['connect_table']) . "',
+									`active`	= 1
+							";
+						}
+					} else {
+						if (!empty($aList['connect_customer'])) {
+							$sQuery = "
+								DELETE FROM
+									`newsletter2_recipients`
+								WHERE
+									`idList` = " . (int)$_VARS['id'] . " AND
+									(
+										(
+											`email` = '" . \DB::escapeQueryString($aCustomer['e']) . "' AND
+											`idUser` = 0
+										) OR
+										(
+											`idUser` > 0 AND
+											`idUser` = " . (int)$aCustomer['id'] . " AND
+											`idTable` = " . (int)$aList['connect_customer'] . "
+										)
+									)
+							";
+						} elseif (!empty($aList['connect_table'])) {
+							$sQuery = "
+								DELETE FROM
+									`newsletter2_recipients`
+								WHERE
+									`idList` = " . (int)$_VARS['id'] . " AND
+									(
+										(
+											`email` = '" . \DB::escapeQueryString($aCustomer['e']) . "' AND
+											`idUser` = 0
+										) OR
+										(
+											`idUser` > 0 AND
+											`idUser` = " . (int)$aCustomer['id'] . " AND
+											`table` = '" . \DB::escapeQueryString($aList['connect_table']) . "'
+										)
+									)
+							";
+						}
+					}
+
+					$i++;
+
+					if (($i % 20) == 0) {
+						echo "<script>$('spanStatus').innerHTML='".$i."'; $('td1').style.width='".intval($factor * $i)."'; $('td2').style.width='".intval(400-($factor*$i))."';</script>\n";
+						flush();
+					}
+
+					DB::executeQuery($sQuery);
+
+				}
+			?>
+			<script type="text/javascript">
+				Event.observe(window, 'load', function()
+				{
+					$('spanStatus').innerHTML = '<?=$i?>';
+					$('td1').style.width = '400px';
+					$('td2').style.width = '0';
+				});
+			</script>
+
+			<h2>Abgleich erfolgreich durchgeführt.</h2>
+
+			<p>
+				<button class="btn" onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>';">zurück</button>
+			</p>
+		</td>
+	</tr>
+</table>
+
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == "editList") {
+
+	if ($_VARS['id'] > 0) {
+
+		$aList = Ext_Newsletter::getListData($_VARS['id']);
+
+		if (!is_array($_VARS['iFilter'])) {
+			if (isset($_VARS['brace_flag']) && $_VARS['brace_flag'] == 'brace_error') {
+				$aList['filter'] = $_VARS['aTmpFilter'];
+			}
+
+			$aFilter = unserialize($aList['filter']);
+
+			$_VARS['iFilter']	= $aFilter['field'];
+			$_VARS['sFilter']	= $aFilter['filter'];
+			$_VARS['iMode']		= $aFilter['mode'];
+			$_VARS['iOpen']		= $aFilter['open'];
+			$_VARS['iOperator']	= $aFilter['operator'];
+			$_VARS['iClose']	= $aFilter['close'];
+		}
+	}
+
+	if (!empty($aList['connect_customer'])) {
+		$aCustomerFields = CustomerDb\Helper\Functions::getCustomerFields($aList['connect_customer']);
+	} elseif (!empty($aList['connect_table'])) {
+		$aTemp = (array)DB::describeTable($aList['connect_table']);
+		$aCustomerFields = array();
+		foreach ($aTemp as $sField=>$aField) {
+			$aCustomerFields[$sField] = $sField;
+		}
+	}
+
+	$aOperators = array(
+		1	=> "beinhaltet X",
+		2	=> "gleich",
+		6	=> "größer",
+		7	=> "kleiner",
+		8	=> "nicht leer",
+		10	=> "innerhalb der letzten X Tage",
+		11	=> "älter als",
+		12	=> "beginnt mit"
+	);
+
+	$i=0;
+	$aFilter = array();
+	$sQueryString = ' ( ';
+	foreach ((array)$_VARS['iFilter'] as $k => $v) {
+		if (!isset($_VARS['iDeleteFilter']) || $_VARS['iDeleteFilter'] != $k) {
+			$aFilter[$i] = array(
+				$_VARS['iFilter'][$k],
+				$_VARS['sFilter'][$k],
+				$_VARS['iMode'][$k],
+				$_VARS['iOpen'][$k],
+				$_VARS['iOperator'][$k-1],
+				$_VARS['iClose'][$k],
+			);
+
+			// ==================================================
+
+			if ($i != 0) {
+				$sQueryString .= ' '. $aFilter[$i][4] .' ';
+			}
+
+			if ($aFilter[$i][3] == 1) {
+				$sQueryString .= ' ( ';
+			}
+
+			$sQueryString .= $aCustomerFields[$aFilter[$i][0]];
+
+			$sQueryString .= ' '. $aOperators[$aFilter[$i][2]] .' ';
+
+			if ($aFilter[$i][1] != '') {
+				$sQueryString .= $aFilter[$i][1];
+			}
+
+			if ($aFilter[$i][5] == 1) {
+				$sQueryString .= ' ) ';
+			}
+
+			// ==================================================
+
+			$i++;
+
+		} else {
+			unset($aFilter[$k]);
+		}
+	}
+
+	$sQueryString .= ' ) ';
+
+	if ($_VARS['action'] == "addFilter") {
+		$aFilter[] = array(0,0,0);
+	}
+
+	$aYesNo = array(0 => 'Nein', 1 => 'Ja');
+
+?>
+	<script type="text/javascript">
+		Event.observe(window, 'load', function()
+		{
+			Event.observe($('connect_customer'), 'change', function()
+			{
+				hideNewsletterOptions($('connect_customer'), false);
+			});
+			Event.observe($('connect_table'), 'change', function()
+			{
+				hideNewsletterOptions($('connect_table'), false);
+			});
+
+			hideNewsletterOptions($('connect_customer'), true);
+			hideNewsletterOptions($('connect_table'), true);
+		});
+
+		function hideNewsletterOptions(oSelect, bFirstLoad)
+		{
+			if(oSelect.id == 'connect_customer')
+			{
+				if(oSelect.value == 0)
+				{
+					$('connect_table').disabled = false;
+				}
+				else
+				{
+					if(!bFirstLoad)
+					{
+						$('connect_table').selectedIndex = 0;
+					}
+
+					$('connect_table').disabled = true;
+				}
+			}
+			else
+			{
+				if(oSelect.value == 0)
+				{
+					$('connect_customer').disabled = false;
+				}
+				else
+				{
+					if(!bFirstLoad)
+					{
+						$('connect_customer').selectedIndex = 0;
+					}
+
+					$('connect_customer').disabled = true;
+				}
+			}
+		}
+	</script>
+
+	<h2>Empfängerliste editieren</h2>
+
+	<form method="post" name="f1" action="<?=$_SERVER['PHP_SELF']?>">
+		<input type="hidden" name="action" value="">
+		<input type="hidden" name="task" value="saveList">
+		<input type="hidden" name="iDeleteFilter" value="-1">
+		<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+		<input type="hidden" name="brace_flag" value="" />
+		<?=printTableStart()?>
+			<?=printFormText("Name","name",$aList['name'])?>
+			<?=printFormSelect("Liste mit Kundendatenbank verknüpfen","connect_customer",(array("0"=>"Nein")+ CustomerDb\Helper\Functions::getCustomerTables()),$aList['connect_customer'], 'id="connect_customer"')?>
+			<?=printFormSelect("Liste mit einer Datenbank-Tabelle verknüpfen","connect_table",Ext_Newsletter::getDatabaseTables(),$aList['connect_table'], 'id="connect_table"')?>
+		<?=printTableEnd()?>
+
+		<br />
+
+		<?php if($aList['connect_customer'] > 0) { ?>
+			<?=printTableStart()?>
+				<?=printFormSelect("Feld: Geschlecht","sex", $aCustomerFields, $aList['sex'])?>
+				<?=printFormSelect("Feld: Vorname","firstname", $aCustomerFields, $aList['firstname'])?>
+				<?=printFormSelect("Feld: Nachname","lastname", $aCustomerFields, $aList['lastname'])?>
+			<?=printTableEnd()?>
+		<?php } elseif ($aList['connect_table'] != '') { ?>
+			<?=printTableStart()?>
+				<?=printFormSelect("Feld: E-Mail-Adresse","email", $aCustomerFields, $aList['email'])?>
+				<?=printFormSelect("Feld: Geschlecht","sex", $aCustomerFields, $aList['sex'])?>
+				<?=printFormSelect("Feld: Vorname","firstname", $aCustomerFields, $aList['firstname'])?>
+				<?=printFormSelect("Feld: Nachname","lastname", $aCustomerFields, $aList['lastname'])?>
+			<?=printTableEnd()?>
+		<?php } ?>
+
+		<br />
+
+		<?php if ($aList['connect_customer'] > 0) { ?>
+			<?=printTableStart()?>
+				<tr>
+					<th colspan="2">Filterkriterien:&nbsp;<button onclick="document.f1.task.value='editList'; document.f1.action.value='addFilter'; document.f1.submit();" class="btn">Filter hinzufügen</button></th>
+				</tr>
+			<?=printTableEnd()?>
+
+			<br />
+
+			<?php if (isset($_VARS['brace_flag']) && $_VARS['brace_flag'] == 'brace_error') { ?>
+				<div style="color:red;">
+					Fehler! Bitte prüfen Sie die Setzung der Klammern.
+				</div>
+
+				<br />
+			<?php } ?>
+
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th style="width:10px;">Verknüpfung</th>
+					<th style="width:10px; text-align:center;">(</th>
+					<th>Feld</th>
+					<th>Bedingung</th>
+					<th>Wert</th>
+					<th style="width:10px; text-align:center;">)</th>
+					<th style="width:10px;">&nbsp;</th>
+				</tr>
+				<?php foreach ((array)$aFilter as $iKey => $aValue) { ?>
+					<tr>
+						<td style="text-align:center;">
+							<?php if ($iKey != 0) { ?>
+								<select name="iOperator[]" class="txt">
+									<option value="AND" <?php if($aValue[4] == 'AND') { ?>selected="selected"<?php } ?>>UND</option>
+									<option value="OR" <?php if($aValue[4] == 'OR') { ?>selected="selected"<?php } ?>>ODER</option>
+								</select>
+							<?php } ?>
+						</td>
+						<td>
+							<input type="checkbox" name="iOpen[<?=$iKey?>]" value="1" class="txt" <?php if($aValue[3] == 1) { ?>checked="checked"<?php } ?> />
+						</td>
+						<td>
+							<select name="iFilter[]" class="txt" onchange="document.f1.task.value='editList'; document.f1.submit();">
+								<?php foreach ($aCustomerFields as $mKey => $sValue) { ?>
+									<option value="<?=$mKey?>" <?php if ($mKey == $aValue[0].'') { ?>selected="selected"<?php } ?>><?=$sValue?></option>
+								<?php } ?>
+							</select>
+						</td>
+						<td>
+							<select name="iMode[]" class="txt">
+								<?php foreach($aOperators as $mKey => $sValue) { ?>
+									<option value="<?=$mKey?>" <?php if($mKey == $aValue[2]) { ?>selected="selected"<?php } ?>><?=$sValue?></option>
+								<?php } ?>
+							</select>
+						</td>
+						<td>
+							<?php
+								if (isset($aValue[0])) {
+									// TODO : In eine Funktion packen
+									$aMyField = DB::getQueryRow("SELECT id,type FROM customer_db_definition WHERE field_nr = '".$aValue[0]."' AND db_nr = '".$aList['connect_customer']."' AND active = 1");
+									if ($aMyField['type'] == "Select Field") {
+										// TODO : In eine Funktion packen
+										$aRows = DB::getQueryRows("SELECT display, value  FROM customer_db_values WHERE definition_id = '".$aMyField['id']."' AND active = 1 ORDER BY display");
+										foreach($aRows as $my_val) {
+											$aValues[$my_val['value']] = $my_val['display'];
+										}
+										?>
+											<select name="sFilter[]" class="txt">
+												<?php foreach($aValues as $mKey => $sValue) { ?>
+													<option value="<?=$mKey?>" <?php if($mKey == $aValue[1]) { ?>selected="selected"<?php } ?>><?=$sValue?></option>
+												<?php } ?>
+											</select>
+										<?php
+									} elseif ($aMyField['type'] == "image") {
+										?>
+											<input type="checkbox" name="sFilter[]" value="1" class="txt" <?php if($aValue[1] == 1) { ?>checked="checked"<?php } ?> />
+										<?php
+									} else {
+										?>
+											<input type="text" name="sFilter[]" value="<?=$aValue[1]?>" class="txt" />
+										<?php
+									}
+								}
+							?>
+						</td>
+						<td>
+							<input type="checkbox" name="iClose[<?=$iKey?>]" value="1" class="txt" <?php if($aValue[5] == 1) { ?>checked="checked"<?php } ?> />
+						</td>
+						<td>
+							<a href="javascript:document.f1.task.value='editList'; document.f1.iDeleteFilter.value='<?=$iKey?>'; document.f1.submit();">
+								<img src="/admin/media/delete.png" border="0" align="absmiddle" /></a>
+						</td>
+					</tr>
+				<?php } ?>
+				<tr>
+					<th>Abfrage:</th>
+					<th colspan="6"><?=$sQueryString?></th>
+				</tr>
+			</table>
+		<?php } else if($aList['connect_table'] != '') { ?>
+			<?=printTableStart()?>
+				<tr>
+					<th colspan="2">Filterkriterien:&nbsp;<button onclick="document.f1.task.value='editList'; document.f1.action.value='addFilter'; document.f1.submit();" class="btn">Filter hinzufügen</button></th>
+				</tr>
+			<?=printTableEnd()?>
+
+			<br />
+
+			<?php if(isset($_VARS['brace_flag']) && $_VARS['brace_flag'] == 'brace_error') { ?>
+				<div style="color:red;">
+					Fehler! Bitte prüfen Sie die Setzung der Klammern.
+				</div>
+
+				<br />
+			<?php } ?>
+
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th style="width:10px;">Verknüpfung</th>
+					<th style="width:10px; text-align:center;">(</th>
+					<th>Feld</th>
+					<th>Bedingung</th>
+					<th>Wert</th>
+					<th style="width:10px; text-align:center;">)</th>
+					<th style="width:10px;">&nbsp;</th>
+				</tr>
+				<?php foreach((array)$aFilter as $iKey => $aValue) { ?>
+					<tr>
+						<td style="text-align:center;">
+							<?php if($iKey != 0) { ?>
+								<select name="iOperator[]" class="txt">
+									<option value="AND" <?php if($aValue[4] == 'AND') { ?>selected="selected"<?php } ?>>UND</option>
+									<option value="OR" <?php if($aValue[4] == 'OR') { ?>selected="selected"<?php } ?>>ODER</option>
+								</select>
+							<?php } ?>
+						</td>
+						<td>
+							<input type="checkbox" name="iOpen[<?=$iKey?>]" value="1" class="txt" <?php if($aValue[3] == 1) { ?>checked="checked"<?php } ?> />
+						</td>
+						<td>
+							<select name="iFilter[]" class="txt" onchange="document.f1.task.value='editList'; document.f1.submit();">
+								<?php foreach($aCustomerFields as $mKey => $sValue) { ?>
+									<option value="<?=$mKey?>" <?php if($mKey == $aValue[0].'') { ?>selected="selected"<?php } ?>><?=$sValue?></option>
+								<?php } ?>
+							</select>
+						</td>
+						<td>
+							<select name="iMode[]" class="txt">
+								<?php foreach($aOperators as $mKey => $sValue) { ?>
+									<option value="<?=$mKey?>" <?php if($mKey == $aValue[2]) { ?>selected="selected"<?php } ?>><?=$sValue?></option>
+								<?php } ?>
+							</select>
+						</td>
+						<td>
+							<?php
+								if (isset($aValue[0])) {
+									// TODO : In eine Funktion packen
+									$aMyField = DB::getQueryRow("SELECT id,type FROM customer_db_definition WHERE field_nr = '".$aValue[0]."' AND db_nr = '".$aList['connect_customer']."' AND active = 1");
+									if ($aMyField['type'] == "Select Field") {
+										// TODO : In eine Funktion packen
+										$aRows = DB::getQueryRows("SELECT display, value  FROM customer_db_values WHERE definition_id = '".$aMyField['id']."' AND active = 1 ORDER BY display");
+										foreach($aRows as $my_val) {
+											$aValues[$my_val['value']] = $my_val['display'];
+										}
+										?>
+											<select name="sFilter[]" class="txt">
+												<?php foreach($aValues as $mKey => $sValue) { ?>
+													<option value="<?=$mKey?>" <?php if($mKey == $aValue[1]) { ?>selected="selected"<?php } ?>><?=$sValue?></option>
+												<?php } ?>
+											</select>
+										<?php
+									} elseif($aMyField['type'] == "image") {
+										?>
+											<input type="checkbox" name="sFilter[]" value="1" class="txt" <?php if($aValue[1] == 1) { ?>checked="checked"<?php } ?> />
+										<?php
+									} else {
+										?>
+											<input type="text" name="sFilter[]" value="<?=$aValue[1]?>" class="txt" />
+										<?php
+									}
+								}
+							?>
+						</td>
+						<td>
+							<input type="checkbox" name="iClose[<?=$iKey?>]" value="1" class="txt" <?php if($aValue[5] == 1) { ?>checked="checked"<?php } ?> />
+						</td>
+						<td>
+							<a href="javascript:document.f1.task.value='editList'; document.f1.iDeleteFilter.value='<?=$iKey?>'; document.f1.submit();">
+								<img src="/admin/media/delete.png" border="0" /></a>
+						</td>
+					</tr>
+				<?php } ?>
+				<tr>
+					<th>Abfrage:</th>
+					<th colspan="6"><?=$sQueryString?></th>
+				</tr>
+			</table>
+		<?php } ?>
+
+		<?=printSubmit("Speichern")?>
+	</form>
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'saveList') {
+
+	// ================================================== // Check errors
+
+	$mError = false;
+	$iCheck = 0;
+	foreach ((array)$_VARS['iFilter'] as $k => $v) {
+		if (isset($_VARS['iOpen'][$k]) && $_VARS['iOpen'][$k] == 1) {
+			$iCheck++;
+		}
+		if (isset($_VARS['iClose'][$k]) && $_VARS['iClose'][$k] == 1) {
+			$iCheck--;
+		}
+
+		if ($iCheck < 0) {
+			$mError = true;
+			break;
+		}
+	}
+	if ($iCheck != 0) {
+		$mError = true;
+	}
+
+	// ==================================================
+
+	$aFilter['field'] 	= $_VARS['iFilter'];
+	$aFilter['filter'] 	= $_VARS['sFilter'];
+	$aFilter['mode'] 	= $_VARS['iMode'];
+	$aFilter['open'] 	= $_VARS['iOpen'];
+	$aFilter['operator']= $_VARS['iOperator'];
+	$aFilter['close'] 	= $_VARS['iClose'];
+
+	if (!$mError) {
+		if($_VARS['id'] > 0) {
+			$sQuery = "
+				UPDATE
+					`newsletter2_lists`
+				SET
+					`name`				= '".\DB::escapeQueryString($_VARS['name'])."',
+					`connect_customer`	= '".\DB::escapeQueryString($_VARS['connect_customer'])."',
+					`connect_table`		= '".\DB::escapeQueryString($_VARS['connect_table'])."',
+					`sex`				= '".\DB::escapeQueryString($_VARS['sex'])."',
+					`email`				= '".\DB::escapeQueryString($_VARS['email'])."',
+					`firstname`			= '".\DB::escapeQueryString($_VARS['firstname'])."',
+					`lastname`			= '".\DB::escapeQueryString($_VARS['lastname'])."',
+					`filter`			= '".\DB::escapeQueryString(serialize($aFilter))."'
+				WHERE
+					`id` = ".(int)$_VARS['id']."
+				LIMIT
+					1
+			";
+		} else {
+			$sQuery = "
+				INSERT INTO
+					`newsletter2_lists`
+				SET
+					`name`				= '".\DB::escapeQueryString($_VARS['name'])."',
+					`connect_customer`	= '".\DB::escapeQueryString($_VARS['connect_customer'])."',
+					`connect_table`		= '".\DB::escapeQueryString($_VARS['connect_table'])."',
+					`sex`				= '".\DB::escapeQueryString($_VARS['sex'])."',
+					`email`				= '".\DB::escapeQueryString($_VARS['email'])."',
+					`firstname`			= '".\DB::escapeQueryString($_VARS['firstname'])."',
+					`lastname`			= '".\DB::escapeQueryString($_VARS['lastname'])."',
+					`filter`			= '".\DB::escapeQueryString(serialize($aFilter))."'
+			";
+		}
+		DB::executeQuery($sQuery);
+
+		?>
+			<script>
+				document.location.href='<?=$_SERVER['PHP_SELF']?>';
+			</script>
+		<?php
+
+	} else {
+
+		$sTmpFilter = serialize($aFilter);
+		?>
+			<form method="post" name="f1" action="<?=$_SERVER['PHP_SELF']?>">
+				<input type="hidden" name="task" value="editList" />
+				<input type="hidden" name="id" value="<?=$_VARS['id']?>" />
+				<textarea name="aTmpFilter" style="display:none;"><?=$sTmpFilter?></textarea>
+				<input type="hidden" name="brace_flag" value="brace_error" />
+			</form>
+			<script>
+				document.f1.submit();
+			</script>
+		<?php
+	}
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'delete') {
+
+	if ($_VARS['newsletter_id'] > 0) {      
+		$sQuery = "DELETE FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."' LIMIT 1";
+		DB::executeQuery($sQuery);
+	}
+
+?>
+<script>
+	document.location.href='<?=$_SERVER['PHP_SELF']?>';
+</script>
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'exportRecipients') {
+?>
+<form name="newsletter_newsletter_1" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="entry_id" value="0">
+	<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+	<input type="hidden" name="task" value="0">
+	<input type="hidden" name="active" value="0">
+</form>
+<table cellpadding="4" cellspacing="1" border="0" width="100%">
+	<tr height="185" class="first">
+		<td width="99%">
+<?php
+	$fExport = $sNewsletterPath."export.csv";
+	$fh = fopen($fExport, "w");
+	$csv = '"Anrede","Titel","Vorname","Weitere Vornamen","Nachname","Suffix","Firma","Abteilung","Position","Straße geschäftlich","Straße geschäftlich 2","Straße geschäftlich 3","Ort geschäftlich","Region geschäftlich","Postleitzahl geschäftlich","Land geschäftlich","Straße privat","Straße privat 2","Straße privat 3","Ort privat","Region privat","Postleitzahl privat","Land privat","Weitere Straße","Weitere Straße 2","Weitere Straße 3","Weiterer Ort","Weitere Region","Weitere Postleitzahl","Weiteres Land","Telefon Assistent","Fax geschäftlich","Telefon geschäftlich","Telefon geschäftlich 2","Rückmeldung","Autotelefon","Telefon Firma","Fax privat","Telefon privat","Telefon privat 2","ISDN","Mobiltelefon","Weiteres Fax","Weiteres Telefon","Pager","Haupttelefon","Mobiltelefon 2","Telefon für Hörbehinderte","Telex","Abrechnungsinformation","Benutzer 1","Benutzer 2","Benutzer 3","Benutzer 4","Beruf","Büro","E-Mail-Adresse","E-Mail: Angezeigter Name","E-Mail 2: Adresse","E-Mail 2: Angezeigter Name","E-Mail 3: Adresse","E-Mail 3: Angezeigter Name","Empfohlen von","Geburtstag","Geschlecht","Hobby","Initialen","Internet-Frei/Gebucht","Jahrestag","Kategorien","Kinder","Konto","Name Assistent","Name des/der Vorgesetzten","Notizen","Organisations-Nr.","Ort","Partner","Postfach","Priorität","Privat","Regierungs-Nr.","Reisekilometer","Sprache","Stichwörter","Vertraulichkeit","Verzeichnisserver","Webseite"';
+	$csv .= "\r\n";
+	fputs($fh,$csv);
+
+	$aRows = DB::getQueryRows("SELECT * FROM newsletter2_recipients WHERE idList = '".$_VARS['id']."' AND active = 1 ORDER BY id DESC");
+	foreach($aRows as $my_abfrage4) {
+		if($my_abfrage4['sex']==2)
+			$anrede = "Frau";
+		elseif($my_abfrage4['sex']==1)
+			$anrede = "Herr";
+		else
+			$anrede = "";
+		$csv = '"'.$anrede.'","' . $aRecipientsTitles[$my_abfrage4['title']] . '","'.$my_abfrage4['firstname'].'","","'.$my_abfrage4['name'].'","","","","",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"'.$my_abfrage4['email'].'","'.$my_abfrage4['email'].'",,,,,,"0.0.00","Keine Angabe",,"",,"0.0.00",,,"",,,,,"",,,"Normal","Aus",,,"","","Normal"';
+		$csv .= "\r\n";
+		fputs($fh,$csv);
+	}
+
+	fclose($fh);
+	chmod($sNewsletterPath."export.csv", $system_data['chmod_mode_file']);   
+
+?>
+<script>
+window.open('<?=$sNewsletterUrl."export.csv"?>');
+history.back();
+</script>
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'importRecipients') {
+
+	$aNewsletter = Ext_Newsletter::getListData($_VARS['id']);
+
+?>
+<h2>Import von Empfängern in "<?=$aNewsletter['name']?>":</h2>
+
+<form method="POST" name="import_form" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="task" value="startimport" />
+	<input type="hidden" name="id" value="<?=$_VARS['id']?>" />
+			<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th>Trennzeichen</th>
+					<td><input type="text" name="import_separator" value=";" class="txtxs"></td>
+				</tr>
+				<?=printFormText("Zeichensatz", "charset", "cp1252")?>
+				<tr>
+					<th>Geschlecht</th>
+					<td>
+						<div style="width:100px; float:left;"><label for="import_male">männlich</label></div>
+						<input type="text" id="import_male" name="import_male" value="m" class="txtxs" />
+						<div style="clear:left; height:1px;"></div>
+						<div style="width:100px; float:left;"><label for="import_female">weiblich</label></div>
+						<input type="text" id="import_female" name="import_female" value="w" class="txtxs" />
+						<div style="clear:left;"></div>
+					</td>
+				</tr>
+				<tr>
+					<th>Titel</th>
+					<td>
+						<?php foreach((array)$aRecipientsTitles as $iKey => $sValue) { ?>
+
+							<div style="width:100px; float:left;"><label for="import_title_<?=$iKey?>"><?=$sValue?></label></div>
+							<input type="text" id="import_title_<?=$iKey?>" name="import_titles[<?=$iKey?>]" value="<?=$sValue?>" class="txtxs" />
+							<div style="clear:left; height:1px;"></div>
+
+						<?php } ?>
+					</td>
+				</tr>
+				<tr>
+					<th>Position (Spalte)</th>
+					<td>
+						<div style="width:100px; float:left;"><label for="import_name">Nachname</label></div>
+						<input type="text" id="import_name" name="import_name" value="1" class="txtxs" />
+						<div style="clear:left; height:1px;"></div>
+						
+						<div style="width:100px; float:left;"><label for="import_firstname">Vorname</label></div>
+						<input type="text" id="import_firstname" name="import_firstname" value="2" class="txtxs" />
+						<div style="clear:left; height:1px;"></div>
+						
+						<div style="width:100px; float:left;"><label for="import_email">E-Mail</label></div>
+						<input type="text" id="import_email" name="import_email" value="3" class="txtxs" />
+						<div style="clear:left; height:1px;"></div>
+						
+						<div style="width:100px; float:left;"><label for="import_sex">Geschlecht</label></div>
+						<input type="text" id="import_sex" name="import_sex" value="4" class="txtxs" />
+						<div style="clear:left; height:1px;"></div>
+						
+						<div style="width:100px; float:left;"><label for="import_title">Titel</label></div>
+						<input type="text" id="import_title" name="import_title" value="5" class="txtxs">
+						<div style="clear:left;"></div>
+					</td>
+				</tr>
+				<tr>
+					<th>Datei</th>
+					<td>Bitte wählen Sie eine .CSV Datei von Ihrer Festplatte aus.<br><input type="file" name="import_file" value="" class="txt"></td>
+				</tr>
+			</table>
+</form>
+	<p align="right">
+	<?make_button("Import starten", "#", "onclick=\"document.import_form.submit();\"");?>&nbsp;
+	<?make_button("zurück", "#", "onclick=\"document.location.href='".$_SERVER['PHP_SELF']."?active=0';\"");?>
+	</p>
+
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'startimport') {
+
+	$aNewsletter = Ext_Newsletter::getListData($_VARS['id']);
+
+	$i=0;
+	$arr = file($_FILES['import_file']['tmp_name']);
+
+	foreach ($arr as $elem) {
+		$entry = explode($_VARS['import_separator'],$elem);
+
+		foreach ($entry as $k=>$v) {
+			$entry[$k] = str_replace('"','',$entry[$k]);
+			//$entry[$k] = preg_replace('/(^[^a-z0-9 ]+)|([^a-z0-9 ]+$)/ig', '', $entry[$k]); 
+			$entry[$k] = trim($entry[$k]);
+			if (!empty($_VARS['charset'])) {
+				$entry[$k] = iconv($_VARS['charset'], 'UTF-8', $entry[$k]);
+			}
+		}
+
+		$name 		= $entry[$_VARS['import_name']-1];
+	 	$firstname 	= $entry[$_VARS['import_firstname']-1];
+	 	$email 		= $entry[$_VARS['import_email']-1];
+		$sex 		= $entry[$_VARS['import_sex']-1];
+		$sTitle		= $entry[$_VARS['import_title']-1];
+
+		if ($sex == $_VARS['import_male']) {
+			$sex = "1";
+		} elseif ($sex == $_VARS['import_female']) { 
+			$sex = "2";
+		} else { 
+			$sex = 0;
+		}
+
+		$iTitle = (int)array_search(trim($sTitle), (array)$_VARS['import_titles']);
+
+		if (checkEmailMx($email)) {
+			$aCheckRecipient = DB::getQueryRow("SELECT id FROM newsletter2_recipients WHERE email LIKE '".\DB::escapeQueryString($email)."' AND idList = ".(int)$_VARS['id']." ");
+			if (empty($aCheckRecipient)) {
+				DB::executeQuery("INSERT INTO newsletter2_recipients (idList, name, firstname, email, sex, title, active) VALUES (".(int)$_VARS['id'].",'".\DB::escapeQueryString($name)."','".\DB::escapeQueryString($firstname)."','".\DB::escapeQueryString($email)."','".\DB::escapeQueryString($sex)."','".\DB::escapeQueryString($iTitle)."',1)");
+				$i++;
+			}
+		}
+	}
+	echo $i;
+?>
+<script>
+	document.location.href='/admin/extensions/newsletter/recipients.html?list_id=<?=(int)$_VARS['id']?>';
+</script>
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'sendMail') {
+
+	$aNewsletter = DB::getQueryRow("SELECT * FROM newsletter2_mails WHERE id = '".$_VARS['id']."'");
+
+?>
+<script>
+
+function preview() {
+	document.send_form.submit();
+}
+
+</script>
+
+	<h2>Newsletter "<?=$aNewsletter['name']?>" versenden</h2>
+
+	<form method="POST" name="send_form" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="task" value="preview">
+	<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+	<h3>Bitte wählen Sie die Empfänger für diesen Newsletter aus:</h3>
+			<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th width="40%">Newsletter an folgende Empfängerliste senden:</th>
+					<td>
+						<select name="send_recipients" class="txt">
+						<option value="0">keine Auswahl
+<?php
+						$rLists = DB::getQueryRows("SELECT l.id,l.name,COUNT(r.id) c FROM newsletter2_lists l, newsletter2_recipients r WHERE l.id = r.idList AND l.active = 1 AND r.active = 1 GROUP BY r.idList ORDER BY name");
+						foreach($rLists as $aLists) {
+							echo "<option value=".$aLists['id'].">".$aLists['name']." (".intval($aLists['c'])." Einträge)\n";
+						}
+?>
+					</select></td>
+				</tr>
+			<?=printTableEnd()?>
+			<?=printSubmit("weiter zur Vorschau")?>
+			</form>
+	<p align="right">
+	<?make_button("zurück", "#", "onclick=\"document.location.href='".$_SERVER['PHP_SELF']."';\"");?>
+	</p>
+
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif($_VARS['task'] == 'preview') {
+
+	$aNewsletter = DB::getQueryRow("SELECT * FROM newsletter2_mails WHERE id = ".(int)$_VARS['id']."");
+
+?>
+<script>
+
+function confirmsend() {
+	if(confirm("Möchten Sie den Newsletter wirklich absenden?")) {
+		document.send_form.submit();
+	} else {
+		return false;
+	}
+}
+
+</script>
+
+<?php
+	
+	$iRecipients = 0;
+	$sRecipients = "";
+	if($_VARS['send_recipients'] > 0) {
+		$aData = DB::getQueryRow("SELECT l.id,l.name,COUNT(r.id) c FROM newsletter2_lists l, newsletter2_recipients r WHERE l.id = ".$_VARS['send_recipients']." AND l.id = r.idList AND l.active = 1 AND r.active = 1 GROUP BY r.idList");
+		$iRecipients = $aData['c'];
+		$sRecipients = $aData['name'];
+	}
+
+	if(is_numeric($aNewsletter['html_page'])) {
+		
+		$oPage = \Cms\Entity\Page::getInstance($aNewsletter['html_page']);
+		$oSite = $oPage->getJoinedObject('site');
+		
+		$strUrl = $oPage->getLink(null, true);
+
+	} else {
+		$strDomain = $system_data['domain'];
+		$strUrl = $system_data['domain'].$aNewsletter['html_page'];
+	}
+
+	if($_SERVER['HTTPS'] == 'on') {
+		$strUrl = str_replace('http://', 'https://', $strUrl);
+	}
+
+?>
+	<h2>Newsletter "<?=$aNewsletter['name']?>" Vorschau</h2>
+
+	<form method="POST" name="send_form" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="task" value="startsend">
+	<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+	<input type="hidden" name="send_recipients" value="<?=$_VARS['send_recipients']?>">
+			<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th width="30%">Empfänger</th>
+					<td width="70%"><?=$sRecipients?> (<?=$iRecipients?> Empfänger)</td>
+				</tr>
+				<tr>
+					<th>Betreff</th>
+					<td><?=$aNewsletter['subject']?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für männliche Empfänger</th>
+					<td><?=$aNewsletter['salutation_m']?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für weiblich Empfänger</th>
+					<td><?=$aNewsletter['salutation_f']?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für Empfänger ohne Zuordnung</th>
+					<td><?=$aNewsletter['salutation_o']?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für männliche Empfänger mit Titel</th>
+					<td><?=$aNewsletter['salutation_title_m']?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für weiblich Empfänger mit Titel</th>
+					<td><?=$aNewsletter['salutation_title_f']?></td>
+				</tr>
+
+<?php 
+				if($aNewsletter['html_page']) { 
+?>
+				<tr>
+					<th valign="top">HTML E-Mail</th>
+					<td>
+					<iframe src="<?=$strUrl?>" style="width:100%;height: 400px;background-color:#FFFFFF;border:1px solid black;" frameborder="0" onclick="return false;">
+					</iframe>
+					</td>
+				</tr>
+<?php } ?>
+				<tr>
+					<th valign="top">Alternative Text E-Mail</th>
+					<td>
+					<div style="width:100%;height:300px;background-color:#FFFFFF; border:1px solid black; font-family:Courier; overflow: auto;">
+					<?=nl2br($aNewsletter['text'])?>
+					</div>
+					</td>
+				</tr>
+			</table>
+			</form>
+	<p align="right">
+	<?make_button("senden", "#", "onclick=\"confirmsend()\"");?>&nbsp;
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='".$_SERVER['PHP_SELF']."?active=0';\"");?>
+	</p>
+					
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['task'] == 'startsend') {
+
+	$aNewsletter = DB::getQueryRow("SELECT * FROM newsletter2_mails WHERE id = '".$_VARS['id']."'");
+
+	$sSql = "
+			SELECT 
+				* 
+			FROM 
+				newsletter2_attachments
+			WHERE
+				`mail_id` = :mail_id AND
+				`active` = 1
+				";
+	$aSql = array('mail_id'=>$aNewsletter['id']);
+	$aAttachments = DB::getPreparedQueryData($sSql, $aSql);
+	
+	$i=0;
+	$iDoubles = 0;
+	$iErrors = 0;
+
+	$aRecipients = (array)DB::getQueryRows("SELECT * FROM newsletter2_recipients WHERE idList  = ".(int)$_VARS['send_recipients']." AND active = 1");
+	$iRecipients = count($aRecipients);
+
+	flush();
+	ignore_user_abort(true);
+	set_time_limit(7200);
+	ini_set('memory_limit', '4G');
+
+	$factor = 400 / $iRecipients;
+	$aDoneRecipients = array();
+
+?>
+			<h2>Newsletter "<?=$aNewsletter['name']?>" versenden an <?=(int)$iRecipients?> Empfänger aus Liste #<?=(int)$_VARS['send_recipients']?>:</h2>
+			<p>
+			Fortschritt:
+			<table id="table1" cellpadding="0" cellspacing="0" border="0" style="height:10px;width:400px;border:1px solid #29527A;table-layout:fixed;margin-top:5px;">
+				<tr>
+					<td id="td1" style="width:1px;background-color:#dededf;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+					<td id="td2" style="width:399px;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+				</tr>
+			</table>
+			</p>
+			<p>
+			Aktueller Stand:<br>
+			<span id="spanStatus">0</span>
+			</p>
+		</td>
+	</tr>
+</table>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?php
+
+	if (is_numeric($aNewsletter['remove_page'])) {
+		$oPage = \Cms\Entity\Page::getInstance($aNewsletter['remove_page']);
+		$strRemoveUrl = $oPage->getLink(null, true);
+	} else {
+		$strRemoveUrl = $system_data['domain'].$aNewsletter['remove_page'];
+	}
+
+	$strRemoveUrl .= "?newsletter_action=remuser&newsletter_recipient=#email#";
+	
+	// Wenn HTML-E-Mail
+	if ($aNewsletter['html_page']) {
+
+		if (is_numeric($aNewsletter['html_page'])) {
+			$oPage = \Cms\Entity\Page::getInstance($aNewsletter['html_page']);
+			$oSite = $oPage->getJoinedObject('site');
+			
+			$strDomain = '';
+			if($oSite->force_https) {
+				$strDomain .= 'https://';
+			} else {
+				$strDomain .= 'http://';
+			}
+			$strDomain .= $oSite->getMainDomain();
+			
+			$strUrl = $oPage->getLink(null, true);
+		} else {
+			$strDomain = $system_data['domain'];
+			$strUrl = $system_data['domain'].$aNewsletter['html_page'];
+		}
+
+		$sHtml = implode("\n", file($strUrl));
+
+		/*
+		 * get .css and replace css link tag
+		 */
+		$sCssPattern = '%<link type="text/css" rel="stylesheet" href="([a-z0-9._\-/]+)\?.*?" />%i';
+
+		preg_match($sCssPattern, $sHtml, $arrMatch);
+
+		if(!empty($arrMatch[1])) {
+			$sCss = implode("\n", file($strDomain.$arrMatch[1]));
+			$sCss = \Util::compressCssOutput($sCss);
+			$sCss = '<style>'.$sCss.'</style>';
+			$sHtml = str_replace($arrMatch[0], $sCss, $sHtml);
+		}
+
+		if ($aNewsletter['stripscript'] == 1) {
+			$sTag = "script";
+			while(stripos($sHtml, "<".$sTag) !== false) {
+				$it = strpos( strtolower($sHtml) , strtolower("<" . $sTag)  ) ;
+				$it2 = strpos( strtolower($sHtml) , strtolower("</" . $sTag . ">") ) + strlen( $sTag ) + 3 ;
+				$temp = substr( $sHtml , 0    , $it  ) ;
+				$temp2 = substr( $sHtml , $it2) ;
+				$sHtml = $temp . $temp2 ;
+			}
+			$sHtml = $sHtml;
+		}
+
+		// Wenn Dateien in der E-Mail mitgeschickt werden sollen
+		$array = array();
+		// Alle Dateien raussuchen
+		preg_match_all('/(?:(?:"|\')|(?:url+\(?"|\'|\())([^"\'\(\)]+\.(css|jpg|png|gif))("|\'|\))/Ui',$sHtml,$regs);
+		$regs[1] = array_unique($regs[1]);
+		foreach ($regs[1] as $elem) {
+			// Wenn Datei vorhanden, dann im Array eintragen
+			if (is_file($_SERVER['DOCUMENT_ROOT'].$elem) && !in_array($elem,$array)) {
+				if ($aNewsletter['attach'] == 1) {
+					//$array[] = $elem;
+					//$sHtml = str_replace($elem,substr($elem,strrpos($elem,"/")+1),$sHtml);
+				} else {
+					$sHtml = str_replace($elem,$strDomain.$elem,$sHtml);
+				}
+			}
+		}
+
+		// Links absolut mit Domain adressieren
+		$sHtml = str_replace('href="/','href="'.$strDomain.'/',$sHtml);
+
+		// Removelink einbauen
+		$sHtml = preg_replace("/[^\"]+#remove#/", $strRemoveUrl, $sHtml);
+	}
+
+	$sText = preg_replace("/(\r\n|\n|\r)/", "\n", $aNewsletter['text']); 
+
+	$sText = str_replace("#remove#", $strRemoveUrl, $sText);
+
+	$sLogname = "log_".time().".txt";
+	$fh = fopen($sNewsletterPath.$sLogname, "w");
+
+	fwrite($fh, "Ein Newsletter wurde am ".strftime("%x %X", time())." an folgende Empfänger aus der Liste #".(int)$_VARS['send_recipients']." versendet:\r\n\r\n");
+
+	foreach($aRecipients as $aRecipient) {
+		if(!in_array($aRecipient['email'], $aDoneRecipients)) {
+
+			$sErrorMessage = '';
+
+			try {
+
+				// get data from customer_db
+				if (
+					$aRecipient['idUser'] &&
+					$aRecipient['idTable']
+				) {
+					$strSql = "SELECT * FROM customer_db_".(int)$aRecipient['idTable']." WHERE id = ".(int)$aRecipient['idUser']." LIMIT 1";
+					$arrData = DB::getQueryData($strSql);
+					$aRecipient['customer_db'] = $arrData[0];
+				}
+
+				$oMessage = new Swift_Message();
+
+				foreach((array)$aAttachments as $aAttachment) {
+					$oMessage->attach(Swift_Attachment::fromPath($sNewsletterPath.$aAttachment['attachment']));
+				}
+
+				if ($aRecipient['sex'] == "1") {
+					$sSalutation = $aNewsletter['salutation_m'];
+				} elseif ($aRecipient['sex'] == "2") {
+					$sSalutation = $aNewsletter['salutation_f'];
+				} else {
+					$sSalutation = $aNewsletter['salutation_o'];
+				}
+
+				if ($aRecipient['sex'] > 0) {
+					if ($aRecipient['title'] > 0) {
+						if ($aRecipient['sex'] == 1) {
+							$sSalutation = $aNewsletter['salutation_title_m'];
+						} elseif ($aRecipient['sex'] == 2) {
+							$sSalutation = $aNewsletter['salutation_title_f'];
+						}
+
+						$sSalutation = str_replace('#titel#', $aRecipientsTitles[$aRecipient['title']], $sSalutation);
+					}
+				}
+
+				$text = $sText;
+				$text = str_replace("#anrede#",$sSalutation,$text);
+				$text = str_replace("#titel#",$aRecipientsTitles[$aRecipient['title']],$text);
+				$text = str_replace("#id#",$aRecipient['id'],$text);
+				$text = str_replace("#name#",$aRecipient['name'],$text);
+				$text = str_replace("#vorname#",$aRecipient['firstname'],$text);
+				$text = str_replace("#email#",$aRecipient['email'],$text);
+
+				$html = $sHtml;
+				$html = str_replace("#anrede#",$sSalutation,$html);
+				$html = str_replace("#titel#",$aRecipientsTitles[$aRecipient['title']],$html);
+				$html = str_replace("#id#",$aRecipient['id'],$html);
+				$html = str_replace("#name#",$aRecipient['name'],$html);
+				$html = str_replace("#vorname#",$aRecipient['firstname'],$html);
+				$html = str_replace("#email#",$aRecipient['email'],$html);
+
+				/**
+				 * wd hook
+				 */
+				$aTransfer = array();
+				$aTransfer['text'] = &$text;
+				$aTransfer['html'] = &$html;
+				$aTransfer['customer'] = &$aRecipient['customer_db'];
+				\System::wd()->executeHook('newsletter_send', $aTransfer);
+
+				if(is_array($aRecipient['customer_db'])) {
+					$html = str_replace("#password#", $aRecipient['customer_db']['password'], $html);
+					$text = str_replace("#password#", $aRecipient['customer_db']['password'], $text);
+					$html = str_replace("#nickname#", $aRecipient['customer_db']['nickname'], $html);
+					$text = str_replace("#nickname#", $aRecipient['customer_db']['nickname'], $text);
+				}
+
+				$sSubject = $aNewsletter['subject'];
+				$sSubject = str_replace("#anrede#",$sSalutation,$sSubject);
+				$sSubject = str_replace("#titel#",$aRecipientsTitles[$aRecipient['title']],$sSubject);
+				$sSubject = str_replace("#id#",$aRecipient['id'],$sSubject);
+				$sSubject = str_replace("#name#",$aRecipient['name'],$sSubject);
+				$sSubject = str_replace("#vorname#",$aRecipient['firstname'],$sSubject);
+				$sSubject = str_replace("#email#",$aRecipient['email'],$sSubject);
+
+				if($aNewsletter['html_page']) {
+
+					$aEmbeddedImages = array();
+					$iAdditionalOffset = 0;
+					preg_match_all('=<[^>]*img[^>]*src[^>\\=]*\\=[^>]*"([^"]*)"[^>]*>=iuU', $html, $aMatches, PREG_OFFSET_CAPTURE);
+					foreach($aMatches[1] as $aMatchedImgSrc) {
+						// Bild-Pfad/Url normalisieren und nur Bilder beachten die mit / beginnen
+						$sImagePath = trim($aMatchedImgSrc[0]);
+						if(mb_substr($sImagePath, 0 , 1) !== '/') {
+							continue;
+						}
+						// jedes Bild soll nur einmalig eingebunden werden
+						if(!isset($aEmbeddedImages[$sImagePath])) {
+							$sFinalImagePath = $strDomain.$sImagePath;
+							if(is_file($_SERVER['DOCUMENT_ROOT'].$sImagePath)) {
+								$sFinalImagePath = $_SERVER['DOCUMENT_ROOT'].$sImagePath;
+							}
+							$aEmbeddedImages[$sImagePath] = $oMessage->embed(Swift_Image::fromPath($sFinalImagePath));
+						}
+						// Das Img-Src-Attribut gegen den Wert/Index des eigebundenen Bildes austauschen
+						$html = substr_replace(
+							$html,
+							$aEmbeddedImages[$sImagePath],
+							$aMatchedImgSrc[1]+$iAdditionalOffset,
+							mb_strlen($aMatchedImgSrc[0])
+						);
+						// Änderungen in der String-Länge merken da dann der Offset für die folgenden Elemente nicht
+						// mehr passt (wenn der ersetzte String länger/kürzer als der original String ist)
+						$iAdditionalOffset += mb_strlen($aEmbeddedImages[$sImagePath]) - mb_strlen($aMatchedImgSrc[0]);
+					}
+
+					$oMessage->setBody($html, 'text/html');
+					$oMessage->addPart($text, 'text/plain');
+
+				} else {
+
+					$oMessage->setBody($text, 'text/plain');
+
+				}
+
+				if(empty($aNewsletter['sender'])) {
+					$sFrom = $system_data['project_name'];
+				} else {
+					$sFrom = $aNewsletter['sender'];
+				}
+
+				$oMessage->setReturnPath($aNewsletter['email']);
+				$oMessage->setFrom(array($aNewsletter['email'] => $sFrom));
+				$oMessage->setSubject($sSubject);
+
+				$oHeaders = $oMessage->getHeaders();
+				$oHeaders->addTextHeader('X-Mailer', 'webDynamics Newslettermodul (by Fidelo Software GmbH)');
+
+				$oMessage->setTo(array($aRecipient['email']));
+
+				$oWDMail = new WDMail;
+				$oTransport = $oWDMail->getTransport();
+
+				$oMailer = new Swift_Mailer($oTransport);
+
+				$iNumSent = $oMailer->send($oMessage);
+
+			} catch (\Exception $e) {
+				$iNumSent = 0;
+				$sErrorMessage = $e->getMessage().' @ '.$e->getFile().':'.$e->getLine();
+			}
+
+			if($iNumSent) {
+				$aDoneRecipients[] = $aRecipient['email'];
+			}
+
+			fwrite($fh, "[@".strftime("%X", time())."] Status: ".intval($iNumSent)." / Empfänger: ".$aRecipient['email']." / Fehler: ".$sErrorMessage."\r\n");
+
+			if($iNumSent) {
+				$i++;
+			} else {
+				$iErrors++;
+			}
+
+			if($i%20 == 0) {
+				usleep(200);
+				echo "<script>$('spanStatus').innerHTML='".$i."';$('td1').style.width='".intval($factor*$i)."';$('td2').style.width='".intval(400-($factor*$i))."';</script>\n";
+				flush();
+			}
+
+		} else {
+			$iDoubles++;
+		}
+	}
+
+	fwrite($fh, "\r\n[@".strftime("%X", time())."] Abgeschlossen! Empfänger insgesamt: ".(int)$iRecipients." / Duplikate: ".(int)$iDoubles." / Fehler: ".$iErrors."\r\n");
+	fclose($fh);
+
+	if(!empty($user_data['data']['email'])) {
+		$oMail = new WDMail();
+		$oMail->attachments = array($sNewsletterPath.$sLogname=>'newsletter.log');
+		$oMail->subject = 'Report Newsletterversand';
+		$oMail->text = 'Anbei der Report';
+		$oMail->send(array($user_data['data']['email']));
+	}
+	
+?>
+
+	<script type="text/javascript">
+		Event.observe(window, 'load', function()
+		{
+			$('spanStatus').innerHTML = '<?=$i?>';
+			$('td1').style.width = '400px';
+			$('td2').style.width = '0';
+		});
+	</script>
+
+	<h3>Ihre Nachricht wurde erfolgreich an <?=$i?> Empfänger versendet.</h3>
+	<p><?=$iDoubles?> doppelte Empfänger wurden rausgefiltert.</p>
+	<?php if($iErrors > 0) { ?>
+		<p>An <?=$iErrors?> Empfänger ist wegen Fehlern beim Versenden der E-Mail keine Nachricht versendet worden.</p>
+	<?php } ?>
+	<p>Hier finden Sie das Protokoll dieser Nachricht &raquo; <a href="<?=$sNewsletterUrl.$sLogname?>" target="_blank">Protokoll (<?=$sLogname?>)</a></p>
+	<p align="right">
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='".$_SERVER['PHP_SELF']."?active=0';\"");?>
+	</p>
+
+<?php
+} elseif ($_VARS['task'] == 'editMail') {
+	
+	$aMail = DB::getQueryRow("SELECT * FROM newsletter2_mails WHERE id = ".(int)$_VARS['id']."");
+	
+	$sSql = "
+			SELECT 
+				* 
+			FROM 
+				newsletter2_attachments
+			WHERE
+				`mail_id` = :mail_id AND
+				`active` = 1
+				";
+	$aSql = array('mail_id'=>$aMail['id']);
+	$aAttachments = DB::getPreparedQueryData($sSql, $aSql);
+	
+	$aAttachments[] = array();
+	
+?>
+	<h2>Eigenschaften von "<?=$aMail['name']?>":</h2>
+	<form method="POST" name="init_form" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+	<input type="hidden" name="task" value="saveMail">
+	<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+	<?=printTableStart()?>
+		<?=printFormText("Name","name",$aMail['name'])?>
+		<?=printFormText("Absender Bezeichnung","sender",$aMail['sender'])?>
+		<?=printFormText("Absender E-Mail-Adresse","email",$aMail['email'])?>
+		<?=printFormCheckbox("Bilder in der E-Mail mitsenden","attach",1,$aMail['attach'])?>
+		<?=printFormCheckbox("Script Abschnitte entfernen","stripscript",1,$aMail['stripscript'])?>
+	<?=printTableEnd()?>
+	<br>
+	<?=printTableStart()?>
+		<?=printFormText("Betreff","subject",$aMail['subject'])?>
+		<?=printFormText("Anrede für männliche Empfänger","salutation_m",$aMail['salutation_m'])?>
+		<?=printFormText("Anrede für weiblich Empfänger","salutation_f",$aMail['salutation_f'])?>
+		<?=printFormText("Anrede für Empfänger ohne Zuordnung","salutation_o",$aMail['salutation_o'])?>
+		<?=printFormText("Anrede für männliche Empfänger mit Titel","salutation_title_m",$aMail['salutation_title_m'])?>
+		<?=printFormText("Anrede für weiblich Empfänger mit Titel","salutation_title_f",$aMail['salutation_title_f'])?>
+		<?=printFormPageSelect("Ort der Abmeldeseite","remove_page",$aMail['remove_page'], array('value_type'=>1))?>
+		<?=printFormPageSelect("Ort der HTML E-Mail","html_page",$aMail['html_page'], array('empty'=>array(""=>"keine Auswahl (nur Text)"), 'value_type'=>1))?>
+		<?=printFormTextarea("Alternative Text-E-Mail","text",$aMail['text'],10)?>
+	<?=printTableEnd()?>
+	<h2>Anhänge</h2>
+	<?=printTableStart()?>
+<?php
+	foreach ((array)$aAttachments as $iKey=>$aAttachment) {
+
+		$sCheckbox = '<input type="checkbox" name="delete['.$aAttachment['id'].']" value="1" />';
+		
+		if ($aAttachment['attachment']) {
+			echo '<tr><th>'.$sCheckbox.' Anhang '.($iKey+1).'</th><td>'.$aAttachment['attachment'].'</td></tr>';
+		} else {
+			echo printFormFile('Anhang '.($iKey+1).'', 'attachment['.$aAttachment['id'].']');
+		}
+
+	}
+?>
+
+	<?=printTableEnd()?>
+	</form>
+	<p align="right">
+	<?make_button("Speichern", "#", "onclick=\"document.init_form.submit();\"");?>&nbsp;
+	<?make_button("Zurück", "#", "onclick=\"go('".$_SERVER['PHP_SELF']."'); return false;\"");?>
+	</p>
+	<p>
+	Platzhalter: #name#, #vorname#, #anrede#, #titel# (wird unter #anrede# eingesetzt), #email#
+	</p>
+
+<?php
+
+} elseif ($_VARS['task'] == 'saveMail') {
+
+	if (!$_VARS['id']) {
+		$_VARS['id'] = DB::insertData('newsletter2_mails', ['active' => 1]);
+	}
+
+	if ($_VARS['id'] > 0) {
+		$sSet = "
+				`sender` = '".\DB::escapeQueryString($_VARS['sender'])."',  
+				`name` = '".\DB::escapeQueryString($_VARS['name'])."',  
+				`email` = '".\DB::escapeQueryString($_VARS['email'])."', 
+				`attach` = '".\DB::escapeQueryString($_VARS['attach'])."', 
+				`stripscript` = '".\DB::escapeQueryString($_VARS['stripscript'])."', 
+				`subject` = '".\DB::escapeQueryString($_VARS['subject'])."', 
+				salutation_f = '".\DB::escapeQueryString($_VARS['salutation_f'])."', 
+				salutation_m = '".\DB::escapeQueryString($_VARS['salutation_m'])."',
+				salutation_title_f = '".\DB::escapeQueryString($_VARS['salutation_title_f'])."', 
+				salutation_title_m = '".\DB::escapeQueryString($_VARS['salutation_title_m'])."', 
+				salutation_o = '".\DB::escapeQueryString($_VARS['salutation_o'])."', 
+				html_page = '".\DB::escapeQueryString($_VARS['html_page'])."', 
+				remove_page = '".\DB::escapeQueryString($_VARS['remove_page'])."', 
+				`text` = '".\DB::escapeQueryString($_VARS['text'])."' ";
+		DB::executeQuery("UPDATE newsletter2_mails SET ".$sSet." WHERE id = '".$_VARS['id']."'");
+
+		foreach ((array)$_FILES['attachment']['tmp_name'] as $iKey=>$sFile) {
+			if (is_file($sFile)) {
+				
+				$sName = \Util::getCleanFileName($_VARS['id']."_".$_FILES['attachment']['name'][$iKey]);
+				move_uploaded_file($sFile, $sNewsletterPath.$sName);
+				
+				$sSql = "INSERT INTO newsletter2_attachments SET `created` = NOW(), `mail_id` = :mail_id, `attachment` = :attachment";
+				$aSql = array('mail_id'=>(int)$_VARS['id'], 'attachment'=>$sName);
+				DB::executePreparedQuery($sSql, $aSql);
+
+			}
+		}
+
+		foreach ((array)$_VARS['delete'] as $iItem=>$iValue) {
+			if ($iValue == 1) {
+				$sSql = "DELETE FROM newsletter2_attachments WHERE `mail_id` = :mail_id AND `id` = :id";
+				$aSql = array('mail_id'=>(int)$_VARS['id'], 'id'=>$iItem);
+				DB::executePreparedQuery($sSql, $aSql);	
+			}
+		}
+		
+	}
+
+?>
+
+<script>
+	document.location.href='<?=$_SERVER['PHP_SELF']?>?id=<?=$_VARS['id']?>&task=editMail';
+</script>
+<?php
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+} elseif ($_VARS['newsletter_action'] == 'delete') {
+
+?>
+<script>
+	document.location.href='form.html?newsletter_id=<?=$_VARS['newsletter_id']?>&newsletter_action=entries&active=0';
+</script>
+<?php } ?>
+</td>
+	</tr>
+</table>
+<?php } ?>
+	
+</section>
+	
+<?=Admin_Html::loadAdminFooter()?>

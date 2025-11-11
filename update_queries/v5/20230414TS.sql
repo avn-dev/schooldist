@@ -1,0 +1,3 @@
+INSERT INTO `system_elements` (`id`, `title`, `description`, `element`, `category`, `file`, `version`, `parent`, `image`, `documentation`, `template`, `sql`, `administrable`, `include_backend`, `include_frontend`, `include_mode`, `active`) VALUES (NULL, 'Api', '', 'bundle', 'Fidelo', 'Api', '0.010', '', '', '', '', '', '0', '1', '1', '0', '1');
+
+REPLACE INTO `system_config` (`c_key`, `c_value`) VALUES ('oauth2.google.client_id', '384517480350-hp5v68bqg0rej740sac761evp89us9fc.apps.googleusercontent.com'), ('oauth2.google.client_secret', 'F314slSii105CcTDYd3aGja6'), ('oauth2.microsoft.client_id', 'a7b32b29-24da-403e-a41c-1b7e4b6fc0c6'), ('oauth2.microsoft.client_secret', '8Pp8Q~O-cyHmoJuBV5F0VNgkjwgRdep1z4ThPded');

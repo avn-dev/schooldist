@@ -1,0 +1,2 @@
+[2025-11-06T16:48:38.635377+01:00] Log.INFO: Login succeeded {"id":7,"ip":"192.168.65.1","passkey":null} []
+[2025-11-06T16:48:38.650209+01:00] Log.INFO: Known device {"user":7,"device":15,"new_expires_at":"2025-12-06 16:48:38"} []

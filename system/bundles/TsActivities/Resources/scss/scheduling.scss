@@ -1,0 +1,83 @@
+
+@import 'floating-vue/dist/style.css';
+
+.col-students {
+	height: 99vh;
+
+	> .box {
+		overflow: hidden;
+
+		.box-body {
+			height: 100%;
+			overflow: hidden;
+			padding: 0;
+		}
+	}
+}
+
+.col-calendar {
+	height: 99vh;
+}
+
+div.student-table {
+	overflow: auto;
+	height: 100%;
+
+	table {
+		table-layout: fixed;
+
+		.col-checkbox {
+			width: 32px;
+			text-align: center;
+		}
+		.col-group {
+			width: 10%;
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+		}
+		.col-name {
+			width: 40%;
+		}
+		.col-blocks-booked,
+		.col-blocks-allocated {
+			width: 10%;
+		}
+		.col-activity {
+			width: 20%;
+		}
+		.col-actions {
+			width: 5%;
+			min-width: 30px;
+		}
+	}
+
+	&.unallocated td:nth-child(3) {
+		cursor: move;
+	}
+}
+
+.fc-event {
+	border: 2px solid transparent;
+}
+
+.fc-event.selected {
+	border-color: #3a87ad;
+	box-shadow: 0 0 8px #555;
+}
+
+.fc-event-actions {
+	float: right;
+
+	i {
+		padding: 0 2px;
+	}
+}
+
+.modal {
+	.modal-dialog {
+		width: 600px;
+		margin: 30px auto;
+
+	}
+}

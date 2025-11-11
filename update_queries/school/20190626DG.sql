@@ -1,0 +1,2 @@
+REPLACE INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES
+(46, '2019-06-25 23:19:18', '0000-00-00 00:00:00', 1, 'Student Record » Kursbuchung', 'student_record_journey_course', 'student_record_journey_course');

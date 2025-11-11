@@ -1,0 +1,56 @@
+.drag{
+	position:relative;
+	cursor:hand
+}
+
+#scontentmain{
+	display:			none;
+	position:			absolute;
+	width:				138px;
+}
+
+#scontentbar{
+	border-top: 		1px solid buttonhighlight;
+	border-left: 		1px solid buttonhighlight;
+	border-bottom: 		1px solid buttonshadow;
+	border-right: 		1px solid buttonshadow;
+	padding: 			0px 1px; 
+	margin: 			0;
+	height:				16px;
+	cursor:				hand;
+	background-color:	buttonface;
+	background-image:	url(/admin/media/menu_point.gif);
+	text-align:			right;
+	vertical-align:		middle;
+}
+
+#scontentbar IMG {
+	margin:				2px;
+}
+
+#scontentbarsub{
+	border-top: 		1px solid buttonhighlight;
+	border-left: 		1px solid buttonhighlight;
+	border-bottom: 		1px solid buttonshadow;
+	border-right: 		1px solid buttonshadow;
+	margin: 			0; 
+	padding: 			0; 
+	padding-bottom:		1px; 
+	padding-top:		1px;
+	cursor:				hand;
+	background-color:	buttonface;
+	height:				5px;
+	background-image:	url(/admin/media/menu_point.gif);
+}
+
+#scontentsub{
+	border-top: 		1px solid buttonhighlight;
+	border-left: 		1px solid buttonhighlight;
+	border-bottom: 		1px solid buttonshadow;
+	border-right: 		1px solid buttonshadow;
+	padding: 			0; 
+	margin: 			0; 
+	padding-bottom:		1; 
+	padding-top:		1;
+	background-color:	buttonface;
+}

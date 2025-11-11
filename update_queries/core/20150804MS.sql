@@ -1,0 +1,1 @@
+ALTER TABLE `tc_complaints` DROP `type`;

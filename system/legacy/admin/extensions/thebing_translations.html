@@ -1,0 +1,216 @@
+<?
+
+$_POST['systemlanguage'] = 'en';
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+#unset($user_data);
+#unset($_SESSION);
+#die();
+if(
+	!Ext_Thebing_Util::isDevSystem() &&
+	!Ext_Thebing_Util::isTestSystem()
+) {
+	die();
+}
+
+if(isset($_VARS['l'])) {
+	$_SESSION['thebing']['translations']['language'] = $_VARS['l'];
+}
+
+if(!isset($_SESSION['thebing']['translations']['language'])) {
+	$_SESSION['thebing']['translations']['language'] = 'ja';
+}
+
+$sCode = $_SESSION['thebing']['translations']['language'];
+
+if(!$user_data['cms']) {
+
+	Admin_Html::loadAdminHeader();
+
+	echo '<div style="padding: 30px;"><form method="POST" action="thebing_translations.html"><input type="hidden" name="login" value="ok" />';
+	echo 'Username: <input type="text" name="username"/>';
+	echo 'Password: <input type="password" name="password"/>';
+	echo '<input type="submit" value="Login"/>';
+	echo $system_data['error'];
+	echo '</form></div>';
+
+	Admin_Html::loadAdminFooter();
+	die();
+
+}
+
+accesschecker("control");
+
+$oSchool = Ext_Thebing_Client::getFirstSchool();
+
+#accesschecker("edit_language_".$sCode);
+$bHasRight = Ext_Thebing_Access::hasRight('edit_language_' . $sCode, $oSchool->id);
+
+if(!$bHasRight){
+	die('You do not have access to the "'.$sCode.'" translation!');
+}
+
+/**
+ * Fetch data
+ */
+$aLanguages = Data_Languages::getList(\System::getInterfaceLanguage());
+
+$sSql = "
+	SELECT
+		*
+	FROM
+		`language_files`
+	ORDER BY
+		`file`
+";
+$aLanguageFiles = DB::getQueryData($sSql);
+$aFiles = array(
+	''	=> L10N::t('Alle'),
+	0	=> L10N::t('Global verfügbar')
+);
+foreach($aLanguageFiles as $iKey => $aValue) {
+	$aFiles[$aValue['id']] = $aValue['file'];
+}
+
+/**
+ * Start Gui2 initialisation
+ */
+$oGui = new Ext_Thebing_Gui2(md5('backend_translations'), 'L10N_Translations_Gui2');
+
+#$oGui->setWDBasic('L10N_Translations');
+$oGui->setWDBasic('L10N_BackendTranslations');
+$oGui->setTableData('where', array('active' => 1, 'use'=>1));
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('code' => 'ASC'));
+
+// Listen Optionen
+$oGui->gui_description 		= 'Framework » Übersetzungen';
+$oGui->gui_title 			= $oGui->t('Übersetzungen');
+$oGui->multiple_selection	= 0;
+$oGui->row_style			= new L10N_Translations_Gui2_Row();
+
+/**
+ * Dialog
+ */
+$oDialog = $oGui->createDialog($oGui->t('Übersetzung bearbeiten'));
+$oDialog->setElement($oDialog->createRow($oGui->t('Englisch'), 'text', array('db_alias' => '', 'db_column'=>'en')));
+$oDialog->setElement($oDialog->createRow($aLanguages[$sCode], 'textarea', array('db_alias' => '', 'db_column'=>$sCode, 'style'=>'width: 500px; height: 80px;')));
+
+$oDialog->width = 900;
+
+/**
+ * Leisten
+ */
+# START - Leiste 1 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$aSearchColumns = array('en');
+$aSearchColumns[] = $sCode;
+$oFilter->db_column = $aSearchColumns;
+$oFilter->db_alias = '';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oFilter->id = 'search';
+$oFilter->db_operator = 'like_strict';
+$oBar ->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->label				= $oGui->t('Bereich');
+$oFilter->db_column			= 'file_id';
+$oFilter->db_operator		= '=';
+$oFilter->db_emptysearch	= 1;
+$oFilter->select_options	= $aFiles;
+$oFilter->width				= '300px';
+$oFilter->value				= 'xNullx';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('checkbox');
+$oFilter->label				= $oGui->t('Noch nicht übersetzte Einträge');
+$oFilter->db_column			= 'not_translated_entries';
+$oFilter->filter_query		= " ( 
+									`".$sCode."` IN ('', ' ', '&nbsp;') 
+									AND `code` != ''  
+							) ";
+$oFilter->value				= 1;
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+# ENDE - Leiste 1 #
+
+# START - Leiste 2 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createEditIcon(
+			L10N::t('Editieren', $oGui->gui_description),
+			$oDialog,
+			L10N::t('Editieren', $oGui->gui_description)
+		);
+$oBar ->setElement($oIcon);
+
+// Leiste der Gui Zuweisen
+$oGui->setBar($oBar);
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oPagination = $oBar->createPagination();
+$oBar ->setElement($oPagination);
+
+$oSeperator = $oBar->createSeperator();
+$oBar ->setElement($oSeperator);
+
+$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGui->gui_description));
+$oBar ->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+# ENDE - Leiste 2 #
+
+
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'file_id';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Bereich');
+$oColumn->width = 250;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection($aFiles);
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'code';
+$oColumn->title = $oGui->t('Schlüssel');
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'en';
+$oColumn->title = $aLanguages['en'];
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = $sCode;
+$oColumn->title = $aLanguages[$sCode];
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'changed';
+$oColumn->title = $oGui->t('Verändert');
+$oColumn->width = 130;
+$oColumn->width_resize = false;
+$oColumn->format = 'Timestamp';
+$oGui->setColumn($oColumn);
+
+$oGui->display();

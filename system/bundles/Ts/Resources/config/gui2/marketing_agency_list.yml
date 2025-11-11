@@ -1,0 +1,62 @@
+hash: d49517c2d793edbac78a16c450ba7d8e
+class:
+  wdbasic: Ext_Thebing_Agency_List
+  data: \Ts\Gui2\Data\AgencyList
+access: thebing_marketing_agency_list
+css: 
+  - /assets/ts/css/gui2.css
+orderby:
+  - \Ts\Gui2\Data\AgencyList
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\AgencyList
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        column: 
+          - id
+          - name
+        alias:
+          - 
+          - 
+        searchtype: LIKE 
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\AgencyList
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\AgencyList
+          - getDialog
+     -
+        element: icon_delete
+        dialog:
+          - \Ts\Gui2\Data\AgencyList
+          - getDialog
+columns:
+  - 
+    title: Anzahl
+    column: id
+    width: char
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Agency_Agenciescount
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true
+  - 
+    title: Beschreibung
+    column: description
+    width: name
+    resize: true

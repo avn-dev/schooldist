@@ -1,0 +1,141 @@
+hash: 440d8533051e7e820f84524a667ee67e
+class:
+  wdbasic: Ext_TC_Flexibility
+  data: Ext_TC_Flexible_Gui2
+  date_format: Ext_TC_Gui2_Format_Date
+  js: Flexibility
+access:
+  - core_user_flexibility
+  - ""
+sortable: true
+only_pagecount: true
+limit_selection: false
+export: false
+where:
+  - Ext_TC_Flexible_Gui2
+  - getWhere
+  - false
+bars:
+  -
+    position: top
+    set: ['main']
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - title
+          - description
+          - type
+          - placeholder
+      -
+        element: seperator
+      -
+        element: selectfilter
+        id: section_filter
+        column:
+          - section_id
+        entries:
+          - Ext_TC_Flexible_Gui2
+          - getSectionFilterOptions
+  -
+      position: top
+      set: ['main']
+      type: ""
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Ext_TC_Flexible_Gui2
+            - getDialog
+            - false
+        - 
+          element: icon_edit
+          dialog:
+            - Ext_TC_Flexible_Gui2
+            - getDialog
+            - false
+        - 
+          element: icon_delete
+  -
+    position: top
+    set: ['child_fields']
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Flexible_Gui2
+          - getDialog
+          - true
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Flexible_Gui2
+          - getDialog
+          - true
+      -
+        element: icon_delete
+columns:
+  -
+    title: ID
+    column: id
+    width: id
+    resize: false
+  -
+    title: Titel
+    column: title
+    width: name
+    resize: true
+  -
+    title: Beschreibung
+    column: description
+    width: name
+    resize: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - description
+      - true
+      - 80
+  -
+    title: Feldtyp
+    column: type
+    width: name
+    resize: false
+    format: Ext_TC_Flexible_Gui2_Format_Fieldtype
+  -
+    title: In Liste angezeigt
+    set: ['main']
+    column: visible
+    width: name
+    resize: false
+    format: Ext_TC_Gui2_Format_YesNo
+  -
+    title: Pflicht
+    column: required
+    width: name
+    resize: false
+    format: Ext_TC_Gui2_Format_YesNo
+  -
+    title: Verwendung
+    column: usage
+    width: name
+    default: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_TC_Flexible_Gui2, getFormatParamsUsageColumn]
+  -
+    title: Platzhalter
+    column: placeholder
+    width: comment
+    resize: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - placeholder
+      - true
+      - 80
+js:
+  - [admin/js/flexibility.js, tc]

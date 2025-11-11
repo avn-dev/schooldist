@@ -1,0 +1,663 @@
+<?php
+ 
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('control');
+
+Admin_Html::loadAdminHeader();
+
+// Bei sehr großen Kunden wie NYLC klappt der Index-Refresh ohne Memory-Limit schon nicht mehr
+ini_set("memory_limit", '4G');
+
+$sMessage = null;
+$bError = false;
+$sDocumentRoot = \Util::getDocumentRoot();
+$oToolsService = Ext_TC_System_Tools::getToolsService();
+
+$aIndexOptions = $oToolsService->getIndexes();
+$aIndexOptions = array_combine(array_keys($aIndexOptions), array_keys($aIndexOptions));
+
+if(!isset($_VARS['task'])) {
+	$_VARS['task'] = null;
+}
+
+if($_VARS['task'] == 'save_memcache') {
+
+	$oConfig = \Factory::getInstance('Ext_TC_Config');
+	$oConfig->set('memcache_host', $_VARS['memcache_host']);
+	$oConfig->set('memcache_port', $_VARS['memcache_port']);
+	$oConfig->save();
+
+	$system_data['memcache_host'] = $oConfig->getValue('memcache_host');
+	$system_data['memcache_port'] = $oConfig->getValue('memcache_port');
+	
+} elseif($_VARS['task'] == 'flush_cache') {
+
+	$oCacheHelper = new \Core\Helper\Cache();
+	$oCacheHelper->clearAll();
+
+} elseif($_VARS['task'] == 'update_navigation') {
+
+	\WDCache::deleteGroup(\Admin\Helper\Navigation::CACHE_GROUP_KEY);
+	
+} elseif($_VARS['task'] == 'refresh_bundles') {
+
+	\Core\Facade\Cache::forget('core_system_elements');
+	
+} elseif($_VARS['task'] == 'unlock_dialogs') {
+
+	$_SESSION['gui2_dialog_lock_break'] = true;
+
+	$sSql = "DELETE FROM `gui2_dialog_lock` WHERE `user_id` = ".$user_data['id'];
+	DB::executeQuery($sSql);
+
+} elseif($_VARS['task'] == 'unlock_numberranges') {
+
+	$aNumberranges = Ext_TC_NumberRange::getRepository()->findAll();
+	foreach($aNumberranges as $oNumberrange) {
+		/** @var $oNumberrange Ext_TC_NumberRange */
+		$oNumberrange->removeLock();
+	}
+} elseif($_VARS['task'] == 'unlock_entities') {
+
+	\Core\Facade\Cache::forgetGroup('entity_lock');
+
+} elseif($_VARS['task'] === 'update_routings') {
+
+	$oRoutingService = new Core\Service\RoutingService();
+	$oRoutingService->buildRoutes();
+
+} elseif($_VARS['task'] == 'update_access_database') {
+
+	Ext_TC_Factory::executeStatic('Ext_TC_Update', 'updateAccessDatabase');
+	
+} elseif($_VARS['task'] == 'update_stored_functions') {
+
+	Ext_TC_Factory::executeStatic('Ext_TC_Db_StoredFunctions', 'updateStoredFunctions');
+
+} elseif($_VARS['task'] == 'unlock_last_announcement') {
+
+    [$dateAsOf, $aEntries] = \Ext_TC_Welcome::readFile(true, false);
+
+    if (!empty($aEntries)) {
+        $iKey = (int)\Illuminate\Support\Arr::first($aEntries)['key'];
+        \System::s('tc_news_last_dispatched', (int)($iKey - 1));
+        \Tc\Service\SystemEvents::dispatchNewsEvents();
+    }
+
+} elseif($_VARS['task'] == 'add_to_debug_ips') {
+
+	\AdminTools\Helper\Util::setDebugIP($_SERVER['REMOTE_ADDR']);
+
+} elseif($_VARS['task'] == 'rebuild_files') {
+	
+	$oUpdate = new Ext_TC_Update('update', $system_data['license']);
+	
+	$oFrameworkUpdate = new Update;
+
+	$oLog = Log::getLogger('update');
+	$oLog->addInfo('Rebuild started');
+
+	if($bError === false) {
+
+		$sZipFile = $sDocumentRoot.'install.zip';
+
+		// Load Zip
+		$sContent = $oUpdate->getFileContents('/update.php?action=getInstallFiles&version='.$system_data['version']);
+
+		if(!empty($sContent)) {
+
+			$rTestFile = fopen($sZipFile, "wb");
+			fwrite($rTestFile, $sContent);
+			fclose($rTestFile);
+
+			$oLog->addInfo('Zip-file saved');
+			
+			// Extract Zip
+			$oZip = new ZipArchive();
+
+			$bZip = $oZip->open($sZipFile);
+
+			// Wenn das so nicht klappt, dann per Konsole versuchen
+			if ($bZip !== true) {
+			
+				$oLog->addInfo('ZipArchive-class is not working, try to use console unzip');
+				
+				$sCmd = 'unzip -z '.$sZipFile;
+				$sReturn = $oFrameworkUpdate->executeShellCommand($sCmd);
+
+				$oLog->addInfo('ZipArchive-class is not working, try to use console unzip', array(substr($sReturn, 0, 1000)));
+
+				if(mb_strpos($sReturn, 'Archive:') === 0) {
+					$bZip = true;
+				}
+
+				$oZip = null;
+
+			}
+
+			if ($bZip === true) { 
+
+				$oLog->addInfo('Zip successfully unzipped');
+				
+				// /admin und /system löschen falls gewünscht
+				if($_VARS['delete_old']) {
+
+					$oLog->addInfo('Delete current files');
+					
+					Ext_TC_Util::recursiveDelete($sDocumentRoot.'admin/');
+					Ext_TC_Util::recursiveDelete($sDocumentRoot.'system/');
+				}
+
+				$bSuccess = true;		
+
+				if($oZip) {
+					
+					$aZipArchiveErrors = array();
+					
+					for($i = 0; $i < $oZip->numFiles; $i++) {
+						$sFilename = $oZip->getNameIndex($i);
+						// Alles außer das /media Verzeichnis
+						if(
+							mb_strpos($sFilename, 'media/') !== 0 &&
+							preg_match("/\.ico$/", $sFilename) === 0 &&
+							mb_strpos($sFilename, 'config.inc.php') === false &&
+							mb_strpos($sFilename, 'test.php') === false &&
+							mb_strpos($sFilename, 'access/class.client.php') === false &&
+							mb_strpos($sFilename, 'access/class.data.php') === false
+						) {
+							$bFileSuccess = $oZip->extractTo($sDocumentRoot, array($sFilename));
+							if($bFileSuccess !== true) {
+								$bSuccess = false;
+								$aZipArchiveErrors[] = $sFilename;
+							}
+						}
+					}
+
+					$oLog->addInfo('Unzip via ZipArchive', array('files'=>$oZip->numFiles, 'errors' => $aZipArchiveErrors));
+
+				} else {
+
+					$sCmd = 'unzip '.$sZipFile.' -x media/* *.ico system/includes/config.inc.php system/extensions/thebing/access/class.client.php system/extensions/tc/access/class.data.php -d '.$sDocumentRoot;
+					$sReturn = $oFrameworkUpdate->executeShellCommand($sCmd);
+
+					$oLog->addInfo('Unzip via console', array(substr($sReturn, 0, 1000)));
+
+					if(mb_strpos($sReturn, 'Archive:') === 0) {
+						$bSuccess = true;
+					}
+
+				}
+
+				if($bSuccess) {
+
+					$oLog->addInfo('Unzip successfull');
+					
+					// Datenbankzugangsdaten schreiben
+					$sConfig = "<?php\n";
+					$sConfig .= "\$db_data['system'] 	= \"".$db_data['system']."\";\n";
+					$sConfig .= "\$db_data['username'] 	= \"".$db_data['username']."\";\n";
+					$sConfig .= "\$db_data['password'] 	= \"".$db_data['password']."\";\n";
+					$sConfig .= "\$db_data['host'] 		= \"".$db_data['host']."\";\n";
+					$sConfig .= "\$db_data['port'] 		= \"".$db_data['port']."\";\n";
+					$sConfig .= "?" . ">\n";
+
+					//Konfigurationsdatei an der entsprechenden Stelle sichern
+					$hConfig = fopen($sDocumentRoot."system/includes/config.inc.php", "w");
+
+					if($hConfig){
+
+						fwrite($hConfig, $sConfig);
+						fclose($hConfig);
+						
+						$oLog->addInfo('Config-file successfully written');
+						
+					}
+
+					if($oZip) {
+
+						$oZip->close();
+						unlink($sZipFile);
+
+						$oLog->addInfo('ZipArchive closed');
+
+					}
+
+					// Show message
+					$sMessage = 'Dateien wurden erfolgreich aktualisiert!';
+
+				} else {
+
+					$oLog->addError('Zip-file could not be unzipped');
+					
+					$sMessage = 'ZIP konnte nicht entpackt werden.';
+
+					if($oZip) {
+						$sMessage = $oZip->getStatusString();
+						$oLog->addError('ZipArchive status', array($sMessage));
+					}
+
+					$bError = true;
+
+				}
+			} else {
+				$sMessage = 'Fehler beim Öffnen!';
+				
+				$oLog->addError('Zip could not be opened');
+				
+				$bError = true;
+			}
+			
+		} else {
+			
+			$oLog->addError('Empty answer from update-server');
+			
+			$sMessage = 'Dateien konnten nicht abgerufen werden!';
+			$bError = true;
+
+		}
+
+	}
+	
+} elseif($_VARS['task'] == 'create_db_dump') {
+
+	$aExcludedTables = array(
+		'system_cache',
+		'system_maillog',
+		'core_parallel_processing_stack',
+		'gui2_index_registry', // System sollte das durch YML-Konfiguration selber wieder hinbekommen
+		'kolumbus_logs',
+	);
+
+	$aIncludeStructure = $aExcludedTables;
+
+	// Leere Tabellen bei der Schule rauswerfen (sind schon genug und das Erstellen der Tabellen dauert länger als der Daten-Import)
+	if(Ext_TC_Util::getSystem() === 'school') {
+		$aExcludedTables[] = 'tc_cancellation.*';
+		$aExcludedTables[] = 'tc_communication_blocks.*';
+		$aExcludedTables[] = 'tc_communication_categories.*';
+		$aExcludedTables[] = 'tc_communication_messages.*';
+		$aExcludedTables[] = 'tc_communication_sets.*';
+		$aExcludedTables[] = 'tc_communication_templates.*';
+		$aExcludedTables[] = 'tc_countrygroups.*';
+		$aExcludedTables[] = 'tc_documents.*';
+		$aExcludedTables[] = 'tc_exchangerates.*';
+		$aExcludedTables[] = 'tc_gui2_designs.*';
+		$aExcludedTables[] = 'tc_incomingfiles.*';
+		$aExcludedTables[] = 'tc_licences.*';
+		$aExcludedTables[] = 'tc_login_reminder';
+		$aExcludedTables[] = 'tc_objects_emailsignatures';
+		$aExcludedTables[] = 'tc_pdf_templates.*';
+		$aExcludedTables[] = 'tc_placeholder_examples.*';
+		$aExcludedTables[] = 'tc_positiongroups.*';
+		$aExcludedTables[] = 'tc_upload.*';
+	}
+
+	// Liste aller Tabellen, die exportiert werden
+	$aSql = array('table_schema' => $db_data['system']);
+	$sSql = "
+		SELECT
+			`TABLE_NAME`
+		FROM
+			`information_schema`.`TABLES`
+		WHERE
+			`table_schema` = :table_schema AND
+			`TABLE_NAME` NOT REGEXP '^(_.*|".join('|', $aExcludedTables).")'
+	";
+
+	$sRequestScheme = 'http://';
+	if($_SERVER['HTTPS'] === 'on') {
+		$sRequestScheme = 'https://';
+	}
+	
+	$aResult = DB::getQueryCol($sSql, $aSql);
+	$sPath = Util::getDocumentRoot().'storage/';
+	$sDumpFile = $sPath.'db_dump.sql';
+	$sLink = $sRequestScheme.$_SERVER['HTTP_HOST'].'/storage/download/db_dump.sql';
+	$iStartTime = microtime(true);
+
+	// Exkludierte Tabellen manuell hinzufügen (NUR Struktur)
+	$sDumpAppend = '';
+	foreach($aIncludeStructure as $sExcludedTable) {
+		try {
+			$sDump = "\n\nDROP TABLE IF EXISTS `".$sExcludedTable."`;\n";
+			$sDump .= Ext_TC_Update::getCreateTable($sExcludedTable).';';
+			$sDumpAppend .= $sDump;
+		} catch(DB_QueryFailedException $e) {
+			// Tabelle gibt es auf dem System nicht
+		}
+	}
+
+	// Backticks müssen maskiert werden
+	// Hier darf nicht escapeshellcmd() benutzt werden
+	$sDumpAppend = str_replace('`', '\`', $sDumpAppend);
+
+	// Dump mithilfe von mysqldump erzeugen
+	// Hier wird eine Shell-Liste geöffnet, damit die Ausgaben direkt in einer Ausgabe umgeleitet werden.
+	// Das erspart 1. Rechenzeit & I/O, die gzip keine Zeit braucht zum Öffnen der Datei und
+	// 2. die Hälfte an Speicherplatz, da nur eine Datei direkt geschrieben wird.
+	// Zur Performance autocommit abschalten (InnoDB-Performance) und Key-Check deaktivieren (sonst wird pro Row Index aktualisiert)
+	$sExec = '{ ';
+	$sExec .= 'mysqldump ';
+	$sExec .= '--no-autocommit ';
+	$sExec .= '--disable-keys ';
+	$sExec .= '--extended-insert ';
+	$sExec .= '--single-transaction ';
+	$sExec .= '--quick ';
+	$sExec .= '-u'.escapeshellcmd($db_data['username']).' ';
+	$sExec .= '-p'.escapeshellcmd($db_data['password']).' ';
+	$sExec .= escapeshellcmd($db_data['system']).' ';
+	$sExec .= join(' ', $aResult);
+	$sExec .= '; echo "'.$sDumpAppend.'";';
+	$sExec .= ' }';
+
+	// Wenn Gzip verfügbar, dann direkt durch gzip pipen
+	$sWhich = exec('which gzip');
+	if(!empty($sWhich)) {
+		$sExec .= ' | gzip > '.$sDumpFile.'.gz';
+		$sLink .= '.gz';
+	} else {
+		$sExec .= ' > '.$sDumpFile;
+	}
+
+	exec($sExec);
+
+	$sMessage = 'Dump created successfully!';
+
+	$iEnd = microtime(true) - $iStartTime;
+	$sMessage .= "<br />Time took to dump: ".number_format($iEnd, 2).'s';
+	$sMessage .= '<br /><a href="'.$sLink.'" target="_blank">Dump</a>';
+
+} elseif($_VARS['task'] == 'delete_db_dump') {
+	@unlink(Util::getDocumentRoot().'storage/db_dump.sql');
+	@unlink(Util::getDocumentRoot().'storage/db_dump.sql.gz');
+} else if($_VARS['task'] == 'add_stack') {
+	$aIds = explode(',', trim($_VARS['index_id']));
+	foreach($aIds as $sId) {
+		Ext_Gui2_Index_Stack::add($_VARS['index_name'], (int)trim($sId), (int)$_VARS['prio']);
+	}
+
+    Ext_Gui2_Index_Stack::save(true);
+
+	if($_VARS['execute_cache']) {
+		Ext_Gui2_Index_Stack::executeCache();
+	}
+} else if($_VARS['task'] == 'search_registry'){
+    $aSearch = array('class' => $_VARS['class'], 'id' => $_VARS['id']);
+    $aResult = Ext_Gui2_Index_Registry::getByArray($aSearch);
+    foreach($aResult as $aRow){
+        __pout($aRow);
+    }
+} else if($_VARS['task'] == 'search_wdsearch'){
+    $oWDSearch = new ElasticaAdapter\Facade\Elastica($_VARS['index']);
+    $oWDSearch->setLimit(100);
+    $oWDSearch->setFields(array('*'));
+    $aResult = $oWDSearch->search($_VARS['query']);
+    foreach($aResult as $aRow){
+        __pout($aRow);
+    }
+    
+} else if($_VARS['task'] == 'execute_check') {
+
+	if(class_exists($_VARS['check'])) {
+		$oCheck = new $_VARS['check'];
+		if($oCheck instanceof GlobalChecks) {
+			try {
+                $start = microtime(true);
+				$bSuccess = $oCheck->executeCheck();
+                $runtime = microtime(true) - $start;
+				__out($bSuccess);
+				__out('Runtime: ' . $runtime);
+			} catch (\Throwable $e) {
+				__out($e);
+			}
+		} else {
+			__out(get_class($oCheck).' leitet nicht von GlobalChecks ab!');
+		}
+	} else {
+		__out('Class '.$_VARS['check'].' not found!');
+	}
+
+} else if($_VARS['task'] == 'id_action') {
+	try {
+		__out($oToolsService->executeIdAction($_VARS['action'], $_VARS));
+		Ext_Gui2_Index_Stack::executeCache();
+		Ext_Gui2_Index_Stack::save();
+	} catch(Exception $e) {
+		__out($e->getMessage());
+		__out($e->getTraceAsString());
+	}
+
+} else if($_VARS['task'] == 'reset_index') {
+
+	__out($oToolsService->executeIndexReset($_VARS));
+
+} else if($_VARS['task'] == 'fill_stack') {
+
+	__out($oToolsService->executeFillStack($_VARS));
+
+} else if($_VARS['task'] == 'index_options') {
+
+    Ext_Gui2_Index_Stack::saveStoreOption($_VARS['stack']);
+    Ext_Gui2_Index_Registry::saveStoreOption($_VARS['registry']);
+    System::s('index_replicas', (int)$_VARS['replicas']);
+    System::s('index_shards', (int)$_VARS['shards']);
+    System::s('index_compound_format', (int)$_VARS['compound_format']);
+    //
+    __out('Please reset all Indexes ( Tools Html -> Reset All )');
+
+} elseif($_VARS['task'] === 'config') {
+
+//	if(
+//		// Doppelte Werte
+//		(int)$_VARS['tc_flex_fields_per_section_limit'] > 20 ||
+//		(int)$_VARS['tc_flex_fields_per_section_visible_limit'] > 15
+//	) {
+//		__out('Maximum flex limit reached!', 1);
+//	}
+
+	System::s('tc_flex_fields_per_section_limit', (int)$_VARS['tc_flex_fields_per_section_limit']);
+    System::s('tc_flex_fields_per_section_visible_limit', (int)$_VARS['tc_flex_fields_per_section_visible_limit']);
+    System::s('zendesk_id', (string)$_VARS['zendesk_id']);
+
+}
+
+?>
+
+<section class="content-header">
+	<h1>Thebing » Tools</h1>
+	<a href="/admin/extensions/tc/tools.html" target="_blank">Open in new tab</a>
+</section>
+
+<section class="content">
+
+<?
+	if($sMessage !== null) {
+		echo '<p>'.$sMessage.'</p>';
+	}
+?>
+
+	<!--<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="rebuild_files" />
+		<?=printTableStart()?>
+			<?=printFormCheckbox('Delete all old files in /admin and /system directory!', 'delete_old')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('Rebuild all files', 'onclick="return confirm(\'Bitte sicherstellen, dass alle Dateien aktuell sind (ZIP löschen)! Hiermit werden außerdem ALLE Hotfixes überschrieben!\');"')?>
+	</form>-->
+
+	<!--<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="save_memcache" />
+		<?=printTableStart()?>
+			<?=printFormText('Memcached host', 'memcache_host', $system_data['memcache_host'])?>
+			<?=printFormText('Memcached port', 'memcache_port', $system_data['memcache_port'])?>
+		<?=printTableEnd()?>
+		<?=printSubmit('Save settings')?>
+	</form>-->
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="flush_cache" />
+		<? printSubmit('Clear cache', "onclick = \"return confirm('Really clear cache?')\"") ?>
+	</form>
+	
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="update_navigation" />
+		<? printSubmit('Update navigation') ?>
+	</form>
+	
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="refresh_bundles" />
+		<? printSubmit('Refresh bundles') ?>
+	</form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="unlock_dialogs" />
+		<? printSubmit('Unlock dialogs') ?>
+	</form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="unlock_numberranges" />
+		<? printSubmit('Unlock number ranges', "onclick = \"return confirm('Are you sure?')\"") ?>
+	</form>
+
+    <form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+        <input type="hidden" name="task" value="unlock_entities" />
+		<? printSubmit('Remove entity lock', "onclick = \"return confirm('Are you sure?')\"") ?>
+    </form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="update_routings" />
+		<? printSubmit('Update routings') ?>
+	</form>
+
+	<? if(false && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') { ?>
+		<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="create_db_dump" />
+			<? printSubmit('Create database dump', "onclick = \"return confirm('Really dump?')\"") ?>
+		</form>
+
+		<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="delete_db_dump" />
+			<? printSubmit('Delete database dump'); ?>
+		</form>
+	<? } else {
+//		printSubmit('Database dump is not possible on Windows Server!', 'disabled="disabled"');
+	} ?>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="update_stored_functions" />
+		<?=printSubmit('Update stored functions')?>
+	</form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="update_access_database" />
+		<?=printSubmit('Update access database')?>
+	</form>
+
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="unlock_last_announcement" />
+		<? printSubmit('Unlock last announcement') ?>
+	</form>
+
+	<? if(!Util::isDebugIP()) { ?>
+		<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="add_to_debug_ips" />
+			<? printSubmit('Add IP to Util::isDebugIP()') ?>
+		</form>
+	<? } ?>
+
+	<h3>ID-Aktionen</h3>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="id_action" />
+		<?=printTableStart()?>
+		<? printFormSelect('Aktion', 'action', array_reduce($oToolsService->getIdActions(), fn($carry, $item) => [...$carry, ...$item], []), $_VARS['action']); ?>
+		<?=printFormText('Wert', 'value')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('ausführen')?>
+	</form>
+
+    <h3>Check ausführen</h3>
+    <form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="execute_check" />
+		<?=printTableStart()?>
+			<?=printFormText('Check Name', 'check')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('ausführen')?>
+	</form>
+
+	<h3>Index: Zurücksetzen</h3>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="reset_index" />
+		<? printTableStart(); ?>
+		<? $aIndexOptions['all'] = 'ALLE'; ?>
+		<? printFormSelect('Index', 'index_name', $aIndexOptions, $_VARS['index_name']); ?>
+		<? printFormCheckbox('Stack füllen', 'fill_stack', 1, isset($_VARS['fill_stack']) ? $_VARS['fill_stack'] : 1)?>
+		<? printTableEnd(); ?>
+		<? printSubmit('ausführen'); ?>
+	</form>
+
+	<h3>Index: Aktualisieren</h3>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="fill_stack" />
+		<? printTableStart(); ?>
+		<? $aIndexOptions['all'] = 'ALLE'; ?>
+		<? printFormSelect('Index', 'index_name', $aIndexOptions, $_VARS['index_name']); ?>
+		<? printTableEnd(); ?>
+		<? printSubmit('ausführen'); ?>
+	</form>
+ 
+	<h3>Index: In Stack einfügen</h3>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="add_stack" />
+		<? printTableStart(); ?>
+		<? unset($aIndexOptions['all']); ?>
+		<? printFormSelect('Index', 'index_name', $aIndexOptions, ''); ?>
+		<? printFormText('ID (mehere mit Komma separieren)', 'index_id'); ?>
+		<? printFormText('Priorität', 'prio', 0); ?>
+		<? printFormCheckbox('Sofort ausführen', 'execute_cache', 1, true); ?>
+		<? printTableEnd(); ?>
+		<? printSubmit('Eintragen'); ?>
+	</form>
+
+	<h3>Einstellungen</h3>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="config" />
+		<? printTableStart(); ?>
+		<? # printFormText('Flexible Felder: Maximale Felder pro Bereich', 'tc_flex_fields_per_section_limit', System::d('tc_flex_fields_per_section_limit')); ?>
+		<? # printFormText('Flexible Felder: Maximale Felder pro Liste', 'tc_flex_fields_per_section_visible_limit', System::d('tc_flex_fields_per_section_visible_limit')); ?>
+		<? # printFormText('Zendesk: ID', 'zendesk_id', System::d('zendesk_id')); ?>
+
+		<?
+		//if(Ext_TC_Util::getSystem() === 'school') {
+		//    printFormCheckbox('Kursdaten trotz Buchung/Planung überschreibbar (wird nächtlich zurückgesetzt)', 'overwrite_course_settings', System::d('overwrite_course_settings'));
+		//}
+		?>
+
+		<? printTableEnd(); ?>
+		<? printSubmit('Speichern'); ?>
+	</form>
+
+    <!--<h3>Index: Registry search</h3>
+    <form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="search_registry" />
+		<?=printTableStart()?>
+			<?=printFormText('Class', 'class')?>
+			<?=printFormText('ID', 'id')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('suchen')?>
+	</form>-->
+    
+    <!--<h3>Index: WDSearch search ( max. 100 Einträge )</h3>
+    <form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="search_wdsearch" />
+		<?=printTableStart()?>
+			<?=printFormText('Index', 'index')?>
+			<?=printFormText('Query', 'query')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('suchen')?>
+	</form>-->
+	
+</section>
+
+<?
+Admin_Html::loadAdminFooter();
+?>

@@ -1,0 +1,326 @@
+<?php
+/*
+ * Created on 16.10.2006
+ * Konfiguration der gewünschten Zahlungsoptionen
+ *
+ */
+
+
+//
+
+///////////////////////////////////////////////////
+/////////////   Administration   //////////////////
+//////////  zu Zahlungsdaten-Modul      ///////////
+///////////////////////////////////////////////////
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+require (\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+
+
+
+global $db_data;
+global $element_data;
+
+
+$SQL_handler = new customer_db;
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+
+
+
+$identifier="customer_db_";
+$definition_table=$identifier."definition";
+$value_table=$identifier."values";
+
+$table_name=$identifier.$config->idDatabase;
+
+////////////////////////////////////////////////
+
+
+
+if ($form_action=="Speichern"  && $page_id > 0 && $element_id > 0)
+{
+
+	$config->table_name = $identifier.$_VARS['idDatabase'];
+	$config->idDatabase = $_VARS['idDatabase'];
+
+    $config->Zahlung_primaer        = $_VARS['Zahlung_primaer'];
+
+    // Kreditkarte:
+    $config->K_Type                 = $_VARS['K_Type'];
+    $config->K_Nummer               = $_VARS['K_Nummer'];
+    $config->K_gueltig_tag          = $_VARS['K_gueltig_tag'];
+    $config->K_gueltig_monat        = $_VARS['K_gueltig_monat'];
+    $config->K_gueltig_jahr         = $_VARS['K_gueltig_jahr'];
+    $config->K_Inhaber              = $_VARS['K_Inhaber'];
+
+    // Kontodaten:
+    $config->Kon_Inhaber            = $_VARS['Kon_Inhaber'];
+    $config->Kon_Nummer             = $_VARS['Kon_Nummer'];
+    $config->BLZ                    = $_VARS['BLZ'];
+
+	// �berweisung
+	$config->transfer_recipient		= $_VARS['transfer_recipient'];
+	$config->transfer_institut		= $_VARS['transfer_institut'];
+	$config->transfer_accountnumber	= $_VARS['transfer_accountnumber'];
+	$config->transfer_banknumber	= $_VARS['transfer_banknumber'];
+	$config->transfer_purpose		= $_VARS['transfer_purpose'];
+		
+
+	// sonstiges
+    $config->destination_url        = $_VARS['destination_url'];
+    $config->destination_button     = $_VARS['destination_button'];
+
+    $config->back_url               = $_VARS['back_url'];
+    $config->back_button            = $_VARS['back_button'];
+
+	$config->comment 				= $_VARS['comment'];	
+
+	$config->save_config($page_id, $element_id);
+
+}
+
+// Laden der vorhandenen Daten
+$config->config_class($page_id, $element_id);
+
+
+////////////////////////////////////////////////
+
+#echo "<br><br>config:";
+#var_dump($config);
+
+
+
+function show_fields($db_module,$SQL_handler,$definition_table, $table_name,$field_name,$identifier,$field_type)
+{
+    if ($table_name=="")
+    {
+        $SQL_handler->SQL_get_table_names($db_module,$identifier);
+        $result=$SQL_handler->result[1];
+        $table_name=$result[0];
+    }
+
+    $option_name="db_nr";
+    $position=strrpos($table_name,"_")+1;
+    $option=substr($table_name,$position);
+
+    $SQL_handler->SQL_get_row_by_option($db_module, $definition_table, $table_name, $option_name, $option);
+    $result=$SQL_handler->result[1];
+    //var_dump($result);
+
+    for ($i=1;$i<count($result);$i++)     //count($result)
+    {
+        //echo "<br>field_nr : ".$result[$i]["field_nr"];
+        if($result[$i]["name"]!="changed" AND $result[$i]["name"]!="changed_by" )
+        {
+            $current_fields[]= $result[$i]["name"];
+            if($result[$i]["name"]=="Passwort" AND $result[$i]["field_nr"]==0)
+            {
+                $current_field_names[] = 1;
+            }
+            else
+            {
+                $current_field_names[] = $result[$i]["field_nr"];
+            }
+        }
+    }
+
+    echo "<select name=\"$field_type\"  OnChange=\"document.customer_db_form.form_action.value='Speichern';document.customer_db_form.submit();\">";//;document.formular1.form_action.value=Refresh; document.formular1.submit();\" >";
+
+    echo "<option value=''>- keine Auswahl -</option>";
+    for ($i=0;$i<count($current_fields);$i++)
+    {
+
+        if ($current_field_names[$i]==$field_name)
+        {
+            $pre_select="SELECTED";
+	    }
+        else
+        {
+            $pre_select="";
+        }
+        //$current_fields[$i]=htmlspecialchars($current_fields[$i]);
+        echo "<option $pre_select value=\"".$current_field_names[$i]."\" >";
+        echo $current_fields[$i];
+        echo "</option>";
+    } // Ende for $i
+    echo "</select>";
+
+    //echo "<br>field-name : ".$field_name."<br>Feld Typ:".$field_type;
+}
+
+////////////////////////////////////////////////
+
+
+?>
+
+<?=Admin_Html::loadAdminHeader();?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Konfiguration des Zahlungsdatenmoduls (englisch)</h1>
+
+
+
+<form name="customer_db_form" method=post enctype="multipart/form-data" action="<?=$PHP_SELF?>">
+<input type='hidden' name="page_id" value=<?=$page_id?>>
+<input type='hidden' name="element_id" value=<?=$element_id?>>
+<input type='hidden' name="form_action" value="Speichern">
+
+
+
+<table class=table border=0 cellpadding="4" cellspacing=0 width="100%">
+
+	<?=printFormSelect("Datenbank","idDatabase",CustomerDb\Helper\Functions::getCustomerTables(),$config->idDatabase)?>
+	
+<tr><th colspan=2>
+Folgende Felder sollen eingetragen werden:
+</th></tr>
+<tr><th>
+�bergeordnete Auswahl Kredikarte/Lastschrift:
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->Zahlung_primaer,$identifier,"Zahlung_primaer");?>
+</td></tr>
+
+
+<tr><th colspan=2>Kreditkarte</th></tr>
+
+
+<tr><th>
+Kreditkarte - Typ:
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->K_Type,$identifier,"K_Type");?>
+</td></tr>
+
+<tr><th>
+Kreditkarte - Nummer
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->K_Nummer,$identifier,"K_Nummer");?>
+</td></tr>
+
+<tr><th>
+Kreditkarte - Gültig - Tag
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->K_gueltig_tag,$identifier,"K_gueltig_tag");?>
+</td></tr>
+
+<tr><th>
+Kreditkarte - Gültig - Monat
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->K_gueltig_monat,$identifier,"K_gueltig_monat");?>
+</td></tr>
+
+<tr><th>
+Kreditkarte - Gültig - Jahr
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->K_gueltig_jahr,$identifier,"K_gueltig_jahr");?>
+</td></tr>
+
+<tr><th>
+Kreditkarte - Inhaber
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->K_Inhaber,$identifier,"K_Inhaber");?>
+</td></tr>
+
+
+
+
+
+<tr><th colspan=2>Lastschrift</th></tr>
+
+<tr><th>
+Konto - Inhaber
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->Kon_Inhaber,$identifier,"Kon_Inhaber");?>
+</td></tr>
+
+<tr><th>
+Konto - Nummer
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->Kon_Nummer,$identifier,"Kon_Nummer");?>
+</td></tr>
+
+<tr><th>
+Bankleitzahl
+</th><td>
+    <? show_fields($db_data['module'],$SQL_handler,$definition_table, $table_name,$config->BLZ,$identifier,"BLZ");?>
+</td></tr>
+
+<tr><th colspan=2>�berweisungen</th></tr>
+<?=printFormText("Empfänger","transfer_recipient",$config->transfer_recipient)?>
+<?=printFormText("Bankname","transfer_institut",$config->transfer_institut)?>
+<?=printFormText("Bankleitzahl","transfer_banknumber",$config->transfer_banknumber)?>
+<?=printFormText("Kontonummer","transfer_accountnumber",$config->transfer_accountnumber)?>
+<?=printFormText("Verwendungszweck","transfer_purpose",$config->transfer_purpose)?>
+
+<?
+if(!$config->comment) $config->comment="Die benötigten Daten werden Ihnen natürlich noch einmal per Mail zugestellt.<br>Bitte überweisen Sie den fälligen Betrag binnen 14 Tagen.";
+?>
+<?=printFormHTMLarea("Kommentar zur Überweisung","comment",$config->comment)?>
+        
+
+
+
+	<tr><th colspan=2>Buttons</th></tr>
+    <tr>
+        <th>
+            Ziel-Button-Titel:
+        </th>
+        <td>
+
+            <input type="text" name="destination_button" value="<? if(!htmlspecialchars($config->destination_button)) echo "weiter &raquo;"; else echo $config->destination_button;?>" class="txt">
+        </td>
+    </tr>
+
+    <tr>
+        <th>
+            Ziel-Seite:
+        </th>
+        <td>
+            <?=printPageSelect("destination_url",$config->destination_url,"","","width:400px"); ?>
+        </td>
+    </tr>
+
+
+
+    <tr>
+        <th>
+            Vorhergehende Seite Button:
+        </th>
+        <td>
+
+            <input type="text" name="back_button" value="<?=htmlspecialchars($config->back_button)?>" class="txt">
+        </td>
+    </tr>
+    <tr>
+        <th>
+            Vorhergehende Seite:
+        </th>
+        <td>
+            <?=printPageSelect("back_url",$config->back_url,"","","width:400px"); ?>
+        </td>
+    </tr>
+
+
+</table>
+<p align="right">
+	<input type=submit class=btn value="Speichern" style="width:150" OnCLick='document.customer_db_form.form_action.value="Speichern";document.customer_db_form.submit();'>
+	&nbsp;
+	<input type=button class=btn value="Fenster schliessen" style="width:150" OnClick='top.close();'>
+</p>
+</form>
+
+
+		</td>
+	</tr>
+</table>
+<?
+
+?>
+<?=Admin_Html::loadAdminFooter()?>
+

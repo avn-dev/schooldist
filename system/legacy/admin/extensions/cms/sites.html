@@ -1,0 +1,616 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("admin_sites");
+
+if($_VARS['task'] == "save") {
+
+	if($_VARS['id'] > 0) {
+
+		$sQuery = "
+			UPDATE 
+				cms_sites 
+			SET 
+				name = '".\DB::escapeQueryString($_VARS['name'])."', 
+				email = '".\DB::escapeQueryString($_VARS['email'])."', 
+				redirect_to_domain = '".\DB::escapeQueryString($_VARS['redirect_to_domain'])."', 
+				force_https = '".\DB::escapeQueryString($_VARS['force_https'])."', 
+				favicon_active = '".\DB::escapeQueryString((int)$_VARS['favicon_active'])."' 
+			WHERE 
+				id = ".(int)$_VARS['id']."";
+		DB::executeQuery($sQuery);
+
+	} else {
+
+		$sQuery = "INSERT INTO cms_sites SET name = '".\DB::escapeQueryString($_VARS['name'])."', email = '".\DB::escapeQueryString($_VARS['email'])."', redirect_to_domain = '".\DB::escapeQueryString($_VARS['redirect_to_domain'])."', force_https = '".\DB::escapeQueryString($_VARS['force_https'])."', favicon_active = '".\DB::escapeQueryString((int)$_VARS['favicon_active'])."', position = 999";
+		DB::executeQuery($sQuery);
+		$_VARS['id'] = DB::fetchInsertID();
+		
+		if(
+			$_VARS['copy_id'] && 
+			$_VARS['id']
+		) {
+			$aCopySite = DB::getRowData('cms_sites', (int)$_VARS['copy_id']);
+			if(!empty($aCopySite)) {
+				
+				$aReplaceIds = array();
+				
+				$sSql = "SELECT * FROM cms_pages WHERE site_id = :site_id AND element != 'template'";
+				$aSql = array('site_id'=>$aCopySite['id']);
+				$aPages = DB::getPreparedQueryData($sSql, $aSql);
+				foreach((array)$aPages as $aPage) {
+					$iNewId = copyPage($aPage['id'], $aPage['language'], $aPage['path'], $aPage['file'], $aPage['title'], $_VARS['id']);
+					$aReplaceIds[] = array('from'=>$aPage['id'], 'to'=>$iNewId);
+				}
+
+				// replace all page ids in links
+				$sSql = "SELECT * FROM cms_pages WHERE site_id = :site_id AND element != 'template'";
+				$aSql = array('site_id'=>$_VARS['id']);
+				$aPages = DB::getPreparedQueryData($sSql, $aSql);
+				foreach((array)$aPages as $aPage) {
+
+					$sSql = "SELECT * FROM cms_content WHERE page_id = :page_id";
+					$aSql = array('page_id'=>$aPage['id']);
+					$aItems = DB::getPreparedQueryData($sSql, $aSql);
+					foreach((array)$aItems as $aItem) {
+	
+						foreach((array)$aReplaceIds as $aReplaceId) {
+						
+							$aSql = array(
+											'content_id'=>$aItem['id'],
+											'from'=>'#page:'.$aReplaceId['from'].':pagelink#',
+											'to'=>'#page:'.$aReplaceId['to'].':pagelink#'
+										);
+
+							$sSql = "
+										UPDATE 
+											cms_blockdata 	
+										SET 
+											`content` = REPLACE(`content`, :from, :to),
+											`public` = REPLACE(`public`, :from, :to)
+										WHERE 
+											`content_id` = :content_id
+									";
+							DB::executePreparedQuery($sSql, $aSql);
+							
+							$sSql = "
+										UPDATE 
+											cms_content 	
+										SET 
+											`content` = REPLACE(`content`, :from, :to),
+											`public` = REPLACE(`public`, :from, :to)
+										WHERE 
+											`id` = :content_id
+									";
+							DB::executePreparedQuery($sSql, $aSql);
+							
+						}
+
+					}
+
+					$sSql = "SELECT * FROM cms_extensions_config WHERE page_id = :page_id";
+					$aSql = array('page_id'=>$aPage['id']);
+					$aItems = DB::getPreparedQueryData($sSql, $aSql);
+					foreach((array)$aItems as $aData) {
+
+						$aData['param'] = unserialize($aData['param']);
+						
+						foreach((array)$aReplaceIds as $aReplaceId) {
+
+							foreach($aData['param'] as $k=>$v) {
+								if(
+									strpos($k, 'page') !== false &&
+									$v == $aReplaceId['from']
+								) {
+									$aData['param']->$k = $aReplaceId['to'];
+								} else {
+									$aData['param']->$k = str_replace('#page:'.$aReplaceId['from'].':pagelink#', '#page:'.$aReplaceId['to'].':pagelink#', $aData['param']->$k);
+								}
+							}
+
+						}
+							
+						$aSql = array(
+										'id'=>$aData['id'],
+										'param'=>serialize($aData['param'])
+									);
+						$sSql = "
+									UPDATE 
+										cms_extensions_config 	
+									SET 
+										`param` = :param
+									WHERE 
+										`id` = :id
+								";
+						DB::executePreparedQuery($sSql, $aSql);
+							
+					}
+					
+				}
+				
+			}
+		}
+		
+	}
+
+	$oSite = \Cms\Entity\Site::getInstance($_VARS['id']);
+	$oSite->no_language_folder = $_VARS['no_language_folder'];
+	$oSite->url_ending = $_VARS['url_ending'];
+
+	$oSite->save();
+	
+	if($_VARS['domain'][0]) {
+		$strSql = "INSERT INTO cms_sites_domains SET site_id = :intSiteId, domain = :strDomain";
+		$arrTransfer = array('intSiteId'=>(int)$_VARS['id'], 'strDomain'=>strtolower($_VARS['domain'][0]));
+		DB::executePreparedQuery($strSql, $arrTransfer);
+		unset($_VARS['domain'][0]);
+	}
+
+	foreach((array)$_VARS['domain'] as $intKey=>$strDomain) {
+		if($strDomain) {
+			$strSql = "UPDATE cms_sites_domains SET domain = :strDomain WHERE id = :intDomainId";
+			$arrTransfer = array('intDomainId'=>$intKey, 'strDomain'=>strtolower($strDomain));
+			DB::executePreparedQuery($strSql, $arrTransfer);
+		} else {
+			$strSql = "DELETE FROM cms_sites_domains WHERE id = :intDomainId";
+			$arrTransfer = array('intDomainId'=>$intKey);
+			DB::executePreparedQuery($strSql, $arrTransfer);
+		}
+	}
+
+	if(isset($_FILES['favicon']) && is_file($_FILES['favicon']['tmp_name'])) {
+		$sTarget = \Util::getDocumentRoot().'storage/favicon_'.(int)$_VARS['id'].'.ico';
+		move_uploaded_file($_FILES['favicon']['tmp_name'], $sTarget);
+		Util::changeFileMode($sTarget);
+	}
+	if(isset($_FILES['robots']) && is_file($_FILES['robots']['tmp_name'])) {
+		$sTarget = \Util::getDocumentRoot().'storage/robots_'.(int)$_VARS['id'].'.txt';
+		move_uploaded_file($_FILES['robots']['tmp_name'], $sTarget);
+		Util::changeFileMode($sTarget);
+	}
+
+	enterlog(0, \Cms\Helper\Log::LOG_SITES_UPDATED);
+
+	$_VARS['task'] = "edit";
+	
+} elseif($_VARS['task'] == "delete") {
+
+	if($_VARS['id'] > 0) {
+		$sQuery = "DELETE FROM cms_sites WHERE id = ".(int)$_VARS['id']."";
+		DB::executeQuery($sQuery);
+	}
+
+	Log::enterLog(0, \Cms\Helper\Log::LOG_SITES_DELETED);
+
+	$_VARS['task'] = false;
+
+} elseif($_VARS['task'] == "setposition") {
+
+	changePosition($_VARS['dir'], (int)$_VARS['id'], "cms_sites");
+
+	Log::enterLog(0, \Cms\Helper\Log::LOG_SITES_POSITION);
+
+	$_VARS['task'] = false;
+
+}
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen & Funktionen')?> &raquo; <?=L10N::t('Internetauftritte', 'CMS')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<form method="POST" action="sites.html" enctype="multipart/form-data">
+		
+	
+<?
+if(
+	$_VARS['task'] == "edit"
+) {
+
+	if($_VARS['action'] == "master") {
+		$strSql = "UPDATE cms_sites_domains SET master = 0 WHERE site_id = :intSiteId";
+		$arrTransfer = array('intSiteId'=>intval($_VARS['id']));
+		DB::executePreparedQuery($strSql, $arrTransfer);
+
+		$strSql = "UPDATE cms_sites_domains SET master = 1 WHERE id = :intDomainId LIMIT 1";
+		$arrTransfer = array('intDomainId'=>intval($_VARS['domain_id']));
+		DB::executePreparedQuery($strSql, $arrTransfer);
+	}
+
+	if($_VARS['action'] == "active") {
+		$strSql = "UPDATE cms_sites_domains SET active = :bolActive WHERE id = :intDomainId";
+		$arrTransfer = array('intDomainId'=>intval($_VARS['domain_id']), 'bolActive'=>intval($_VARS['value']));
+		DB::executePreparedQuery($strSql, $arrTransfer);
+	}
+
+	$arrSite = array();
+	if($_VARS['id'] > 0) {
+		$arrSite = DB::getQueryRow("SELECT * FROM cms_sites WHERE id = '".intval($_VARS['id'])."'");
+		$strSql = " 
+					SELECT 
+						*  
+					FROM  
+						cms_sites_domains  
+					WHERE  
+						site_id = :intSiteId  
+					ORDER BY 
+						domain ASC";
+		$arrTransfer = array('intSiteId'=>$_VARS['id']);
+		$arrDomains = DB::getPreparedQueryData($strSql, $arrTransfer);
+	}
+
+	$oSite = \Cms\Entity\Site::getInstance($_VARS['id']);
+
+?>
+
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=L10N::t('Einstellungen', 'CMS')?></h3>
+	        </div>
+			<div class="box-body">
+			<?=printTableStart()?>
+				<input type="hidden" name="task" value="save">
+				<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>">
+				<input type="hidden" name="copy_id" value="<?=(int)$_VARS['copy_id']?>">
+				<?=printFormText(L10N::t("Internetauftritt", 'CMS'), "name", $arrSite['name'])?>
+				<?=printFormCheckbox(L10N::t("Zugriffe auf Hauptdomain umleiten?", 'CMS'), "redirect_to_domain", 1, $arrSite['redirect_to_domain'])?>
+				<?=printFormCheckbox(L10N::t("HTTPS erzwingen", 'CMS'), "force_https", 1, $arrSite['force_https'])?>
+				<?=printFormText(L10N::t("Webmaster E-Mail", 'CMS'), "email", $arrSite['email'])?>
+				<?=printFormFile(L10N::t("Favicon (.ico)", 'CMS'), "favicon")?>
+				<?=printFormCheckbox(L10N::t('Favicon aktivieren?', 'CMS'), 'favicon_active', 1, (int)$arrSite['favicon_active'])?>
+				<?=printFormFile(L10N::t("Robots (.txt)", 'CMS'), "robots")?>
+				<?=printFormCheckbox(L10N::t('Sprachordner aus URL entfernen?', 'CMS'), 'no_language_folder', 1, (int)$arrSite['no_language_folder'])?>
+				<?=printFormText(L10N::t('URL-Endung', 'CMS'), 'url_ending', $arrSite['url_ending'])?>
+			<?=printTableEnd()?>
+			<h2><?=L10N::t('Domains', 'CMS')?></h2>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th width="70%"><?=L10N::t('Domain', 'CMS')?></th>
+					<th width="15%"><?=L10N::t('Hauptdomain', 'CMS')?></th>
+					<th width="15%"><?=L10N::t('Aktiv', 'CMS')?></th>
+				</tr>
+<?
+				foreach((array)$arrDomains as $arrDomain) { 
+?>
+				<tr>
+					<td><input type="text" class="txt w300" name="domain[<?=$arrDomain['id']?>]" value="<?=\Util::convertHtmlEntities($arrDomain['domain'])?>" /></td>
+					<td align="center">
+<?
+					if($arrDomain['master']) {
+?>
+						Ja
+<?
+					} else { 
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=master&id=<?=$arrDomain['site_id']?>&domain_id=<?=$arrDomain['id']?>">Nein</a>
+<?
+					}
+?>
+					</td>
+					<td align="center">
+<?
+					if($arrDomain['active']) {
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=active&value=0&id=<?=$arrDomain['site_id']?>&domain_id=<?=$arrDomain['id']?>"><img src="/admin/media/sitemap_active.gif" alt="" /></a>
+<?
+					} else { 
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=active&value=1&id=<?=$arrDomain['site_id']?>&domain_id=<?=$arrDomain['id']?>"><img src="/admin/media/sitemap_inactive.gif" alt="" /></a>
+<?
+					}
+?>
+					</td>
+				</tr>
+<?
+				}
+?>				
+				<tr>
+					<td colspan="4">
+						<input type="text" class="txt w300" name="domain[0]" value="" />
+					</td>
+				</tr>
+			</table>
+
+		</div>
+		<div class="box-footer">
+			<button type="button" class="btn btn-default" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>';"><?=L10N::t('Zurück', 'CMS')?></button>
+			<button type="submit" class="btn btn-primary pull-right" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>';"><?=L10N::t('Speichern', 'CMS')?></button>
+
+<?
+} elseif($_VARS['task'] == "languages") {
+
+	$oSite = \Cms\Entity\Site::getInstance($_VARS['site_id']);
+	
+?>
+			
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=$oSite->name?> &raquo; <?=L10N::t('Sprachen', 'CMS')?></h3>
+	        </div>
+			<div class="box-body">
+	
+<?
+	
+	if($_VARS['act'] == "save") {
+	
+		if($_VARS['id'] > 0) {
+			\System::wd()->executeHook('languages_update', $_VARS);
+			$sQuery = "UPDATE cms_sites_languages SET name = '".\DB::escapeQueryString($_VARS['name'])."', code = '".\DB::escapeQueryString($_VARS['code'])."', charset = '".\DB::escapeQueryString($_VARS['charset'])."', locale = '".\DB::escapeQueryString($_VARS['locale'])."' WHERE id = ".(int)$_VARS['id']." AND site_id = ".(int)$oSite->id."";
+		} else {
+			\System::wd()->executeHook('languages_insert', $_VARS);
+			$sQuery = "INSERT INTO cms_sites_languages SET site_id = ".(int)$oSite->id.", name = '".\DB::escapeQueryString($_VARS['name'])."', code = '".\DB::escapeQueryString($_VARS['code'])."', charset = '".\DB::escapeQueryString($_VARS['charset'])."', locale = '".\DB::escapeQueryString($_VARS['locale'])."', position = 999";
+		}
+
+		if(
+			!empty($_VARS['code']) &&
+			strlen($_VARS['code']) >= 2
+		) {
+			DB::addField('system_translations', $_VARS['code'], 'TEXT NOT NULL');
+			DB::addField('cms_snippets', $_VARS['code'], 'TEXT NOT NULL');
+		}
+
+		DB::executeQuery($sQuery);
+	
+		enterlog(0,\Cms\Helper\Log::LOG_SITES_LANGUAGES_UPDATED);
+	
+		$_VARS['act'] = false;
+		
+	} elseif($_VARS['act'] == "delete") {
+	
+		if($_VARS['id'] > 0) {
+	
+			\System::wd()->executeHook('languages_delete', $_VARS['id']);
+	
+			$sQuery = "DELETE FROM cms_sites_languages WHERE id = ".(int)$_VARS['id']." AND site_id = ".(int)$oSite->id."";
+			DB::executeQuery($sQuery);
+			enterlog(0, \Cms\Helper\Log::LOG_SITES_LANGUAGE_DELETED);
+	
+		}
+
+		$_VARS['act'] = false;
+
+	} elseif($_VARS['act'] == "activate") {
+		$strSql = "
+					UPDATE 
+						cms_sites_languages
+					SET 
+						active = 1
+					WHERE
+						id = :intId AND
+						site_id = ".(int)$oSite->id."
+					";
+		$arrTransfer = array("intId"=>(int)$_VARS['id']);
+		DB::executePreparedQuery($strSql, $arrTransfer);
+		$_VARS['act'] = false;
+
+	} elseif($_VARS['act'] == "deactivate") {
+
+		$strSql = "
+					UPDATE 
+						cms_sites_languages
+					SET 
+						active = 0
+					WHERE
+						id = :intId AND
+						site_id = ".(int)$oSite->id."
+					";
+		$arrTransfer = array("intId"=>(int)$_VARS['id']);
+		DB::executePreparedQuery($strSql, $arrTransfer);
+		$_VARS['act'] = false;
+
+	} elseif($_VARS['act'] == "setposition") {
+	
+		changePosition($_VARS['dir'], $_VARS['id'], "cms_sites_languages", "WHERE site_id = ".(int)$oSite->id."");
+	
+		enterlog(0, \Cms\Helper\Log::LOG_SITES_LANGUAGE_POSITION);
+	
+		$_VARS['act'] = false;
+	
+	}
+
+	if($_VARS['act'] == "edit") {
+	
+		$aLanguage = array();
+		if($_VARS['id'] > 0) {
+			$aLanguage = DB::getQueryRow("SELECT * FROM cms_sites_languages WHERE id = ".(int)$_VARS['id']." AND site_id = ".(int)$oSite->id."");
+		}
+	
+		$aLocales = System::getAvailableLocales(false, $aLanguage['charset']);
+	
+	?>
+
+				<?=printTableStart()?>
+					<input type="hidden" name="task" value="languages">
+					<input type="hidden" name="act" value="save">
+					<input type="hidden" name="site_id" value="<?=$oSite->id?>">
+					<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>">
+					<?=printFormText(L10N::t('Sprache', 'CMS'), "name", $aLanguage['name'])?>
+					<?=printFormText(L10N::t('Code', 'CMS'), "code", $aLanguage['code'])?>
+					<?=printFormText(L10N::t('Zeichensatz', 'CMS'), "charset", $aLanguage['charset'])?>
+	<?
+		if(
+			!empty($aLocales) &&
+			(
+				in_array($aLanguage['locale'], $aLocales) ||
+				!$aLanguage['locale']
+			)
+		) {
+	?>
+					<?=printFormSelect(L10N::t('Locale', 'CMS'), "locale", $aLocales, $aLanguage['locale'])?>
+	<?
+		} else {
+	?>
+					<?=printFormText(L10N::t('Locale', 'CMS'), "locale", $aLanguage['locale'])?>
+	<?
+		}
+	?>
+				<?=printTableEnd()?>
+
+		</div>
+		<div class="box-footer">
+			<button type="submit" class="btn btn-primary pull-right" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>';"><?=L10N::t('Speichern', 'CMS')?></button>
+			<button type="button" onclick="go('sites.html?site_id<?=$oSite->id?>'); return false;" class="btn btn-default"><?=L10N::t('Zurück', 'CMS')?></button>
+
+	<?
+	} elseif($_VARS['task'] == "reload") {
+
+	?>
+			<div class="alert alert-success"><?=L10N::t('Die Sprache wurde neu initialisiert.', 'CMS')?></div>
+					
+		</div>
+		<div class="box-footer">
+			<button type="button" onclick="go('sites.html?site_id<?=$oSite->id?>'); return false;" class="btn btn-primary"><?=L10N::t('Zurück', 'CMS')?></button>
+
+<?
+	} else {	
+?>
+
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th style="width: auto;"><?=L10N::t('Sprache', 'CMS')?></th>
+					<th style="width: 100px;"><?=L10N::t('Code', 'CMS')?></th>
+					<th style="width: 100px;"><?=L10N::t('Zeichensatz', 'CMS')?></th>
+					<th style="width: 50px;"><?=L10N::t('Aktiv', 'CMS')?></th>
+					<th style="width: 120px;"><?=L10N::t('Aktionen', 'CMS')?></th>
+				</tr>
+<?
+				$bolAllIso = true;
+				$arrLanguages = array();
+				$aLanguages = $oSite->getLanguages(0, 0);
+				foreach((array)$aLanguages as $aLanguage) {
+					if(strtolower($aLanguage['charset']) != 'iso-8859-1') {
+						$bolAllIso = false;
+					}
+?>
+				<tr>
+					<td><?=$aLanguage['name']?></td>
+					<td><?=$aLanguage['code']?></td>
+					<td><?=$aLanguage['charset']?></td>
+					<td align="center">
+<?
+					if($aLanguage['active'] == 1) {
+?>
+						<a href="sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=deactivate&amp;id=<?=$aLanguage['id']?>"><img src="/admin/media/sitemap_active.gif" border=0 title="<?=L10N::t('Sprache deaktivieren', 'CMS')?>"></a>&nbsp;
+<?
+					} else {
+?>
+						<a href="sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=activate&amp;id=<?=$aLanguage['id']?>"><img src="/admin/media/sitemap_inactive.gif" border=0 title="<?=L10N::t('Sprache aktivieren', 'CMS')?>"></a>&nbsp;
+<?
+					}
+?>
+					</td>
+					<td align="center">
+						<a href="sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=setposition&amp;dir=up&amp;id=<?=$aLanguage['id']?>"><img src="/admin/media/sitemap_up.png" border=0 title="<?=L10N::t('Nach oben verschieben', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=setposition&amp;dir=down&amp;id=<?=$aLanguage['id']?>"><img src="/admin/media/sitemap_down.png" border=0 title="<?=L10N::t('Nach unten verschieben', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=delete&amp;id=<?=$aLanguage['id']?>"><img src="/admin/media/delete.png" border="0" title="<?=L10N::t('Sprache löschen', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=edit&amp;id=<?=$aLanguage['id']?>"><img src="/admin/media/edit.png" border="0" title="<?=L10N::t('Sprache editieren', 'CMS')?>"></a>&nbsp;
+					</td>
+				</tr>
+				<?
+				}
+				?>
+			</table>
+
+		</div>
+		<div class="box-footer">
+				<button type="button" onclick="go('sites.html?task=languages&amp;site_id=<?=$oSite->id?>&amp;act=edit'); return false;" class="btn btn-primary pull-right"><?=L10N::t('Sprache hinzufügen', 'CMS')?></button>
+				<button type="button" onclick="go('sites.html'); return false;" class="btn btn-default"><?=L10N::t('Zurück', 'CMS')?></button>
+
+<?
+	}
+
+} elseif($_VARS['task'] == "reload") {
+
+	$sSql = "SELECT id FROM cms_pages WHERE site_id = ".intval($_VARS['id'])." AND `element` != 'template'";
+	$aPages = DB::getQueryData($sSql);
+	foreach((array)$aPages as $aPage) {
+		$oPage = \Cms\Entity\Page::getInstance($aPage['id']);
+		$oPage->setLevel();
+		$oPage->save();
+	}
+
+	$oSite = \Cms\Entity\Site::getInstance($_VARS['id']);
+
+	$aLanguages = $oSite->getLanguages();
+	foreach((array)$aLanguages as $aLanguage) {
+
+		if($oSite->no_language_folder != 1) {
+
+			$aIndexPage = DB::getQueryRow("SELECT id FROM cms_pages WHERE site_id = ".intval($_VARS['id'])." AND path = '' AND file = 'index' AND (language = '".$aLanguage['code']."' OR language = '')");
+			if(empty($aIndexPage)) {
+				DB::executeQuery("INSERT INTO `cms_pages` SET site_id = ".intval($_VARS['id']).", file = 'index', element = 'page', layout = 'block', active = 1, template = 'standard', window = 'normal', title = 'Start', language = '".$aLanguage['code']."', level = 1");
+			}
+
+			$aFirstPage = DB::getQueryRow("SELECT id FROM cms_pages WHERE site_id = ".intval($_VARS['id'])." AND path = '' AND file != 'index' AND (language = '".$aLanguage['code']."' OR language = '') AND level = 1");
+			if(empty($aFirstPage)) {
+				DB::executeQuery("INSERT INTO `cms_pages` SET site_id = ".intval($_VARS['id']).", file = 'start', element = 'page', layout = 'block', active = 1, `indexpage` = 1, template = 'standard', window = 'normal', title = 'Start', language = '".$aLanguage['code']."', level = 1");
+			}
+
+		}
+
+	}
+
+	$aMovePage = DB::getQueryRow("SELECT id FROM cms_pages WHERE site_id = ".intval($_VARS['id'])." AND path = '' AND file = '' AND language = ''");
+	if(empty($aMovePage)) {
+		DB::executeQuery("INSERT INTO `cms_pages` SET `site_id` = ".intval($_VARS['id']).", element = 'page', layout = 'block', active = 1, `indexpage` = 1, template = 'standard', window = 'normal', title = 'Start'");
+	}
+
+?>
+				
+
+			<div class="box-body">
+	
+			<div class="alert alert-success">
+                <?=L10N::t('Der Internetauftritt wurde neu initialisiert.', 'CMS')?>
+            </div>
+		</div>
+		<div class="box-footer">
+				<a href="sites.html" class="btn btn-primary pull-right"><?=L10N::t('Zurück', 'CMS')?></a>
+
+<?
+} else {
+?>
+
+			<div class="box-body">
+	
+			<table class="table table-hover table-striped">
+				<tr>
+					<th width="80%"><?=L10N::t('Internetauftritt', 'CMS')?></th>
+					<th width="20%"><?=L10N::t('Aktion', 'CMS')?></th>
+				</tr>
+				<?
+				$arrLanguages = array();
+				$resSql = (array)DB::getQueryRows("SELECT * FROM cms_sites ORDER BY position, name");
+				foreach($resSql as $arrSites) {
+				?>
+				<tr>
+					<td><a href="sites.html?task=edit&id=<?=$arrSites['id']?>"><?=$arrSites['name']?></a></td>
+					<td align="center">
+						<a href="sites.html?task=setposition&amp;dir=up&amp;id=<?=$arrSites['id']?>"><img src="/admin/media/application_get.png" border=0 title="<?=L10N::t('Internetauftritt nach oben schieben', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=setposition&amp;dir=down&amp;id=<?=$arrSites['id']?>"><img src="/admin/media/application_put.png" border=0 title="<?=L10N::t('Internetauftritt nach unten schieben', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=reload&amp;id=<?=$arrSites['id']?>"><img src="/admin/media/application_go.png" border="0" title="<?=L10N::t('Internetauftritt neu initialisieren', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=delete&amp;id=<?=$arrSites['id']?>"><img src="/admin/media/application_delete.png" border="0" title="<?=L10N::t('Internetauftritt entfernen', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=edit&amp;id=<?=$arrSites['id']?>"><img src="/admin/media/application_edit.png" border="0" title="<?=L10N::t('Internetauftritt editieren', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=edit&amp;copy_id=<?=$arrSites['id']?>"><img src="/admin/media/application_double.png" border="0" title="<?=L10N::t('Internetauftritt kopieren', 'CMS')?>"></a>&nbsp;
+						<a href="sites.html?task=languages&amp;site_id=<?=$arrSites['id']?>"><img src="/admin/media/application_form.png" border="0" title="<?=L10N::t('Sprachen bearbeiten', 'CMS')?>"></a>&nbsp;
+					</td>
+				</tr>
+				<?
+				}
+				?>
+			</table>
+		</div>
+		<div class="box-footer">
+			<button type="button" onClick="self.location.href='sites.html?task=edit';" class="btn btn-primary pull-right"><?=L10N::t('Internetauftritt hinzuf&uuml;gen', 'CMS')?></button>
+<?
+}
+?>
+		</div>
+		</form>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

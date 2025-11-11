@@ -1,0 +1,123 @@
+<?
+
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('office_reports');
+
+/* ==================================================================================================== */
+
+$oConfig = Ext_Office_Config::getInstance();
+
+$oProject = new Ext_Office_Project('office_projects');
+
+$oDate = new WDDate();
+$oDate->sub(1, WDDate::MONTH)->set(1, WDDate::DAY);
+
+$sFrom = $oDate->get(WDDate::DATES);
+$sTill = $oDate->get(WDDate::MONTH_DAYS) . '.' . $oDate->get('M.Y');
+
+/* ==================================================================================================== */
+
+$sParams = '<link rel="stylesheet" href="/admin/extensions/office/office.css"></link>';
+$sParams .= '<link type="text/css" rel="stylesheet" href="/admin/js/calendar/calendar.css" />';
+
+$sParams .= '<script type="text/javascript" src="/admin/js/calendar/calendar.js"></script>';
+$sParams .= '<script type="text/javascript" src="/admin/extensions/office/js/stats_project.js"></script>';
+
+$sParams .= '<style type="text/css">body { overflow:hidden; scroll:no-scroll; }</style>';
+
+$aParams = array('additional' => $sParams);
+
+Admin_Html::loadAdminHeader($aParams);
+
+?>
+
+<style type="text/css">
+	.tblTimes, .tblTimes tr, .tblTimes th, .tblTimes td {
+		border:					1px solid #CCC;
+		border-collapse:		collapse;
+		border-spacing:			0;
+		padding:				0;
+		margin:					0;
+	}
+	.tblTimes th {
+		padding:				4px 3px;
+		background-color:		#EEE;
+		color:					#29527A;
+	}
+	.tblTimes td {
+		padding:				4px 3px;
+		text-align:				right;
+		font-size:				11px;
+	}
+</style>
+
+<script type="text/javascript">
+	Event.observe(window, 'load', function()
+	{
+		Calendar.prepare({
+			dateField      : 'filter_from',
+			triggerElement : 'picFrom'
+		});
+
+		Calendar.prepare({
+			dateField      : 'filter_till',
+			triggerElement : 'picTill'
+		});
+
+		loadProjectStatsList();
+	});
+</script>
+
+<section class="content custom-gui">
+
+<div class="divHeader" style="height:52px; margin-bottom:5px; border-bottom:1px solid #CCC;">
+
+	<div class="divToolbar">
+		<div class="divToolbarFormItem">
+			<b>Projekt:</b>
+			<select id="filter_project" class="txt" onchange="loadProjectStatsList();">
+				<option value="">Alle Projekte</option>
+			</select>
+		</div>
+		<div class="divToolbarFormItem">
+			<b>Datum:</b>
+			<input id="filter_from" value="<?=$sFrom?>" class="txt" onchange="loadProjectStatsList();" readonly="readonly" style="width:80px;" />
+		</div>
+		<div class="divToolbarFormItem">
+			<img alt="von" id="picFrom" src="/admin/media/calendar.png" />
+		</div>
+		<div class="divToolbarFormItem">
+			<b>-</b>
+			<input id="filter_till" value="<?=$sTill?>" class="txt" onchange="loadProjectStatsList();" readonly="readonly" style="width:80px;" />
+		</div>
+		<div class="divToolbarFormItem">
+			<img alt="von" id="picTill" src="/admin/media/calendar.png" />
+		</div>
+		<div class="divToolbarIcon">
+			<img id="loader" alt="" src="/admin/media/indicator.gif" style="display:none;" />
+		</div>
+		<div style="clear:both;"></div>
+	</div>
+</div>
+
+<div id="divTimes" style="overflow-x:scroll;">
+	<table class="tblTimes" style="width:100%;">
+		<thead>
+			<tr>
+				<th>Mitarbeiter</th>
+				<th style="width:120px;">h-Brutto</th>
+				<th style="width:120px;">h-Netto</th>
+				<th style="width:50px;">Bugs</th>
+				<th style="width:100px;">Bugs h-Brutto</th>
+				<th style="width:100px;">Bugs h-Netto</th>
+				<th style="width:50px;">Exts</th>
+				<th style="width:100px;">Exts h-Brutto</th>
+				<th style="width:100px;">Exts h-Netto</th>
+			</tr>
+		</thead>
+		<tbody id="tblTimes"></tbody>
+	</table>
+</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

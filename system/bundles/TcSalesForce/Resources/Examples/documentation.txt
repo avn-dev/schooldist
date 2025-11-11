@@ -1,0 +1,6 @@
+1. Sandbox: Webhooks erstellen (4 Klassen und 2 Trigger)
+2. Sandbox: Outbound Change Sets erstellen und hochladen
+3. Production: Inbound Change Set validieren
+4. Production: Inbound Change Set deployen
+5. Production: Remote site anlegen
+

@@ -1,0 +1,1 @@
+ALTER TABLE `ts_payment_conditions_settings` CHANGE `due_type` `due_type` ENUM('document_date','course_start_date','course_start_date_month_end','begin','end','start_of_month') CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL;

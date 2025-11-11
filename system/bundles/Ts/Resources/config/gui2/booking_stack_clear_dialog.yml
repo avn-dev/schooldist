@@ -1,0 +1,48 @@
+parent: ts_document
+hash: 71a0e39a7b4b7313af05a6499ca2b6f5
+foreign_key: id
+default_columns: []
+pagination: false
+export: false
+load_admin_header: false
+multiple_selection: false´
+index:
+  registry: 
+    generate: false
+class: 
+  data: Ext_TS_Accounting_BookingStack_Clear_Gui2_Data
+where:
+  - Ext_TS_Accounting_BookingStack_Clear_Gui2_Data
+  - getListWhere
+orderby:
+  - Ext_TS_Accounting_BookingStack_Clear_Gui2_Data
+  - getOrderby
+bars:
+  - 
+    position: top
+    set: [booking_stack_clear_dialog]
+    type: legend
+    elements:
+      - 
+        element: legend_info
+        label: Die angezeigten Rechnungen heben sich komplett auf und keine der Enthaltenen Buchungssätze wurde bisher verbucht.
+  - 
+    position: top
+    set: [booking_stack_clear_dialog]
+    type: legend
+    elements:
+      - 
+        element: legend_info
+        label: Durch die Bestätigung des Dialoges werden die Rechnungen aus dem Buchungsstapel entfernt.
+  - 
+    position: top
+    set: [booking_stack_clear_dialog]
+    type: legend
+    elements:
+      - 
+        element: legend_info
+        label: ''
+        info:
+          color: red_font
+          text: Bitte beachten Sie, dass dieser Schritt nicht umkehrbar ist!
+          text_l10n: true

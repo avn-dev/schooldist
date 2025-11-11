@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_inquiries_documents` CHANGE `entity` `entity` ENUM('Ext_TS_Inquiry','Ext_TS_Inquiry_Journey','TsCompany\\Entity\\JobOpportunity\\StudentAllocation','Ext_Thebing_Teacher') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL;

@@ -1,0 +1,891 @@
+hash: b951ea49b20b6e5b7bb56a1377e63ea5
+class:
+  wdbasic: Ext_TS_Inquiry_Journey_Accommodation
+  data: Ext_Thebing_Accommodation_Communication_Gui2
+  js: StudentlistGui
+  icon_status: Ext_Thebing_Gui2_Icon_Accommodation_Communication_Icon
+  row_style: Ext_Thebing_Gui2_Style_Accommodation_Communication_Row
+access: thebing_accommodation_communicate_overview
+css:
+  - /assets/ts-tuition/css/progress_report.css
+multiple_selection: true
+id:
+  column: id
+  alias: kia
+encode_data:
+  - allocation_id
+  - accommodation_inquiry_id
+orderby:
+  - Ext_Thebing_Accommodation_Communication_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Accommodation_Communication_Gui2
+  - getWhere
+limit: 30
+options:
+  decode_inquiry_id_additional_documents: accommodation_inquiry_id
+  orderby: accommodation_from
+  groupby: accommodations
+  query_transfer_location: 1
+  query_accommodation_communication: 1
+  selected_object_from_encoded_data: accommodation
+designer:
+  additional_flex:
+    -
+      section: student_record
+      primary_key: inquiry_id
+    -
+      section: accommodation_providers_general
+      primary_key: accommodation_id
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        label: Suche
+        column:
+          - lastname
+          - firstname
+          - number
+          - document_number
+          - short
+          - name
+          - number
+          - ext_1
+          - ext_2
+          - email
+          - ext_33
+        alias:
+          - cdb1
+          - cdb1
+          - tc_c_n
+          -
+          - kg
+          - kg
+          - kg
+          - ka
+          - ka
+          - tc_e
+          - cdb4
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column:
+            - from
+            - from
+          alias:
+            - kia
+            - kia
+          default:
+            - Ext_Thebing_Accommodation_Communication_Gui2
+            - getDefaultFilterFrom
+        until:
+          column:
+            - until
+            - from
+          alias:
+            - kia
+            - kia
+          default:
+            - Ext_Thebing_Accommodation_Communication_Gui2
+            - getDefaultFilterUntil
+        searchtype: contact
+        query_value_key: filter_accommodation
+        skip_query: true
+      -
+        element: selectfilter
+        value: accommodation_period
+        label: basierend auf
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getBasedOnFilter
+        filter_query:
+          accommodation_period: '( DATE(COALESCE(`kia`.`from`, 0000-00-00)) <= :filter_accommodation_until AND
+                             DATE(COALESCE(`kia`.`until`, 0000-00-00)) >= :filter_accommodation_from  )'
+          accommodation_start: 'DATE(`kia`.`from`) != "0000-00-00" AND
+                                DATE(`kia`.`from`) BETWEEN :filter_accommodation_from AND :filter_accommodation_until'
+      -
+        element: selectfilter
+        id: transfer_filter
+        label: Transfer
+        filter_part: having
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getFilterSelect
+          - 'transfer'
+        label_as_item: true
+        filter_query:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getTransferFilterQueries
+      -
+        element: selectfilter
+        id: accommodation_filter
+        label: Unterkunft
+        filter_part: having
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getFilterSelect
+          - 'accommodation'
+        label_as_item: true
+        filter_query:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getAccommodationFilterQueries
+      -
+        element: selectfilter
+        id: accommodation_category_filter
+        label: Unterkunftskategorie
+        entries:
+          - Ext_Thebing_Accommodation_Category
+          - getSelectOptions
+        label_as_item: true
+        column:
+          - accommodation_id
+        alias:
+          - kia
+      -
+        element: selectfilter
+        id: provider_filter
+        label: Anbieter
+        filter_part: having
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getFilterSelect
+          - 'provider'
+        label_as_item: true
+        filter_query:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getProviderFilterQueries
+      -
+        element: selectfilter
+        access: thebing_accommodation_communicate_filter_agency
+        id: agency_filter
+        label: Agenturen
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getAgencyOptions
+        filter_query: '`ka`.`id` = {value}'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Zuweisung
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getFilterSelect
+          - 'allocation'
+        label_as_item: true
+        filter_query:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getAllocationFilterQueries
+      -
+        element: selectfilter
+        label: Inbox
+        column:
+          - inbox
+        alias:
+          - ki
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getInboxes
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Gruppe
+        value: xNullx
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ki`.`group_id` != 0'
+          no: '`ki`.`group_id` = 0'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Stornierung
+        value: xNullx
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ki`.`canceled` != 0'
+          no: '`ki`.`canceled` = 0'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Alle Dokumente
+        entries:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getDocumentTypeOptions
+        filter_query:
+          invoice: '`ki`.`has_invoice` = 1'
+          proforma: '`ki`.`has_proforma` = 1 AND `ki`.`has_invoice` = 0'
+        label_as_item: true
+  -
+    position: top
+    elements:
+      -
+        element: icon_edit
+        label: Details
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - dialog_detail
+        dialog:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - accommodation_communication
+        active: 0
+        action: edit
+        additional: accommodation_communication
+        access: thebing_accommodation_communicate_details
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - history_detail
+        label: Verlauf
+        task: openDialog
+        action: history
+        additional: accommodation_communication
+        access: thebing_accommodation_communicate_history
+      -
+        element: labelgroup
+        label: Kunden / Agentur
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - accept
+        label: bestätigen
+        task: request
+        action: confirm_customer_agency
+        multiple_id: 1
+        active: 0
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - delete
+        label: wiederrufen
+        task: request
+        action: revoce_customer_agency
+        multiple_id: 1
+        active: 0
+      -
+        element: labelgroup
+        label: Unterkunft
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - accept
+        label: bestätigen
+        task: request
+        action: confirm_provider
+        multiple_id: 1
+        active: 0
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - delete
+        label: wiederrufen
+        task: request
+        action: revoce_provider
+        multiple_id: 1
+        active: 0
+  -
+    position: top
+    elements:
+      -
+        element: labelgroup
+        label: Kommunikation
+      -
+        element: icon_communication
+        label: Kunden / Agentur
+        application: accommodation_communication_customer_agency
+        multiple_id: true
+        access: thebing_accommodation_communicate_student
+      -
+        element: icon_communication
+        application: accommodation_communication_provider
+        label: Unterkunftsanbieter
+        multipleId: true
+        access: thebing_accommodation_communicate_provider
+      -
+        element: icon
+        label: Verfügbarkeit anfragen
+        access:
+          - thebing_accommodation_communicate_overview
+          - request_availability
+        action: request_availability
+        task: openDialog
+        dialog:
+          - Ext_Thebing_Accommodation_Communication_Gui2
+          - getRequestAvailabiltyDialog
+        img: far fa-envelope
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Kommunikation
+      -
+        element: legend_info
+        label: Offen
+        info:
+          color: bad
+      -
+        element: legend_info
+        label: Erledigt
+        info:
+          color: good
+      -
+        element: legend_info
+        label: Verändert
+        info:
+          color: neutral
+      -
+        element: legend_info
+        label: Buchung
+      -
+        element: legend_info
+        label: Storniert
+        info:
+          color: storno
+      -
+        element: legend_info
+        label: Zuweisung nicht mehr existent
+        info:
+          text: true
+          color: red_font
+          italic: true
+columns:
+  -
+    group: Kundendaten
+    title: Inbox
+    column: inbox
+    alias: ki
+    width: name
+    small: true
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_System, getInboxList, true, true]
+    default: false
+  -
+    group: Kundendaten
+    column: customerNumber
+    title: K.Nr.
+    width: customer_number
+    small: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'customerNumber'
+      - true
+      - 60
+  -
+    title: Rechnungsnummer
+    group: Kundendaten
+    column: document_number
+    alias: ''
+    width: document_number
+    small: true
+    default: false
+  -
+    group: Kundendaten
+    column: lastname
+    alias: cdb1
+    title: Name
+    width: customer_name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_CustomerName
+  -
+    group: Kundendaten
+    column: customer_birthday
+    alias: ''
+    title: Geburtsdatum
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    column: birthday
+    group: Kundendaten
+    alias: cdb1
+    title: Alter
+    width: age
+    small: true
+    format: Ext_TS_Gui2_Format_Age
+    format_params:
+      - false
+      - 'customer_birthday'
+  -
+    column: customer_mail
+    data: customer_mail
+    group: Kundendaten
+    alias: ''
+    title: E-Mail
+    width: email
+    small: true
+    format: Ext_Thebing_Gui2_Format_Email
+    default: false
+  -
+    column: visum_name
+    group: Kundendaten
+    alias: ''
+    title: Visa
+    width: name
+    format: Ext_TC_GUI2_Format_List
+    format_params:
+      - 'Ext_Thebing_Visum'
+      - 'visum_name'
+      - 'name'
+    default: false
+  -
+    column: short
+    group: Kundendaten
+    alias: ''
+    data: group_short
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    width: group_short
+  -
+    title: Gruppennummer
+    group: Kundendaten
+    column: group_number
+    width: number
+    default: false
+  -
+    column: ext_2
+    group: Kundendaten
+    alias: ka
+    data: agency_name
+    title: Agentur
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'agency_full_name'
+      - true
+  -
+    title: Telefon
+    group: Kundendaten
+    column: customer_phone
+    width: name
+    sortable: false
+    default: false
+    format: Tc\Gui2\Format\Contact\Detail
+    format_params:
+      - phone_private
+  -
+    title: Mobiltelefon
+    group: Kundendaten
+    column: customer_mobile
+    width: name
+    sortable: false
+    default: false
+    format: Tc\Gui2\Format\Contact\Detail
+    format_params:
+      - phone_mobile
+  -
+    column: status_id
+    group: Kundendaten
+    alias: ki
+    data: agency_name
+    title: Status
+    width: name
+    format: Ext_Thebing_Gui2_Format_CustomerStatus
+    default: false
+    sortable: false
+  -
+    column: customer_nationality_full
+    group: Kundendaten
+    alias: ''
+    db_type: varchar
+    title: Nationalität
+    width: nationality
+    default: false
+  -
+    column: customer_gender
+    group: Kundendaten
+    alias: ''
+    db_type: varchar
+    data: customer_gender
+    title: Geschlecht
+    width: gender
+    format: Ext_Thebing_Gui2_Format_Gender
+    default: false
+  -
+    column: course_names
+    group: Kundendaten
+    title: Gebuchte Kurse
+    width: name
+    default: false
+    format: Ext_Gui2_View_Format_StringParts
+    format_params:
+      - ','
+  -
+    title: Anreisedaten angefordert
+    group: Transfer
+    column: transfer_data_requested
+    alias: ki
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Accommodation_Transfer_Requested
+    style: Ext_Thebing_Gui2_Style_Accommodation_Transfer_Requested
+    default: false
+  -
+    title: Anreisedaten vollständig
+    group: Transfer
+    column: ext_2
+    alias: cdb13
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Accommodation_Transfer_Complete
+    style: Ext_Thebing_Gui2_Style_Accommodation_Transfer_Complete
+    sortable: false
+    default: false
+  -
+    title: 'Kunde/Agentur: Bestätigt'
+    group: Transfer
+    column: customer_agency_confirmed
+    alias: kit
+    data: customer_agency_confirmed
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Accommodation_Transfer_Confirmed
+    style: Ext_Thebing_Gui2_Style_Accommodation_Transfer_Confirmed
+    sortable: false
+    default: false
+  -
+    title: Gebuchter Transfer
+    group: Transfer
+    alias: ts_i_j
+    column: transfer_mode
+    width: name
+    format: Ext_Thebing_Gui2_Format_Transfer
+    default: false
+  -
+    title: Anreise-Datum
+    group: Transfer
+    column: transfer_date
+    alias: kit
+    data: arrival_date
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+    sortable: false
+  -
+    title: Zeit
+    group: Transfer
+    column: transfer_time
+    alias: kit
+    data: arrival_time
+    width: time
+    small: true
+    format: Ext_Thebing_Gui2_Format_Time
+    default: false
+  -
+    title: Fluggesellschaft
+    group: Transfer
+    column: airline
+    alias: kit
+    data: arrival_airline
+    width: name
+    small: true
+    default: false
+  -
+    title: Flugnummer
+    group: Transfer
+    column: flightnumber
+    alias: kit
+    data: arrival_flightnumber
+    width: name
+    small: true
+    default: false
+  -
+    title: Transfer Kommentar
+    group: Transfer
+    column: value
+    alias: wa_journey
+    data: transfer_comment
+    width: comment
+    default: false
+  -
+    title: Anreise Kommentar
+    group: Transfer
+    column: arrival_comment
+    alias: kit
+    data: arrival_comment
+    width: comment
+    sortable: false
+    default: false
+  -
+    title: Abreise Kommentar
+    group: Transfer
+    column: departure_comment
+    alias: kit
+    data: departure_comment
+    width: comment
+    sortable: false
+    default: false
+  -
+    title: An Kunden / Agentur bestätigt
+    group: Zuweisung
+    column: accommodation_customer_agency_confirmed
+    alias: kaa
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Accommodation_Confirmed
+    format_params:
+      - 'accommodation_customer_agency_confirmed'
+    style: Ext_Thebing_Gui2_Style_Accommodation_Confirmed
+    style_params:
+      - 'accommodation_customer_agency_confirmed'
+    sortable: false
+  -
+    title: Kundendaten an Unterkunftsanbieter bestätigt
+    group: Zuweisung
+    column: accommodation_accommodation_confirmed
+    alias: kaa
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Accommodation_Confirmed
+    format_params:
+      - 'accommodation_accommodation_confirmed'
+    style: Ext_Thebing_Gui2_Style_Accommodation_Confirmed
+    style_params:
+      - 'accommodation_accommodation_confirmed'
+    sortable: false
+  -
+    title: Transferdaten an Unterkunftsanbieter bestätigt
+    group: Zuweisung
+    column: accommodation_transfer_confirmed
+    alias: kaa
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Accommodation_Confirmed
+    style: Ext_Thebing_Gui2_Style_Accommodation_Confirmed
+    style_params:
+      - 'accommodation_transfer_confirmed'
+    sortable: false
+  -
+    title: Kommentar
+    group: Zuweisung
+    column: comment
+    alias: kaal
+    data: allocation_comment
+    width: name
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'allocation_comment'
+      - true
+      - 80
+  -
+    title: Von
+    group: Unterkunft
+    column: inquiry_accommodation_from_2
+    alias: ''
+    data: inquiry_accommodation_from_2
+    width: date
+    format: Ext_TS_Gui2_Format_DateTime
+  -
+    title: Bis
+    group: Unterkunft
+    column: inquiry_accommodation_until_2
+    alias: ''
+    data: inquiry_accommodation_until_2
+    width: date
+    format: Ext_TS_Gui2_Format_DateTime
+  -
+    title: Wochen
+    group: Unterkunft
+    column: weeks
+    width: date
+    alias: kia
+    format: Ext_TC_Gui2_Format_Int
+  -
+    title: Gebuchte Unterkunft
+    group: Unterkunft
+    column: accommodation_id
+    alias: kia
+    data: accommodation_fulllist
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Inquiry_AccommodationCategories
+    style: Ext_Thebing_Gui2_Style_Accommodation_Accommodation
+  -
+    title: Kommentar
+    group: Unterkunft
+    column: acc_comment
+    alias: ''
+    width: name
+    small: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'acc_comment'
+      - true
+      - 80
+  -
+    title: Kommentar 2
+    group: Unterkunft
+    column: acc_comment2
+    alias: ''
+    width: name
+    small: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'acc_comment2'
+      - true
+      - 80
+  -
+    title: Allergien
+    group: Unterkunft
+    column: acc_allergies
+    alias: ''
+    width: name
+    small: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'acc_allergies'
+      - true
+      - 80
+    default: false
+  -
+    title: Unterkunft-Nr.
+    group: Unterkunft
+    column: accommodation_number
+    width: number
+    default: false
+  -
+    title: Unterkunft
+    group: Unterkunft
+    column: accommodation_name
+    width: name
+    small: true
+  -
+    title: Adresse
+    column: accommodation_street
+    group: Unterkunft
+    alias: ''
+    width: name
+    small: true
+    default: false
+  -
+    title: Adresszusatz
+    group: Unterkunft
+    column: accommodation_address_addon
+    alias: ''
+    width: name
+    small: true
+    default: false
+  -
+    title: PLZ
+    group: Unterkunft
+    column: accommodation_plz
+    alias: ''
+    width: name
+    small: true
+    default: false
+  -
+    title: Stadt
+    group: Unterkunft
+    column: accommodation_city
+    alias: ''
+    width: name
+    small: true
+    default: false
+  -
+    title: Telefon
+    group: Unterkunft
+    column: accommodation_phone
+    alias: ''
+    width: name
+    small: true
+    default: false
+  -
+    title: Mobil
+    group: Unterkunft
+    column: accommodation_mobile
+    alias: ''
+    width: name
+    small: true
+    default: false
+  -
+    title: Raum
+    group: Unterkunft
+    column: room_name
+    alias: ''
+    width: name
+    small: true
+  -
+    title: Teilen mit
+    group: Unterkunft
+    column: share_with
+    alias: ''
+    data: share_with
+    width: short_name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Matching_ShareName
+  -
+    title: Familienbeschreibung
+    group: Unterkunft
+    column: accommodation_family_description
+    sortable: false
+    width: long_description
+    small: true
+    default: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - accommodation_family_description
+      - true
+      - 80
+      - true
+  -
+    title: E-Mail
+    group: Unterkunft
+    column: accommodation_email
+    width: email
+    default: false
+  -
+    title: Erstellt
+    column: created
+    alias: ts_i_j_a
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    default: false
+  -
+    title: Ersteller
+    column: creator_id
+    alias: ts_i_j_a
+    width: user_name
+    format: Ext_Gui2_View_Format_UserName
+    format_params:
+      - true
+    default: false
+  -
+    title: Bearbeiter
+    column: editor_id
+    alias: ts_i_j_a
+    width: user_name
+    format: Ext_Gui2_View_Format_UserName
+    format_params:
+      - true
+    default: false
+  -
+    title: Verändert
+    column: changed
+    alias: ts_i_j_a
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    default: false

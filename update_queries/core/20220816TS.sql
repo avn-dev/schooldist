@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_messages` ADD `sent` TINYINT(1) NOT NULL DEFAULT '1' AFTER `content_type`;

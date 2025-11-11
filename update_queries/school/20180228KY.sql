@@ -1,0 +1,1 @@
+ALTER TABLE `ts_accommodation_providers_requirements` ADD `requirement` text NOT NULL, ADD `age` tinyint(4) DEFAULT NULL;

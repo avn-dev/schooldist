@@ -1,0 +1,41 @@
+class:
+  wdbasic: Ext_Thebing_Placementtests_Question_Answer
+  data: TsTuition\Gui2\Data\PlacementtestQuestionAnswer
+sortable: true
+only_pagecount: true
+foreign_key: idQuestion
+access: ''
+orderby:
+  - TsTuition\Gui2\Data\PlacementtestQuestionAnswer
+  - getOrderBy
+bars:
+  - position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - text
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - TsTuition\Gui2\Data\PlacementtestQuestionAnswer
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - TsTuition\Gui2\Data\PlacementtestQuestionAnswer
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Antwort
+    column: text
+    width: name
+    resize: true

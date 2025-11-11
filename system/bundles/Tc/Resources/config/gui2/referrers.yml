@@ -1,0 +1,74 @@
+hash: d11de495c7a074394d78a4d4a6ae07fb
+class:
+  wdbasic: Ext_TC_Referrer
+  js: ReferrersGui
+  data: Ext_TC_Referrer_Gui2_Data
+access: core_marketing_referrers
+js:
+  - [js/referrers.js, tc]
+sortable: true
+only_pagecount: true
+orderby:
+  - Ext_TC_Referrer_Gui2_Data
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        id: search
+        alias:
+          - tc_r_i18n
+        column:
+          - name
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Referrer_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Referrer_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_r_i18n
+    resize: true
+    i18n:
+      jointable: tc_r_i18n
+      pass_language: true
+      show_flag: true
+      interface: frontend
+      all: true
+  -
+    set: [agency]
+    title: Textfeld
+    column: textfields
+    alias: tc_r
+    width: short_name
+    format: Ext_TC_Gui2_Format_YesNo
+  -
+    title: [Ext_TC_Object, getSubObjectLabel, true]
+    column: subobjects
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_TC_Object, getSubObjects, true]

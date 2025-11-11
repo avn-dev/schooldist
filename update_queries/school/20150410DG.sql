@@ -1,0 +1,1 @@
+UPDATE `tc_gui2_filtersets_bars_elements_basedon` SET `base_on` = 'invoice_status' WHERE `base_on` = 'canceled';

@@ -1,0 +1,18 @@
+@import "node_modules/bootstrap/scss/functions";
+@import "node_modules/bootstrap/scss/variables";
+
+$primary: $blue !default;
+$primary-hsl-hue: 211 !default;
+$primary-hsl-saturation: 100% !default;
+$primary-hsl-lightness: 50% !default;
+$secondary: $gray-600 !default;
+$secondary-hsl-hue: 208 !default;
+$secondary-hsl-saturation: 7% !default;
+$secondary-hsl-lightness: 46% !default;
+
+$btn-padding-x-xs: .20rem !default;
+$btn-padding-y-xs: .12rem !default;
+$input-btn-line-height-xs: 1.1 !default;
+
+// Must be in px for negative margins
+$overlay-font-size: 50px;

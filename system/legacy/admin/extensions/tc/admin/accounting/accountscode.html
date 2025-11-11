@@ -1,0 +1,94 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = new Ext_TC_Gui2(md5('tc_accounting_accountscode'));
+
+$oGui->access = array('core_admin_accountscode', '');
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+
+$oGui->setWDBasic('Ext_TC_Accounting_Accountscode');
+$oGui->setTableData('orderby', array('tc_ac.name' => 'ASC'));
+$oGui->setTableData('limit', 10);
+
+// Dialog
+
+$oDialog = $oGui->createDialog($oGui->t('Kontenplan "{name}" editieren'), $oGui->t('Kontenplan anlegen'));
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Name'), 'input', array(
+	'db_alias' => 'tc_ac', 
+	'db_column' => 'name', 
+	'required' => 1
+)));
+
+$oDialog->height = '300';
+$oDialog->width = '750';
+
+// Filter
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name');
+$oFilter->db_alias = array('tc_ac');
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+// Icon
+
+$oBar = $oGui->createBar();
+
+$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+// Loading / Pagination
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oBar->createCSVExportWithLabel();
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// List
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_ac';
+$oColumn->title			= $oGui->t('Name');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+// Page
+
+$oCategoryGui = Ext_TC_Accounting_Accountscode::getCategoryGui();	//Kategorien
+$oAccountGui = Ext_TC_Accounting_Accountscode::getAccountGui();		//Konten
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oCategoryGui, array('hash' => $oGui->hash, 'foreign_key' => 'accountscode_id',  'parent_primary_key' => 'id', 'reload' => true));
+$oPage->setGui($oAccountGui, array('hash' => $oGui->hash, 'foreign_key' => 'accountscode_id',  'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display();
+
+?>

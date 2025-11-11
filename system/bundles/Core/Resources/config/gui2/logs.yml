@@ -1,0 +1,64 @@
+class:
+  wdbasic: \Core\Entity\System\Log
+  data: \Core\Gui2\Data\System\Log
+id:
+  column: id
+  alias: sl
+title: Protokoll
+orderby: 
+    - \Core\Gui2\Data\System\Log
+    - getOrderBy
+access:
+    - core_logs
+    - 
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: selectfilter
+          label: Aktion
+          column: 
+            - code
+          alias: 
+            - sl
+          entries:
+            - \Core\Gui2\Data\System\Log
+            - getCodeOptions
+        -
+          element: timefilter
+          label: Zeitraum
+          from:
+              column: created
+          until:
+              column: created
+          searchtype: between
+columns:
+  -
+    title: Aktion
+    column: code
+    alias: sl
+    format: \Core\Gui2\Format\Logs\Action
+    width: name
+    resize: true
+    sortable: false
+  -
+    title: Benutzer
+    column: user_id
+    alias: sl
+    format: \Ext_Gui2_View_Format_UserName
+    width: name
+    resize: false
+    sortable: false
+default_columns:
+  -
+    title: Datum
+    format: \Ext_Gui2_View_Format_Date_DateTime
+    column: created
+    data: created
+    alias: sl
+    width: date
+    resize: false
+    sortable: true

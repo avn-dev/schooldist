@@ -1,0 +1,2 @@
+ALTER TABLE `ts_accounts_transactions` CHANGE `account_type` `account_type` ENUM('agency','group','contact','sponsor') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
+ALTER TABLE `ts_accounts_transactions` ADD `id` INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (`id`);

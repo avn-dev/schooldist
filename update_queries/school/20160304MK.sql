@@ -1,0 +1,2 @@
+ALTER TABLE `customer_db_4` ADD `default_category_id` INT UNSIGNED NOT NULL, ADD INDEX `default_category_id` (`default_category_id`);
+ALTER TABLE `ts_accommodation_categories_to_accommodation_providers` ADD INDEX(`accommodation_provider_id`);

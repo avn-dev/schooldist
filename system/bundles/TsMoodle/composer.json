@@ -1,0 +1,13 @@
+{
+	"name": "fidelo-bundle/ts-moodle",
+	"version": "1.1.0",
+	"require": {
+		"fidelo-software/moodle-php-sdk": "1.*"
+	},
+	"repositories": [
+		{
+			"type": "git",
+			"url": "https://github.com/fidelo-software/moodle-php-sdk.git"
+		}
+	]
+}

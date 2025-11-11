@@ -1,0 +1,125 @@
+<?
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+require (\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+<tr>
+<td valign="top">
+<h1>Konfiguration des Login-Button</h1>
+
+
+<form name="customer_db_data_login_button" enctype="multipart/form-data" action="<?=$PHP_SELF?>">
+<input type='hidden' name="page_id" value=<?=$page_id?>>
+<input type='hidden' name="element_id" value=<?=$element_id?>>
+<input type='hidden' name="form_action" value="Speichern">
+<?
+
+
+// Negiert, damit im Zweifelsfall lieber eine Option zuviel als zuwenig angezeigt wird.
+$DONT_SHOW_DETAIL_LINK =		false;
+$DONT_SHOW_ADD_LINK =			false;
+$DONT_SHOW_GOTO_ORDER_LINK =	        false;
+$DONT_SHOW_OTHER_LINK =false;
+$DONT_SHOW_ANY_LINK =			true;
+
+//include("shop/shop_admin.inc");
+
+$res_element = db_query($db_system, "SELECT * FROM content WHERE page_id='$page_id' AND number='$element_id'");
+$my_element  = get_data($res_element);
+$template    = $my_element[content]  ;
+
+
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if ($form_action=="Speichern")
+{
+
+
+   $config->button_name =         $button_name;
+   $config->button_look =         $button_look;
+   
+
+   $config->save_config($page_id, $element_id);
+}
+
+$config->config_class($page_id, $element_id);
+
+ if($config->button_name=="")
+ 	{
+	   $button_name="Login";
+	}
+ else
+ 	{
+	   $button_name=$config->button_name;
+	}
+
+if ($config->button_look=="Text")
+{
+   $text_checked="SELECTED";
+ }
+else
+{
+   $text_checked="";
+}
+
+?>
+
+<table class=table border=0 cellpadding="4" cellspacing=0 >
+
+
+    <tr class=first>
+    <td>
+        <table width='100%' align=center cellspacing="2" cellpadding="2" border="0" >
+        <colgroup>
+            <col valign=top align=left width=290>
+            <col valign=top align=left>
+        </colgroup>
+        <tr>
+            <th>Beschriftung des Login-Link :</th>
+            <td>
+                <input type='text' class = 'input' style= 'width:100px' name = 'button_name' value='<?=$button_name?>'>
+            </td>
+        </tr>
+        <tr>
+            <th>Aussehen des Login-Link :</th>
+            <td>
+                <select name="button_look" style= 'width:100px'>
+                    <option>Button</option>
+                    <option <?=$text_checked?>>Text</option>
+                </select>
+            </td>
+        </tr>
+
+
+        <tr class=first>
+            <td align="center" colspan=2>
+				<!--<input type=button value="speichern" OnClick="document.customer_db_data_form_back.submit()"></td> -->
+
+                <input type="button" value="Speichern" class="btn" OnClick="document.customer_db_data_login_button.form_action.value='Speichern';document.customer_db_data_login_button.submit();">
+                <input class=btn type=button value="Fenster schliessen" OnClick='top.close();'>
+            </td>
+		</tr>
+	   </table>
+	</td>
+    </tr>
+</table></form>
+
+</td>
+</tr>
+</table>
+
+
+<?=Admin_Html::loadAdminFooter()?>
+

@@ -1,0 +1,174 @@
+<?
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("admin");
+
+// ===== DEBUG >>>
+/*
+$sSQL = "SELECT * FROM `plani_rebuild`";
+$aResult = DB::getQueryData($sSQL);
+
+$sTarFile	= \Util::getDocumentRoot().'backup.tar.gz';
+
+foreach($aResult as $iKey => $aValue)
+{
+	file_put_contents($sTarFile, $aResult[$iKey]['files']);
+	wdmail('mark@koopmann-online.de', 'Test', 'Test', '', array($sTarFile => $sTarFile));
+	unlink($sTarFile);
+}
+
+die();
+*/
+// ===== DEBUG <<<
+
+// Create the backup table
+$sSQL = "
+	CREATE TABLE IF NOT EXISTS
+		`plani_rebuild`
+		(
+			`id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			`created` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00-00-00',
+			`changed` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+			`active` TINYINT(1) NOT NULL DEFAULT '1',
+			`dump` LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+			`files` LONGBLOB NOT NULL
+		)
+	ENGINE = MYISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci
+";
+DB::executeQuery($sSQL);
+
+// These tables will be not backuped
+$aTmpTables = array(
+	'plani_rebuild',
+	'system_access',
+	'system_maillog',
+	'system_rights',
+	'system_roles',
+	'system_roles2rights',
+	'system_user'
+);
+
+// Get all tables
+$sTables = '';
+$rTables = mysql_list_tables($db_data['system']);
+while($aTable = mysql_fetch_array($rTables))
+{
+	if(!in_array($aTable[0], $aTmpTables))
+	{
+		$sTables .= $aTable[0].' ';
+	}
+}
+
+// Define the temporary backup files
+$sDumFile	= '/tmp/backup.sql';
+$sTarFile	= '/tmp/backup.tar.gz';
+
+$sFilesDir	= \Util::getDocumentRoot().'';
+
+// User message
+$sMessage = '';
+
+// Backup
+if(isset($_VARS['action']) && $_VARS['action'] == 'backup')
+{
+	set_time_limit(1800);
+	ini_set("memory_limit", "512M");
+
+	// Create the files backup
+	$mResult = exec("cd ".$sFilesDir."; tar -czf ".$sTarFile." ./");
+
+	// Execute the mysqldump and save the dump in a file
+	$mResult = exec("mysqldump --user=".$db_data['username']." --password=".$db_data['password']." --host=".$db_data['host']." ".$db_data['system']." ".$sTables." > ".$sDumFile);
+
+	// Insert the backup to data base
+	if(is_file($sDumFile) && is_file($sTarFile))
+	{
+		$sDump	= file_get_contents($sDumFile);
+		$sFiles	= file_get_contents($sTarFile);
+
+		$sSQL = "INSERT INTO `plani_rebuild` SET
+			`created`	= NOW(),
+			`dump`		= '".DB::escapeQueryString($sDump)."',
+			`files`		= '".DB::escapeQueryString($sFiles)."'";
+		DB::executeQuery($sSQL);
+
+		// Get the new id
+		$iID = DB::fetchInsertID();
+
+		// Delete old backups
+		$sSQL = "DELETE FROM `plani_rebuild` WHERE `id` < (".(int)$iID." - 4)";
+		DB::executeQuery($sSQL);
+
+		// Set all backups on inactive
+		$sSQL = "UPDATE `plani_rebuild` SET `active` = 0 WHERE `id` != ".(int)$iID;
+		DB::executeQuery($sSQL);
+
+		// Delete backup files
+		unlink($sDumFile);
+		unlink($sTarFile);
+
+		// Create the message
+		$sMessage = 'Die Sicherung der Daten wurde erfolgreich abgeschlossen.';
+	}
+}
+
+// Restore
+if(isset($_VARS['action']) && $_VARS['action'] == 'restore')
+{
+	set_time_limit(1800);
+	ini_set("memory_limit", "512M");
+
+	// Get the last dump
+	$sSQL = "SELECT * FROM `plani_rebuild` WHERE `active` = 1";
+	$aResult = DB::getQueryData($sSQL);
+	$sDump	= $aResult[0]['dump'];
+	$sFiles	= $aResult[0]['files'];
+
+	// Delete document root directory
+	$mResult = exec("rm -rf ".$sFilesDir);
+
+	// Create a backup files
+	file_put_contents($sDumFile, $sDump);
+	file_put_contents($sTarFile, $sFiles);
+
+	// Execute the restore
+	$mResult = system("mysql --user=".$db_data['username']." --password=".$db_data['password']." --host=".$db_data['host']." ".$db_data['system']." < ".$sDumFile);
+	$mResult = exec("mkdir ".$sFilesDir."; chmod 0777 ".$sFilesDir);
+	$mResult = system("cd ".$sFilesDir."; tar -xzf ".$sTarFile);
+	$mResult = system("cd ".$sFilesDir."; chmod -R 0777 ./ ");
+	$mResult = system("cd ".$sFilesDir."; chown -R www-data:www-data ./ ");
+
+	// Delete the backup files
+	unlink($sDumFile);
+	unlink($sTarFile);
+
+	// Create the message
+	$sMessage = 'Die Wiederherstellung der Daten wurde erfolgreich abgeschlossen.';
+}
+
+Admin_Html::loadAdminHeader();
+
+?>
+<table style="border:0; width:100%; height:100%;" cellpadding="0" cellspacing="30">
+	<tr>
+		<td style="vertical-align:top;">
+			<h2><?=$sMessage?></h2>
+			<h1>Sichern</h1>
+			<form action="" method="post">
+				<input name="action" value="backup" type="hidden" />
+				<input name="submit" value="Daten sichern" type="submit" class="btn" />
+			</form>
+
+			<br /><br />
+
+			<h1>Wiederherstellen</h1>
+			<form action="" method="post">
+				<input name="action" value="restore" type="hidden" />
+				<input name="submit" value="Daten wiederherstellen" type="submit" class="btn" />
+			</form>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

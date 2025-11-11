@@ -1,0 +1,46 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$aAttendanceFlexFields = Ext_TC_Flexibility::getFields('tuition_attendance_register');
+$aAttendanceFlexOptions = [];
+foreach($aAttendanceFlexFields as $oField) {
+	$aAttendanceFlexOptions['flex_'.$oField->id] = $oField->title;
+}
+
+$oGui = new Ext_TC_Config_Gui2(md5('core_config'), 'Ext_TC_Config_Gui2_Data');
+$oGui->setOption('right', 'thebing_management_resources');
+$oGui->gui_description = Ext_TS_System_Navigation::tp();
+$oGui->gui_title = Ext_TS_System_Navigation::t();
+
+$aConfig = [];
+
+if(Ext_Thebing_Access::hasRight('thebing_tuition_attendance_score_progress_report')) {
+	$aConfig['ts_statistic_attendance_score_progress_columns'] = array(
+		'description' => (new TsStatistic\Generator\Statistic\AttendanceScoreProgress())->getTitle().': '.$oGui->t('Spalten'),
+		'type' => 'select',
+		'select_options' => $aAttendanceFlexOptions,
+		'required' => false,
+		'multiple' => 5,
+		'jquery_multiple' => 1,
+		'style' => 'height: 105px;'
+	);
+}
+
+$oLanguage = new \Tc\Service\Language\Backend(\System::getInterfaceLanguage());
+$oLanguage->setContext(Ext_Thebing_Agency_Gui2::getDescriptionPart());
+$aAgencyCrmColumns = \Ext_Thebing_Agency_Placeholderoverview::getPlaceholderDuePayments($oLanguage);
+asort($aAgencyCrmColumns);
+$aConfig['ts_agency_crm_due_payments_columns'] = [
+	'description' => $oGui->t('Agentur CRM-Report: Spalten für fällige Zahlungen'),
+	'type' => 'select',
+	'multiple' => 5,
+	'select_options' => $aAgencyCrmColumns,
+	'jquery_multiple' => true,
+];
+
+Ext_Thebing_Management_Settings_TuitionTimes_Gui2_Data::addSettings($oGui, $aConfig);
+
+$oGui->setConfigurations($aConfig);
+$oGui->setWDBasic('Ext_TS_Config');
+$oGui->display();

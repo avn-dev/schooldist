@@ -1,0 +1,129 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.dao.inc.php");
+
+Access_Backend::checkAccess("office_customers");
+
+$aClients = classExtensionDao_Office::getAllClients(true);
+
+$oGui = new Ext_Gui2(md5('office_customers'));
+
+$oGui->setWDBasic('Ext_Office_Customer_Group');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('where', array('active'=>1));
+
+// Listen Optionen
+$oGui->gui_description 		= 'Office';
+$oGui->gui_title			= L10N::t('Office » Kunden » Gruppen', $oGui->gui_description);
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection 	= 0;
+$oGui->query_id_column		= 'id';
+
+# START Dialog 1 #
+
+$oDialog = $oGui->createDialog(L10N::t('Gruppe "{name}" bearbeiten', $oGui->gui_description), L10N::t('Neue Gruppe anlegen', $oGui->gui_description));
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Name', $oGui->gui_description), 'input', array('db_column'=>'name', 'required'=>1)));
+$oDialog->setElement($oDialog->createRow(L10N::t('Mandant', $oGui->gui_description), 'select', array('db_column'=>'client_id', 'select_options'=>$aClients)));
+
+$oDialog->width = 950;
+$oDialog->height = 560;
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oLabelGroup = $oBar->createLabelGroup(L10N::t('Suche', $oGui->gui_description));
+$oBar->setElement($oLabelGroup);
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('id', 'name');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+// Leisten erzeugen
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oLabelGroup = $oBar->createLabelGroup(L10N::t('Bearbeiten', $oGui->gui_description));
+$oBar ->setElement($oLabelGroup);
+
+$oIcon = $oBar->createNewIcon(
+                        L10N::t('Neuer Eintrag', $oGui->gui_description),
+                        $oDialog,
+                        L10N::t('Neuer Eintrag', $oGui->gui_description)
+                    );
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+                        L10N::t('Editieren', $oGui->gui_description),
+                        $oDialog,
+                        L10N::t('Editieren', $oGui->gui_description)
+                    );
+$oBar ->setElement($oIcon);
+
+
+$oIcon = $oBar->createDeleteIcon(
+                        L10N::t('Löschen', $oGui->gui_description),
+                        L10N::t('Löschen', $oGui->gui_description)
+                    );
+$oBar ->setElement($oIcon);
+
+// Leiste der Gui Zuweisen
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oPagination = $oBar->createPagination();
+$oBar ->setElement($oPagination);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'id';
+$oColumn->db_alias = '';
+$oColumn->db_type = 'int';
+$oColumn->title = L10N::t('ID', $oGui->gui_description);
+$oColumn->width = 50;// NUR Zahlen!!
+$oColumn->format = 'int';
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Name', $oGui->gui_description);
+$oColumn->width = 200;
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'created';
+$oColumn->db_alias = '';
+$oColumn->db_type = 'timestamp';
+$oColumn->title = L10N::t('Erstellt', $oGui->gui_description);
+$oColumn->width = 80;// NUR Zahlen!!
+$oColumn->format = 'Date';
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'changed';
+$oColumn->db_alias = '';
+$oColumn->db_type = 'timestamp';
+$oColumn->title = L10N::t('Verändert', $oGui->gui_description);
+$oColumn->width = 80;
+$oColumn->format = 'Date';
+$oGui->setColumn($oColumn);
+
+$aOptionalData = array();
+$oGui->display($aOptionalData);

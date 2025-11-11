@@ -1,0 +1,110 @@
+hash: d68742a68de29491ee338b1b810a6ae6
+class:
+  wdbasic: Ext_TC_NumberRange
+  data: Ext_TC_NumberRange_Gui2_Data
+  js: NumberRanges
+access:
+  - core_numberranges
+  -
+orderby:
+  - Ext_TC_NumberRange_Gui2_Data
+  - getOrderby
+pagination: false
+export: false
+id:
+  column: id
+  alias: tc_nr
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - tc_nr
+        column:
+          - name
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_NumberRange_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_NumberRange_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+  -
+    position: top
+    type: ''
+    elements:
+      -
+        element: pagination
+        only_pagecount: false
+        limit_selection: false
+      -
+        element: icon
+        label: Einstellungen
+        task: openDialog
+        action: edit
+        access:
+          - core_numberranges
+          - settings
+        additional: settings
+        active: 1
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - settings
+      -
+        element: icon
+        label: Zuweisen
+        task: openDialog
+        action: allocate
+        access:
+          - core_numberranges
+          - allocate
+        active: 1
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - allocate
+      -
+        element: icon
+        label: Rechte
+        task: openDialog
+        action: openAccessDialog
+        access:
+          - core_numberranges
+          - allocate
+        active: 1
+        visible: 1
+        multipleId: 1
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - access
+      -
+        element: labelgroup
+        label: Export
+      -
+        element: csv_export
+      -
+        element: excel_export
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_nr
+    width: name
+    resize: true
+js:
+  - [js/access_matrix.js, tc]
+  - [admin/js/numberranges.js, tc]

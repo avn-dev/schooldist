@@ -1,0 +1,67 @@
+<?
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("support_form");
+
+?>
+<?=Admin_Html::loadAdminHeader()?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Supportformular')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+<?
+if($action != "send") {
+?>
+<form action="<?=$PHP_SELF?>" name="formular" method="post">
+<input type="hidden" name="topic" value="1">
+<input type="hidden" name="action" value="send">
+<table border="0" cellpadding="4" cellspacing="0" width="100%" class="table">
+	<tr>
+		<th>Ihr Browser</th>
+		<td><script>document.write('<input type="hidden" name="support_navigator" value="'+navigator.userAgent+'">'); document.write(navigator.userAgent);</script></td>
+	</tr>
+	<tr>
+		<th>Ihr Prozessortyp</th>
+		<td><script>document.write('<input type="hidden" name="support_prozessor" value="'+navigator.cpuClass+'">'); document.write(navigator.cpuClass);</script></td>
+	</tr>
+	<tr>
+		<th>Ihr Betriebssystem</th>
+		<td><script>document.write('<input type="hidden" name="support_system" value="'+navigator.platform+'">'); document.write(navigator.platform);</script></td>
+	</tr>
+	<?=printFormText("Bitte geben Sie hier den Betreff ein","support_subject")?>
+	<?=printFormTextarea("Bitte geben Sie hier Ihre Anfrage/Nachricht ein","support_message")?>
+</table>
+<?=printSubmit("Anfrage senden")?>
+</form>
+
+<?
+
+} else {
+$mailtxt = "";
+$mailtxt .= "Zeit: ".strftime("%A %d. %B %Y %H:%M:%S",time())."\r\n";
+$mailtxt .= "Benutzer Name: ".$user_data['name']."\r\n";
+$mailtxt .= "Benutzer Browser: $support_navigator\r\n";
+$mailtxt .= "Benutzer Prozessor: $support_prozessor\r\n";
+$mailtxt .= "Benutzer System: $support_system\r\n";
+$mailtxt .= "URL: $domain\r\n";
+$mailtxt .= "\r\n";
+$mailtxt .= "Nachricht: $support_message\r\n";
+mail("support@cmsarea.de","Support Nachricht von ".$system_data['project_name'].": $support_subject",$mailtxt,"FROM: ".$system_data['project_name']."");
+?>
+<h2>
+Ihre Nachricht wurde erfolgreich verschickt und wird schnellstmöglich bearbeitet.
+</h2>
+<?
+}
+?>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

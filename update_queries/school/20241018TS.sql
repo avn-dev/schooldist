@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_courses` ADD `allow_parallel_tuition_allocations` TINYINT(1) UNSIGNED NULL DEFAULT '0' AFTER `catch_up_on_cancelled_lessons`;

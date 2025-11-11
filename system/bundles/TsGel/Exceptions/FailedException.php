@@ -1,0 +1,14 @@
+<?php
+
+namespace TsGel\Exceptions;
+
+class FailedException extends RuntimeException {
+
+	private $response = null;
+
+	public function response($response) {
+		$this->response = $response;
+		return $this;
+	}
+
+}

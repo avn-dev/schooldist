@@ -1,0 +1,2 @@
+RENAME TABLE `ts_activities_blocks_accompanying_persons` TO `ts_activities_blocks_days_accompanying_persons`;
+ALTER TABLE `ts_activities_blocks_days_accompanying_persons` CHANGE `block_id` `day_id` INT(11) NOT NULL;

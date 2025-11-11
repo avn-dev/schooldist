@@ -1,0 +1,162 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess('editor');
+
+if($_VARS['task'] == "save") {
+	$strSql = "
+			UPDATE
+				cms_content
+			SET
+				content = '".\DB::escapeQueryString($_VARS['code'])."', uptodate = 0
+			WHERE
+				page_id = '".intval($_VARS['page_id'])."' AND
+				number = '".intval($_VARS['id'])."'
+			LIMIT 1
+			";
+	db_query($strSql);
+}
+
+$bolSave = 0;
+
+if($_VARS['page_id'] > 0) {
+	$target = '$(\'code\').value';
+	$bolSave = 1;	
+
+	$strSql = "
+			SELECT 
+				*
+			FROM 
+				cms_content
+			WHERE
+				page_id = '".intval($_VARS['page_id'])."' AND
+				number = '".intval($_VARS['id'])."'
+			";
+	$arrContent = get_data(db_query($strSql));
+	
+} elseif($_VARS['type'] == "div") {
+	$target = stripslashes($_VARS['target']).".innerHTML";
+} else {
+	$target = stripslashes($_VARS['target']).".value";
+}
+
+$language = $_VARS['language'];
+
+if(!$language) {
+	$language = 'html';
+}
+
+?>	
+
+<?=Admin_Html::loadAdminHeader("",0,"onload=\"setCode('html',".$target.");\"")?>
+  		
+  		
+  	<?
+  	if($bolSave) {
+  	?>
+	<form method="post" name="f1" action="editor.html">
+	<input type="hidden" name="task" value="save">
+	<input type="hidden" name="code" id="code" value="<?=htmlspecialchars($arrContent['content'])?>" />
+	<input type="hidden" name="page_id" value="<?=htmlspecialchars($_VARS['page_id'])?>" />
+	<input type="hidden" name="id" value="<?=htmlspecialchars($_VARS['id'])?>" />
+	<input type="hidden" name="target" value="<?=htmlspecialchars($_VARS['target'])?>" />
+	<input type="hidden" name="language" value="<?=htmlspecialchars($_VARS['language'])?>" />
+	<input type="hidden" name="type" value="<?=htmlspecialchars($_VARS['type'])?>" />
+	<input type="image" src="/admin/media/spacer.gif" />
+	</form>
+	<?
+	}
+  	?>
+	
+	<script>
+	// get code from codepress
+	function getCode() {
+		var IFrameObj = document.getElementById('codepress').contentWindow;
+		var textWithoutHighlighting = IFrameObj.CodePress.getCode()
+		// do what you have to do with the code
+		//alert(textWithoutHighlighting);
+		return textWithoutHighlighting;
+	}
+
+	// get code from a textarea and put it inside codepress window
+	function setCode(strLanguage,strTarget) {
+		var IFrameObj = document.getElementById('codepress').contentWindow;
+		IFrameObj.CodePress.setCode(strLanguage,strTarget);
+	}
+
+	function sendform() {
+  		<?=$target?> = getCode();
+  		<?
+  		if($bolSave) {
+  		?>
+  		document.f1.submit();
+  		opener.document.location.reload();
+  		<?
+		}
+  		?>
+  		top.close();
+	}
+
+	var last = null;
+	function edit(strLanguage,objBtn) {
+
+		objLast = document.getElementById('default');
+		objBtn.id = 'default';
+		objLast.id = '';
+		objLast = objBtn;
+		
+		var IFrameObj = document.getElementById('codepress').contentWindow;
+		IFrameObj.CodePress.setLanguage(strLanguage);
+		
+	}
+	</script>
+	<style>
+	#codepress {width:100%;height:350px;border:1px solid gray;frameborder:0;}
+	#languages {margin:5px 0;}
+	button {margin-top:5px;}
+	#default {font-weight:bold;color:red;}
+	</style>
+	
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%" height="100%">
+				<tr>
+					<td>
+
+<h1>Editor</h1>
+<br>
+	</td>
+</tr>
+<tr>
+	<td height="99%">
+		<div id="languages">
+			Syntax Highlighting:&nbsp; 
+			<!--<button class="btn" onclick="edit('php',this)">PHP</button>&nbsp;-->
+			<button class="btn" onclick="edit('javascript',this)">JavaScript</button>&nbsp;
+			<button class="btn" onclick="edit('html',this)" id="default">HTML</button>&nbsp;
+			<!--<button class="btn" onclick="edit('css',this)">CSS</button> 	&nbsp;-->
+			<button class="btn" onclick="edit('text',this)">plain text</button><br />
+		</div>
+		<iframe id="codepress" src="/admin/includes/codepress/codepress.php?language=<?=$language?>" border="0" frameborder="0"></iframe><br />
+
+		</td>
+</tr>
+<tr>
+	<td align="right">
+	<br>
+	<p align="right">
+	<?make_button(L10N::t('Abbrechen', 'Framework'),"","onclick=\"top.close();\"")?>
+	<?make_button(L10N::t('Speichern', 'Framework'),"","onclick=\"sendform();\"")?>
+	</p>
+<script>
+self.focus();
+</script>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

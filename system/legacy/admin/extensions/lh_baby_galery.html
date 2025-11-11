@@ -1,0 +1,306 @@
+<?php
+
+
+// Includes
+include_once $_SERVER["DOCUMENT_ROOT"] . "/admin/includes/main.inc.php";
+include_once $_SERVER["DOCUMENT_ROOT"] . "/system/extensions/luisenhospital/functions_lh.inc.php";
+
+
+// Konstanten
+$sFotoPfad = "/media/lh/baby_gallery/";
+$sDBTable = "lh_babies";
+
+
+// Rechte checken
+Access_Backend::checkAccess("baby_gallery");
+
+
+// Alte Daten entfernen
+removeOldData($sDBTable, $sFotoPfad);
+
+
+// Uebergabewerte auslesen
+$iID = intval($_VARS["id"]);
+$sTodo = trim($_VARS["form_action"]);
+
+
+
+
+
+
+// Standard Admin Anfang
+Admin_Html::loadAdminHeader();
+?>
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Babygalerie-Administration</h1><br /><br />
+<?php
+
+
+
+
+
+// Error-Text initialisieren
+$sError = "";
+
+
+
+
+
+// Wenn die Daten gespeichert werden sollen
+if("save" == $sTodo)
+{
+	$aBaby["geburtstag"] = trim($_VARS["sBirthday"]);
+	$aBaby["geburtstag"] = convertGermanToSQLDate($aBaby["geburtstag"]);
+	if(!$sBirthday)
+	{
+		$sError .= "Der Geburtstag ist nicht angegeben bzw. im falschen Format!<br />";
+	}
+	$aBaby["name"] = trim($_VARS["sName"]);
+	if(!$aBaby["name"])
+	{
+		$sError .= "Der Name ist nicht angegeben!<br />";
+	}
+	$aBaby["vorname"] = trim($_VARS["sForename"]);
+	if(!$aBaby["vorname"])
+	{
+		$sError .= "Der Vornamen ist nicht angegeben!<br />";
+	}
+	$aBaby["geschlecht"] = trim($_VARS["sGender"]);
+	if(!in_array($aBaby["geschlecht"], array('m', 'w')))
+	{
+		$sError .= "Das Geschlecht ist falsch definiert!<br />";
+	}
+	$aBaby["gewicht"] = trim($_VARS["sWeight"]);
+	$aBaby["groesse"] = trim($_VARS["sHeight"]);
+	$sNewPhotoLink = trim($_VARS["sNewPhotoLink"]["name"]);
+	if($sNewPhotoLink)
+	{
+		if($_FILES["sNewPhotoLink"]["size"])
+		{
+			$sRealFile = $_FILES["sNewPhotoLink"]["name"];
+			$sExtention = substr($sRealFile, strrpos($sRealFile, '.'));
+			$sTempFile = "_temp." . $sExtention;
+			$sTempPath = $_SERVER["DOCUMENT_ROOT"] . $sFotoPfad . $sTempFile;
+			move_uploaded_file($_FILES["sNewPhotoLink"]["tmp_name"], $sTempPath);
+			if(file_exists($sTempPath))
+			{
+				$sNewBigFile = "bb_" . fillZeros($iID, 5) . ".jpg";
+				$sNewBigPath = $_SERVER["DOCUMENT_ROOT"] . $sFotoPfad . $sNewBigFile;
+				convertImage(640, "*", $sTempPath, $sNewBigPath, $system_data['im_path']);
+				
+				$sNewSmallFile = "bs_" . fillZeros($iID, 5) . ".jpg";
+				$sNewSmallPath = $_SERVER["DOCUMENT_ROOT"] . $sFotoPfad . $sNewSmallFile;
+				convertImage(160, "*", $sTempPath, $sNewSmallPath, $system_data['im_path']);
+			}
+			else
+			{
+				$sError .= "Das Foto konnte nicht gespeichert werden!<br />";
+			}
+		}
+		else
+		{
+			$sError .= "Das Foto wurde nicht &uuml;bertragen!<br />";
+		}
+	}
+	else if(!$iID)
+	{
+		$sError .= "Das Foto ist nicht angegeben!<br />";
+	}
+	if($sError)
+	{
+		echo "<span style='color:red'>" . $sError . "</span>\n";
+	}
+	else
+	{
+		$sSQL = "`" . $sDBTable . "`" .
+			" SET `geburtstag`='" . addslashes($aBaby["geburtstag"]) . "'" .
+			", `name`='" . addslashes($aBaby["name"]) . "'" .
+			", `vorname`='" . addslashes($aBaby["vorname"]) . "'" .
+			", `geschlecht`='" . addslashes($aBaby["geschlecht"]) . "'" .
+			", `gewicht`='" . addslashes($aBaby["gewicht"]) . "'" .
+			", `groesse`='" . addslashes($aBaby["groesse"]) . "'" .
+			", `active`='1'";
+		if($iID)
+		{
+			$sSQL = "UPDATE " . $sSQL . " WHERE `id`='" . $iID . "'";
+		}
+		else
+		{
+			$sSQL = "INSERT INTO " . $sSQL;
+		}
+		db_query($sSQL);
+		if(!$iID)
+		{
+			$iID = get_insert_id();
+			$sNewBigFile2 = "bb_" . fillZeros($iID, 5) . ".jpg";
+			$sNewBigPath2 = $_SERVER["DOCUMENT_ROOT"] . $sFotoPfad . $sNewBigFile2;
+			rename($sNewBigPath, $sNewBigPath2);
+
+			$sNewSmallFile2 = "bs_" . fillZeros($iID, 5) . ".jpg";
+			$sNewSmallPath2 = $_SERVER["DOCUMENT_ROOT"] . $sFotoPfad . $sNewSmallFile2;
+			rename($sNewSmallPath, $sNewSmallPath2);
+		}
+		echo "<span>Die Daten wurden gespeichert.</span>\n";
+	}
+	$sTodo = "edit";
+}
+
+
+
+
+
+
+// Wenn Daten aus der Liste geloescht werden sollen
+if($iID && "delete" == $sTodo)
+{
+	$sSQL = "UPDATE `" . $sDBTable . "`" .
+		" SET `active`='2'" .
+		" WHERE `id`='" . $iID . "'";
+	db_query($sSQL);
+}
+
+
+
+
+
+
+// Wenn die Daten editiert werden sollen, ...
+if("edit" == $sTodo)
+{
+	echo "			<h2>Baby" . ($iID?"details":" hinzuf&uuml;gen") . "</h2>\n";
+	if($iID && !$sError)
+	{
+		$sSQL = "SELECT * FROM `" . $sDBTable . "` WHERE `active`='1' AND `id`='" . $iID . "'";
+		$rSQL = db_query($sSQL);
+		$aBaby = get_data($rSQL);
+	}
+?>
+			<form method="POST" action="<?=$_SERVER["PHP_SELF"];?>" enctype="multipart/form-data">
+				<input type="hidden" name="form_action" value="save">
+				<input type="hidden" name="id" value="<?=$iID;?>">
+<?php
+	printTableStart();
+	if($aBaby["geburtstag"])
+	{
+		$sBirthday = convertSQLToGermanDate($aBaby["geburtstag"]);
+	}
+	else
+	{
+		$sBirthday = date("d.m.Y");
+	}
+	printFormText("Geburtstag *)", "sBirthday", $sBirthday);
+	printFormText("Name *)", "sName", trim($aBaby["name"]));
+	printFormText("Vorname *)", "sForename", $aBaby["vorname"]);
+	$aGenders = array('m' => "m&auml;nnlich", 'w' => "weiblich");
+	printFormSelect("Geschlecht", "sGender", $aGenders, $aBaby["geschlecht"]);
+	printFormText("Gewicht (in g)", "sWeight", $aBaby["gewicht"]);
+	printFormText("Gr&ouml;&szlig;e (in cm)", "sHeight", $aBaby["groesse"]);
+?>
+		<tr>
+			<th width="40%">Foto *)</th>
+			<td width="60%">
+				<input type="file" name="sNewPhotoLink" class="txt" />
+<?php
+	$sImageFile = "bs_" . fillZeros($aBaby["id"], 5) . ".jpg";
+	if(file_exists($_SERVER["DOCUMENT_ROOT"] . $sFotoPfad . $sImageFile))
+	{
+		echo "				<br /><br /><img src=\"" . $sFotoPfad . $sImageFile ."\" width=\"160\" alt=\"Babyfoto\" border=\"0\" />\n";
+	}
+	echo " 			</td>\n		</tr>\n";
+	printTableEnd();
+	echo "		<br /><span>*) Pflichtfelder</span>";
+	printSubmit("Baby speichern");
+?>
+				<button type="button" onClick="window.location.href='<?=$_SERVER["PHP_SELF"];?>'" class="btn">zur&uuml;ck</button>
+			</form>
+<?php
+}
+
+
+
+
+
+
+// ansonsten die Liste ausgeben
+else
+{
+	echo "			<h2>Babyliste</h2>\n";
+	// Baby-Liste konfigurieren
+	$sHeadline = "";
+	$aColumnNames = array(
+		"Geburtsdatum", 
+		"Name", 
+		"Vorname", 
+		"Geschlecht", 
+		"Gewicht", 
+		"Größe",
+		"Aktion"
+	);
+	$aDBColumnNames = array(
+		"id",
+		"geburtstag", 
+		"name", 
+		"vorname", 
+		"geschlecht", 
+		"gewicht", 
+		"groesse"
+	);
+	$aColumnWidths = false;
+	$sSQLquery = "SELECT * FROM `" . $sDBTable . "` WHERE `active`='1'";
+	$sEditAction = "edit";
+	$sDeleteAction = "delete";
+	$aButtons = array("hinzuf&uuml;gen|edit");
+	$aColumnFunctions = array(
+		"convertSQLToGermanDate",
+		false,
+		false,
+		"convertGender",
+		"addWeightMeasure",
+		"addHeightMeasure"
+	);
+	$sDefaultOrder = "geburtstag DESC";
+	$iPerPage = 20;
+	$bShowTopNavi = false;
+	
+	
+	// Baby-Liste ausgeben
+	printTableList(
+		$sHeadline,
+		$aColumnNames,
+		$aDBColumnNames,
+		$aColumnWidths,
+		$sSQLquery,
+		$sEditAction,
+		$sDeleteAction,
+		$aButtons,
+		$aColumnAligns='',
+		$aColumnFunctions,			// ='',
+		$asAdvancedSQLQuery='',
+		$sDefaultOrder,				// ='',
+		$iPerPage,					// =0,
+		$bNoWrap=false,
+		$sGetParam='',
+		$aPostParam='',
+		$bNewWindow=false,
+		$bShowTopNavi,				// =true,
+		$sDatabase=false
+	);
+}
+
+
+
+
+
+
+// Standard Admin Ende
+?>
+		</td>
+	</tr>
+</table>
+<?php
+Admin_Html::loadAdminFooter();
+
+
+?>

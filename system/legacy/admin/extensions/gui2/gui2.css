@@ -1,0 +1,1980 @@
+@CHARSET "UTF-8";
+
+body,
+html {
+    height: 100%;
+    width: 100%;
+	overflow: hidden;
+	padding:0px;
+	margin: 0px;
+}
+
+/*.dialog .table td,
+.dialog .table tr {
+	font-size:10px;
+}*/
+
+.dialog-wrapper {
+/*	box-shadow: 0 5px 8px #555555;*/
+}
+
+.dialog-button {
+/*    color: #FFF;
+    padding: 3px 10px;
+	border-radius: 3px;
+	font-weight: bold;
+	margin: 5px 0 5px 5px;*/
+}
+
+.dialog-actions .buttons {
+/*	padding: 1px 10px;*/
+}
+
+.divHeader {
+    /*background-color: #fff;*/
+    background-position: top;
+    background-repeat: repeat;
+    width: 100%;
+    height: auto;
+}
+
+.divBody {
+	overflow: hidden;
+}
+
+.divFooter {
+    clear: both;
+	background-position: bottom;
+    background-repeat: repeat;
+    width: 100%;
+    height: auto;
+	/*background-color: #F7F7F7;
+	border-top: 1px solid #CCC;*/
+}
+
+.divSum {
+	top: 1px;
+}
+
+.divToolbar {
+    float: left;
+    line-height: 16px;
+    overflow: hidden;
+	margin: 0;
+	/*border-bottom: 1px solid #CCC;
+	border-top: 1px solid #FFFFFF;*/
+}
+
+
+.divToolbar:last-child {
+	border-bottom: 0;
+}
+
+/*
+.GUIDialogTabContentDiv .divToolbar {
+}
+
+.GUIDialogTabContentDiv .tab_area ul.nav-tabs {
+	border-bottom-color: #CCC;
+}
+
+.GUIDialogTabContentDiv .tab_area ul.nav-tabs li.active a {
+	border-top: none;
+	border-left-color: #CCC;
+	border-right-color: #CCC;
+}*/
+
+.GUIDialogTabContentDiv .tab_area .nav-tabs-custom {
+	box-shadow: none;
+}
+
+/*
+fast gleich wie divToolbar
+wird benötigt falls man icon unabhängig von einer toolbar erstellen möchte
+*/
+.divSingleIcon {
+	float: left;
+    line-height: 16px;
+    overflow: hidden;
+	margin: 0;
+}
+
+.divToolbar input, .divToolbar select {
+    margin: 0 0 0 0;
+}
+
+.divToolbar input[type="checkbox"], 
+.divToolbar input[type="radio"] {
+	vertical-align: middle;
+}
+
+.divTopLine {
+    border-top: 1px solid #CCCCCC;
+}
+
+/*.divToolbar .divToolbarIcon,
+.divSingleIcon .divToolbarIcon {
+	float: left;
+	overflow:hidden;
+	text-align:center;
+	margin: 3px 0 0 0;
+	height: 18px;
+}*/
+
+.guiBarFilter .divToolbarIcon {
+	float: none;
+	padding: 1px 0 0 0;
+}
+
+.divToolbar .divToolbarIcon .divToolbarIconArrowBox ,
+.divSingleIcon .divToolbarIcon .divToolbarIconArrowBox{
+	position: absolute;
+	z-index: 9999;
+	left: 0px;
+	top: 0px;
+	/*background: #CCC;
+	border: 1px solid #999;*/
+}
+
+.divToolbar .divToolbarLabelGroup,
+.divSingleIcon .divToolbarLabelGroup {
+	float:left;
+	/*font-weight:bold;*/
+	height:16px;
+	line-height:16px;
+
+}
+
+/*.guiBarFilter .divToolbarLabel,
+.divToolbar .divToolbarLabelGroup,
+.divSingleIcon .divToolbarLabelGroup {
+	margin: 13px 5px 0 0;
+}*/
+
+/*.divToolbar .divToolbarLabel,
+.divSingleIcon .divToolbarLabel {
+	margin: 0 5px 0px 5px;
+}*/
+
+.guiBarElement .divToolbarLabel,
+.guiBarFilter .divToolbarLabel {
+	/*padding: 0 4px;*/
+	margin: 0;
+	vertical-align: top;
+}
+
+.guiBarElement .divToolbarIcon {
+	height: 23px;
+	line-height: 23px;
+}
+
+/*.guiBarFilter .divToolbarLabel {
+	height: 23px;
+	line-height: 23px;
+}*/
+
+.guiBarFilter > .form-control {
+	vertical-align: top;
+}
+
+/* TODO Das ist viel zu unspezifisch, siehe Fall darunter */
+.divToolbar > * {
+	display: table;
+	float: left;
+}
+
+.divToolbar .clearfix {
+	display: block;
+	float: none;
+}
+
+.divToolbarToggleIcon {
+	float:right;
+	padding: 3px 4px;
+	/*margin: 5px 2px 0 2px;*/
+	cursor: pointer;
+	/*margin: 6px 0 4px 0;*/
+}
+
+.divToolbarToggleLabel {
+	padding-right: 5px;
+	height: 23px;
+	line-height: 23px;
+}
+
+/*.divToolbarToggleIcon i {
+	padding-top: 1px;
+}*/
+
+/*.guiBarFilter > * {
+	display: table-cell;
+}*/
+
+/*.divToolbar .fa {
+	color: #333;
+}*/
+
+/*.divToolbar .colorkey .fa {
+	color: #fff;
+}*/
+
+.divToolbar .divToolbarHtml {
+    float: left;
+    height: 16px;
+    line-height: 16px;
+    margin-top: 2px;
+    padding-left: 5px;
+}
+
+.divToolbar .divToolbarSeparator {
+    float: left;
+    /*height: 16px;
+    line-height: 16px;
+    padding: 8px 4px;*/
+}
+
+/*.guiBarFilter input {
+	border-radius: 2px;
+}*/
+
+.guiBarFilter .divToolbarSeparator,
+.guiBarElement .divToolbarSeparator {
+	margin-top: 2px;
+}
+
+.divToolbar .divToolbarSeparator div {
+	border-left: 2px dotted #666;
+	height: 18px;
+	width: 2px;
+	margin: 2px 0 0 0;
+}
+
+.divToolbar .divToolbarFormItem {
+    float: left;
+    height: 16px;
+    line-height: 16px;
+    margin-top: 5px;
+    padding-right: 4px;
+}
+
+.divToolbar .guiBarFilter .divNavigation  {
+	 float: right;
+	 margin-left: 5px;
+	 padding-top: 3px;
+}
+
+.divToolbar .guiBarFilter .divNavigation .divToolbarIcon {
+	padding: 0;
+	display: inline;
+	margin: 0 8px 0 0;
+}
+
+.divToolbar .guiBarFilter .divNavigation i {
+	cursor: pointer;
+}
+
+.divToolbar .divToolbarIconGroup {
+}
+
+.divToolbar .divPagination > .divToolbarSeparator {
+	padding: 0 4px;
+}
+
+.divToolbar .divPagination > .divToolbarLabel {
+	/*padding: 8px 3px 4px 5px;*/
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.divToolbar .divPagination > .divToolbarIcon {
+	/*margin: 5px 3px 0 3px;*/
+	/*padding: 6px 1px 6px 0px;*/
+	/*display: table-cell;*/
+}
+
+/*.divToolbar .divPagination > .divToolbarSeparator {
+	line-height: 14px;
+}*/
+
+.divToolbar .divPagination > * {
+	float: none; 
+	display: table-cell;
+}
+
+/*.divToolbar .divPagination i {
+	margin: 0 4px 0 0;
+	cursor: pointer;
+}*/
+
+/*.divToolbar .divPagination > select {
+	margin: 5px 3px 0 3px;
+}*/
+
+/*.divToolbar .divPagination > :first-child.divToolbarIcon {
+	padding-left: 5px;
+}*/
+
+.divPagination > .guiBarFilter {
+	display: table-cell;
+}
+
+.divToolbar .input-group input {
+	margin: 0 0 0 0;
+}
+
+.divToolbar .input-group .input-group-addon {
+	
+}
+
+.guiTableHead,
+.guiTableBody,
+table.guiTableSum {
+	table-layout: fixed;
+}
+
+/*.guiTableHead,
+.guiTableBody,
+table.guiTableSum {
+	border-collapse: collapse;  Nötig damit eingefärbte Zellen unterschieden werden können 
+    border-spacing: 0;
+	table-layout: fixed;
+	border-left: 0;
+	margin-bottom: 0;
+}*/
+
+.guiTableHead .pointer {
+	cursor: pointer;
+}
+
+.guiTableHeadContainer {
+	overflow: hidden;
+	position: relative;
+}
+
+/*.guiTableBody {
+	border-top: 0;
+	border-left: 0;
+	border-bottom: 1px solid #eee;
+}*/
+
+.guiTableTBody {
+    position: static;
+}
+
+/*.guiTableBody tr,
+.guiTableHead tr,
+.guiTableTSum tr {
+	height: 19px;
+}*/
+
+div.guiTableSum {
+	width: 100%;
+	overflow: hidden;
+	position: relative;
+	margin-bottom: 5px;
+}
+
+/*.guiHeadFirstColumn, .guiBodyFirstColumn {
+	padding: 0px 2px!important;
+	border-left: 0;
+}
+
+.guiHeadFirstColumn input, .guiBodyFirstColumn input {
+	margin: 2px;
+}*/
+
+/*.guiTableBody tr:first-child {
+	border-top: 0 !important;
+}
+
+.guiTableBody tr:last-child {
+
+}*/
+
+/*.guiTableHead {
+	border-right: 1px solid #CCCCCC;
+}
+
+.guiTableHead th:last-child {
+	border-right: 0;
+}*/
+
+/*.guiTableBody td:last-child {
+	border-right: 0;
+}*/
+
+/*.guiTableTBody .guiSelectedRow {
+
+}
+
+.guiTableTBody .guiSelectedRow:nth-child(even) {
+	height: 20px !important;
+}
+
+.guiTableTBody .guiSelectedRow:nth-child(odd) {
+	height: 18px !important;
+}*/
+
+/*.guiTableTBody .guiSelectedRow td {
+	padding: 1px 2px 1px 2px;
+}*/
+
+/*.guiTableBody tr:nth-child(odd) {
+	border-top: 1px solid #fff;
+	height: 18px;
+}*/
+
+/*.guiTableBody tr:nth-child(odd) td {
+	padding: 0 2px 0 2px;
+}*/
+
+/* Zeile 2,4,6,8... */
+/*.guiTableBody tr:nth-child(even) {
+	background-color: #F3F3F3;
+	border-top: 1px solid #fff;
+	height: 20px;
+}
+
+.guiTableBody tr:nth-child(even) td {
+	padding: 1px 2px 1px 2px;
+}*/
+
+/*.guiTableTBody tr:hover {
+     background: #FDFF00 !important; 
+	 color: #FFF;
+}*/
+
+.guiTableContextMenu {
+	border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.guiTableContextMenu td {
+	cursor:pointer;
+}
+
+.guiTableContextMenu td:hover {
+	background-color:#FFFF99;
+}
+
+.guiTableHead th, .guiTableBody td {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.guiTableHead th {
+	white-space: nowrap;
+}
+
+.guiTableHead th.icon {
+	text-align: center;
+}
+
+/*.guiTableHead th {
+    border-bottom: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+	background:-moz-linear-gradient(top, #FFF, #CCC);  Firefox 
+	background:-webkit-gradient(linear, left top, left bottom, from(#FFF), to(#CCC));  Safari, Chrome 
+	background:-webkit-linear-gradient(top, #FFF, #CCC);  Safari, Chrome - neue Syntax! 
+	background:-o-linear-gradient(top, #FFF, #CCC);  Opera 
+	background:-ms-linear-gradient(top, #FFF, #CCC);  IE 
+	background:linear-gradient(top, #FFF, #CCC);  W3C Standard 
+	color: #333;
+	padding-right: 13px;
+	overflow: hidden;
+}*/
+
+/*.guiTableHead th img {
+	vertical-align: middle;
+}*/
+
+/*.guiTableHead th.pointer:hover {
+	background:-moz-linear-gradient(top, #FFF, #EEE);  Firefox 
+	background:-webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));  Safari, Chrome 
+	background:-webkit-linear-gradient(top, #FFF, #EEE);  Safari, Chrome - neue Syntax! 
+	background:-o-linear-gradient(top, #FFF, #EEE);  Opera 
+	background:-ms-linear-gradient(top, #FFF, #EEE);  IE 
+	background:linear-gradient(top, #FFF, #EEE);  W3C Standard 
+}
+
+.guiTableHead th.pointer.sortasc:hover {
+	background: url(/admin/extensions/gui2/up.gif), -moz-linear-gradient(top, #FFF, #EEE);  Firefox 
+	background: url(/admin/extensions/gui2/up.gif), -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));  Safari, Chrome 
+	background: url(/admin/extensions/gui2/up.gif), -webkit-linear-gradient(top, #FFF, #EEE);  Safari, Chrome - neue Syntax! 
+	background: url(/admin/extensions/gui2/up.gif), -o-linear-gradient(top, #FFF, #EEE);  Opera 
+	background: url(/admin/extensions/gui2/up.gif), -ms-linear-gradient(top, #FFF, #EEE);  IE 
+	background: url(/admin/extensions/gui2/up.gif), linear-gradient(top, #FFF, #EEE);  W3C Standard 
+	background-position: right center;
+    background-repeat: no-repeat;
+}
+
+.guiTableHead th.pointer.sortdesc:hover {
+	background: url(/admin/extensions/gui2/down.gif), -moz-linear-gradient(top, #FFF, #EEE);  Firefox 
+	background: url(/admin/extensions/gui2/down.gif), -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));  Safari, Chrome 
+	background: url(/admin/extensions/gui2/down.gif), -webkit-linear-gradient(top, #FFF, #EEE);  Safari, Chrome - neue Syntax! 
+	background: url(/admin/extensions/gui2/down.gif), -o-linear-gradient(top, #FFF, #EEE);  Opera 
+	background: url(/admin/extensions/gui2/down.gif), -ms-linear-gradient(top, #FFF, #EEE);  IE 
+	background: url(/admin/extensions/gui2/down.gif), linear-gradient(top, #FFF, #EEE);  W3C Standard 
+	background-position: right center;
+    background-repeat: no-repeat;
+}*/
+
+.guiTableHead th.small {
+	font-size: inherit;
+	letter-spacing: -0.07em;
+	word-spacing: 0.01em;
+}
+
+/*.guiTableBody td {
+    border: none;
+	background: none; /* admin.css überschreiben */
+    /*border-right: 1px solid #ccc;
+}*/
+
+.guiTableBody td hr {
+	border-style: solid none;
+	border-width: 1px 0 0;
+	border-color: #ccc;
+	height: 0;
+	margin: 0;
+}
+
+.guiBarFilter,
+.guiBarElement {
+    /*float: left;
+	height: 23px;
+	display: table;*/
+}
+
+.guiBarElement {
+	padding: 3px 4px;
+	/*margin: 5px 2px 0 2px;*/
+}
+
+.guiBarFilter {
+	/*padding: 3px 4px;
+	margin-top: 2px;*/
+}
+
+.divToolbar .divPagination {
+	display: table;
+	padding-left: 0;
+	/*height: 30px;*/
+}
+
+.guiBarLink {
+   cursor: pointer;
+}
+
+/*
+.guiBarLink:hover {
+   border: 1px solid #ccc;
+   border-radius: 3px;
+   -moz-border-radius: 3px;
+   background-color: #fff;
+   padding: 0 2px 0 2px;
+   height: 21px;
+}*/
+
+.guiBarInactive {
+	color: #666!important;
+}
+
+/*.guiBarFilter input,
+.guiBarFilter select,
+.guiBarFilter img {
+    display: block;
+	float: left;
+}*/
+
+/*.guiBarFilter input {
+	margin: 1px 2px 0 3px;
+}
+
+.guiBarFilter select {
+	margin: 1px 2px 0 3px;
+}
+
+.guiBarFilter img {
+    margin: 2px 2px 0;
+}
+
+.guiBarElement input {
+    margin-top: 6px;
+    margin-left: 5px;
+}*/
+
+.guiBarElement select {
+    margin-top: 3px;
+    margin-left: 5px;
+}
+
+.guiBarElement .guiIconInactive,
+.divPagination .guiIconInactive,
+.divNavigation .guiIconInactive {
+	filter: alpha(opacity = 50); /* IE */
+    -moz-opacity: 0.5; /* Gecko-Browser */
+    opacity: 0.5; /* Opera 9+ */
+}
+
+.guiScrollBody {
+    overflow-x: hidden;
+    height: 100px;
+    width: 100%;
+    overflow-y: scroll;
+    overflow-x: auto;
+	scrollbar-width: thin;
+}
+
+#guiLoadingDiv, .guiLoadingDiv {
+    z-index: 9999;
+	/*position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #CCC;
+    background-image: url('/admin/extensions/gui2/ajax-loader.gif');
+    background-position: center;
+    background-position-x: center;
+    background-position-y: center;
+    background-repeat: no-repeat;
+    filter: alpha(opacity = 50);
+    -moz-opacity: 0.5;
+    opacity: 0.5;*/
+}
+
+.guiBodyRow {
+    cursor: pointer;
+}
+
+.guiBodyColumn {
+	empty-cells: show;
+}
+
+.guiBodyOverflow {
+	text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
+	-ms-text-overflow: ellipsis;
+	-moz-text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.guiBodyOverflow:hover {
+	overflow-x: hidden;
+	overflow-y: auto;
+	white-space: normal;
+}
+
+.table .sortasc,
+.table .sortdesc {
+	position: relative;
+	padding-right: 22px;
+}
+
+.table .sortdesc {
+    background-color: #B9DDFF;
+}
+
+.table .sortasc {
+    background-color: #DDFFAC;
+}
+
+.table .sortdesc:after,
+.table .sortasc:after {
+    font: normal normal bold 14px/1 "Font Awesome 5 Free";
+	position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: block;
+}
+
+.table .sortasc:after {
+	content: "\f884";
+}
+
+.table .sortdesc:after {
+    content: "\f160";
+}
+
+.GUIBarHint{
+	border: 1px solid #FED22F;
+	color: #363636;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #ffe45c;
+}
+
+.GUIBarInfo {
+	border: 1px solid #82C1EC;
+	color: #363636;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #B9CDE5;
+}
+
+.GUIBarError {
+	border: 1px solid #CD0A0A;
+	color: #FFFFFF;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #b81900;
+}
+
+.GUIDialogTitle {
+	/*float: left;*/
+	cursor: move;
+}
+
+.GUIDialogTitleAction {
+	float: right;
+	text-align: right;
+	height: 16px;
+	margin: 3px;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+.GUIDialogTitleAction img {
+	cursor: pointer;
+	margin: 3px;
+}
+
+.GUIDialogTitleAction img:hover  {
+
+}
+
+.GUIDialogNoScrolling {
+	overflow: hidden!important;
+}
+
+
+.GUIDialogTabDiv {
+	/*background: #f0f0f0;*/
+	overflow: hidden;
+}
+
+.Gui2ChildTableButtons, .GUIDialogTabDiv ul.tab-scroll {
+	padding: 0 20px;
+}
+
+.GUIDialogTabDiv .tabs_scroll_left,
+.GUIDialogTabDiv .tabs_scroll_right {
+	/*background: #F0F0F0;*/
+	height: 32px;
+	width: 18px;
+	padding: 0 4px;
+	/*border-bottom: 1px solid #CCC;*/
+}
+
+.GUIDialogTabDiv .tabs_scroll_left span,
+.GUIDialogTabDiv .tabs_scroll_right span {
+	color: #333;	
+}
+
+.GUIDialogTabDiv .tabs_scroll_left {
+	left: 0;
+}
+
+.GUIDialogTabDiv .tabs_scroll_right {
+	right: 0;
+}
+
+/*
+.GUIDialogTabDiv {
+	font-size:11px;
+	font-weight:bold;
+	line-height:15px;
+	margin:0;
+	vertical-align:middle;
+	z-index:2;
+	margin: 5px 12px 0;
+	overflow: hidden;
+	height: 37px;
+}
+
+.GUIDialogTabDiv li {
+	border-left: 1px solid #CCCCCC;
+    border-radius: 3px 3px 0 0;
+    border-right: 1px solid #CCCCCC;
+    border-top: 1px solid #CCCCCC;
+    box-shadow: 0 0 4px #AAAAAA;
+    color: #666666;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    height: 23px;
+    list-style: none outside none;
+    margin: 10px 0 0;
+    padding: 5px;
+    position: relative;
+    vertical-align: middle;
+    z-index: 3;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}*/
+
+/*.GUIDialogTabHeaderActive {
+    background-color: #f0f0f0;
+    color: #000000 !important;
+    height: 21px !important;
+    line-height: 17px;
+    margin-top: 1px !important;
+	top: -4px;
+    padding-top: 6px;
+	z-index: 4!important;
+}*/
+
+.GUIDialogTabHeader, .GUIDialogTabHeaderActive {
+	cursor: pointer;
+}
+
+.GUIDialogTabContentDiv {
+	overflow: auto;
+/*	border-color: #f0f0f0 #DDDDDD #DDDDDD;
+    border-style: solid;
+    border-width: 2px 1px 1px;
+	margin: 0 10px 5px 10px;
+	box-shadow: 0 0 4px #AAAAAA;	*/
+}
+
+/*.GUIDialogContentPadding h1,
+.GUIDialogContentPadding h2,
+.GUIDialogContentPadding h3 {
+    color: #FFF;
+    font-weight: bold;
+    margin-bottom: 3px;
+    padding: 5px;
+	border-radius: 3px;
+}
+
+.GUIDialogContentPadding h1 {
+	font-size: 15px;
+}
+
+.GUIDialogContentPadding h2 {
+	font-size: 13px;
+}
+
+.GUIDialogContentPadding h3 {
+    font-size: 11px;
+    padding: 3px;
+    padding-left: 5px;
+}*/
+
+.GUIDialogTabContentDiv fieldset {
+	border:1px solid #CCCCCC;
+	padding:1px 5px;
+	margin:0 0 5px;
+}
+
+.GUIDialogTabContentDiv fieldset legend {
+	width: inherit;
+	/* border-bottom: none; */
+	margin-bottom: 0;
+	font-size: 16px;
+}
+
+.GUIDialogContentPadding {
+	/*padding: 10px 10px 0 10px;*/
+	position: relative;
+}
+
+/*.form-horizontal .GUIDialogContentDiv .form-group.form-group-sm {
+	margin-bottom: 10px;
+}*/
+
+
+/*.GUIDialogContentPadding .nav>li>a {
+	padding: 4px 6px;
+}*/
+
+.GUIDialogContentPadding > .infoBoxTabs .tab-content .tab-pane {
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.GUIDialogTabContentDiv {
+	position: relative;
+}
+
+.GUITabBody {
+	position: absolute;
+	top: 0;
+	z-index: -1;
+}
+
+.GUITabBodyActive {
+	position: static;
+	z-index: 1;
+}
+
+.GUIDialogRequiredText {
+	line-height: 32px;
+	float: left;
+}
+
+/*.GUIDialogRow {
+    border-bottom: 1px solid #EEEEEE;
+    line-height: 15px;
+    padding-bottom: 3px;
+    padding-left: 5px;
+    padding-top: 3px;
+}*/
+
+.GUIDialogMultiRow .form-control {
+	display: inline-block;
+}
+
+/*.GUIDialogRow:last-of-type {
+	border-bottom: none!important;
+}*/
+
+.GUIDialogRowLabelDiv {
+	position: relative;
+}
+
+.GUIDialogRowLabelDiv i.fa-info-circle {
+	position: absolute;
+	right: -6px;
+	top: 12px;
+	font-size: 15px;
+	/*margin-right: 5px;*/
+	/*cursor: help;*/
+}
+
+.GUIDialogRowLabelDiv.tooltip-medium .tooltip-inner {
+	min-width: 100px;
+}
+
+.GUIDialogRowLabelDiv.tooltip-large .tooltip-inner {
+	min-width: 200px;
+}
+
+.GUIDialogRowLabelDiv .tooltip-inner {
+   text-align: left !important;
+   max-width: 200px;
+}
+
+/*.GUIDialogRowLabelDiv i.edit-info-icon {
+	cursor: pointer !important;
+}
+
+.GUIDialogRowLabelDiv i.fa-info-circle.private {
+	color: #EF5E50;
+}
+
+.GUIDialogRowLabelDiv i.fa-info-circle.inactive {
+	color: #CDCDCD;
+}*/
+
+.GUIDialogRowLabelDiv.required:after {
+	content: ' *';
+}
+
+/*.GUIDialogRowLabelDiv {
+	float:left;
+	margin-top: 4px;
+	width: 250px;
+}*/
+
+/*.GUIDialogRowLabelDivSmall {
+	width: 140px;
+}
+
+.GUIDialogRowLabelDivBig {
+	width: 400px;
+}
+
+.GUIDialogRowLabelDiv .required:after {
+	content: " *";
+}
+
+.GUIDialogRowFlexLabelDiv {
+	float:left;
+	margin-top: 4px;
+	width: 300px;
+}
+
+.GUIDialogRowFlexLabelDiv .required:after {
+	content: " *";
+}*/
+
+
+
+.GUIDialogGroupLabelDiv {
+	float:left;
+	width: 180px;
+}
+
+.GUIDialogGroupLabelDiv .required:after {
+	content: " *";
+}
+
+/*.GUIDialogRowInputDiv {
+	float: left;
+	padding:1px 0 0;
+}*/
+
+.GUIDialogRowInputDivContainer > img.btn {
+    border: 0 none;
+    cursor: pointer;
+    margin: -2px 2px 0;
+    vertical-align: middle;
+}
+
+.GUIDialogRowInputDivContainer img.btn_delete {
+	display: inline;
+}
+
+.GUIDialogRowInputDivContainer img.btn_add {
+	display: none;
+}
+
+.GUIDialogRowInputDivContainer:first-child img.btn_delete {
+	display: none;
+}
+
+.GUIDialogRowInputDivContainer:first-child img.btn_add {
+	display: inline;
+}
+
+input.txt[type='text'].readonly,
+input.txt[type='password'].readonly,
+textarea.txt.readonly,
+select.txt.readonly,
+input[readonly] {
+	color: #aaa !important;
+}
+/*
+.GUIDialogRowCalendarDiv {
+	position: relative;
+	margin: 2px 0 2px 0;
+}
+
+.GUIDialogRowCalendarDiv img {
+	cursor: pointer;
+	display: block;
+	position: absolute;
+	left: 106px;
+	top: 1px;
+}*/
+
+/*.GUIDialogRowInputDiv input {
+	margin: 2px 0;
+	width: 300px;
+	line-height: 13px;
+	height: 15px;  wichtig 
+    border-radius: 2px;
+}*/
+
+.GUIDialogRowInputDiv .i18nFlag {
+/*	position: absolute;
+	left: 5px;
+	top: 5px;
+	float: left;*/
+}
+
+.GUIDialogRowInputDiv .i18nInput{
+/*	padding-left: 25px;
+	width: 275px;
+	float: left;
+	clear: left;*/
+}
+
+/*.GUIDialogRowCalendarDiv .calendar_input {
+	width: 75px;
+	padding-right: 22px;
+	padding-left: 25px;
+	margin: 0;
+}*/
+
+/*.GUIDialogRowCalendarDiv.calender_input_no_weekday .calendar_input {
+	padding-left: 0!important;
+}
+
+.GUIDialogRowCalendarDiv.calender_input_no_weekday img {
+	left: 81px!important;
+}*/
+
+/*.GUIDialogRowInputDiv > textarea,
+.GUIDialogRowInputDiv > .input-group,*/
+.GUIDialogRowInputDiv span.mceEditor {
+	margin: 2px 0;
+}
+
+.GUIDialogRowInputDiv span.mceEditor {
+	display: block;
+	margin: 2px 0;
+}
+
+.GUIDialogRowWeekdayDiv {
+	width: 40px!important;
+}
+
+/*.GUIDialogRowInputDiv input[type=checkbox] {
+	width:auto;
+	margin: 4px 0;
+}*/
+
+/*.GUIDialogRowInputDiv select {
+	margin: 2px 0;
+	width: 300px;
+}*/
+
+.GUIDialogRowFlexDiv {
+	float:left;
+	width: 25px;
+	height: 17px;
+}
+
+/*.GUIDialogFlexRowList .GUIDialogFRow {
+	cursor: pointer;
+}*/
+
+.GUIDialogError {
+	overflow: hidden;
+	background-color:#F7F7F7;
+	border-bottom:1px solid #DDDDDD;
+	color:red;
+	font-size:11px;
+	padding:1px;
+}
+
+.GUIDialogSuccess {
+	overflow: hidden;
+	background-color:#F7F7F7;
+	border-bottom:1px solid #DDDDDD;
+	color:green;
+	font-size:11px;
+	padding:1px;
+}
+
+.GUIDialogSaveBarOptions {
+	margin-left:5px;
+}
+
+/*.GuiDialogErrorInput {
+	border: 1px solid red !important;
+}*/
+
+.GuiDialogErrorTab {
+	color: red !important;
+}
+
+.GUIDialogMinimizeBar {
+	height: 12px;
+	padding: 5px;
+	margin: 2px;
+	position: absolute;
+	border: 1px solid rgb(255, 255, 255);
+	bottom: 5px;
+	right: 0px;
+	z-index: 9000;
+	color: #FFF;
+}
+
+.GUIDialogMinimizeBarImg {
+	cursor: pointer;
+	float:right;
+}
+
+.dialog-header {
+    padding: 7px 15px;
+	/*background-color: #f0f0f0;
+	border-top: 3px solid;*/
+}
+
+.Gui2ChildTableDraggable {
+	/*background-color: #ddd;*/
+	cursor: row-resize;
+	/*z-index: 2999;*/ /* 300 fangen dialoge an */
+	width: 100%;
+}
+
+/*.Gui2ChildTableButtonContainer {
+	margin-top: 5px;
+}*/
+
+.Gui2ChildTableButtons,
+.GUIDialogTabDiv ul {
+    margin: 0;
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px;
+	list-style: none;
+	/*padding-left: 5px;*/
+	white-space: nowrap;
+	position: relative;
+	/*border-bottom: 1px solid #CCC;*/
+}
+
+.Gui2ChildTableButton,
+.GUIDialogTabHeader {
+	/*margin-bottom: -1px;*/
+    /*margin-right: 5px;*/
+	/*border-style: solid;
+	border-width: 0 1px 1px 1px;
+	border-color: transparent;*/
+	position: relative;
+    /*display: inline-block;*/
+    /*padding: 4px 8px;*/
+    /*color: #444;*/
+    /*border-top: 3px solid transparent;*/
+}
+
+/*.GUIDialogTabHeader {
+	padding: 4px 8px;
+}*/
+
+.Gui2ChildTableButtonActive,
+.GUIDialogTabHeaderActive {
+	cursor: default;
+    /*background-color: #fff;*/
+	/*border-color: #CCC;*/
+    /*border-bottom-color: transparent;*/
+    /*border-left-color: #CCC;
+    border-right-color: #CCC;*/
+}
+
+/*.Gui2ChildTableButton a {
+	color: #000;
+}*/
+
+.Gui2ChildTableButtonActive a {
+}
+
+#contextmenu {
+	position: absolute;
+	background-color:#CCCCCC;
+	width: 200px;
+	min-height: 20px;
+	min-width: 100px;
+	max-width: 800px;
+	padding: 3px;
+	border: 1px solid #000;
+}
+
+/*.flex_row {
+	padding: 5px 10px 0 7px;
+	border-bottom: 1px solid #EEEEEE;
+}
+
+.flex_row label {
+	font-weight: normal;
+}
+
+.flex_row:hover {
+	background-color: #d4ddf0!important;
+}*/
+
+div.autocomplete {
+  position:absolute;
+  /*width:400px!important; /* Ticket: #6769 */
+  background-color:white;
+  border:1px solid #ccc;
+  margin:0;
+  padding:0;
+  z-index: 99999;
+  max-height: 400px;
+  overflow: auto;
+}
+div.autocomplete ul {
+  list-style-type:none;
+  margin:0;
+  padding:0;
+}
+div.autocomplete ul li.selected { background-color: #ffb;}
+div.autocomplete ul li {
+  list-style-type:none;
+  display:block;
+  /*margin:0;*/
+  padding: 2px 2px 2px 10px;
+  min-height:18px;
+  cursor:pointer;
+	text-indent: -8px;
+}
+
+.ui-autocomplete {
+	z-index: 9999!important;
+}
+
+/* ----  InPlaceEditor style --------------------------------------------- */
+
+.table .guiInplaceEditor .guiInplaceEditorInput {
+	width:100px;
+   	float:left;
+}
+
+.table .guiInplaceEditor .guiInplaceEditorImg {
+  	float:left;
+	padding-left:2px;
+	padding-top:2px;
+	display:block;
+}
+
+.table .guiInplaceEditor .btn {
+	float: left;
+}
+
+.table .guiInplaceEditor select {
+	float: left;
+	margin: 0;
+	height: 16px;
+}
+
+.GuiInplaceeditorEmpty {
+    color: #FFFFFF;
+}
+
+.guiTableBody tr:nth-child(even) .GuiInplaceeditorEmpty {
+	color: #F3F3F3;
+}
+
+.inplaceeditor-form .editor_field {
+	height: 15px;
+	line-height: 15px;
+	border: 0;
+	font-size: 11px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	text-align: left;
+	background: #eeeeee;
+	color: #333333;
+	width: 100%;
+}
+
+.inplaceeditor-form .editor_ok_button,
+.inplaceeditor-form A {
+	display: none;
+}
+
+.table .guiInplaceEditor,
+.inplaceeditor-container {
+	height: 16px;
+	line-height: 14px;
+    width: 100%;
+}
+
+.inplaceeditor-container:hover {
+	color: #333333;
+}
+
+.divTooltip {
+	/*position: absolute;
+	border: 1px solid #ccc;
+	background-color: #f7f7f7;
+	border-radius: 3px;
+   -moz-border-radius: 3px;
+   padding: 3px 4px;*/
+   z-index: 9999;
+	/*max-width: 500px;*/
+ }
+
+.divTooltip table.table {
+	border-spacing: 0;
+}
+
+.divTooltip table.table td,
+.divTooltip table.table td {
+	margin: 0;
+    padding: 3px 2px;
+}
+
+.jqueryIcon {
+	background-image: url("/admin/extensions/gui2/jquery/css/images/ui-icons_222222_256x240.png");
+    height: 16px;
+    width: 16px;
+}
+
+.jqueryIconSortable {
+	background-position: -130px -49px;
+	cursor: move;
+	filter:alpha(opacity=50);
+	opacity:0.5;
+	width: 11px;
+}
+
+/*.dialog-actions .GUIDialogMessages{
+	padding: 1px 10px 5px;
+	min-height: 1px;
+}*/
+
+.w16 {
+	width: 16px;
+}
+
+.colorkey {
+	width: 24px;
+	height: 19px;
+	float: left;
+	margin: 0px 6px 0px 3px;
+	text-align: center;
+}
+
+.GUIDialogJoinedObjectContainer {
+	/*border: 1px solid #CCCCCC;
+    padding: 2px 5px;*/
+	margin-bottom: 15px;
+}
+
+.GUIDialogJoinedObjectContainerRow {
+	/*border: 1px solid #CCCCCC;
+    padding: 2px 5px;
+	margin: 4px 1px;*/
+}
+
+.GUIDialogJoinedObjectContainer.no_border,
+.GUIDialogJoinedObjectContainer.no_border .GUIDialogJoinedObjectContainerRow {
+	border: 0;
+}
+
+/*.GUIDialogJoinedObjectContainerRow .GUIDialogRowLabelDiv {
+	width: 237px;
+}
+
+.GUIDialogJoinedObjectContainerRow .GUIDialogRowLabelDivSmall {
+	width: 127px;
+}*/
+
+
+/**
+ TABLE in Dialogen
+*/
+.GUIDialogContentPadding .table th {
+/*    border-bottom: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+	background:-moz-linear-gradient(top, #FFF, #CCC);  Firefox 
+	background:-webkit-gradient(linear, left top, left bottom, from(#FFF), to(#CCC));  Safari, Chrome 
+	background:-webkit-linear-gradient(top, #FFF, #CCC);  Safari, Chrome - neue Syntax! 
+	background:-o-linear-gradient(top, #FFF, #CCC);  Opera 
+	background:-ms-linear-gradient(top, #FFF, #CCC);  IE 
+	background:linear-gradient(top, #FFF, #CCC);  W3C Standard 
+	padding: 2px;*/
+}
+
+.GUIDialogContentPadding .table {
+	border-spacing:		 0px;
+}
+
+.GUIDialogContentPadding .table .table th {
+	background: #f0f0f0;
+}
+
+.GUIDialogContentPadding .GUIDialogTabArea {
+	margin: 4px 0;
+}
+
+.GUIDialogTabArea .tab-content {
+	padding: 15px 0;
+}
+
+.GUIDialogTabArea .GUIDialogTabDiv ul {
+	margin-left: 0!important;
+}
+
+.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   user-select: none;
+}
+
+.dialog_wdsearch {
+    position: relative;
+}
+
+.dialog_wdsearch input{
+    background: transparent !important;
+    color: transparent !important;
+    outline: medium none !important;
+    overflow: hidden !important;
+    position: absolute;
+	z-index: 10;
+}
+
+.wdsearch {
+	height: 25px;
+    position: relative;
+    width: 800px;
+}
+
+.wdsearch input{
+	background: transparent !important;
+    color: transparent !important;
+    outline: medium none !important;
+    overflow: hidden !important;
+	width: 800px !important;
+    position: absolute;
+	z-index: 10;
+}
+
+
+
+.wdsearch_div_text {
+    background: none repeat scroll 0 0 transparent;
+    color: #000000;
+    left: 5px;
+    padding: 0;
+    position: absolute;
+    top: 2px;
+    white-space: pre;
+    z-index: 2;
+	overflow: hidden;
+}
+
+.wdsearch_div_text_full {
+    background: none repeat scroll 0 0 transparent;
+    color: silver;
+    left: 5px;
+    padding: 0;
+    position: absolute;
+    text-align: left;
+    top: 2px;
+    white-space: pre;
+    z-index: 3;
+	overflow: hidden;
+}
+
+.wdsearch_div_cursor {
+    background: none repeat scroll 0 0 #000000;
+    color: #000000;
+    height: 13px;
+    padding: 0;
+    position: absolute;
+    top: 4px;
+    white-space: pre;
+    width: 1px;
+    z-index: 4;
+}
+
+.wdsearch_div_results {
+	border: 1px solid #B2B2B2;
+	background-color: #FFF;
+	position: absolute;
+	z-index: 1000;
+	border-radius: 2px 2px 2px 2px;
+	box-shadow: 0px 4px 5px #888;
+}
+
+.wdsearch_div_results .info{
+	color: #CCC;
+	margin-left: 10px;
+}
+
+.wdsearch_div_results div {
+	padding: 3px 10px 3px 10px;
+	cursor: pointer;
+}
+
+.wdsearch_div_results .selected {
+	background-color: #CCC !important;
+}
+
+.wdsearch_div_results div:hover {
+	background-color: #EEE;
+}
+
+.loader {
+    width: 400px; 
+    height: 18px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background-color: #dedede;
+    padding: 2px;
+}
+
+.loader div {
+    height: 18px;
+    background-color: #fff;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.GUIDialogMessages .GuiErrorShadow {
+	box-shadow: inset 0px 0px 3px 3px rgba(0, 0, 0, 0.2);
+	padding: 7px;
+	margin-top: 5px;
+}
+
+.GUIDialogRowInputDiv input.w100 {
+	width: 100px;
+}
+
+.GUIDialogRowInputDiv select.auto_width {
+	width: auto;
+}
+
+.GUIDialogRowInputDiv input.amount {
+	text-align: right;
+}
+
+:first-child > .first-parent-not-visible {
+	visibility: hidden;
+}
+
+/*div.gui2_upload_existing_files .gui2_upload_existing_file {
+	-webkit-box-shadow: none;
+	box-shadow: none;
+	border: 1px solid rgba(0,0,0,0.2);
+	display: block;
+	width: 100%;
+	height: 30px;
+	position: relative;
+	padding-left: 10px;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background-color: #f0f0f0;
+	line-height: 1.9em;
+}
+
+
+div.gui2_upload_existing_files .multiple_files .gui2_upload_existing_file {
+	margin-top: 5px;
+}
+
+div.gui2_upload_existing_files .gui2_upload_existing_file i,
+div.gui2_uploads .gui2_upload i {
+	position: absolute;
+	right: 0;
+	width: 40px;
+	cursor: pointer;
+	border: none;
+	border-left: 1px solid rgba(0,0,0,0.2);
+	padding: 7px 12px;
+	text-align: center;
+}
+
+div.gui2_uploads .gui2_upload .delete_file {
+	margin-right: 45px;
+	float: right;
+	margin-top: -28px;
+}
+
+div.gui2_upload input[type=file] {
+	padding: 0px;
+}
+
+div.gui2_uploads .gui2_upload .add_file {
+	margin-right: 3px;
+	float: right;
+	margin-top: -28px;
+}*/
+
+div.gui2_upload_save_message {
+	margin-bottom: 4px;
+	color: #ff0000;
+}
+
+/* jQuery UI */
+.ui-widget-header {
+    font-weight: normal!important;
+}
+
+.tabs_scroll_left,
+.tabs_scroll_right {
+	width: 20px;
+	height: 37px;
+    position: absolute;
+    top: 0;
+}
+.tabs_scroll_left span,
+.tabs_scroll_right span {
+	margin-top: 14px;
+}
+.tabs_scroll_right span {
+	float:right;
+}
+.tabs_scroll_left:hover span,
+.tabs_scroll_right:hover span {
+	opacity: 0.7;
+}
+.tabs_scroll_left {
+	left: 0;
+	cursor: w-resize;
+}
+.tabs_scroll_right {
+	right: 0;
+	cursor: e-resize;
+}
+
+.box-header[data-toggle=collapse],
+.box-header[data-widget=collapse] {
+	cursor: pointer;
+}
+
+/*
+ * Overwrite AdminLte Styles
+ */
+
+.table {
+	margin: 0;
+}
+
+/*.input-sm {
+    height: 23px;
+    padding: 2px 4px;
+    line-height: 1;
+}*/
+
+/*select.input-sm {
+    height: 23px;
+    line-height: 23px;
+    padding: 1px 4px;
+}*/
+
+.input-sm + .form-control-feedback,
+.input-group-sm + .form-control-feedback,
+.form-group-sm .form-control + .form-control-feedback {
+  width: 21px;
+  height: 21px;
+  line-height: 21px;
+}
+
+.input-group-sm .input-group-addon {
+	padding: 2px 6px;
+}
+
+/*.input-group-sm > .form-control,
+.input-group-sm > .input-group-addon, */
+.input-group-sm > .input-group-btn > .btn {
+	height: 21px;
+    padding: 2px 4px;
+    line-height: 1;
+}
+
+/*.input-group-sm > .input-group-addon {
+	padding: 0 4px;
+}*/
+
+.input-group-sm > .input-group-addon > select.input-sm {
+	border: 0;
+	height: 19px;
+	line-height: 19px;
+}
+
+/*.table > tbody > tr > td,
+.table > tbody > tr > th, 
+.table > tfoot > tr > td, 
+.table > tfoot > tr > th, 
+.table > thead > tr > td, 
+.table > thead > tr > th {
+	padding: 5px 5px;
+}*/
+
+.input-group-addon .flag {
+	width: 16px;
+}
+
+.colorpicker {
+	z-index: 999999;
+}
+
+.dialog-content h2 {
+	font-size: 22px;
+}
+
+/*.dialog-content h3:not(.box-title) {
+	font-size: 18px;
+	border-bottom: 1px solid #ccc;
+}*/
+
+.dialog-content option[disabled] {
+	color: #aaa;
+}
+
+.modal-header {
+	border-bottom: 0;
+}
+
+/*.modal-footer {
+	padding: 7px 15px;
+}*/
+
+input[type="file"].form-control{
+	border: none;
+}
+
+.input-group-sm > .form-control, .input-group-sm > .input-group-addon, .input-group-sm > .input-group-btn > .btn {
+	border-radius: 0;
+}
+
+.GUIDialogNotification {
+	text-align: initial;
+}
+
+/*.GUIDialogNotification.alert {
+	padding: 10px;
+}
+
+.GUIDialogNotification.alert-dismissible {
+	padding-right: 30px;
+}*/
+
+.GUIDialogNotification h4 {
+	margin-bottom: 0;
+}
+
+.GUIDialogNotification .GuiDescription {
+	margin-top: 10px;
+}
+
+/*.input-group .input-group-addon {
+    background-color: #f0f0f0;
+}*/
+
+/*
+ * AdminLTE Farben
+ *
+ * blau 357ca5
+ * hell-blau 00a7d0 
+ * grün 008d4c 
+ * gelb? db8b0b 
+ * rot d33724 
+ * dunkelblau 001a35 
+ * türkis 30bbbb 
+ * lila 555299 
+ * orange ff7701 
+ * pink ca195a 
+ *
+ * Individuelle Farben
+ * #008d4c
+ *
+ * @TODO Farben zusammenfassen?
+ */
+.fa-colored.fa-plus-circle {
+	color: #008d4c!important;
+}
+.fa-colored.fa-pencil {
+	color: #db8b0b!important;
+}
+.fa-colored.fa-minus-circle {
+	color: #d33724!important;
+}
+.fa-colored.fa-table,
+.fa-colored.fa-file-csv {
+	color: #357ca5!important;
+}
+.fa-colored.fa-exclamation-triangle {
+	color: #FFDD41!important;
+}
+.fa-colored.fa-money {
+	color: #008d4c!important;
+}
+.fa-colored.fa-envelope {
+	color: #357ca5!important;
+}
+.fa-colored.fa-edit {
+	color: #00a7d0!important;
+}
+.fa-colored.fa-file-pdf-o,
+.fa-colored.fa-file-pdf {
+	color: #d33724!important;
+}
+.fa-colored.fa-users {
+	color: #001F3F!important;
+}
+.fa-colored.fa-check {
+	color: #008d4c!important;
+}
+.fa-colored.fa-remove {
+	color: #d33724!important;
+}
+.fa-colored.fa-refresh,
+.fa-colored.fa-file-excel-o,
+.fa-colored.fa-file-excel {
+	color: #008d4c!important;
+}
+.fa-colored.fa-print {
+	color: #357ca5!important;
+}
+.fa-colored.fa-check-circle {
+	color: #008d4c!important;
+}
+.fa-colored.fa-warning {
+	color: #f39c12!important;
+}
+
+/* Fastselect Styles */
+.fstMultipleMode { display: block!important; }
+.fstMultipleMode .fstControls { width: 100%!important; }
+.fstMultipleMode .fstControls {
+    padding: 1px 1px 0em 4px!important;
+}
+
+.fstChoiceItem {
+	margin: 2px 2px 2px 0 !important;
+	padding: 1px 0.2em 1px 1.5em !important;
+}
+
+.fstMultipleMode .fstQueryInput {
+    font-size: 12px!important;
+	padding: 1px 0 1px 5px !important;
+	margin: 4px 0 0 0 !important;
+	line-height: 18px!important;
+}
+
+.fstElement {
+	border-color: #d2d6de!important;
+	border-radius: 3px!important;
+	height: 30px!important;
+}
+
+.fstChoiceItem {
+    font-size: 12px!important;
+}
+
+.fstResultItem {
+	font-size: 12px!important;
+}
+
+.fstChoiceRemove {
+	margin-top: -0.6em!important;
+}
+
+#api_menu {
+	position:absolute;
+	width:20px;
+	height:20px;
+	opacity:0;
+	z-index:9999;
+	right: 0;
+	bottom: 0; 
+	cursor: pointer;
+}
+
+#api_menu i {
+    position: relative;
+    top: -10px;
+    left: -10px;
+}
+
+#api_menu:hover {
+	opacity:1;
+}
+
+/*.gui-help-btn {
+	padding: 0 5px 1px 5px;
+	margin-top: 3px;
+}*/
+
+/*.dialog-content .gui-help-btn {
+	margin-left: 5px;
+}*/
+
+
+.btn-group-vertical>.btn-group:after, .btn-toolbar:after, .clearfix:after, .container-fluid:after, .container:after, .dl-horizontal dd:after, .form-horizontal .form-group:after, .modal-footer:after, .modal-header:after, .nav:after, .navbar-collapse:after, .navbar-header:after, .navbar:after, .pager:after, .panel-body:after, .row:after {
+	clear: both;
+}
+
+.btn-group-vertical>.btn-group:after, .btn-group-vertical>.btn-group:before, .btn-toolbar:after, .btn-toolbar:before, .clearfix:after, .clearfix:before, .container-fluid:after, .container-fluid:before, .container:after, .container:before, .dl-horizontal dd:after, .dl-horizontal dd:before, .modal-footer:after, .modal-footer:before, .modal-header:after, .modal-header:before, .nav:after, .nav:before, .navbar-collapse:after, .navbar-collapse:before, .navbar-header:after, .navbar-header:before, .navbar:after, .navbar:before, .pager:after, .pager:before, .panel-body:after, .panel-body:before, .row:after, .row:before {
+	display: table;
+	content: " ";
+}
+
+/*.dialog-content .GUIDialogRow:not(.GUIDialogMultiRow) .bootstrap-tagsinput {
+    width: 100%;
+}
+
+.dialog-content .GUIDialogMultiRow .bootstrap-tagsinput {
+    min-width: 150px;
+}*/
+

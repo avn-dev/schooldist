@@ -1,0 +1,1 @@
+RENAME TABLE `tc_marketing_questionaries_childs_questions_to_questions` TO `tc_marketing_questionaries_childs_questions_ratings`;

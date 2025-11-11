@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_partial_invoices` ADD `document_id` INT NULL DEFAULT NULL AFTER `type`;

@@ -1,0 +1,81 @@
+class:
+  wdbasic: \TsStudentApp\Entity\AppContent
+  data: \TsStudentApp\Gui2\Data\AppContent
+access: thebing_admin_student_handbook
+pagination: false
+export: false
+sortable: true
+where:
+  - \TsStudentApp\Gui2\Data\AppContent
+  - getListWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - title
+        alias:
+          - i18n
+     -
+       element: selectfilter
+       label: Typ
+       label_as_item: true
+       column:
+         - type
+       alias:
+         - ts_sac
+       entries:
+         - \TsStudentApp\Gui2\Data\AppContent
+         - getTypeOptions
+     -
+       element: validfilter
+       label: Gültigkeit
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsStudentApp\Gui2\Data\AppContent
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsStudentApp\Gui2\Data\AppContent
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+columns:
+  -
+    visible: true
+    sortable: false
+    title: Titel
+    column: title
+    alias: i18n
+    width: name
+    resize: true
+    i18n:
+      jointable: i18n
+      pass_language: true
+      all: false
+      show_flag: true
+  -
+    visible: true
+    sortable: false
+    title: Freigegeben
+    column: released
+    width: icon
+    format: Ext_Thebing_Gui2_Format_YesNo
+    default: false
+  -
+    visible: true
+    title: Typ
+    column: type
+    width: name
+    format: TsStudentApp\Gui2\Format\AppContentType

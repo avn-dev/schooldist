@@ -1,0 +1,82 @@
+hash: 83c8a5ce4d2841df25ef4977645663a9
+class:
+  wdbasic: Ext_Thebing_School
+  data: Ext_Thebing_School_Gui2
+  js: SchoolGui
+access: thebing_admin_schools
+js: 
+  - [/gui2/util.js, thebing]
+  - [/js/school.js, ts]
+id:
+  column: id
+  alias: cdb2
+sortable: true
+pagination: true
+only_pagecount: true
+orderby:
+  - Ext_Thebing_School_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_School_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        id: search
+        column:
+          - ext_1
+          - email
+        alias:
+          - cdb2
+          - cdb2
+        searchtype: LIKE   
+  -
+    position: top
+    elements: 
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_School_Gui2
+          - getDialog 
+     -       
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_School_Gui2
+          - getDialog 
+     -
+        element: icon_delete
+     -
+        element: icon_file_manager
+columns:
+  - 
+    title: ID
+    column: id
+    alias: cdb2
+    width: id
+    format: Ext_Thebing_Gui2_Format_Int
+  - 
+    title: Snippet Key	
+    column: sMd5
+    alias: cdb2
+    width: name
+    default: false
+  - 
+    title: Schule 	
+    column: ext_1
+    alias: cdb2
+    width: name
+    resize: true
+  - 
+    title: Abkürzung
+    column: short
+    alias: cdb2
+    width: short_name
+  - 
+    title: E-Mail	
+    alias: cdb2
+    column: email
+    width: email

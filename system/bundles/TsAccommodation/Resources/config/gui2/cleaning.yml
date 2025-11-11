@@ -1,0 +1,266 @@
+class:
+  wdbasic: \TsAccommodation\Entity\Cleaning\Status
+  data: \TsAccommodation\Gui2\Data\CleaningData
+  icon_visible: TsAccommodation\Gui2\Icon\Cleaning\Visible
+description: Thebing » Accommodation » Room Cleaning
+access: thebing_accommodation_other_cleaning
+sortable: false
+multiple_selection: true
+pagination: false
+export: false
+title:
+  - Ext_TS_System_Navigation
+  - t
+encode_data:
+  - room_id
+  - bed
+  - type_id
+  - cycle_id
+  - date
+  - status
+designer:
+  additional_flex:
+    -
+      section: student_record_matching
+      primary_key: inquiry_id
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: timefilter
+          from:
+            column:
+              - from
+            alias:
+              - kaa
+            default:
+              - \TsAccommodation\Gui2\Data\CleaningData
+              - getDefaultFilterDate
+          until:
+            column:
+              - until
+            alias:
+              - kaa
+            default:
+              - \TsAccommodation\Gui2\Data\CleaningData
+              - getDefaultFilterDate
+        -
+          element: seperator
+        -
+          element: selectfilter
+          id: status
+          label: Status
+          label_as_null_item: true
+          column:
+            - status
+          alias:
+            - kaa
+          entries:
+            - \TsAccommodation\Gui2\Data\CleaningData
+            - getStatuses
+        -
+          element: selectfilter
+          label: Reinigungsart
+          id: type_id
+          label_as_null_item: true
+          column:
+            - type
+          entries:
+            - \TsAccommodation\Gui2\Data\CleaningData
+            - getSelectOptionsTypeFilter
+        -
+          element: selectfilter
+          id: school_id
+          label: Schule
+          label_as_item: true
+          column:
+            - school_id
+          entries:
+            - Ext_Thebing_Client
+            - getSchoolList
+            - true
+    -
+      position: top
+      elements:
+        -
+          element: icon
+          img: fa-check
+          label: Gereinigt
+          task: request
+          action: setStatus
+          additional: clean
+        -
+          element: icon
+          img: fa-wrench
+          label: Reparatur nötig
+          task: request
+          action: setStatus
+          additional: repair
+        -
+          element: icon
+          img: fa-check
+          label: Geprüft
+          task: request
+          action: setStatus
+          additional: checked
+        -
+          element: icon
+          img: fa-close
+          label: Reinigungsstatus aufheben
+          task: request
+          action: setStatus
+          additional: dirty
+    -
+      position: top
+      type: ''
+      elements:
+        -
+          element: pagination
+          only_pagecount: true
+          limit_selection: false
+        -
+          element: labelgroup
+          label: Export
+        -
+          element: icon
+          task: export_csv
+          active: 1
+          label: CSV
+          title: Export CSV
+          img: fa-table
+        -
+          element: icon
+          task: request
+          action: exportPdf
+          active: 1
+          label: PDF
+          title: Export PDF
+          img: fa-file-pdf-o
+        -
+          element: icon
+          task: openDialog
+          action: settings
+          active: 1
+          label: Einstellungen
+          title: Einstellungen
+          img: fa-cog
+          dialog:
+            - \TsAccommodation\Gui2\Data\CleaningData
+            - getSettingsDialog
+          access:
+            - thebing_cleaning_schedule_settings
+            -
+        -
+          element: loading_indicator
+
+# In der Data-Klassen werden noch Spalten ergänzt
+columns:
+  -
+    title: Datum
+    column: date
+    alias: ts_aps
+    width: date
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Raum
+    column: room
+    alias: ts_aps
+    width: name
+    resize: true
+    sortable: false
+    format: \TsAccommodation\Gui2\Format\Cleaning\Room
+  -
+    title: Bett
+    column: bed
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+  -
+    title: Status
+    column: status
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+    format: \TsAccommodation\Gui2\Format\Cleaning\Status
+  -
+    title: Name des Kunden
+    column: customer
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+  -
+    title: Name der Unterkunft
+    column: accommodation
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+    default: false
+  -
+    title: Geschlecht
+    column: gender
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+  -
+    title: Gebuchter Raumtyp
+    column: inquiry_roomtype
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+  -
+    title: Reinigungsart
+    column: type
+    alias: ts_aps
+    width: short_name
+    resize: false
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - type_full
+      - true
+  -
+    title: Abreise
+    column: departure
+    alias: ts_aps
+    width: date
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Nächste Anreise
+    column: next_arrival
+    alias: ts_aps
+    width: date
+    resize: false
+    sortable: false
+    style: \TsAccommodation\Gui2\Style\Cleaning\Arrival
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Transferzeit
+    column: transfer_time
+    alias: ts_aps
+    width: date
+    resize: false
+    sortable: false
+    default: false
+#    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Schule
+    column: school
+    alias: ts_aps
+    width: name
+    resize: false
+    sortable: false
+    default: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [ Ext_Thebing_Client, getSchoolList, true ]

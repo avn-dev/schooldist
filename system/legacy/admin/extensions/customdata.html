@@ -1,0 +1,71 @@
+<?php
+
+
+/*
+ * -- webDynamics CustomData extension backend --
+ * Björn Goetschke <bg@plan-i.de>
+ *
+ * copyright by plan-i GmbH
+ *
+ * Depends on:
+ * - webDynamics extension: CustomData
+ * - webDynamics class: SmartyWrapper
+ * - webDynamics GUI
+ */
+
+
+// load basic admin functions
+include_once(realpath(dirname(__FILE__).'/../').'/includes/main.inc.php');
+
+set_time_limit(600);
+ini_set("memory_limit", "512M");
+
+// check permissions
+Access_Backend::checkAccess('modules_admin');
+
+
+// load the CustomData extension
+include_once(realpath(dirname(__FILE__).'/../../').'/system/extensions/customdata/customdata.php');
+
+
+// load the webDynamics GUI
+include_once(realpath(dirname(__FILE__).'/../../').'/system/includes/gui/gui.php');
+
+
+// load the SmartyWrapper class
+include_once(realpath(dirname(__FILE__).'/../../').'/system/includes/class.smartywrapper.php');
+include_once(realpath(dirname(__FILE__)).'/customdata/customdata.smartywrapper.inc.php');
+
+
+// include the requested backend page
+if (!array_key_exists('task', $_VARS)) {
+	$_VARS['task'] = 'list_tables';
+}
+switch ($_VARS['task']) {
+	case 'list_tables':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.list_tables.inc.php');
+		break;
+	case 'show_entries':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.show_entries.inc.php');
+		break;
+	case 'edit_table':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.edit_table.inc.php');
+		break;
+	case 'edit_field':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.edit_field.inc.php');
+		break;
+	case 'edit_constraint':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.edit_constraint.inc.php');
+		break;
+	case 'edit_row':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.edit_row.inc.php');
+		break;
+	case 'edit_assignment':
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.edit_assignment.inc.php');
+		break;
+	default:
+		include(realpath(dirname(__FILE__)).'/customdata/customdata.errorpage.inc.php');
+}
+
+
+?>

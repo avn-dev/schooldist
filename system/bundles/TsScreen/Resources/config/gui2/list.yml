@@ -1,0 +1,51 @@
+class:
+  wdbasic: \TsScreen\Entity\Screen
+  data: \TsScreen\Gui2\Data\ScreenData
+  date_format: Ext_Thebing_Gui2_Format_Date
+description: TS » Digital Screens
+access: thebing_admin_icon
+sortable: false
+only_pagecount: false
+id:
+  column: id
+  alias: ts_scr
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \TsScreen\Gui2\Data\ScreenData
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \TsScreen\Gui2\Data\ScreenData
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_scr
+    width: name
+    resize: true
+  -
+    title: Link
+    column: link
+    sortable: false
+    alias: ts_scr
+    width: 500
+    format: \TsScreen\Gui2\Format\Link
+    resize: false

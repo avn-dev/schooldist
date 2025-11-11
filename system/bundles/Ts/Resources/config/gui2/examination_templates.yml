@@ -1,0 +1,68 @@
+hash: a0b98e25a669b31c600132fd6b486894
+class:
+  wdbasic: Ext_Thebing_Examination_Templates
+  data: Ext_Thebing_Examination_Templates_Gui2
+  js: ExaminationTemplateGui
+access: thebing_tuition_examination_templates
+js:
+  - [tuition/js/examination_templates.js, thebing]
+css: 
+  - [css/examination_terms.css, thebing]
+id:
+  column: id
+  alias: kext
+orderby:
+  - Ext_Thebing_Examination_Templates_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Examination_Templates_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        column: 
+          - id
+          - title
+        alias:
+          - kext
+          - kext
+        searchtype: LIKE 
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Examination_Templates_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Examination_Templates_Gui2
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Name
+    column: title
+    alias: kext
+    width: name
+    resize: true
+  - 
+    title: Kommentar	
+    column: comment
+    alias: kext
+    width: comment
+  - 
+    title: Kurse 	
+    column: course_list
+    width: name
+  - 
+    title: Vorlage
+    column: template_name
+    width: name

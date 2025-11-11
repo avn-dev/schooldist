@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/file-manager",
+  "version": "1.0.0",
+  "require": {
+    "enyo/dropzone": "*"
+  }
+}

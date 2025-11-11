@@ -1,0 +1,65 @@
+hash: 838118ee3bc22b455bd1dbba90cf9b4c
+class:
+  wdbasic: Ext_Thebing_Provision_Group
+  data: Ext_Thebing_Provision_Gui2
+  js: ProvisiongroupGui
+access:
+  - thebing_marketing_provisions
+  -
+js:
+  - [gui2/util.js, thebing]  
+  - [marketing/js/provisiongroup.js, thebing]
+id:
+  column: id
+  alias: ts_coc
+orderby:
+  - Ext_Thebing_Provision_Gui2
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        id: search
+        column:
+          - id
+          - name
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Provision_Gui2
+          - getDialog
+        access:
+          - thebing_marketing_provisions
+          - new
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Provision_Gui2
+          - getDialog
+        access:
+          - thebing_marketing_provisions
+          - edit
+     -
+        element: icon_delete
+        access:
+          - thebing_marketing_provisions
+          - delete
+columns:
+  - 
+    title: Bezeichnung
+    column: name
+    alias: ts_coc
+    width: comment
+  - 
+    title: Kommentar
+    column: comment
+    alias: ts_coc
+    width: comment
+    resize: true

@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/adminlte",
+  "version": "1.0.1",
+  "require": {
+    "almasaeed2010/adminlte": "2.4.*"
+  }
+}

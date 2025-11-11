@@ -1,0 +1,1 @@
+ALTER TABLE `tc_complaints_histories` CHANGE `followup` `followup` DATE NULL DEFAULT NULL;

@@ -1,0 +1,139 @@
+class:
+  wdbasic: Office\Entity\Settlementlist\Item
+orderby : 
+  - Office\Gui2\Dialog\SettlementListDialog
+  - getOrderBy
+where : 
+  - Office\Gui2\Dialog\SettlementListDialog
+  - getWhere
+id:
+  column: id
+  alias: osli
+title: "Abrechnungsliste"
+description: "Office"
+access: "office_settlement_list"
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - product
+            - description
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements: 
+        -
+          element: icon_new
+          dialog:
+            - Office\Gui2\Dialog\SettlementListDialog
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Office\Gui2\Dialog\SettlementListDialog
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Kunde
+    column: customer
+    description: ""
+    resize: false
+    width: name
+  -
+    title: Ansprechpartner
+    column: contact
+    description: ""
+    resize: false
+    width: name
+  -
+    title: Produkt
+    column: product
+    description: ""
+    resize: true
+  -
+    title: Menge
+    column: amount
+    description: ""
+    format:		Office\Gui2\Format\AmountFormat
+    resize: false
+  -
+    title: Preis
+    column: price
+    description: ""
+    width: count
+    format:		Office\Gui2\Format\PriceFormat
+    resize: false
+  -
+    title: Gesamtpreis
+    column: price
+    description: ""
+    width: count
+    format:		Office\Gui2\Format\ItemPriceFormat
+    resize: false 
+ 
+default_columns:
+  -
+    visible: true
+    set: []
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+  -
+    visible: true
+    set: []
+    title: Erstellt
+    format: Ext_Gui2_View_Format_Date_Time
+    column: created_original
+    data: created
+    alias: ""
+    width: 140
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+  -
+    visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_Gui2_View_Format_Date_Time
+    column: changed_original
+    data: changed
+    alias: ""
+    width: 140
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false

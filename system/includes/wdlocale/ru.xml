@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>«</quotationStart>
+		<quotationEnd>»</quotationEnd>
+		<alternateQuotationStart>„</alternateQuotationStart>
+		<alternateQuotationEnd>“</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar>
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">янв.</month>
+					<month type="2">февр.</month>
+					<month type="3">марта</month>
+					<month type="4">апр.</month>
+					<month type="5">мая</month>
+					<month type="6">июня</month>
+					<month type="7">июля</month>
+					<month type="8">авг.</month>
+					<month type="9">сент.</month>
+					<month type="10">окт.</month>
+					<month type="11">нояб.</month>
+					<month type="12">дек.</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">января</month>
+					<month type="2">февраля</month>
+					<month type="3">марта</month>
+					<month type="4">апреля</month>
+					<month type="5">мая</month>
+					<month type="6">июня</month>
+					<month type="7">июля</month>
+					<month type="8">августа</month>
+					<month type="9">сентября</month>
+					<month type="10">октября</month>
+					<month type="11">ноября</month>
+					<month type="12">декабря</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">Вс</day>
+					<day type="mon">Пн</day>
+					<day type="tue">Вт</day>
+					<day type="wed">Ср</day>
+					<day type="thu">Чт</day>
+					<day type="fri">Пт</day>
+					<day type="sat">Сб</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">воскресенье</day>
+					<day type="mon">понедельник</day>
+					<day type="tue">вторник</day>
+					<day type="wed">среда</day>
+					<day type="thu">четверг</day>
+					<day type="fri">пятница</day>
+					<day type="sat">суббота</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">1-й кв.</quarter>
+					<quarter type="2">2-й кв.</quarter>
+					<quarter type="3">3-й кв.</quarter>
+					<quarter type="4">4-й кв.</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">1-й квартал</quarter>
+					<quarter type="2">2-й квартал</quarter>
+					<quarter type="3">3-й квартал</quarter>
+					<quarter type="4">4-й квартал</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>AM</am>
+			<pm>PM</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%d %B %y 'г'.</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%d.%m.%Y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%d.%m.%y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H:%M:%S %Z</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H:%M:%S</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H:%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>Год</displayName>
+				</field>
+				<field type="month">
+					<displayName>Месяц</displayName>
+				</field>
+				<field type="week">
+					<displayName>Неделя</displayName>
+				</field>
+				<field type="day">
+					<displayName>День</displayName>
+					<relative type="-2">Позавчера</relative>
+					<relative type="-1">Вчера</relative>
+					<relative type="0">Сегодня</relative>
+					<relative type="1">Завтра</relative>
+					<relative type="2">Послезавтра</relative>
+				</field>
+				<field type="weekday">
+					<displayName>День недели</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>AM/PM</displayName>
+				</field>
+				<field type="hour">
+					<displayName>Час</displayName>
+				</field>
+				<field type="minute">
+					<displayName>Минута</displayName>
+				</field>
+				<field type="second">
+					<displayName>Секунда</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>,</decimal>
+			<group> </group>
+			<list>;</list>
+			<percentSign>%</percentSign>
+			<nativeZeroDigit>0</nativeZeroDigit>
+			<patternDigit>#</patternDigit>
+			<plusSign>+</plusSign>
+			<minusSign>-</minusSign>
+			<exponential>E</exponential>
+			<perMille>‰</perMille>
+			<infinity>∞</infinity>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<percentFormats>
+			<percentFormatLength>
+				<percentFormat>
+					<pattern>#,##0 %</pattern>
+				</percentFormat>
+			</percentFormatLength>
+		</percentFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>#,##0.00 ¤</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="few">{0} дня</unitPattern>
+			<unitPattern count="many">{0} дней</unitPattern>
+			<unitPattern count="one">{0} день</unitPattern>
+			<unitPattern count="other">{0} дня</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="few">{0} часа</unitPattern>
+			<unitPattern count="many">{0} часов</unitPattern>
+			<unitPattern count="one">{0} час</unitPattern>
+			<unitPattern count="other">{0} часа</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="few">{0} минуты</unitPattern>
+			<unitPattern count="many">{0} минут</unitPattern>
+			<unitPattern count="one">{0} минута</unitPattern>
+			<unitPattern count="other">{0} минуты</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="few">{0} месяца</unitPattern>
+			<unitPattern count="many">{0} месяцев</unitPattern>
+			<unitPattern count="one">{0} месяц</unitPattern>
+			<unitPattern count="other">{0} месяца</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="few">{0} секунды</unitPattern>
+			<unitPattern count="many">{0} секунд</unitPattern>
+			<unitPattern count="one">{0} секунда</unitPattern>
+			<unitPattern count="other">{0} секунды</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="few">{0} недели</unitPattern>
+			<unitPattern count="many">{0} недель</unitPattern>
+			<unitPattern count="one">{0} неделя</unitPattern>
+			<unitPattern count="other">{0} недели</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="few">{0} года</unitPattern>
+			<unitPattern count="many">{0} лет</unitPattern>
+			<unitPattern count="one">{0} год</unitPattern>
+			<unitPattern count="other">{0} года</unitPattern>
+		</unit>
+	</units>
+</ldml>
+

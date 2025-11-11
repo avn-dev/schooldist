@@ -1,0 +1,255 @@
+class:
+  wdbasic: Ext_TS_Enquiry_Combination
+  gui: Ext_TS_Enquiry_Combination_Gui2
+  data: Ext_TS_Enquiry_Combination_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+  js: RequestCombinationGui
+  icon_status: Ext_TS_Enquiry_Combination_Gui2_Icon_Active
+access:
+    thebing_students_contact_search
+id:
+  column: id
+  alias: ts_ec
+title: "Suche"
+multiple_selection: true
+bars:
+    -
+      type: ''
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Ext_TS_Enquiry_Combination_Gui2_Data
+            - getDialog
+        -
+          element: icon_edit
+          dialog:
+            - Ext_TS_Enquiry_Combination_Gui2_Data
+            - getDialog
+        -
+          element: icon_delete
+        -
+          element: seperator
+        -
+          element: icon
+          label: Einzelne Angebote erstellen
+          action: create_offer
+          task:	openDialog
+          dialog:	getCombinationAssignDialog()
+          access:
+            -	thebing_students_contact_search
+          img:
+            -	Ext_TC_Util
+            - getIcon
+            - page_add
+#        -
+#          element: icon
+#          label: Ein Gesamtangebot erstellen
+#          action: create_offer_packet
+#          task:	openDialog
+#          dialog:	getCombinationAssignDialog()
+#          access:
+#            - thebing_students_contact_search
+#            - ""
+#          img:
+#            - Ext_TC_Util
+#            - getIcon
+#            - page_add
+
+            
+columns:
+  -
+    title: Kursliste
+    group: Kursdaten
+    column: course_name_short
+    width: name
+    resize: true
+    format:		Ext_TS_Gui2_Format_Enquiry_Service_Data
+    format_params: [course_name, all_course_ids, true]
+  -
+    title: Kursstart
+    group: Kursdaten
+    column: course_from
+    width: date
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_course_ids, true, Ext_Thebing_Gui2_Format_Date, true, "{||}"]
+  -
+    title: Kursende
+    group: Kursdaten
+    column: course_until
+    width: date
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_course_ids, true, Ext_Thebing_Gui2_Format_Date, true, "{||}"]
+  -
+    title: Kursniveau
+    group: Kursdaten
+    column: course_level
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_course_ids, true, false, true, "{||}"]
+  -
+    title: Lektionen
+    group: Kursdaten
+    column: course_units
+    width: number
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_course_ids, true, Ext_Thebing_Gui2_Format_Float, true, "{||}"]
+  -
+    title: Kurswochen
+    group: Kursdaten
+    data: course_weeks
+    column: weeks
+    alias: ts_ecc
+    width: number
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_course_ids, true, false , true, "{||}"]
+  -
+    title: Erster Kursbeginn
+    group: Kursdaten
+    column: first_course_start
+    width: date
+    resize: false
+    sortable: false
+    format:		Ext_TS_Enquiry_Combination_Gui2_Format_Course_Start
+    format_params: [date]
+  -
+    title: Erster Kursname
+    group: Kursdaten
+    column: first_course_start
+    width: date
+    resize: false
+    sortable: false
+    format:		Ext_TS_Enquiry_Combination_Gui2_Format_Course_Start
+    format_params: [name]
+#Unterkunft
+#  -
+#    title: Unterkunft
+#    group: Unterkunft
+#    column: accommodation_name
+#    width: name
+#    resize: false
+#    format:		Ext_Thebing_Gui2_Format_Concat
+#    format_params: [all_accommodation_ids, true]
+#  -
+#    title: Verpflegung
+#    group: Unterkunft
+#    column: accommodation_meal
+#    width: name
+#    resize: false
+#    format:		Ext_Thebing_Gui2_Format_Concat
+#    format_params: [all_accommodation_ids, true]
+#  -
+#    title: Unterkunftsraum
+#    group: Unterkunftsart
+#    column: accommodation_roomtype
+#    width: name
+#    resize: false
+#    format:		Ext_Thebing_Gui2_Format_Concat
+#    format_params: [all_accommodation_ids, true]
+  -
+    title: Unterkunft
+    group: Unterkunftsdaten
+    column: accommodation_all_short
+    width: extra_long_description
+    resize: false
+    format:		Ext_TS_Gui2_Format_Enquiry_Service_Data
+    format_params: [accommodation_all, all_accommodation_ids, true]
+  -
+    title: Startdatum
+    group: Unterkunftsdaten
+    column: accommodation_from
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_accommodation_ids, true, Ext_Thebing_Gui2_Format_Date, true, "{||}"]
+  -
+    title: Enddatum
+    group: Unterkunftsdaten
+    column: accommodation_until
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_accommodation_ids, true, Ext_Thebing_Gui2_Format_Date, true, "{||}"]
+  -
+    title: Unterkunftswochen
+    group: Unterkunftsdaten
+    data: accommodation_weeks
+    column: weeks
+    alias: ts_eca
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_accommodation_ids, true, false , true, "{||}"]
+#Transfer    
+  -
+    group: Transfer
+    title: Anreiseinformation
+    column: arrival_date
+    width: long_description
+    #format:		Ext_TS_Enquiry_Combination_Gui2_Format_Transfer
+    format:		Ext_Thebing_Gui2_Format_Transfer_Info
+    format_params: [arrival]
+    resize: false
+  -
+    group: Transfer
+    title: Abreiseinformation
+    column: departure_date
+    width: long_description
+    #format:		Ext_TS_Enquiry_Combination_Gui2_Format_Transfer
+    format:		Ext_Thebing_Gui2_Format_Transfer_Info
+    format_params: [departure]
+    resize: false
+  -
+    group: Transfer
+    title: Transfer
+    column: transfer_mode
+    width: date_time
+    format:		Ext_Thebing_Gui2_Format_Transfer
+    resize: false
+  #-
+    #title: Transferstrecke
+    #group: Transferdaten
+    #column: transfer_mode
+    #width: name
+    #resize: false 
+#Versicherungen
+  -
+    title: Versicherung
+    group: Versicherungsdaten
+    column: insurance_name
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_insurance_ids, true]
+  -
+    title: Versicherungsstart
+    group: Versicherungsdaten
+    column: insurance_from
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_insurance_ids, true, Ext_Thebing_Gui2_Format_Date]
+  -
+    title: Versicherungsende
+    group: Versicherungsdaten
+    column: insurance_until
+    width: name
+    resize: false
+    format:		Ext_Thebing_Gui2_Format_Concat
+    format_params: [all_insurance_ids, true, Ext_Thebing_Gui2_Format_Date]
+ #Betrag
+  -
+    title: Betrag
+    group: Sonstiges
+    column: amount
+    width: name
+    resize: false
+    format:		Ext_TS_Gui2_Format_Enquiry_Service_Amount
+    format_params: [Ext_TS_Enquiry_Combination, setCombination]
+    sortable: false

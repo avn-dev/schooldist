@@ -1,0 +1,201 @@
+<?php	
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+if(
+	!Ext_TC_Util::isDevAgencySystem() &&
+	!Ext_TC_Util::isLocalSystem()
+){
+	die('Dieser Bereich ist nur auf dev.agency.thebing.com erreichbar!');
+}
+
+/**
+ * Daten vorbereiten 
+ */
+
+$aLanguages = Ext_TC_Util::getBackendLanguages();
+
+/**
+ * GUI Objekt aufbauen 
+ */
+
+$oGui = new Ext_TC_Gui2(md5('tc_placeholder_examples'));
+$oGui->calendar_format = Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+$oGui->i18n_languages = $aLanguages;
+$oGui->row_sortable = true;
+
+$oGui->setWDBasic('Ext_TI_Placeholder_Example');
+$oGui->setTableData('limit', 30);
+
+// Dialog
+
+$oDialog = $oGui->createDialog($oGui->t('Beispiel editieren'), $oGui->t('Neues Beispiel anlegen'));
+$oDialog->width = 1100;
+$oDialog->setElement($oDialog->createI18NRow($oGui->t('Name'), array(
+	'db_alias' => 'tc_pe_i18n',
+	'db_column'=> 'name', 
+	'i18n_parent_column' => 'example_id',
+	'required' => true
+), $aLanguages));
+
+$oDialog->height = 300;
+
+//Icon
+
+$oBar = $oGui->createBar();
+
+$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+// Loading/Pagination
+
+$oBar = $oGui->createBar();
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// List 
+
+$oGui->addI18nColumns($oGui->t('Name'),	array(
+	'join_table_key'	=> 'tc_pe_i18n',
+	'join_table_field'	=> 'name',
+	'width'				=> Ext_TC_Util::getTableColumnWidth('name'),
+	'width_resize'		=> true
+));
+
+$oGui->addDefaultColumns();
+
+//------------------------------------------------------------------------------
+
+/**
+ * Daten vorbereiten 
+ */
+
+$aPdfApplications = Ext_TC_Factory::executeStatic('Ext_TC_Placeholder_Example_Entry', 'getPdfApplications');
+$aEmailApplications = Ext_TC_Factory::executeStatic('Ext_TC_Placeholder_Example_Entry', 'getEmailApplications');
+
+/**
+ * GUI Objekt aufbauen (unten)
+ */
+
+$oGuiEntries = new Ext_TC_Gui2(md5('tc_placeholder_examples_entries'));
+$oGuiEntries->gui_title = $oGuiEntries->t('Beispiele');
+$oGuiEntries->calendar_format = Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGuiEntries->include_jquery = true;
+$oGuiEntries->include_jquery_multiselect = true;
+$oGuiEntries->i18n_languages = $aLanguages;
+$oGuiEntries->row_sortable = true;
+
+$oGuiEntries->setWDBasic('Ext_TI_Placeholder_Example_Entry');
+$oGuiEntries->setTableData('limit', 30);
+
+// Dialog
+
+$oDialogEntries = $oGuiEntries->createDialog($oGuiEntries->t('Beispiel editieren'), $oGuiEntries->t('Neues Beispiel anlegen'));
+
+$oDialogEntries->setElement($oDialogEntries->createI18NRow($oGuiEntries->t('Name'), array(
+	'db_alias' => 'tc_pee_i18n',
+	'db_column'=> 'name', 
+	'i18n_parent_column' => 'example_entry_id',
+	'required' => true
+), $aLanguages));
+
+$oDialogEntries->setElement($oDialogEntries->createRow($oGuiEntries->t('PDF-Übersichten'), 'select', array(
+	'db_alias' => 'tc_pee',
+	'db_column'=> 'pdf_applications',
+	'multiple' => 5, 
+	'jquery_multiple' => 1,
+	'select_options' => $aPdfApplications,
+	'searchable' => 1,
+	'required' => true
+)));
+
+$oDialogEntries->setElement($oDialogEntries->createRow($oGuiEntries->t('E-Mail-Übersichten'), 'select', array(
+	'db_alias' => 'tc_pee',
+	'db_column'=> 'email_applications',
+	'multiple' => 5, 
+	'jquery_multiple' => 1,
+	'select_options' => $aEmailApplications,
+	'searchable' => 1,
+	'required' => true
+)));
+
+$oDialogEntries->setElement($oDialogEntries->createRow($oGuiEntries->t('Beispiel'), 'textarea', array(
+	'db_alias' => 'tc_pee',
+	'db_column'=> 'value',
+	'style' => 'width: 600px; height: 200px;',
+	'required' => true
+)));
+
+$oDialogEntries->setElement($oDialogEntries->createI18NRow($oGuiEntries->t('Beschreibung'), array(
+	'type' => 'html',
+	'db_alias' => 'tc_pee_i18n',
+	'db_column'=> 'description', 
+	'i18n_parent_column' => 'example_entry_id',
+	'required' => true
+), $aLanguages));
+
+//Icon
+
+$oBar = $oGuiEntries->createBar();
+
+$oIcon = $oBar->createNewIcon($oGuiEntries->t('Neuer Eintrag'), $oDialogEntries, $oGuiEntries->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon($oGuiEntries->t('Editieren'), $oDialogEntries, $oGuiEntries->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGuiEntries->t('Löschen'), $oGuiEntries->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGuiEntries->setBar($oBar);
+
+// Loading/Pagination
+
+$oBar = $oGuiEntries->createBar();
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiEntries->setBar($oBar);
+
+// List 
+
+$oGuiEntries->addI18nColumns($oGuiEntries->t('Name'),	array(
+	'join_table_key'	=> 'tc_pee_i18n',
+	'join_table_field'	=> 'name',
+	'width'				=> Ext_TC_Util::getTableColumnWidth('name'),
+	'width_resize'		=> true
+));
+
+$oGuiEntries->addDefaultColumns();
+
+//------------------------------------------------------------------------------
+
+/**
+ * GUI-PAGE Objekt aufbauen 
+ */
+
+$aOptional = array();
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiEntries, array('hash' => $oGui->hash, 'foreign_key' => 'example_id',  'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display($aOptional);
+
+?>

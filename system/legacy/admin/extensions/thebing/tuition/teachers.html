@@ -1,0 +1,550 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+DB::setResultType(MYSQL_ASSOC);
+
+$oGui = new Ext_Thebing_Gui2(md5('thebing_tuition_teacher'), Ext_Thebing_Teacher_Gui2::class);
+
+$oSchool = Ext_Thebing_School::getSchoolFromSession();
+
+$oGui->setWDBasic(\Ext_Thebing_Teacher::class);
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('lastname'=>'ASC'));
+$oGui->class_js = 'CoreGUI';
+$oGui->access = ['thebing_tuition_resource_teachers', ''];
+$oGui->name = 'ts_teachers';
+
+// Listen Optionen
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection 	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'kt';
+$oGui->sSection				= 'teachers';
+$oGui->multiple_selection	= 1;
+$oGui->calendar_format		= new Ext_Thebing_Gui2_Format_Date();
+$oGui->row_icon_status_active = new TsComplaints\Gui2\Icon\Complaint(false);
+
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+
+
+$sInterfaceLanguage = $oSchool->getInterfaceLanguage();
+
+/**
+ * Daten Arrays holen
+ */
+$aGenders = Ext_Thebing_Util::getGenders();
+
+$oCourseCategory = new Ext_Thebing_Tuition_Course_Category;
+$aCourseCategories = $oCourseCategory->getArrayList(true, 'name_'.$sInterfaceLanguage);//$oSchool->getCourseCategoriesList('select');
+$aFilterCourseCategories	= Ext_Gui2_Util::addLabelItem($aCourseCategories, $oGui->t('Kurskategorie'));
+
+$aCourseLanguages = \Ext_Thebing_Tuition_LevelGroup::getSelectOptions();
+
+$aLevels = Ext_Thebing_Tuition_Level::getList('internal', $sInterfaceLanguage);
+$aFilterLevels = Ext_Gui2_Util::addLabelItem($aLevels, $oGui->t('Sprachniveaus'));
+
+$aTeacherCostCategories = Ext_Thebing_Marketing_Costcategories::getTeacherCategories(true, $oSchool);
+$aFilterTeacherCostCategories = [-2 => $oGui->t('Keine Kostenkategorie'), -1 => $oGui->t('Festgehalt')];
+$aFilterTeacherCostCategories += $aTeacherCostCategories;
+$aFilterTeacherCostCategories = Ext_Gui2_Util::addLabelItem($aFilterTeacherCostCategories, $oGui->t('Kostenkategorie'));
+$aTeacherCostCategories = Ext_Thebing_Util::addEmptyItem($aTeacherCostCategories, Ext_Thebing_L10N::getEmptySelectLabel('teacher_cost_category'));
+
+$aGenders = Ext_Thebing_Util::getGenders(true, $oGui->t('kein Geschlecht'));
+
+$aCountries = Ext_Thebing_Data::getCountryList(true, true);
+$aLanguages	= Ext_Thebing_Data::getLanguageSkills();
+
+$aNationalities = Ext_Thebing_Nationality::getNationalities(true, $sInterfaceLanguage, 0);
+$aNationalities	= Ext_Thebing_Util::addEmptyItem($aNationalities, Ext_Thebing_L10N::getEmptySelectLabel('nationalities'));
+
+$aSchools = Ext_Thebing_Client::getSchoolList(true);
+$aFilterSchools = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Client::getStaticSchoolListByAccess(), $oGui->t('Schule'));
+$iSelectedSchoolId = 0;
+if(!Ext_Thebing_System::isAllSchools()) {
+	$iSelectedSchoolId = Ext_Thebing_School::getSchoolFromSession()->getId();
+}
+
+# START Dialog 1 #
+
+$oDialog = $oGui->createDialog($oGui->t('Lehrer "{name}"'), $oGui->t('Neuer Lehrer'));
+
+$oTab = $oDialog->createTab($oGui->t('Persönliche Daten'));
+$oTab->aOptions = array(
+		'task' => 'personal_details',
+		'section' => 'teachers_general'
+	);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGui->t('Schulen'),
+		'select',
+		[
+			'db_alias' => '',
+			'db_column' => 'schools',
+			'multiple' => 5,
+			'select_options' => $aSchools,
+			'jquery_multiple' => 1,
+			'searchable' => 1,
+			'required' => 1,
+		]
+	)
+);
+
+$iH3 = $oDialog->create('h4');
+$iH3->setElement($oGui->t('Persönliche Daten'));
+$oTab->setElement($iH3);
+$oTab->setElement($oDialog->createRow($oGui->t('Vorname'), 'input', array('db_column'=>'firstname', 'db_alias'=>'kt', 'required'=>1)));
+$oTab->setElement($oDialog->createRow($oGui->t('Nachname'), 'input', array('db_column'=>'lastname', 'db_alias'=>'kt', 'required'=>1)));
+$oTab->setElement($oDialog->createRow($oGui->t('Geschlecht'), 'select', array('db_column' => 'gender', 'db_alias'=>'kt', 'db_alias' => 'kt', 'select_options' => $aGenders)));
+$oTab->setElement($oDialog->createRow($oGui->t('Geburtsdatum'), 'calendar', array('db_column'=>'birthday', 'db_alias'=>'kt', 'format'=>new Ext_Thebing_Gui2_Format_Date())));
+$oTab->setElement($oDialog->createRow($oGui->t('Nationalität'), 'select', array('db_column' => 'nationality', 'db_alias' => 'kt', 'select_options' => $aNationalities)));
+$oTab->setElement($oDialog->createRow($oGui->t('Muttersprache'),	 'select', array('db_column' => 'mother_tongue', 'db_alias' => 'kt', 'select_options' => $aLanguages)));
+
+$iH3 = $oDialog->create('h4');
+$iH3->setElement($oGui->t('Kontaktdaten'));
+$oTab->setElement($iH3);
+$oTab->setElement($oDialog->createRow($oGui->t('Adresse'), 'input', array('db_column'=>'street', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Adresszusatz'), 'input', array('db_column'=>'additional_address', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('PLZ'), 'input', array('db_column'=>'zip', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Stadt'), 'input', array('db_column'=>'city', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Bundesland'), 'input', array('db_column'=>'state', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Land'), 'select', array('db_column' => 'country_id', 'db_alias' => 'kt', 'select_options' => $aCountries)));
+$oTab->setElement($oDialog->createRow($oGui->t('Telefon'), 'input', array('db_column'=>'phone', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Telefon Büro'), 'input', array('db_column'=>'phone_business', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Handy'), 'input', array('db_column'=>'mobile_phone', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Fax'), 'input', array('db_column'=>'fax', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('E-Mail'), 'input', array('db_column'=>'email', 'db_alias'=>'kt', 'format'=> new Ext_Thebing_Gui2_Format_Email(false))));
+$oTab->setElement($oDialog->createRow($oGui->t('Skype'), 'input', array('db_column'=>'skype', 'db_alias'=>'kt')));
+
+$iH3 = $oDialog->create('h4');
+$iH3->setElement($oGui->t('Sonstiges'));
+$oTab->setElement($iH3);
+$oTab->setElement($oDialog->createRow($oGui->t('Sozialversicherungsnummer'), 'input', array('db_column'=>'socialsecuritynumber', 'db_alias'=>'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Kommentar'), 'textarea', array('db_column'=>'comment', 'db_alias'=>'kt')));
+$oDialog->setElement($oTab);
+
+/**
+ * Bank Tab
+ */
+
+$oTab = $oDialog->createTab($oGui->t('Bank'));
+$oTab->aOptions = array(
+		'task' => 'bank',
+		'section' => 'teachers_bank'
+	);
+
+$iH3 = $oDialog->create('h4');
+$iH3->setElement($oGui->t('Bankverbindung'));
+$oTab->setElement($iH3);
+$oTab->setElement($oDialog->createRow($oGui->t('Kontoinhaber'), 'input', array('db_column'=>'account_holder', 'db_alias' => 'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Kontonummer'), 'input', array('db_column'=>'account_number', 'db_alias' => 'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Bankleitzahl'), 'input', array('db_column'=>'adress_of_bank', 'db_alias' => 'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Name der Bank'), 'input', array('db_column'=>'name_of_bank', 'db_alias' => 'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('Bankadresse'), 'input', array('db_column'=>'bank_address', 'db_alias' => 'kt')));
+$oTab->setElement($oDialog->createRow($oGui->t('IBAN'), 'input', ['db_column' => 'iban', 'db_alias' => 'kt']));
+
+$oDialog->setElement($oTab);
+
+$oTab = $oDialog->createTab($oGui->t('Qualifikation'));
+$oTab->aOptions = array(
+		'task' => 'qualification',
+		'section' => 'teachers_qualification'
+	);
+
+$iH3 = $oDialog->create('h4');
+$iH3->setElement($oGui->t('Kurskategorien und Niveaus, die unterrichtet werden können'));
+$oTab->setElement($iH3);
+$oTab->setElement($oDialog->createRow($oGui->t('Kurskategorien'), 'select', array('db_column' => 'course_categories', 'db_alias' => 'kt', 'multiple'=>5, 'jquery_multiple'=>1, 'searchable' => 1, 'style'=>'height: 105px;', 'select_options' => $aCourseCategories)));
+$oTab->setElement($oDialog->createRow($oGui->t('Niveaus'), 'select', array('db_column' => 'levels', 'db_alias' => 'kt', 'multiple'=>5, 'jquery_multiple'=>1, 'searchable' => 1, 'style'=>'height: 105px;', 'select_options' => $aLevels)));
+$oTab->setElement($oDialog->createRow($oGui->t('Kurssprachen'), 'select', array('db_column' => 'course_languages', 'db_alias' => 'kt', 'multiple'=>5, 'jquery_multiple'=>1, 'searchable' => 1, 'style'=>'height: 105px;', 'select_options' => $aCourseLanguages)));
+
+$oDialog->setElement($oTab);
+
+//$oTab = $oDialog->createTab($oGui->t('Verfügbarkeit'));
+//$oTab->aOptions = array(
+//		'task' => 'schedule'
+//	);
+//$oScheduleGui = Ext_Thebing_Teacher_Gui2::getScheduleGui($oGui);
+//$oTab->setElement($oScheduleGui);
+//$oDialog->setElement($oTab);
+
+
+$oTab = $oDialog->createTab($oGui->t('Vertragsparameter'));
+$oTab->aOptions = array(
+		'access' => 'thebing_tuition_resource_teachers_contracts',
+		'task' => 'contract_parameter'
+	);
+$oContractParameterGui = Ext_Thebing_Teacher_Gui2::getCostcategoryGui($oGui);
+$oTab->setElement($oContractParameterGui);
+$oDialog->setElement($oTab);
+
+
+$oTab = $oDialog->createTab($oGui->t('Verträge'));
+$oTab->aOptions = array(
+		'access' => 'thebing_tuition_teacher_contracts',
+		'task' => 'contracts'
+	);
+$oContractsGui = Ext_Thebing_Teacher_Gui2::getContractGui($oGui);
+$oTab->setElement($oContractsGui);
+$oDialog->setElement($oTab);
+
+
+$oTab = $oDialog->createTab($oGui->t('Zugriffsrechte'));
+$oTab->aOptions = array(
+	'access' => 'thebing_tuition_resource_teachers_access',
+	'task' => 'access_rights'
+);
+
+$oTab->setElement($oDialog->createRow($oGui->t('Stundenplan'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_timetable')));
+if (\TcExternalApps\Service\AppService::hasApp(\TsTeacherLogin\Handler\ExternalApp::APP_NAME)) {
+	$oTab->setElement($oDialog->createRow($oGui->t('Klassen erstellen'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_class_scheduling')));
+	$oTab->setElement($oDialog->createRow($oGui->t('Klassen bearbeiten'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_class_scheduling_edit')));
+}
+$oTab->setElement($oDialog->createRow($oGui->t('Anwesenheit'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_attendance')));
+$oTab->setElement($oDialog->createRow($oGui->t('Entschuldigte Abwesenheiten'), 'checkbox', ['db_alias' => 'kt', 'db_column'=>'access_right_excused_absence']));
+$oTab->setElement($oDialog->createRow($oGui->t('Kommunikation'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_communication')));
+$oTab->setElement($oDialog->createRow($oGui->t('Report Cards'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_reportcards')));
+$oTab->setElement($oDialog->createRow($oGui->t('Alle Lehrerdaten'), 'checkbox', array('db_alias' => 'kt', 'db_column'=>'access_right_teachers')));
+$oDialog->setElement($oTab);
+
+$oDialog->width = 950;
+$oDialog->height = 600;
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('id', 'firstname', 'lastname', 'email');
+$oFilter->db_alias = array('kt', 'kt', 'kt', 'kt');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oFilter->value = '';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+$oFilter = $oBar->createValidFilter($oGui->t('Gültigkeit'));
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('id');
+$oFilter->db_alias = array('ktul');
+$oFilter->db_operator = array('=');
+$oFilter->select_options = $aFilterLevels;
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('costcategory_id');
+$oFilter->db_operator = array('=');
+$oFilter->select_options = $aFilterTeacherCostCategories;
+$oFilter->filter_part = 'having';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = array('id');
+$oFilter->db_alias = array('ktcc');
+$oFilter->db_operator = array('=');
+$oFilter->select_options = $aFilterCourseCategories;
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'filter_school';
+$oFilter->value = $iSelectedSchoolId;
+$oFilter->db_alias = 'filter_schools';
+$oFilter->db_column = 'school_id';
+$oFilter->select_options = $aFilterSchools;
+$oFilter->db_operator = '=';
+$oBar->setElement($oFilter);
+
+$sLanguage = \Ext_Thebing_School::fetchInterfaceLanguage();
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_alias = 'ts_tcl';
+$oFilter->db_column = 'courselanguage_id';
+$oFilter->select_options = Ext_Gui2_Util::addLabelItem($aCourseLanguages, $oGui->t('Kurssprache'));
+$oFilter->db_operator = '=';
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+// Leisten erzeugen
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+                        $oGui->t('Neuer Eintrag'),
+                        $oDialog,
+                        $oGui->t('Neuer Eintrag')
+                    );
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+                        $oGui->t('Editieren'),
+                        $oDialog,
+                        $oGui->t('Editieren')
+                    );
+$oBar ->setElement($oIcon);
+
+
+$oIcon = $oBar->createDeleteIcon(
+                        $oGui->t('Löschen'),
+                        $oGui->t('Löschen')
+                    );
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createDeactivateIcon($oGui->t('Deaktivieren'), $oGui->t('Deaktivieren'));
+$oIcon->access = 'thebing_tuition_teacher_deactivate';
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createFileManagerIcon();
+$oBar->setElement($oIcon);
+
+//$oIcon = $oBar->createIcon(
+//				Ext_Thebing_Util::getIcon('feedback'),
+//				'openDialog',
+//				$oGui->t('Bewertungen einsehen')
+//			);
+//$oIcon->label = $oGui->t('Bewertungen einsehen');
+//$oIcon->action = 'feedback_old';
+//$oIcon->dialog_data = Ext_Thebing_Teacher_Gui2::getFeedbackDialog($oGui);
+//$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createIcon(Ext_Thebing_Util::getIcon('feedback'), 'openDialog', $oGui->t('Feedback'));
+$oIcon->label = $oGui->t('Feedback');
+$oIcon->action = 'feedback';
+$oIcon->dialog_data = Ext_TS_Marketing_Feedback_Provider_Gui2_Data::createProviderDialog($oGui, 'teacher');
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createIcon(
+			Ext_Thebing_Util::getIcon('complaint'),
+			'openDialog',
+			$oGui->t('Beschwerden ansehen')
+		);
+$oIcon->label = $oGui->t('Beschwerden ansehen');
+$oIcon->action = 'teacher_complaint';
+$oIcon->access = 'thebing_marketing_complaints';
+$oIcon->dialog_data = \TsComplaints\Gui2\Data\Complaint::getComplaintDialog($oGui, false);
+$oBar->setElement($oIcon);
+
+// Kommunikation
+$oIcon = $oBar->createCommunicationIcon($oGui->t('Lehrer informieren'), 'tuition_teacher');
+$oIcon->multipleId			= 1;
+$oBar ->setElement($oIcon);
+
+// Leiste der Gui Zuweisen
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oPagination = $oBar->createPagination(false, true);
+$oBar ->setElement($oPagination);
+
+#$oSeperator = $oBar->createSeperator();
+#$oBar ->setElement($oSeperator);
+
+$oLabelgroup = $oBar->createLabelGroup($oGui->t('Export'));
+$oBar ->setElement($oLabelgroup);
+
+$oIcon = $oBar->createCSVExport($oGui->t('Export CSV'));
+$oIcon->label = $oGui->t('CSV');
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createExcelExport();
+$oBar->setElement($oIcon);
+
+// Import
+$oIcon = new Ext_Gui2_Bar_Icon('fa-upload', 'request', $oGui->t('Import'));
+$oIcon->action = 'import';
+$oIcon->label = $oGui->t('Import');
+$oIcon->multipleId 	= 1;
+$oIcon->active = 1;
+$oIcon->visible = 1;
+$oIcon->info_text = 0;
+$oBar->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'fullname';
+$oColumn->select_column= 'lastname';
+$oColumn->sortable_column = 'lastname';
+$oColumn->title = $oGui->t('Name');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('customer_name');
+$oColumn->width_resize = true;
+$oColumn->format = new Ext_Thebing_Gui2_Format_TeacherName();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'firstname';
+$oColumn->title = $oGui->t('Vorname');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oColumn->default = false;
+
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'lastname';
+$oColumn->title = $oGui->t('Nachname');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oColumn->default = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'schools';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Schulen');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('comment');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Multiselect($aSchools, ', ');
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'email';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('E-Mail');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('email');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Email();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'username';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Benutzername');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->default = false;
+$oColumn->width_resize = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'course_languages';
+$oColumn->title = $oGui->t('Kurssprachen');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->default = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'phone';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Telefon');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('phone');
+$oColumn->width_resize = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'mobile_phone';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Handy');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('phone');
+$oColumn->width_resize = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'costcategory_id';
+$oColumn->db_alias = 'kts';
+$oColumn->select_column = 'costcategory_id';
+$oColumn->title = $oGui->t('Kostenkategorie');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Teacher_Costcategory();
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name_'.$sInterfaceLanguage;
+$oColumn->db_alias = 'ktcc';
+$oColumn->select_column = 'course_category_name';
+$oColumn->title = $oGui->t('Kurskategorien');
+$oColumn->width = 200;
+$oColumn->width_resize = false;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name_'.$sInterfaceLanguage;
+$oColumn->db_alias = 'ktul';
+$oColumn->select_column = 'level_name';
+$oColumn->title = $oGui->t('Niveaus');
+$oColumn->width = 200;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_ToolTip('level_name', true, 30, true);
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'comment';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Kommentar');
+$oColumn->width = 200;
+$oColumn->default = false;
+$oGui->setColumn($oColumn);
+
+$oDefaultColumn = $oGui->getDefaultColumn();
+$oDefaultColumn->getSystemUsersById();
+$oDefaultColumn->setAliasForAll('kt');
+$oDefaultColumn->addValidUntilColumn('kt');
+$oGui->setDefaultColumn($oDefaultColumn);
+
+$oGui->addDefaultColumns();
+
+// additional documents
+$oAdditionalDocuments = new Ext_Thebing_Inquiry_Document_Additional();
+$oAdditionalDocuments->icon_status_active = $oGui->row_icon_status_active;
+$oAdditionalDocuments->add_label_group = true;
+#$oAdditionalDocuments->icons_bar_position	= 2;
+$oAdditionalDocuments->add_label_group		= true;
+$oAdditionalDocuments->use_template_type		= 'document_teacher';
+$oAdditionalDocuments->access_document_edit	= ['thebing_tuition_resource_teachers', ''];
+$oAdditionalDocuments->access_document_open	= ['thebing_tuition_resource_teachers', ''];
+$oAdditionalDocuments->add_language_filter = false;
+
+$oGui->addAdditionalDocumentsOptions($oAdditionalDocuments);
+
+/**
+ * Seite zusammenstellen
+ */
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGui);
+
+// Die Seiten nur zusammen setzen, wenn das Recht da ist.
+if(Ext_Thebing_Access::hasRight('thebing_tuition_resource_teachers_crm')) {
+
+	/**
+	 * Kommentare
+	 */
+	$oComments = new Ext_Thebing_Gui2_Comments('thebing_teachers_comments', 'Ext_Thebing_Teacher_Comments', 'teacher');
+	$oComments->setUploadRight("thebing_tuition_resource_teachers");
+	$oComments->setUploadPath(\Ext_Thebing_Teacher_Comments::getUploadDir($oSchool));
+	$oGuiComments = $oComments->get();
+
+	$oPage->setGui($oGuiComments,	array('hash' => $oGui->hash, 'foreign_key' => 'teacher_id', 'parent_primary_key' => 'id', 'reload' => true));
+
+	/**
+	 * Uploads
+	 */
+	$oUpload = new Ext_Thebing_Gui2_Uploads('thebing_teachers_uploads', 'Ext_Thebing_Teacher_Upload');
+	$oUpload->setUploadRight("thebing_tuition_resource_teachers");
+	$oUpload->setUploadPath(\Ext_Thebing_Teacher_Upload::getUploadDir($oSchool));
+	$oGuiPdf = $oUpload->get();
+
+	$oPage->setElement($oGuiPdf, array('hash' => $oGui->hash, 'foreign_key' => 'teacher_id', 'parent_primary_key' => 'id', 'reload' => true));
+
+}
+
+/**
+ * Zusatz
+ */
+$aOptionalData = array();
+$aOptionalData['js'] = array('/admin/extensions/thebing/tuition/js/teacher.js');
+$aOptionalData['js'][] = '/admin/extensions/thebing/gui2/util.js';
+$aOptionalData['css'] = array('/assets/ts/css/gui2.css');
+
+$oPage->display($aOptionalData);

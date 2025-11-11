@@ -1,0 +1,16 @@
+{
+  "//": "TODO: Update v-calendar 2.0.0: https://github.com/nathanreyes/v-calendar/issues/124",
+  "private": true,
+  "name": "@fidelo-bundle/ts-registration-form",
+  "version": "1.0.0",
+  "dependencies": {
+    "@fidelo-software/v-calendar": "^1.0.8",
+    "awesome-debounce-promise": "^2.1.0",
+    "vue-scrollto": "^2.18.2",
+    "vuejs-logger": "^1.5.5",
+    "vuelidate": "^0.7.5",
+    "vuelidate-error-extractor": "^2.4.1",
+    "vuex": "^3.1.2",
+    "v-tooltip": "^2.0.3"
+  }
+}

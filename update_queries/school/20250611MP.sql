@@ -1,0 +1,1 @@
+ALTER TABLE `ts_teachers` CHANGE `access_rights` `access_rights` BIT(8) NOT NULL DEFAULT b'10111001';

@@ -1,0 +1,71 @@
+.communication_preview_container {
+    @apply bg-white rounded-b-md;
+
+    .header {
+        @apply text-xs p-2 bg-white border-b border-gray-100/50;
+
+        .meta-data {
+            @apply flex flex-row items-center gap-x-1;
+
+            .contact-avatar {
+                @apply flex-none;
+
+                span {
+                    @apply grid items-center place-content-center rounded-full font-semibold text-base size-10 bg-gray-50 text-gray-500;
+                }
+            }
+
+            .mail-details {
+                @apply grow flex flex-col;
+
+                .row {
+                    @apply flex flex-row items-center gap-x-1 text-gray-500;
+
+                    .label {
+                        @apply text-gray-200;
+                    }
+
+                    .date {
+                        @apply font-medium;
+                    }
+
+                    &:first-child {
+                        @apply text-gray-700 font-semibold;
+                    }
+                }
+            }
+
+            .flags {
+                > div {
+                    @apply flex flex-row flex-wrap items-center gap-0.5;
+
+                    span {
+                        @apply px-1 py-0.5 text-nowrap bg-gray-100/50 rounded;
+                    }
+                }
+            }
+
+            .date {
+                @apply text-black font-semibold;
+            }
+        }
+
+    }
+
+    .preview_containers.attachments {
+        @apply mt-1 p-1 bg-gray-100/50 rounded-md;
+
+        > div {
+            @apply flex flex-row flex-wrap items-center gap-0.5;
+
+            button {
+                @apply py-0.5 px-1 flex flex-row items-center gap-x-0.5 text-nowrap rounded-md hover:bg-gray-100;
+            }
+        }
+    }
+
+    iframe {
+        @apply rounded-b-md;
+    }
+
+}

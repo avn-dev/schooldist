@@ -1,0 +1,60 @@
+class:
+  wdbasic: Office\Entity\RevenueAccounts
+orderby : 
+  - Office\Gui2\Dialog\RevenueAccountsDialog
+  - getOrderBy
+id:
+  column: id
+  alias: ora
+title: "Erlöskonten"
+description: "Office"
+access: "office_config"
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+            - number
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements: 
+        -
+          element: icon_new
+          dialog:
+            - Office\Gui2\Dialog\RevenueAccountsDialog
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Office\Gui2\Dialog\RevenueAccountsDialog
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    description: ""
+    resize: true
+    width: name
+  -
+    title: Nummer
+    column: number
+    description: ""
+    resize: false
+    width: name
+
+default_columns:

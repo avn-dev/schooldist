@@ -1,0 +1,245 @@
+class:
+  wdbasic: Ext_TS_Inquiry_Journey
+  gui: Ext_TS_Enquiry_Combination_Gui2
+  data: Ext_TS_Enquiry_Combination_Gui2_Data
+  js: RequestCombinationGui
+  icon_status: Ext_TS_Enquiry_Combination_Gui2_Icon_Active # + Ext_TS_Enquiry_Combination_Gui2_Data::isLockedGui()
+  row_style: Ext_TS_Enquiry_Combination_Gui2_Style_Row
+id:
+  alias: ts_ij
+access: thebing_students_contact_gui
+multiple_selection_lock: true
+where:
+  - Ext_TS_Enquiry_Combination_Gui2_Data
+  - getListWhere
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TS_Enquiry_Combination_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TS_Enquiry_Combination_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: seperator
+      -
+        element: icon
+        label: PDF erstellen/bearbeiten
+        task: openDialog
+        action: document_edit
+        access:
+          - thebing_students_contact_gui
+          - ""
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - pdf
+      -
+        element: icon
+        label: PDF löschen
+        task: request
+        action: delete_offer_pdf
+        access:
+          - thebing_students_contact_gui
+          - ""
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - storno
+      -
+        element: icon
+        label: In eine Buchung umwandeln
+        action: convert_offer_to_inquiry
+        task: openDialog
+        dialog: [Ext_Gui2_Factory_Default, getDialog]
+        access:
+          - thebing_students_contact_convert
+          - ""
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - page_go
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Legende
+      -
+        element: legend_info
+        label: Umgewandelte Angebote
+        info:
+          color: lightgreen
+columns:
+  -
+    title: Angebotsnummer
+    group: Angebot
+    column: document_number
+    width: number
+    sortable: true
+  -
+    title: Betrag
+    group: Angebot
+    column: amount
+    width: amount
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Amount
+    resize: false
+    sortable: false
+  -
+    title: PDF
+    group: Angebot
+    column: pdf
+    width: icon
+    format: Ext_Thebing_Gui2_Format_Pdf
+    sortable: false
+  -
+    title: Kurse
+    group: Kurse
+    column: courses
+    width: name
+    #resize: true
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - course
+      - '["getCourseName", true, true]' # Arrays werden natürlich als kontextloser Methodenaufruf angesehen
+  -
+    title: Start
+    group: Kurse
+    column: courses_start
+    width: date
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - course
+      - '["getData", "from"]'
+      - Ext_Thebing_Gui2_Format_Date
+  -
+    title: Ende
+    group: Kurse
+    column: courses_end
+    width: date
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - course
+      - '["getData", "until"]'
+      - Ext_Thebing_Gui2_Format_Date
+  -
+    title: Wochen
+    group: Kurse
+    column: courses_weeks
+    width: name
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - course
+      - '["getData", "weeks"]'
+  -
+    title: Unterkünfte
+    group: Unterkünfte
+    column: accommodations
+    width: name
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - accommodation
+      - '["getAccommodationCategoryWithRoomTypeAndMeal"]'
+  -
+    title: Unterkünfte - Start
+    group: Unterkünfte
+    column: accommodations_start
+    width: date
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - accommodation
+      - '["getData", "from"]'
+      - Ext_Thebing_Gui2_Format_Date
+  -
+    title: Unterkünfte - Ende
+    group: Unterkünfte
+    column: accommodations_end
+    width: date
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - accommodation
+      - '["getData", "until"]'
+      - Ext_Thebing_Gui2_Format_Date
+  -
+    title: Transfer
+    group: Transfer
+    column: transfer_mode
+    width: name
+    default: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Transfer
+  -
+    title: Anreiseinformation
+    group: Transfer
+    column: transfer_arrival
+    width: long_description
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Transfer
+    format_params: [arrival] # PHP-Konstanten gibt es natürlich in YML nicht
+  -
+    title: Abreiseinformation
+    group: Transfer
+    column: transfer_departure
+    width: long_description
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Transfer
+    format_params: [departure] # PHP-Konstanten gibt es natürlich in YML nicht
+
+  -
+    title: Versicherungen
+    group: Versicherungen
+    column: insurances
+    width: name
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - insurance
+      - '["getInsuranceName"]'
+  -
+    title: Versicherungen - Start
+    group: Versicherungen
+    column: insurances_start
+    width: date
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - insurance
+      - '["getData", "from"]'
+      - Ext_Thebing_Gui2_Format_Date
+  -
+    title: Versicherungen - Ende
+    group: Versicherungen
+    column: insurances_end
+    width: date
+    default: false
+    sortable: false
+    format: Ext_TS_Enquiry_Combination_Gui2_Format_Data
+    format_params:
+      - insurance
+      - '["getData", "until"]'
+      - Ext_Thebing_Gui2_Format_Date

@@ -1,0 +1,76 @@
+hash: cfbcb5c1b7f166e3976af72a7f4a477a
+class:
+  wdbasic: Ext_Thebing_School_Week
+  data: Ext_Thebing_School_Week_Gui2_Data
+access: thebing_marketing_weeks
+id:
+  column: id
+  alias: kw
+sortable: true
+limit: PHP_INT_MAX
+only_pagecount: true
+orderby:
+  - Ext_Thebing_School_Week_Gui2_Data 
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+            - id
+            - week
+            - title
+        alias: 
+            - kw
+            - kw
+            - kw
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog: 
+          - Ext_Thebing_School_Week_Gui2_Data  
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_School_Week_Gui2_Data 
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Bezeichnung
+    alias: kw
+    column: title
+    width: name
+    resize: true   
+  - 
+    title: Schulen	
+    column: schools
+    width: name
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+        - [Ext_Thebing_Client, getSchoolList, true]
+  - 
+    title: Extrawoche	
+    column: extra
+    alias: kw
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_YesNo
+  - 
+    title: Startwoche	
+    column: start_week
+    alias: kw
+    width: number
+  - 
+    title: Wochenanzahl	
+    column: week_count
+    alias: kw
+    width: number  
+    

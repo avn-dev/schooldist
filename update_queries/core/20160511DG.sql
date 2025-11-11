@@ -1,0 +1,1 @@
+ALTER TABLE `tc_frontend_templates` ADD `use_default_template` TINYINT NOT NULL AFTER `usage`;

@@ -1,0 +1,72 @@
+class:
+  data: \TsReporting\Gui2\ReportData
+  wdbasic: \TsReporting\Entity\Report
+  js: AccessMatrixGui
+orderby:
+  name: ASC
+access: ts_reporting_definitions
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsReporting\Gui2\ReportDialogData
+          - createDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsReporting\Gui2\ReportDialogData
+          - createDialog
+      -
+        element: icon_delete
+  -
+    position: top
+    last: true
+    elements:
+      -
+        element: icon
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - access
+        task: openDialog
+        action: openAccessDialog
+        active: 1
+        label: Zugriffsrechte
+columns:
+  -
+    visible: true
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    visible: true
+    title: Basis
+    column: base
+    width: comment
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [TsReporting\Gui2\ReportData, getBaseOptions]
+  -
+    visible: true
+    title: Visualisierung
+    column: visualization
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [TsReporting\Gui2\ReportData, getVisualizationOptions]
+js:
+  - /admin/extensions/tc/js/access_matrix.js
+  - /assets/ts-reporting/js/reporting.js

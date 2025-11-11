@@ -1,0 +1,360 @@
+hash: 4e289ca973cc2b424d58ec10197bd160
+class:
+  wdbasic: Ext_Thebing_Inquiry_Payment
+  data: Ext_TS_Payment_Release_Gui2_Data
+row_multiple_checkbox: Ext_TS_Payment_Release_Gui2_MultipleCheckbox
+access: thebing_accounting_incoming_inquiry_payments
+sidebar: true
+designer:
+  flex: inquiries_payments
+id:
+  column: id
+  alias: ip
+sum_row_columns:
+  - amount
+multiple_selection: true
+where:
+  - Ext_TS_Payment_Release_Gui2_Data
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+#     -
+#        element: labelgroup
+#        label:
+     -       
+        element: icon
+        label: Freigeben
+        task: confirm
+        access: [thebing_accounting_incoming_inquiry_payments, release]
+        action: release
+        confirm_message: Wollen Sie die Zahlungen wirklich freigeben?
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - edit 
+     -       
+        element: icon
+        label: Test-Export
+        task: requestAsUrl
+        action: testExport
+        access: [thebing_accounting_incoming_inquiry_payments, release]
+        confirm_message: Wollen Sie die Zahlungen wirklich freigeben?
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - page     
+columns:
+  - 
+    title: Kundennummer
+    alias: ip
+    column: customerNumber
+    width: customer_number
+    small: true
+    filterset:
+      type: input
+  -
+    title: Buchungsnummer
+    column: inquiry_number
+    width: number
+    filterset:
+      type: input
+  - 
+    title: Rechnungsnummer	
+    column: document_number
+    width: document_number
+    small: true
+    filterset:
+      type: input
+  -
+    title: Belegnummer
+    column: receipt_number
+    width: document_number
+    small: true
+    filterset:
+      type: input
+  - 
+    title: Name 	
+    alias: ip
+    column: fullname
+    data: lastname
+    sortable_column: lastname
+    width: customer_name
+    format: Ext_Thebing_Gui2_Format_CustomerName
+  -
+    title: Vorname
+    alias: ip
+    column: firstname
+    width: customer_name
+    filterset:
+      type: input
+    default: false
+  -
+    title: Nachname
+    alias: ip
+    column: lastname
+    width: customer_name
+    filterset:
+      type: input
+    default: false
+  - 
+    title: Vertriebsmitarbeiter 	
+    column: sales_person_id
+    width: customer_name
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    sortable: false
+    default: false
+  - 
+    title: Nationalität 	
+    column: nationality
+    width: nationality
+  - 
+    title: Agentur 	
+    alias: ip
+    column: agency
+    width: name
+    filterset:
+      type: input
+  -
+    title: Schule
+    column: school_id
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [ Ext_Thebing_Client, getSchoolList, true ]
+    width: name
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Client
+        - getSchoolList
+        - true
+  - 
+    title: Agenturnummer 	
+    column: agency_number
+    width: number
+  - 
+    title: Zahlungsdatum
+    alias: ip
+    column: date
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: date
+  -
+    visible: true
+    title: Währung
+    default: false
+    alias: ip
+    column: currency_id
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Currency
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_System
+        - getCurrencyList
+  - 
+    title: Freigabedatum 	
+    column: release_time
+    width: date_user
+    small: true
+    format: \TsAccounting\Gui2\Format\Release\DateUser
+    style: \TsAccounting\Gui2\Style\Released
+  -
+    title: Leistungsbeginn (Buchung)
+    alias: ip
+    column: service_from
+    width: name
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+    filterset:
+      type: date
+  -
+    title: Leistungsbeginn
+    alias: ip
+    column: items_service_from
+    width: name
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+    sortable: false
+  -
+    title: Transaktion 	
+    column: transaction_code
+    width: name
+    default: false
+  - 
+    title: Kommentar 	
+    alias: ip
+    column: comment
+    width: comment
+    format: Ext_Thebing_Gui2_Format_Nl2br
+    filterset:
+      type: input
+  - 
+    title: Betrag 	
+    column: amount
+    width: amount
+    format: Ext_Thebing_Gui2_Format_Amount
+  -
+    title: Gesamtbetrag (Rechnungen)
+    column: amount_documents
+    width: amount
+    format: \TsAccounting\Gui2\Format\Payments\AmountDocuments
+    default: false
+    sortable: false
+  -
+    title: Methode 	
+    column: name
+    data: method_name
+    alias: kpm
+    width: short_name
+  - 
+    title: Gezahlt von 	
+    column: sender
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_Inquiry_Payment, getSenderOptions]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Inquiry_Payment
+        - getSenderOptions
+  - 
+    title: Typ 	
+    column: type_id
+    width: short_name
+    format: Ext_Gui2_View_Format_Selection
+    format_params: 
+      - [Ext_Thebing_Inquiry_Payment, getTypeOptions]
+  - 
+    title: Inbox 	
+    column: inbox
+    small: true
+    width: name
+    default: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_System, getInboxList, true, true]
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Payment_Release_Gui2_Data
+        - getInboxes
+  -
+    visible: false
+    title: Absoluter Leistungszeitraum
+    alias: ip
+    column: service_period
+    width: date
+    filterset:
+      type: date
+      from_column: service_from
+      until_column: service_until
+  -
+    visible: false
+    title: Zahlungsmethode
+    alias: ip
+    column: method_id
+    width: name
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Payment_Release_Gui2_Data
+        - getMethods
+  -
+    visible: false
+    title: Agentur
+    alias: ip
+    column: agency_id
+    width: name
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Payment_Release_Gui2_Data
+        - getAgencies
+  -
+    visible: false
+    title: Buchungstyp
+    alias: ts_i
+    column: id
+    width: name
+    filterset:
+      type: select
+      options:
+        - \Ts\Gui2\Data\InquiryPaymentDetails
+        - getBookingTypes
+      query:
+        1: '`ip`.`agency_id` IS NOT NULL'
+        2: '`ip`.`agency_id` IS NULL'
+  -
+    visible: false
+    title: Freigabe
+    alias: ipr
+    column: release
+    width: name
+    filterset:
+      type: select
+      default: not_released
+      options:
+        - Ext_TS_Document_Release_Gui2_Data
+        - getIsReleasedFilterOptions
+      query:
+        released: '`ts_ipr`.`created` IS NOT NULL'
+        not_released: '`ts_ipr`.`created` IS NULL'
+
+default_columns:
+  -
+    visible: true
+    sortable: true
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ip
+    width: user_name
+  -
+    visible: true
+    sortable: true
+    title: Erstellt
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: created
+    alias: ip
+    width: date
+    filterset:
+      type: date
+  -
+    title: Buchung erstellt
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: inquiry_created
+    width: date
+    filterset:
+      type: date
+  -
+    visible: true
+    sortable: true
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: ip
+    width: user_name
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Payment_Release_Gui2_Data
+        - getEditorOptions
+  -
+    visible: true
+    sortable: true
+    title: Bearbeitet
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: changed
+    alias: ip
+    width: date
+filter_values:
+  date: [Ext_TS_Payment_Release_Gui2_Data, getPaymentDateFilterDefaultDate]

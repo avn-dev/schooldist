@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries_journeys_courses` ADD `index_attendance_warning` JSON NULL;

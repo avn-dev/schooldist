@@ -1,0 +1,24 @@
+parent: ts_inquiry 
+title: ""
+description: ""
+access: thebing_students_departure_list
+hash: d07bf86bf7bbe1b026df6c61969dda5d
+where : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getSudentlistWhere
+leftframe: true
+multiple_selection: true
+index:
+  registry: 
+    generate: false
+designer:
+  dialog: ""
+  filter: ts_students_departure
+  flex: student_record
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo
+filter_values:
+  all_end:
+    from: -P7D
+    until: P7D

@@ -1,0 +1,65 @@
+hash: 6ed56c2626e2a1be84e4ebd3d0f963fa
+class:
+  wdbasic: Ext_TC_Communication_AutomaticTemplate
+  data: Ext_TC_Communication_AutomaticTemplate_Gui2_Data
+  js: AutomaticTemplateGui
+js:
+  - [admin/template/automatictemplate.js, tc]
+access: core_admin_templates_automatic
+orderby:
+  - Ext_TC_Communication_AutomaticTemplate_Gui2_Data
+  - getOrderby
+id:
+  column: id
+  alias: tc_cat
+limit: 30
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+        alias:
+          - tc_cat
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Communication_AutomaticTemplate_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Communication_AutomaticTemplate_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ''
+    width: name
+    resize: true
+  -
+    title: Typ
+    column: type
+    width: name
+    format: Ext_TC_Communication_AutomaticTemplate_Gui2_Format_Type
+    resize: false
+  -
+    title: Empfänger
+    column: recipient_ids
+    alias: ''
+    width: long_description
+    resize: false
+    small: true
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_TC_Communication_AutomaticTemplate, getSelectOptionsRecipients]

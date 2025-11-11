@@ -1,0 +1,922 @@
+<?php
+ 
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess('office_reports');
+
+// Define the reports object
+$oReports = new Ext_Office_Reports($aConfigData);
+
+if($_VARS['export'] == 'month_payments') {
+
+	$iStart	= mktime(0,0,0, date('m', $_VARS['month']), 1, date('Y', $_VARS['month']));
+	$iEnd	= mktime(23,59,59, date('m', $_VARS['month']), date('t', $_VARS['month']), date('Y', $_VARS['month']));
+
+	$aResult = $oReports->getPaymentOverview($iStart, $iEnd);
+
+	header('Content-Disposition: inline; filename="payments.csv"');
+	header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+	header('Content-Type: text/x-comma-separated-values');
+
+	$sSeparator = ";";
+
+	$sLine = "Zeitpunkt".$sSeparator."Kunde".$sSeparator."Kundennummer".$sSeparator."Rechnungsnummer".$sSeparator."Betrag".$sSeparator."Zahlungstext\n";
+
+	foreach((array)$aResult as $aLine) {
+
+		$sLine .= strftime("%x %X", $aLine['created']).$sSeparator;
+		$sLine .= iconv('UTF-8', 'cp1252', $aLine['customer_name']).$sSeparator;
+		$sLine .= $aLine['customer_number'].$sSeparator;
+		$sLine .= $aLine['document_number'].$sSeparator;
+		$sLine .= number_format($aLine['amount'], 2, ",", ".").$sSeparator;
+		$sLine .= '"'.iconv('UTF-8', 'cp1252', $aLine['text']).'"';
+
+		$sLine .= "\n";
+
+	}
+
+	echo $sLine;
+
+	die();
+
+}
+
+$aStats = $aCustomerStats = array();
+
+if(
+	!isset($_VARS['from']) &&
+	isset($_SESSION['office']['reports']['from'])
+) {
+	$_VARS['from'] = $_SESSION['office']['reports']['from'];
+	$_VARS['till'] = $_SESSION['office']['reports']['till'];
+}
+
+if(!isset($_VARS['from'])) {
+
+	$sFromDay	= '01';
+	$sFromMonth	= '01';
+	$sFromYear	= date('Y');
+	$sTillDay	= date('t');
+	$sTillMonth	= date('m');
+	$sTillYear	= date('Y');
+
+} else {
+
+	$_SESSION['office']['reports']['from'] = $_VARS['from'];
+	$_SESSION['office']['reports']['till'] = $_VARS['till'];
+
+	$sFromDay	= substr($_VARS['from'], 0, 2);
+	$sFromMonth	= substr($_VARS['from'], 3, 2);
+	$sFromYear	= substr($_VARS['from'], 6);
+	$sTillDay	= substr($_VARS['till'], 0, 2);
+	$sTillMonth	= substr($_VARS['till'], 3, 2);
+	$sTillYear	= substr($_VARS['till'], 6);
+
+}
+
+// For input fields in the table
+$sFrom = $sFromDay.'.'.$sFromMonth.'.'.$sFromYear;
+$sTill = $sTillDay.'.'.$sTillMonth.'.'.$sTillYear;
+
+// By customer
+$iStart		= $iRealyStart	= gmmktime(0,0,0, $sFromMonth, $sFromDay, $sFromYear);
+$iCustEnd	= $iRealyEnd	= gmmktime(23,59,59, $sTillMonth, $sTillDay, $sTillYear);
+
+$from = new \Carbon\Carbon($iStart);
+$until = new \Carbon\Carbon($iCustEnd);
+
+$aResult	= $oReports->getDocumentStatsByCustomer($iStart, $iCustEnd);
+$aCustomerStats[] = $aResult;
+
+$oRevenueAccounts = \Office\Entity\RevenueAccounts::getInstance();
+$aRevenueAccounts = (array)$oRevenueAccounts->getArrayList(true);	
+
+// By month
+for( ; $sFromYear <= $sTillYear; $sFromYear++) {
+
+	if($sFromYear < $sTillYear) {
+		$sMonth = 12;
+	} else if($sFromYear == $sTillYear) {
+		$sMonth = $sTillMonth;
+	}
+
+	if($sFromMonth > 12) {
+		$sFromMonth = 1;
+	}
+
+	for( ; $sFromMonth <= $sMonth; $sFromMonth++) {
+
+		$iChartTimeStart = mktime(0,0,0, $sFromMonth, $sFromDay, $sFromYear);
+
+		$iStart		= mktime(0,0,0, $sFromMonth, $sFromDay, $sFromYear);
+		$iEnd		= mktime(23,59,59, date('m', $iChartTimeStart), date('t', $iChartTimeStart), date('Y', $iChartTimeStart));
+
+		$sDateFrom = date('Y', $iStart).'-'.date('m', $iStart).'-'.date('d', $iStart);
+		$sDateUntil = date('Y', $iChartTimeStart).'-'.date('m', $iChartTimeStart).'-'.date('t', $iChartTimeStart);
+
+		$aRevenueAccountReport = $oReports->getRevenueAccountsStats($sDateFrom, $sDateUntil);
+		$aResult = $oReports->getDocumentStats('account', $iStart, $iEnd, array('hide'=>array('draft'), 'OR_type' => array('credit', 'cancellation_invoice')));
+
+		$aResult['timestamp'] = $iStart;
+
+		if(!empty($aResult)) {
+			$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear] = $aResult;
+		}
+
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['revenue_accounts'] = $aRevenueAccountReport;
+
+		// Get the number and price of accepted offers
+		$aResult = $oReports->countAcceptedOffers($iStart, $iEnd);
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['offers_counter'] = $aResult['counter'];
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['offers_price'] = (float)$aResult['sum_net'];
+
+		$aResult = $arrChartInvoice = $oReports->getPaymentsInPeriod($iStart, $iEnd);
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['payments'] = $aResult['sum'];
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['payments_net'] = $aResult['sum_net'];
+
+		// Get the number and price of accounts
+		$aResult = $oReports->getDocumentStats('account', $iStart, $iEnd, array('hide'=>array('draft')));
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['accounts_avg'] = (float)$aResult['avg_net'];
+
+		$aResult = $oReports->getDocumentStats('offer', $iStart, $iEnd, array('hide'=>array('draft')));
+		$aStats[strftime('%b', $iChartTimeStart).'_'.$sFromYear]['offer_avg'] = (float)$aResult['avg_net'];
+	}
+}
+
+// Load header
+$arrOptions = array();
+$arrOptions['additional'] = '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+
+ob_start();
+
+?>
+
+<script type="text/javascript">MochiKit = {__export__: false};</script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Base.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Iter.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Base.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Color.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/DOM.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Format.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Signal.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/plotkit/PlotKit_Packed.js"></script>
+
+<script language="JavaScript" type="text/javascript" src="/admin/js/plotkit/drawchart.js"></script>
+
+<!--[if IE]>
+<script language="JavaScript" type="text/javascript" src="/admin/js/plotkit/excanvas.js"></script>
+<![endif]-->
+
+<script language="JavaScript" type="text/javascript" src="/admin/extensions/office/js/app.plotkit.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>
+
+<?php
+
+$arrOptions['additional'] .= ob_get_contents();
+ob_end_clean();
+
+Admin_Html::loadAdminHeader($arrOptions);
+
+?>
+
+<section class="content custom-gui">
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+	<div style="width: 920px;">
+
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<input type="hidden" name="view" value="<?=$_VARS['view']?>"/>
+		<?=printTableStart()?>
+			<?=printFormText('Von (TT.MM.JJJJ)', 'from', $sFrom)?>
+			<?=printFormText('Bis (TT.MM.JJJJ)', 'till', $sTill)?>
+		<?=printTableEnd()?>
+		<?=printSubmit('Anzeigen')?>
+	</form>
+		
+	</div>
+		
+	<div style="width: 1600px;">
+
+		<!-- ================================================== 1. Accordion ================================================== -->
+
+<?
+	if($_VARS['view'] == 'month') {
+		
+		$iLabelWidth = 160;
+		$iMonthWidth = 100;
+		
+		$iTotalWidth = $iLabelWidth + ($iMonthWidth*14);
+		
+?>
+			<div class="infoBox" style="width:100%; margin:0;">
+				<h1>Umsatz pro Monat</h1>
+				<div class="infoBoxContent">
+					<div>
+						<table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows" style="width:<?=$iTotalWidth?>px;">
+							<tr class="borderBottom noHighlight">
+								<td style="width: <?=$iLabelWidth?>px;">&nbsp;</td>
+								<?php
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<th style="width: '.$iMonthWidth.'px; text-align:left; padding:3px;">'.str_replace('_', ' ', $sKey).'</th>';
+								}
+								$iMonth = count($aStats);
+								$sFill = '';
+								for($iFill=$iMonth;$iFill<12;$iFill++) {
+									$sFill .= '<th style="width: '.$iMonthWidth.'px; text-align:left; padding:3px;">&nbsp;</th>';
+								}
+								?>
+								<?=$sFill?>
+								<th style="width: <?=$iMonthWidth?>px; text-align:left; padding:3px;">Gesamt</th>
+								<th style="width: <?=$iMonthWidth?>px; text-align:left; padding:3px;">Durchschnitt</th>
+							</tr>
+							<?php
+							foreach($aRevenueAccounts as $iRevenueAccountId=>$sRevenueAccount) {
+							?>
+							<tr>
+								<th style="padding:3px;"><?=$sRevenueAccount?></th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;">'.number_format($aValue['revenue_accounts'][$iRevenueAccountId], 2, ',', '.').' €</td>';
+									$fTotal = bcadd($fTotal, $aValue['revenue_accounts'][$iRevenueAccountId], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;"><?=number_format($fTotal, 2, ',', '.')?> €</th>
+								<td style="text-align:right; padding:3px;"><?=number_format($fTotal/count($aStats), 2, ',', '.')?> €</td>
+							</tr>
+							<?php
+							}
+							?>
+							<tr style="background-color:#f7f7f7;" class="borderBottom borderTop">
+								<th style="padding:3px;">Umsatz</th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;">'.number_format($aValue['sum_net'], 2, ',', '.').' €</td>';
+									$fTotal = bcadd($fTotal, $aValue['sum_net'], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;"><?=number_format($fTotal, 2, ',', '.')?> €</th>
+								<td style="text-align:right; padding:3px;"><?=number_format($fTotal/count($aStats), 2, ',', '.')?> €</td>
+							</tr>
+							<tr>
+								<th style="padding:3px;">Zahlungen</th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;"><a href="'.$_SERVER['PHP_SELF'].'?export=month_payments&month='.$aValue['timestamp'].'" onclick="bolReadyState=0;window.open(this.href);">'.number_format($aValue['payments'], 2, ',', '.').' €</a></td>';
+									$fTotal = bcadd($fTotal, $aValue['payments'], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;"><?=number_format($fTotal, 2, ',', '.')?> €</th>
+								<td style="text-align:right; padding:3px;"><?=number_format($fTotal/count($aStats), 2, ',', '.')?> €</td>
+							</tr>
+							<tr>
+								<th style="padding:3px;">Zahlungen (ohne USt.)</th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;"><a href="'.$_SERVER['PHP_SELF'].'?export=month_payments&month='.$aValue['timestamp'].'" onclick="bolReadyState=0;window.open(this.href);">'.number_format($aValue['payments_net'], 2, ',', '.').' €</a></td>';
+									$fTotal = bcadd($fTotal, $aValue['payments_net'], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;"><?=number_format($fTotal, 2, ',', '.')?> €</th>
+								<td style="text-align:right; padding:3px;"><?=number_format($fTotal/count($aStats), 2, ',', '.')?> €</td>
+							</tr>
+							<tr>
+								<th style="padding:3px;">Auftragseingang</th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;">'.number_format($aValue['offers_price'], 2, ',', '.').' €</td>';
+									$fTotal = bcadd($fTotal, $aValue['offers_price'], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;"><?=number_format($fTotal, 2, ',', '.')?> €</th>
+								<td style="text-align:right; padding:3px;"><?=number_format($fTotal/count($aStats), 2, ',', '.')?> €</td>
+							</tr>
+							<tr>
+								<th style="padding:3px;">&empty; - Angebote</th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;">'.number_format($aValue['offer_avg'], 2, ',', '.').' €</td>';
+									$fTotal = bcadd($fTotal, $aValue['offer_avg'], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;">&nbsp;</th>
+								<td style="text-align:right; padding:3px;">&nbsp;</td>
+							</tr>
+							<tr>
+								<th style="padding:3px;">&empty; - Rechnungen</th>
+								<?php
+								$fTotal = 0;
+								foreach((array)$aStats as $sKey => $aValue) {
+									echo '<td style="text-align:right; padding:3px;">'.number_format($aValue['accounts_avg'], 2, ',', '.').' €</td>';
+									$fTotal = bcadd($fTotal, $aValue['accounts_avg'], 5);
+								}
+								?>
+								<?=$sFill?>
+								<th style="text-align:right; padding:3px;">&nbsp;</th>
+								<td style="text-align:right; padding:3px;">&nbsp;</td>
+							</tr>
+						</table>
+
+					</div>
+				</div>
+			</div>
+		
+		<!-- ================================================== 5. Accordion ================================================== -->
+
+
+				<div class="infoBox" style="width:100%;">
+					<h1>Umsätze für <?=date('d.m.Y', $iRealyStart)?> - <?=date('d.m.Y', $iRealyEnd)?></h1>
+					<div class="infoBoxContent">
+						<div class="divCanvas"><canvas id="sales" width="698" height="150"></canvas></div>
+					</div>
+				</div>
+
+
+		<!-- ================================================== 6. Accordion ================================================== -->
+
+				<div class="infoBox" style="width:100%;">
+					<h1>Zahlungseingänge für <?=date('d.m.Y', $iRealyStart)?> - <?=date('d.m.Y', $iRealyEnd)?></h1>
+					<div class="infoBoxContent">
+						<div class="divCanvas"><canvas id="inPayment" width="698" height="150"></canvas></div>
+					</div>
+				</div>
+
+		<!-- ================================================== 7. Accordion ================================================== -->
+
+				<div class="infoBox" style="width:100%;">
+					<h1>Auftragseingänge für <?=date('d.m.Y', $iRealyStart)?> - <?=date('d.m.Y', $iRealyEnd)?></h1>
+					<div class="infoBoxContent">
+						<div class="divCanvas"><canvas id="inOrder" width="698" height="150"></canvas></div>
+					</div>
+				</div>
+
+
+	</div>
+
+<script type="text/javascript">
+	var aChartSales		= new Array();
+	var aChartInOrder	= new Array();
+	var aChartInPayment	= new Array();
+
+<?php
+
+// Get the number of selected months
+$iMonthsNumber = date('m', $iRealyEnd) - date('m', $iRealyStart) + 1;
+
+// Create the copy of real times
+$iCopyStart	= $iRealyStart;
+$iCopyEnd	= $iRealyEnd;
+
+// The sales diagramm
+for($i = 0; $i < $iMonthsNumber; $i++)
+{
+	$iRealyEnd = mktime(23,59,59, date("m", $iRealyStart), date("t", $iRealyStart), date("Y", $iRealyStart));
+	$arrChartInvoice = $oReports->getDocumentStats('account', $iRealyStart, $iRealyEnd, array('show'=>array('released', 'paid'), 'OR_type'=>array('credit', 'cancellation_invoice')));
+?>
+
+	aChartSales[<?=$i?>] = new Object();
+	aChartSales[<?=$i?>]['label'] = "<?=strftime("%b", $iRealyStart)?>";
+	aChartSales[<?=$i?>]['value'] = <?=round($arrChartInvoice['sum_net'])?>;
+
+<?php
+	$iRealyStart = $iRealyEnd+1;
+}
+
+// Reset the real times
+$iRealyStart	= $iCopyStart;
+$iRealyEnd		= $iCopyEnd;
+
+// The incomin order diagramm
+for($i = 0; $i < $iMonthsNumber; $i++)
+{
+	$iRealyEnd = mktime(23,59,59, date("m", $iRealyStart), date("t", $iRealyStart), date("Y", $iRealyStart));
+	$arrChartInvoice = $oReports->countAcceptedOffers($iRealyStart, $iRealyEnd);
+
+?>
+
+	aChartInOrder[<?=$i?>] = new Object();
+	aChartInOrder[<?=$i?>]['label'] = "<?=strftime("%b", $iRealyStart)?>";
+	aChartInOrder[<?=$i?>]['value'] = <?=round($arrChartInvoice['sum_net'])?>;
+
+<?
+	$iRealyStart = $iRealyEnd+1;
+}
+
+// Reset the real times
+$iRealyStart	= $iCopyStart;
+$iRealyEnd		= $iCopyEnd;
+
+// The incomin payment diagramm
+for($i = 0; $i < $iMonthsNumber; $i++)
+{
+	$iRealyEnd = mktime(23,59,59, date("m", $iRealyStart), date("t", $iRealyStart), date("Y", $iRealyStart));
+	$arrChartInvoice = $oReports->getPaymentsInPeriod($iRealyStart, $iRealyEnd);
+
+?>
+
+	aChartInPayment[<?=$i?>] = new Object();
+	aChartInPayment[<?=$i?>]['label'] = "<?=strftime("%b", $iRealyStart)?>";
+	aChartInPayment[<?=$i?>]['value'] = <?=round($arrChartInvoice['sum'])?>;
+
+<?
+	$iRealyStart = $iRealyEnd+1;
+}
+?>
+
+	function drawChart()
+	{
+		drawBarChart('sales', aChartSales, 'vertical');
+		drawBarChart('inOrder', aChartInOrder, 'vertical');
+		drawBarChart('inPayment', aChartInPayment, 'vertical');
+	}
+
+	document.observe("dom:loaded", function() {   
+		drawChart();
+	});
+
+</script>
+		
+		
+<?
+	} elseif($_VARS['view'] == 'customers') {
+?>
+		<!-- ================================================== 2. Accordion ================================================== -->
+
+			<div class="infoBoxContainer" style="width:100%;">
+				<div class="infoBox" style="width:100%; margin:0;">
+					<h1>Umsatz pro Kunde</h1>
+					<div class="infoBoxAdditional"><?=$arrBox['additional']?></div>
+					<div class="infoBoxContent">
+						<div>
+							<table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows">
+								<tr class="borderBottom noHighlight">
+									<th style="width:50%; text-align:center; padding:3px;">Kunde</th>
+									<th style="width:15%; text-align:center; padding:3px;">Umsatz</th>
+									<th style="width:15%; text-align:center; padding:3px;">Anteil in %</th>
+									<th style="width:5%; text-align:center; padding:3px;">ABC</th>
+									<th style="width:15%; text-align:center; padding:3px;">Zahlungsdauer</th>
+								</tr>
+								<?
+
+									// get abc classification
+									$iTotal = 0;
+									foreach((array)$aCustomerStats[0] as $sKey => $aValue) {
+										$iTotal += $aValue['sum_net'];
+									}
+
+									// Get average payment times
+									$aAverageTimes = $oReports->getAverageTimes();
+
+									$iTotalCount = 0;
+									$iTotalSum = 0;
+									$iProcentTotal = 0;
+									foreach((array)$aCustomerStats[0] as $sKey => $aValue) {
+										
+										$iProcent = $aValue['sum_net'] / $iTotal;
+										$iProcentTotal += $iProcent;								
+										
+										if($iProcentTotal <= 0.8) {
+											$aValue['class'] = 'A';
+										} elseif($iProcentTotal <= 0.95) {
+											$aValue['class'] = 'B';
+										} else {
+											$aValue['class'] = 'C';
+										}
+										
+										echo '<tr>';
+										echo '<td style="padding:3px;">'.$aValue['customer'].'&nbsp;</td>';
+										echo '<td style="text-align:right; padding:3px;">'.number_format($aValue['sum_net'], 2, ',', '.').' €</td>';
+										echo '<td style="text-align:right; padding:3px;">'.number_format(round($iProcent*100, 2), 2, ',', '.').' %</td>';
+										echo '<td style="text-align:right; padding:3px;">'.$aValue['class'].'</td>';
+										echo '<td style="text-align:right; padding:3px;">'.round($aAverageTimes[$aValue['customer_id']]['average'] / (60*60*24)).' Tage</td>';
+										echo '</tr>';
+										$iTotalCount += $aAverageTimes[$aValue['customer_id']]['c'];
+										$iTotalSum += $aAverageTimes[$aValue['customer_id']]['s'];
+									}
+								?>
+								<tr class="borderTop noHighlight">
+									<td style="padding:3px;">
+										<strong>Gesamt:</strong>
+									</td>
+									<td style="text-align:right; padding:3px;">
+										<strong><?=number_format($iTotal, 2, ',', '.')?> €</strong>
+									</td>
+									<td style="text-align:right; padding:3px;">
+										<strong>100,00 %</strong>
+									</td>
+									<td style="text-align:right; padding:3px;">
+										<strong>&nbsp;</strong>
+									</td>
+									<td style="text-align:right; padding:3px;">
+										<? $aTotalData = $oReports->getAverageTimes($aConfigData, true); ?>
+										<strong>&#216; <?=round($iTotalSum / $iTotalCount / (60*60*24))?> Tage</strong>
+									</td>
+								</tr>
+							</table>
+							
+						</div>
+						
+					</div>
+				</div>
+			</div>
+			<p class="note">
+				ABC: A = 80 % des Gesamtumsatzes, B = 15 %, C = 5 %
+			</p>
+
+<?php
+	} elseif($_VARS['view'] == 'development') {
+?>
+		<!-- ================================================== 3. Accordion ================================================== -->
+
+			<div class="infoBoxContainer" style="width:100%;">
+				<div class="infoBox" style="width:100%; margin:0;">
+					<h1>Allgemeine Geschäftsentwicklung <?=$from->year?></h1>
+					<div class="infoBoxAdditional"><?=$arrBox['additional']?></div>
+					<div class="infoBoxContent">
+						<div>
+							<table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows">
+								<tr class="borderBottom noHighlight">
+									<th style="width:20%;">&nbsp;</th>
+									<th style="width:10%;">&nbsp;</th>
+									<th colspan="2" style="width:35%; text-align:center; padding:5px;">Auftragseingang</th>
+									<th colspan="2" style="width:35%; text-align:center; padding:5px;">Umsatz</th>
+								</tr>
+								<?php
+								
+								$monthFrom = $until->clone();
+								$monthFrom->startOfMonth();
+								$monthUntil = $until->clone();
+								$monthUntil->endOfMonth();
+
+								$aData = $oReports->getPeriodeData($monthFrom->getTimestamp(), $monthUntil->getTimestamp()); 
+								?>
+								<tr>
+									<td style="padding:5px;">
+										<b>Laufender Monat</b>
+										<br />
+										(01.<?=date('m')?>. - <?=date('d')?>.<?=date('m')?>.)
+									</td>
+									<td style="padding:5px;">
+										<b><?=date('Y', $monthFrom->getTimestamp())?></b>
+										<br />
+										<?=date('Y', $monthFrom->getTimestamp())-1?>
+									</td>
+									<td style="text-align:right; padding:5px;">
+										<b><?=number_format($aData['this']['accepted'], 2, ',', '.')?></b>
+										<br />
+										<?=number_format($aData['last']['accepted'], 2, ',', '.')?>&nbsp;
+									</td>
+									<?
+										$sStyle	= $sPM = '';
+										if($aData['accepted'] > 0)
+										{
+											$sStyle	= ' color:green;';
+											$sPM	= '+';
+										}
+										if($aData['accepted'] < 0)
+										{
+											$sStyle = ' color:red;';
+										}
+									?>
+									<td style="text-align:right; padding:5px; white-space:nowrap; <?=$sStyle?>">
+										<?=$sPM.number_format($aData['accepted'], 2, ',', '.')?> %
+									</td>
+									<td style="text-align:right; padding:5px;">
+										<b><?=number_format($aData['this']['released'], 2, ',', '.')?></b>
+										<br />
+										<?=number_format($aData['last']['released'], 2, ',', '.')?>&nbsp;
+									</td>
+									<?
+										$sStyle	= $sPM = '';
+										if($aData['released'] > 0)
+										{
+											$sStyle	= ' color:green;';
+											$sPM	= '+';
+										}
+										if($aData['released'] < 0)
+										{
+											$sStyle = ' color:red;';
+										}
+									?>
+									<td style="text-align:right; padding:5px; white-space:nowrap; <?=$sStyle?>">
+										<?=$sPM.number_format($aData['released'], 2, ',', '.')?> %
+									</td>
+								</tr>
+								<?php
+								
+								$yearFrom = $until->clone();
+								$yearFrom->startOfYear();
+								$yearUntil = $until->clone();
+								$yearUntil->endOfYear();
+
+								$aData = $oReports->getPeriodeData($yearFrom->getTimestamp(), $yearUntil->getTimestamp()); ?>
+								<tr class="borderBottom">
+									<td style="padding:5px;">
+										<b>Laufendes Jahr</b>
+										<br />
+										(01.01. - <?=date('d')?>.<?=date('m')?>.)
+									</td>
+									<td style="padding:5px;">
+										<b><?=date('Y', $yearFrom->getTimestamp())?></b>
+										<br />
+										<?=date('Y', $yearFrom->getTimestamp())-1?>
+									</td>
+									<td style="text-align:right; padding:5px;">
+										<b><?=number_format($aData['this']['accepted'], 2, ',', '.')?></b>
+										<br />
+										<?=number_format($aData['last']['accepted'], 2, ',', '.')?>&nbsp;
+									</td>
+									<?
+										$sStyle	= $sPM = '';
+										if($aData['accepted'] > 0)
+										{
+											$sStyle	= ' color:green;';
+											$sPM	= '+';
+										}
+										if($aData['accepted'] < 0)
+										{
+											$sStyle = ' color:red;';
+										}
+									?>
+									<td style="text-align:right; padding:5px; white-space:nowrap; <?=$sStyle?>">
+										<?=$sPM.number_format($aData['accepted'], 2, ',', '.')?> %
+									</td>
+									<td style="text-align:right; padding:5px;">
+										<b><?=number_format($aData['this']['released'], 2, ',', '.')?></b>
+										<br />
+										<?=number_format($aData['last']['released'], 2, ',', '.')?>&nbsp;
+									</td>
+									<?
+										$sStyle	= $sPM = '';
+										if($aData['released'] > 0)
+										{
+											$sStyle	= ' color:green;';
+											$sPM	= '+';
+										}
+										if($aData['released'] < 0)
+										{
+											$sStyle = ' color:red;';
+										}
+									?>
+									<td style="text-align:right; padding:5px; white-space:nowrap; <?=$sStyle?>">
+										<?=$sPM.number_format($aData['released'], 2, ',', '.')?> %
+									</td>
+								</tr>
+								<tr class="borderBottom noHighlight">
+									<th style="width:20%;">&nbsp;</th>
+									<th style="width:10%;">&nbsp;</th>
+									<th colspan="2" style="width:35%; text-align:center; padding:5px;">Auftragseingang</th>
+									<th colspan="2" style="width:35%; text-align:center; padding:5px;">Umsatz</th>
+								</tr>
+								<?php
+								
+									for($iMonth = 1; $iMonth <= 12; $iMonth++) {
+										
+										$iStart	= mktime(0,0,0, $iMonth, 1, date('Y'));
+										$iEnd	= mktime(23,59,59, $iMonth, date('t', $iStart), date('Y', $iStart));
+
+										$monthFrom = $until->clone();
+										$monthFrom->month = $iMonth;
+										$monthFrom->month = $iMonth;
+										$monthFrom->startOfMonth();
+										$monthFrom->locale('de_DE');
+										$monthUntil = $until->clone();
+										$monthUntil->month = $iMonth;
+										$monthUntil->month = $iMonth;
+										$monthUntil->endOfMonth();
+
+										// Get data to a month
+										$aData = $oReports->getPeriodeData($monthFrom->getTimestamp(), $monthUntil->getTimestamp());
+								?>
+								<tr>
+									<td style="padding:5px;">
+										<b><?=$monthFrom->monthName?></b>
+									</td>
+									<td style="padding:5px;">
+										<b><?=date('Y', $monthFrom->getTimestamp())?></b>
+										<br />
+										<?=date('Y', $monthFrom->getTimestamp())-1?>
+									</td>
+									<td style="text-align:right; padding:5px;">
+										<b><?=number_format($aData['this']['accepted'], 2, ',', '.')?></b>
+										<br />
+										<?=number_format($aData['last']['accepted'], 2, ',', '.')?>&nbsp;
+									</td>
+									<?php
+										$sStyle	= $sPM = '';
+										if($aData['accepted'] > 0)
+										{
+											$sStyle	= ' color:green;';
+											$sPM	= '+';
+										}
+										if($aData['accepted'] < 0)
+										{
+											$sStyle = ' color:red;';
+										}
+									?>
+									<td style="text-align:right; padding:5px; white-space:nowrap; <?=$sStyle?>">
+										<?=$sPM.number_format($aData['accepted'], 2, ',', '.')?> %
+									</td>
+									<td style="text-align:right; padding:5px;">
+										<b><?=number_format($aData['this']['released'], 2, ',', '.')?></b>
+										<br />
+										<?=number_format($aData['last']['released'], 2, ',', '.')?>&nbsp;
+									</td>
+									<?php
+										$sStyle	= $sPM = '';
+										if($aData['released'] > 0)
+										{
+											$sStyle	= ' color:green;';
+											$sPM	= '+';
+										}
+										if($aData['released'] < 0)
+										{
+											$sStyle = ' color:red;';
+										}
+									?>
+									<td style="text-align:right; padding:5px; white-space:nowrap; <?=$sStyle?>">
+										<?=$sPM.number_format($aData['released'], 2, ',', '.')?> %
+									</td>
+								</tr>
+								<?
+									}
+								?>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+
+<?
+	} elseif($_VARS['view'] == 'orderbook') {
+		
+?>
+		<!-- ================================================== 4. Accordion ================================================== -->
+
+
+			<div class="infoBoxContainer" style="width:100%;">
+				<div class="infoBox" style="width:100%;">
+					<h1>Auftragsstatistik (Angebotsdatum <?=strftime("%x", $iRealyStart)?> bis <?=strftime("%x", $iRealyEnd)?>)</h1>
+					<div class="infoBoxContent">
+						<div>
+<?
+						$aOrderStats = $oReports->getOrderStats($iRealyStart, $iRealyEnd);
+?>
+							<table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows">
+								<tr class="borderBottom noHighlight">
+									<th style="width: 50%;">&nbsp;</th>
+									<th style="width: 25%;" colspan="2">Anzahl</th>
+									<th style="width: 25%;" colspan="2">Summe</th>
+								</tr>
+								<tr>
+									<td>Angebote angenommen</td>
+									<td style="text-align: right;"><?=$aOrderStats['accepted']['count']?></td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['accepted']['count'] / $aOrderStats['all']['count'] * 100, 0)?> %</td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['accepted']['sum_net'], 2, ",", ".")?> &euro;</td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['accepted']['sum_net'] / $aOrderStats['all']['sum_net'] * 100, 0)?> %</td>
+								</tr>
+								<tr>
+									<td>Angebote abgelehnt</td>
+									<td style="text-align: right;"><?=$aOrderStats['declined']['count']?></td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['declined']['count'] / $aOrderStats['all']['count'] * 100, 0)?> %</td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['declined']['sum_net'], 2, ",", ".")?> &euro;</td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['declined']['sum_net'] / $aOrderStats['all']['sum_net'] * 100, 0)?> %</td>
+								</tr>
+								<tr>
+									<td>Angebote offen</td>
+									<td style="text-align: right;"><?=$aOrderStats['released']['count']?></td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['released']['count'] / $aOrderStats['all']['count'] * 100, 0)?> %</td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['released']['sum_net'], 2, ",", ".")?> &euro;</td>
+									<td style="text-align: right;"><?=number_format($aOrderStats['released']['sum_net'] / $aOrderStats['all']['sum_net'] * 100, 0)?> %</td>
+								</tr>
+								<tr class="borderTop">
+									<th>Angebote insgesamt</th>
+									<th style="text-align: right;"><?=$aOrderStats['all']['count']?></th>
+									<th style="text-align: right;">100 %</th>
+									<th style="text-align: right;"><?=number_format($aOrderStats['all']['sum_net'], 2, ",", ".")?> &euro;</th>
+									<th style="text-align: right;">100 %</th>
+								</tr>
+								<tr class="noHighlight">
+									<td colspan="5">
+										<strong><br/>Angenommene Angebote werden im Durchschnitt nach <?=number_format($aOrderStats['duration']['average'] / 60 / 60 / 24, 0)?> Tagen angenommen.</strong>
+									</td>
+								</tr>
+							</table>
+
+						</div>
+					</div>
+				</div>
+
+				<div class="infoBox" style="width:100%;">
+					<h1>Auftragsbestand zum <?=strftime("%x")?></h1>
+					<div class="infoBoxContent">
+						<div>
+							<table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows">
+								<tr class="borderBottom noHighlight">
+									<th style="width:25%; text-align:center; padding:3px;">Kunde</th>
+									<th style="width:10%; text-align:center; padding:3px;">Nummer</th>
+									<th style="width:25%; text-align:center; padding:3px;">Betreff</th>
+									<th style="width:10%; text-align:center; padding:3px;">Datum</th>
+									<th style="width:10%; text-align:center; padding:3px;">Summe</th>
+									<th style="width:10%; text-align:center; padding:3px;">Abgerechnet</th>
+									<th style="width:10%; text-align:center; padding:3px;">Offen</th>
+								</tr>
+<?
+							$iTotalPrice = 0;
+							$iTotalCleared = 0;
+							$iTotalPending = 0;
+							$aOffers = $oReports->getCurrentOrderList();
+							foreach((array)$aOffers as $aOffer) {
+?>	
+								<tr>
+									<td style="padding:3px;"><?=$aOffer['company']?></td>
+									<td style="text-align:right; padding:3px;"><?=$aOffer['number']?></td>
+									<td style="padding:3px;"><?=$aOffer['subject']?></td>
+									<td style="padding:3px;"><?=strftime("%x", $aOffer['date_accepted'])?></td>
+									<td style="text-align:right; padding:3px;"><?=number_format($aOffer['price'], 2, ",", ".")?> &euro;</td>
+									<td style="text-align:right; padding:3px;"><?=number_format($aOffer['cleared'], 2, ",", ".")?> &euro;</td>
+									<td style="text-align:right; padding:3px;"><?=number_format($aOffer['price']-$aOffer['cleared'], 2, ",", ".")?> &euro;</td>
+								</tr>
+<?
+								$iTotalPrice += $aOffer['price'];
+								$iTotalCleared += $aOffer['cleared'];
+								$iTotalPending += ($aOffer['price']-$aOffer['cleared']);
+							}
+?>
+								<tr class="borderTop noHighlight">
+									<td style="padding:3px;" colspan="4"><strong>Gesamt</strong></td>
+									<td style="text-align:right; padding:3px;"><strong><?=number_format($iTotalPrice, 2, ",", ".")?> &euro;</strong></td>
+									<td style="text-align:right; padding:3px;"><strong><?=number_format($iTotalCleared, 2, ",", ".")?> &euro;</strong></td>
+									<td style="text-align:right; padding:3px;"><strong><?=number_format($iTotalPending, 2, ",", ".")?> &euro;</strong></td>
+								</tr>
+							</table>
+						</div>
+						
+					</div>
+				</div>
+
+				<div class="infoBox" style="width:100%;">
+					<h1>Offene Angebote zum <?=strftime("%x")?></h1>
+					<div class="infoBoxContent">
+						<div>
+							<table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows">
+								<tr class="borderBottom noHighlight">
+									<th style="width:40%; text-align:center; padding:3px;">Kunde</th>
+									<th style="width:10%; text-align:center; padding:3px;">Nummer</th>
+									<th style="width:25%; text-align:center; padding:3px;">Betreff</th>
+									<th style="width:10%; text-align:center; padding:3px;">Datum</th>
+									<th style="width:15%; text-align:center; padding:3px;">Summe</th>
+								</tr>
+<?
+							$iTotalPrice = 0;
+							$aOffers = $oReports->getOpenOffers();
+							foreach((array)$aOffers as $aOffer) {
+?>	
+								<tr>
+									<td style="padding:3px;"><?=$aOffer['company']?></td>
+									<td style="text-align:right; padding:3px;"><?=$aOffer['number']?></td>
+									<td style="padding:3px;"><?=$aOffer['subject']?></td>
+									<td style="padding:3px;"><?=strftime("%x", $aOffer['date'])?></td>
+									<td style="text-align:right; padding:3px;"><?=number_format($aOffer['price'], 2, ",", ".")?> &euro;</td>
+								</tr>
+<?
+								$iTotalPrice += $aOffer['price'];
+							}
+?>
+								<tr class="borderTop noHighlight">
+									<td style="padding:3px;" colspan="4"><strong>Gesamt</strong></td>
+									<td style="text-align:right; padding:3px;"><strong><?=number_format($iTotalPrice, 2, ",", ".")?> &euro;</strong></td>
+								</tr>
+							</table>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+
+<?
+	}
+?>
+
+
+		</td>
+	</tr>
+</table>
+</section>
+
+<?=Admin_Html::loadAdminFooter()?>

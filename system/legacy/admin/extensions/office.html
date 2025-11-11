@@ -1,0 +1,441 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/sajax.inc.php");
+
+Access_Backend::checkAccess("office");
+
+ob_start();
+
+?>
+
+<style>
+	table td img {
+		cursor: pointer;
+	}
+</style>
+
+<script type="text/javascript">
+</script>
+<script type="text/javascript">MochiKit = {__export__: false};</script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Base.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Iter.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Base.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Color.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/DOM.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Format.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/mochikit/Signal.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/plotkit/PlotKit_Packed.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/js/plotkit/drawchart.js"></script>
+
+<!--[if IE]>
+<script language="JavaScript" type="text/javascript" src="/admin/js/plotkit/excanvas.js"></script>
+<![endif]-->
+
+<script language="JavaScript" type="text/javascript" src="/admin/extensions/office/js/app.plotkit.js"></script>
+<script language="JavaScript" type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>
+    
+<link rel="stylesheet" href="/assets/adminlte/components/datatables.net-bs/css/dataTables.bootstrap.min.css">
+
+<?php
+
+$strAdditional = ob_get_contents();
+ob_end_clean();
+
+Admin_Html::loadAdminHeader($strAdditional);
+error_reporting(E_ALL);
+ini_set('display_errors',1);
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Office', 'Office')?></h1>
+</section>
+
+<section class="content">
+	
+	<div class="container">
+		
+		<div class="nav-tabs-custom">
+			<ul class="nav nav-tabs">
+				<li class="active"><a href="#tab_1" data-toggle="tab">Monatsumsätze <?=date("Y")?></a></li>
+				<li><a href="#tab_2" data-toggle="tab">Quartalsumsätze <?=date("Y")?></a></li>
+			</ul>
+			<div class="tab-content">
+				
+				<div class="tab-pane active" id="tab_1">
+					<div id="divOfficeChartMonth">
+						<div class="divCanvas"><canvas id="canvasStatsMonth" width="698" height="150"></canvas></div>
+					</div>
+				</div>
+
+				<div class="tab-pane" id="tab_2">
+					<div id="divOfficeChartQuarter">
+						<div class="divCanvas"><canvas id="canvasStatsQuarter" width="698" height="150"></canvas></div>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+	
+		<div class="row">
+			<div class="col-md-9">
+
+				<div class="box box-default" style="height: 300px;">
+					<div class="box-header with-border">
+						<h3 class="box-title">Übersicht</h3>
+					</div>
+					<div class="box-body" id="overview_detail_content">
+
+					</div>
+				</div>
+
+			</div>
+			<div class="col-md-3">
+				
+				<div class="box box-default" style="height: 300px;">
+					<div class="box-header with-border">
+						<h3 class="box-title">Zahlungsverkehr (brutto)</h3>
+					</div>
+					<div class="box-body" id="overview_payment_content">
+
+					</div>
+				</div>
+				
+			</div>
+		</div>
+		
+		
+		<!--
+                <div id="overview_due_tickets" class="infoBox" style="display: none;">
+                    <h1>Fällige Tickets</h1>
+                    <div class="infoBoxContent"><div id="overview_due_tickets_content"></div></div>
+                </div>
+                -->
+		
+		
+	<div class="box box-default collapsed-box">
+		<div class="box-header with-border">
+			<h3 class="box-title">F&auml;llige und in Kürze fällige Verträge</h3>
+			<div class="box-tools pull-right">
+				<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+				</button>
+			</div>
+		</div>
+		<div class="box-body" id="overview_due_contracts_content">
+			
+		</div>
+	</div>
+		
+		
+	<div class="box box-default collapsed-box">
+		<div class="box-header with-border">
+			<h3 class="box-title">Offene Forderungen, brutto</h3>
+			<div class="box-tools pull-right">
+				<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+				</button>
+			</div>
+		</div>
+		<div class="box-body" id="overview_receivables_content">
+			
+		</div>
+	</div>
+		
+		
+		
+		
+	<div class="box box-default collapsed-box">
+		<div class="box-header with-border">
+			<h3 class="box-title">Offene Verbindlichkeiten, brutto</h3>
+			<div class="box-tools pull-right">
+				<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+				</button>
+			</div>
+		</div>
+		<div class="box-body" id="overview_liabilities_content">
+			
+		</div>
+	</div>
+		
+			
+                <!-- <div id="overview_tickets" class="infoBox" style="display: none;">
+                    <h1>Ticketauswertung</h1>
+                    <div class="infoBoxAdditional" style="cursor: pointer;" onclick="$j('#overview_tickets_content').toggle();">aus-/einklappen</div>
+                    <div class="infoBoxContent"><div>
+                        <table cellpadding="0" cellspacing="0" border="0" class="tbl100 highlightRows">
+                            <tbody id="overview_tickets_content" style="display: none;"></tbody>
+                            <tr class="noHighlight borderTop">
+                                <th colspan="7">Gesamt</th>
+                                <th id="overview_tickets_total" style="text-align:right;"></th>
+                            </tr>
+                        </table>
+                    </div></div>
+                </div> -->
+		</div>
+</section>
+<script type="text/javascript">
+
+    var objLitBox;
+    function openDialog(strAmount, intId, strCashDiscountAmount, strCashDiscountPercent) {
+
+		var oGui = new GUI;
+
+		sHtml = '<style>.LB_content LABEL{width: 150px;}</style>';
+		sHtml += oGui.printFormHidden('inputDocumentId', intId);
+
+		sHtml += oGui.startFieldset('Zahlung eintragen');
+
+		if(strCashDiscountPercent && strCashDiscountPercent !== '0,00') {
+			sHtml += oGui.printFormCheckbox('Skonto gew&auml;hren ('+strCashDiscountPercent+' %)', 'grantCashDiscount');
+		}
+
+		sHtml += oGui.printFormInput('Eingezahlter Betrag', 'inputAmount', strAmount);
+		sHtml += oGui.printFormCheckbox('Bestätigungs-E-Mail', 'sendMail');
+		sHtml += oGui.printFormTextarea('Kommentar', 'comment', '');
+		sHtml += oGui.endFieldset();
+
+		sHtml += oGui.printFormButton('Zahlung eintragen', 'savePayments();', 'save_button', 'style="opacity:1; filter:alpha(opacity=100);"');
+
+		objLitBox = new LITBox(sHtml, {type:'alert', overlay:true, height:400, width:800, resizable:false, opacity:.9});
+
+		if(strCashDiscountPercent && strCashDiscountPercent !== '0,00') {
+			$j('#grantCashDiscount').observe('change', function() {
+				if(
+					$j('#grantCashDiscount').checked && (
+						$j('#inputAmount').val() === '' ||
+						$j('#inputAmount').val() === strAmount
+					)
+				) {
+					$j('#inputAmount').val() = strCashDiscountAmount;
+				} else if(
+					!$j('#grantCashDiscount').checked && (
+						$j('#inputAmount').val() === '' ||
+						$j('#inputAmount').val() === strCashDiscountAmount
+					)
+				) {
+					$j('#inputAmount').val() = strAmount;
+				}
+			});
+		}
+
+    }
+
+	function savePayments() {
+
+		var intDocumentId = $j('#inputDocumentId').val();
+		var mixAmount = $j('#inputAmount').val();
+		var sComment = encodeURIComponent($j('#comment').val());
+		var strGrantCashDiscount = '0';
+		if($j('#grantCashDiscount') !== null && $j('#grantCashDiscount').checked) {
+			strGrantCashDiscount = '1';
+		}
+
+		if(sComment === '') {
+			$j('#LB_title').update('Bitte geben Sie einen Kommentar an!');
+			return;
+		}
+
+		$j('.page-loader').show();
+
+		var sAction = '';
+		if (document.getElementById('sendMail').checked === true) {
+			sAction = 'sendMail';
+		}
+		mixAmount = mixAmount.replace(/\./g, "");
+		mixAmount = mixAmount.replace(/,/g, ".");
+		var strRequestUrl = '/admin/extensions/office.ajax.php';
+		var strParameters = 'task=payments&document_id='+intDocumentId+'&amount='+mixAmount+'&grant_cash_discount='+strGrantCashDiscount+'&action='+sAction+'&comment='+sComment;
+		var objAjax = new Ajax.Request(
+			strRequestUrl, {
+				method : 'post',
+				parameters : strParameters,
+				onComplete : refreshOverviewData
+			}
+		);
+		objLitBox.remove();
+
+	}
+
+    var arrOfficeChartMonth = new Array();
+    var arrOfficeChartQuarter = new Array();
+    var aYTicksMonth = new Array();
+    function drawChart() {
+        drawBarChart('canvasStatsMonth', arrOfficeChartMonth, 'vertical', aYTicksMonth);
+        drawBarChart('canvasStatsQuarter', arrOfficeChartQuarter, 'vertical');
+    }
+    
+    function init() {
+        refreshOverviewData();
+    }
+	
+    function refreshOverviewData() {
+        $j('.page-loader').show();
+        var strRequestUrl = '/office/overview/refreshOverview';
+        $j.post(
+            strRequestUrl,
+            displayOverviewData
+        );
+    }
+    function displayOverviewData(objResponse) {
+		
+        // overview_charts
+        if (objResponse.overview_charts === null) {
+            $j('#overview_charts').hide();
+            arrOfficeChartMonth = new Array();
+            aYTicksMonth = new Array();
+            arrOfficeChartQuarter = new Array();
+        } else {
+            $j('#overview_charts').show();
+            arrOfficeChartMonth = objResponse.overview_charts.chart_month;
+            aYTicksMonth = objResponse.overview_charts.y_ticks_month;
+            arrOfficeChartQuarter = objResponse.overview_charts.chart_quarter;
+            drawChart();
+        }
+        // overview_detail
+        if (objResponse.overview_detail === null) {
+            $j('#overview_detail').hide();
+            $j('#overview_detail_content').empty();
+        } else {
+            $j('#overview_detail').show();
+            $j('#overview_detail_content').html(objResponse.overview_detail);
+        }
+        // overview_payment
+        if (objResponse.overview_payment === null) {
+            $j('#overview_payment').hide();
+            $j('#overview_payment_content').empty();
+        } else {
+            $j('#overview_payment').show();
+            $j('#overview_payment_content').html(objResponse.overview_payment);
+        }
+        // overview_due_tickets
+        if (objResponse.overview_due_tickets === null) {
+            $j('#overview_due_tickets').hide();
+            $j('#overview_due_tickets_content').empty();
+        } else {
+            $j('#overview_due_tickets').show();
+            $j('#overview_due_tickets_content').html(objResponse.overview_due_tickets);
+        }
+        // overview_due_contracts
+        if (objResponse.overview_due_contracts_content === null) {
+            $j('#overview_due_contracts').hide();
+            $j('#overview_due_contracts_content').empty();
+        } else {
+            $j('#overview_due_contracts').show();
+            $j('#overview_due_contracts_content').html(objResponse.overview_due_contracts_content);
+        }
+        // overview_receivables
+        if (objResponse.overview_receivables_content === null) {
+            $j('#overview_receivables').hide();
+            $j('#overview_receivables_content').empty();
+        } else {
+            $j('#overview_receivables').show();
+            $j('#overview_receivables_content').html(objResponse.overview_receivables_content);
+			
+			$j('#overview_receivables_table').DataTable({
+				"paging": false,
+				columnDefs: [
+					{ type: 'date-eu', targets: [4,5] },
+					{ type: 'currency', targets: [7,9] }
+				]
+			});
+			
+        }
+        // overview_liabilities
+        if (objResponse.overview_liabilities_content === null) {
+            $j('#overview_liabilities').hide();
+            $j('#overview_liabilities_content').empty();
+        } else {
+            $j('#overview_liabilities').show();
+            $j('#overview_liabilities_content').html(objResponse.overview_liabilities_content);
+        }
+
+        // overview_tickets
+        if (objResponse.overview_tickets_content === null) {
+            $j('#overview_tickets').hide();
+            $j('#overview_tickets_content').empty();
+            $j('#overview_tickets_total').empty();
+        } else {
+            $j('#overview_tickets').show();
+            $j('#overview_tickets_content').html(objResponse.overview_tickets_content);
+            $j('#overview_tickets_total').html(objResponse.overview_tickets_total);
+        }
+
+        $j('.page-loader').hide();
+
+    }
+
+</script>
+
+<?php
+
+$sAdditional = '
+<script>jQuery(function() { init(); });</script>
+
+<script src="/assets/adminlte/components/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/assets/adminlte/components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+
+<script>
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "date-eu-pre": function ( date ) {
+        date = date.replace(" ", "");
+         
+        if ( ! date ) {
+            return 0;
+        }
+ 
+        var year;
+        var eu_date = date.split(/[\.\-\/]/);
+ 
+        /*year (optional)*/
+        if ( eu_date[2] ) {
+            year = eu_date[2];
+        }
+        else {
+            year = 0;
+        }
+ 
+        /*month*/
+        var month = eu_date[1];
+        if ( month.length == 1 ) {
+            month = 0+month;
+        }
+ 
+        /*day*/
+        var day = eu_date[0];
+        if ( day.length == 1 ) {
+            day = 0+day;
+        }
+ 
+        return (year + month + day) * 1;
+    },
+ 
+    "date-eu-asc": function ( a, b ) {
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+ 
+    "date-eu-desc": function ( a, b ) {
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+} );
+
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "currency-pre": function ( a ) {
+        a = (a==="-") ? 0 : a.replace(/\./g, \'\').replace(/,/g, \'.\').replace( /[^\d\-\.]/g, "" );
+        return parseFloat( a );
+    },
+ 
+    "currency-asc": function ( a, b ) {
+        return a - b;
+    },
+ 
+    "currency-desc": function ( a, b ) {
+        return b - a;
+    }
+} );
+
+</script>
+
+';
+
+echo Admin_Html::loadAdminFooter($sAdditional);

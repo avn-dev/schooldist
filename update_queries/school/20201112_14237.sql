@@ -1,0 +1,3 @@
+ALTER TABLE `kolumbus_teacher_schedule` ADD `valid_from` DATE NULL AFTER `creator_id`, ADD `valid_until` DATE NULL AFTER `valid_from`, ADD `priority` TINYINT NOT NULL DEFAULT '3' AFTER `valid_until`;
+ALTER TABLE `kolumbus_teacher_schedule` ADD `comment` TEXT NOT NULL;
+REPLACE INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES (50, NOW(), NOW(), 1, 'Lehrer » Verfügbarkeit', 'teachers_availability', 'teachers_availability');

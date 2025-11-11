@@ -1,0 +1,2 @@
+ALTER TABLE `ts_payment_conditions_settings` ADD `additional_fees_in_first_installment` TINYINT(1) NOT NULL DEFAULT '0';
+ALTER TABLE `ts_payment_conditions` CHANGE `surcharge_on` `surcharge_on` ENUM('','deposit','installments','final','course_fees') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

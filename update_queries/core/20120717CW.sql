@@ -1,0 +1,7 @@
+DROP TABLE `tc_gui2_designs_filters_rows`;
+DROP TABLE `tc_gui2_designs_filters_rows_elements`;
+DROP TABLE `tc_gui2_designs_filters_rows_elements_i18n`;
+DROP TABLE `tc_gui2_designs_filters_rows_elements_selectoptions`;
+DROP TABLE `tc_gui2_designs_filters_rows_elements_selectoptions_i18n`;
+DROP TABLE `tc_gui2_designs_filters_rows_elements_to_tab_elements`;
+DROP TABLE `tc_gui2_designs_filters_rows_to_user_groups`;

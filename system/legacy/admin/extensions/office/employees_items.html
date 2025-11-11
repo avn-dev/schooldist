@@ -1,0 +1,208 @@
+<?php
+
+require_once(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('office_employees');
+
+/**
+ * Daten vorbereiten
+ */
+// Liste der Mitarbeiter holen
+$aEmployees = Ext_Office_Employee_Items::getEmployees();
+$oFloatFormat = new Ext_Gui2_View_Format_Float(',', '.');
+$oFloatFormatCurrency = new Ext_Office_Employee_Gui2_Float(',', '.');
+
+/**
+ * GUI Objekt
+ */
+$oGui = new Ext_Gui2(md5('office_employees_items'));
+
+$oGui->setWDBasic('Ext_Office_Employee_Items');
+$oGui->setTableData('where', array('oei.active' => 1));
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('oei.name' => 'ASC'));
+
+// Listen Optionen
+$oGui->gui_description 		= 'Office';
+$oGui->gui_title 			= 'Mitarbeiter &raquo; Anschaffungen';
+$oGui->column_sortable		= 1; // es geht nur eine sortierart!
+$oGui->row_sortable			= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGui->multiple_selection 	= 1;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'oei';
+
+# START - Dialog 1 #
+
+	$oDialog = $oGui->createDialog('Dialog title - {name}', 'Dialog title - Neuer Eintrag');
+
+	$oDialog->setElement($oDialog->createRow('Bezeichnung', 'input', array('db_alias' => 'oei', 'db_column'=>'name', 'required'=>true)));
+
+	$oDialog->setElement($oDialog->createRow('Betrag', 'input', array('db_alias' => 'oei', 'db_column'=>'amount', 'required'=>true, 'format'=>$oFloatFormat)));
+
+	$oDialog->setElement(
+		$oDialog->createRow(
+			'Mitarbeiter',
+			'select',
+			array(
+				'db_alias' => 'oei',
+				'db_column'=>'employee_id',
+				'select_options'=>$aEmployees,
+				'required'=>true
+			)
+		)
+	);
+
+	$oDialog->setElement($oDialog->createRow('Beschreibung', 'textarea', array('db_alias' => 'oei', 'db_column'=>'description')));
+
+	$oDialog->save_bar_options		= true;
+
+	$oDialog->save_bar_default_option	= 'close';
+	$oDialog->width = 900;
+	$oDialog->height = 600;
+
+# START Leiste 1 - Suche #
+
+	$oBar = $oGui->createBar();
+	$oBar->width = '100%';
+
+	$oLabelGroup = $oBar->createLabelGroup('Filter');
+	$oBar ->setElement($oLabelGroup);
+
+	$oFilter = $oBar->createFilter();
+	$oFilter->db_column = 'name';
+	$oFilter->db_alias = '';
+	$oFilter->label = 'Bezeichnung';
+	$oFilter->id = 'search';
+	$oBar ->setElement($oFilter);
+
+	// Leeren Eintrag vorbereiten
+	$aEmployeesSelect = array(array(0=>'')) + $aEmployees;
+	
+	$oFilter = $oBar->createFilter('select');
+	$oFilter->db_column = array('employee_id');
+	$oFilter->db_alias = array();
+	$oFilter->db_operator = '=';
+	$oFilter->select_options = $aEmployeesSelect;
+	$oFilter->id = 'employee';
+	$oFilter->label = $oGui->t('Mitarbeiter');
+	$oBar ->setElement($oFilter);
+
+
+	$oFilter = $oBar->createTimeFilter();
+	$oFilter->db_from_column = array('created'); // Spalten ( von/bis müssen die gleiche anzahl haben )
+	$oFilter->db_from_alias = '';
+	$oFilter->db_until_column = array('created'); // Spalten( von/bis müssen die gleiche anzahl haben )
+	$oFilter->db_until_alias = '';
+	$oFilter->label = 'Datum';
+	$oFilter->default_from = ''; // Standart Wert
+	$oFilter->default_until = ''; // Standart Wert
+	$oFilter->search_type = 'between';
+	$oBar ->setElement($oFilter);
+
+	$oGui->setBar($oBar);
+
+
+# START Leiste 2 #
+
+	$oBar = $oGui->createBar();
+	$oBar->width = '100%';
+
+	$oLabelGroup = $oBar->createLabelGroup('Test Label');
+	$oBar ->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createNewIcon(
+				L10N::t('Neuer Eintrag', $oGui->gui_description),
+				$oDialog,
+				L10N::t('Neuer Eintrag', $oGui->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				$oGui->t('Editieren'),
+				$oDialog,
+				L10N::t('Editieren', $oGui->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+	$oGui->setBar($oBar);
+
+# START - Leiste 3 #
+	
+	$oBar = $oGui->createBar();
+	$oBar->width = '100%';
+	$oBar->position = 'top';
+
+	$oPagination = $oBar->createPagination();
+	$oBar ->setElement($oPagination);
+
+	$oSeperator = $oBar->createSeperator();
+	$oBar ->setElement($oSeperator);
+
+	$oLabelGroup = $oBar->createLabelGroup('Export');
+	$oBar ->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('CSV', $oGui->gui_description));
+	$oIcon->label = $oGui->t('CSV');
+	$oBar ->setElement($oIcon);
+
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+	$oGui->setBar($oBar);
+	
+# ENDE Leiste 3
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'id';
+$oColumn->db_alias = '';
+$oColumn->title = 'ID';
+$oColumn->width = 50;
+$oColumn->width_resize = false;
+$oColumn->inplaceEditor = 0;
+$oColumn->format = 'Int';
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'employee_id';
+$oColumn->db_alias = '';
+$oColumn->title = 'Mitarbeiter';
+$oColumn->width = 250;
+$oColumn->width_resize = false;
+$oColumn->inplaceEditor = 0;
+$oColumn->format = new Ext_Gui2_View_Format_Selection($aEmployees);
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = '';
+$oColumn->title = 'Bezeichnung';
+$oColumn->width = 250;
+$oColumn->width_resize = true;
+$oColumn->inplaceEditor = 0;
+$oColumn->format = 'Text';
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'amount';
+$oColumn->db_alias = '';
+$oColumn->title = 'Betrag';
+$oColumn->width = 100;
+$oColumn->width_resize = false;
+$oColumn->inplaceEditor = 0;
+$oColumn->format = $oFloatFormatCurrency;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'created';
+$oColumn->db_alias = '';
+$oColumn->title = 'Datum';
+$oColumn->width = 140;
+$oColumn->width_resize = false;
+$oColumn->inplaceEditor = 0;
+$oColumn->format = 'Date_Time';
+$oGui->setColumn($oColumn);
+
+$oGui->display();

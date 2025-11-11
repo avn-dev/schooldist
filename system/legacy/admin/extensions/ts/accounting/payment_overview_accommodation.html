@@ -1,0 +1,20 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker('thebing_accounting_accommodation_payments_groupings');
+
+$oPage = new Ext_Gui2_Page();
+
+$oFactory = new Ext_Gui2_Factory('ts_accounting_provider_payment_overview_accommodation');
+$oGui = $oFactory->createGui();
+$oPage->setGui($oGui);
+
+$oFactory = new Ext_Gui2_Factory('ts_accounting_provider_payment_overview_accommodation_positions');
+$oChildGui = $oFactory->createGui('', $oGui);
+$oPage->setGui($oChildGui, array('foreign_key' => 'grouping_id',  'parent_primary_key' => 'id', 'reload' => true));
+
+// Page setzen, da Sie für den CSV / TXT-Export wichtig ist!
+$oGui->setPage($oPage);
+
+$oPage->display();

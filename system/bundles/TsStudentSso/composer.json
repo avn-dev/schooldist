@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/ts-student-sso",
+  "version": "1.0.1",
+  "require": {
+    "codegreencreative/laravel-samlidp": "5.3.*"
+  }
+}

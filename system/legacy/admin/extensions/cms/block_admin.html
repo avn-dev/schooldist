@@ -1,0 +1,749 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("edit");
+
+$sAdditional = '
+<link rel="stylesheet" href="/admin/assets/css/bootstrap-datetimepicker.min.css" />
+';
+Admin_Html::loadAdminHeader($sAdditional);
+
+$objWebDynamicsDAO = new \Cms\Helper\Data;
+
+$arrPageData = $objWebDynamicsDAO->getPageData($_VARS['page_id']);
+
+$oTemplate = \Cms\Entity\PageTemplate::getRepository()->findOneBy(['file' => $arrPageData['template']]);
+
+// check localization
+if(
+	$arrPageData['language'] == "" && 
+	$arrPageData['localization'] == 1
+) {
+	$bolLocalization = 1;
+	$strWhere = " AND language = '".DB::escapeQueryString($_VARS['language'])."' ";
+} else {
+	$bolLocalization = 0;
+	$strWhere = "";
+}
+
+
+if($_VARS['task'] == "save") {
+
+	if(!empty($_VARS['validfrom'])) {
+		$validfrom 	= strtotimestamp($_VARS['validfrom']);
+	} else {
+		$validfrom = 0;
+	}
+	if(!empty($_VARS['validto'])) {
+		$validto 	= strtotimestamp($_VARS['validto']);
+	} else {
+		$validto = 0;
+	}
+	$sSql = "UPDATE cms_content SET ";
+	if($validfrom > 0) {
+		$sSql .= "validfrom = FROM_UNIXTIME('".$validfrom."'), ";
+	} else {
+		$sSql .= "validfrom = 0, ";
+	}
+	if($validto > 0) {
+		$sSql .= "validto = FROM_UNIXTIME('".$validto."'), ";
+	} else {
+		$sSql .= "validto = 0, ";
+	}
+	$sSql .= " level = level, dynamic = ".(int)$_VARS['dynamic'].", content = '' WHERE id = ".(int)$_VARS['content_id']." LIMIT 1";
+	DB::executeQuery($sSql);
+
+	$buffer = array();
+	$c=0;
+	foreach((array)$_VARS['access'] as $val) {
+		if($val) {
+			$buffer[$val] = 1;
+			$c++;
+		}
+	}
+	foreach((array)$_VARS['noaccess'] as $val) {
+		if($val) {
+			$buffer[$val] = -1;
+			$c++;
+		}
+	}
+
+	$access = json_encode($buffer);
+	if($c==0) {
+		$access = "";
+	}
+
+	$query = "UPDATE cms_content SET access = '".\DB::escapeQueryString($access)."' WHERE id = ".(int)$_VARS['content_id']." LIMIT 1";
+	DB::executeQuery($query);
+
+	foreach((array)$_VARS['content'] as $key=>$val) {
+		if(is_array($val)) {
+			$val = json_encode($val);
+		}
+		$query = "UPDATE cms_blockdata SET page_id = ".(int)$_VARS['page_id'].", content = '".DB::escapeQueryString($val)."', uptodate = 0 WHERE id = ".(int)$key."";
+		DB::executeQuery($query);
+	}
+
+	enterlog($_VARS['page_id'], \Cms\Helper\Log::LOG_BLOCK_UPDATED);
+
+	$img = "page_";
+	if($arrPageData['indexpage'] == 1)
+		$img .= "home_";
+	else
+		$img .= "normal_";
+	$img .= "publish";
+	if($arrPageData['active'] == 0 || $arrPageData['menue'] == 0)
+		$img .= "_inactive";
+	if($arrPageData['access'] != "")
+		$img .= "_secure";
+	$img .= ".gif";
+
+?>
+<script>
+//var img = new Array();
+//img[0] = new Image();
+//img[0].src = "/admin/media/icon_status_yes.gif";
+//img[1] = new Image();
+//img[1].src = "/admin/media/<?=$img?>";
+//if(top && top.opener) {
+//	top.opener.parent.edittop.document.getElementById('btnStatus').src = img[0].src;
+//	top.opener.parent.edittop.document.getElementById('DIV_publish').style.visibility = "visible";
+//	if(top.opener.parent.parent.menue.document.getElementById('iid_<?=$_VARS['page_id']?>'))
+//		top.opener.parent.parent.menue.document.getElementById('iid_<?=$_VARS['page_id']?>').src = img[1].src;
+//
+//	top.opener.location.reload();
+//}
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+
+if($_VARS['task'] == "delete") {
+
+	DB::executeQuery("DELETE FROM cms_blockdata WHERE page_id = ".(int)$_VARS['page_id']." AND content_id = ".(int)$_VARS['content_id']."");
+	DB::executeQuery("DELETE FROM cms_content WHERE id = '".$_VARS['content_id']."'");
+	enterlog($_VARS['page_id'], \Cms\Helper\Log::LOG_BLOCK_DELETED);
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+parent.jQuery('#cms-modal').modal('hide');
+</script>
+<?
+}
+
+if($_VARS['task'] == "move")
+{
+	changePosition($_VARS['dir'],$_VARS['content_id'],"cms_content","WHERE page_id = '".(int)$_VARS['page_id']."' AND number = '".$_VARS['number']."' AND element = 'block'","system","level");
+	enterlog($_VARS['page_id'], \Cms\Helper\Log::LOG_BLOCK_POSITION);
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+?>
+
+<script language="JavaScript" type="text/javascript">
+
+function open_media(form_field, iType) {
+	self.open('/tinymce/resource/filemanager/dialog.php?type='+iType+'&lang=de&field_id='+form_field+'&popup=1', 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+
+function deleteBlock() {
+	var bolConfirm = confirm('<?=L10N::t('Möchten Sie diesen Block wirklich löschen?', 'CMS')?>');
+	if(bolConfirm) {
+		self.location.href='block_admin.html?content_id=<?=$_VARS['content_id']?>&block_id=<?=$_VARS['block_id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&level=<?=$_VARS['level']?>&task=delete';
+	}
+}
+
+function moveBlock(dir) {
+	self.location.href='block_admin.html?content_id=<?=$_VARS['content_id']?>&block_id=<?=$_VARS['block_id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&level=<?=$_VARS['level']?>&task=move&dir='+dir;
+}
+
+var bufferType = [];
+var bufferLink = [];
+var bufferTarget = [];
+var bufferPopup = [];
+
+
+function writeLink(id) {
+	var code = "";
+	var parameter = [];
+
+	if(bufferType[id] == "extern") {
+		bufferLink[id] = document.blockForm.elements['link_extern['+id+']'].value;
+	} else {
+		bufferLink[id] = document.blockForm.elements['link_intern['+id+']'].options[document.blockForm.elements['link_intern['+id+']'].selectedIndex].value;
+		bufferLink[id] += document.blockForm.elements['link_intern_query['+id+']'].value;
+	}
+
+	if(!bufferTarget[id]) bufferTarget[id] = "_self";
+
+	switch(bufferTarget[id]) {
+		case "_none":
+			code = bufferLink[id];
+			break;
+		case "_blank":
+			code = bufferLink[id]+'" onclick="window.open (this.href); return false;';
+			break;
+		case "popup":
+			parameter[1] = document.blockForm.elements['popup_width['+id+']'].value;
+			parameter[2] = document.blockForm.elements['popup_height['+id+']'].value;
+			parameter[3] = document.blockForm.elements['popup_scroll['+id+']'].options[document.blockForm.elements['popup_scroll['+id+']'].selectedIndex].value;
+			parameter[4] = document.blockForm.elements['popup_resize['+id+']'].options[document.blockForm.elements['popup_resize['+id+']'].selectedIndex].value;
+			code = 'javascript:void(0);\" onclick=\"window.open(\''+bufferLink[id]+'\', \'popup\', \'toolbar=0,scrollbars='+parameter[3]+',location=0,statusbar=0,menubar=0,resizable='+parameter[4]+',width='+parameter[1]+',height='+parameter[2]+'\');';
+			break;
+	}
+
+	document.blockForm.elements['content['+id+']'].value = code;
+
+}
+
+function changeLinktype(on,id) {
+	if(on.options[on.selectedIndex].value == "intern") {
+		document.getElementById('link_extern_'+id).style.display = 'none';
+		document.getElementById('link_intern_'+id).style.display = 'inline';
+	} else {
+		document.getElementById('link_intern_'+id).style.display = 'none';
+		document.getElementById('link_extern_'+id).style.display = 'inline';
+	}
+	bufferType[id] = on.options[on.selectedIndex].value;
+	writeLink(id);
+}
+
+function changeLink(on,id) {
+	writeLink(id);
+}
+
+function changeWindow(on,id) {
+	bufferTarget[id] = on.options[on.selectedIndex].value;
+	if(bufferTarget[id] == "popup") {
+		document.getElementById('popup_'+id).style.display = 'inline';
+	} else {
+		document.getElementById('popup_'+id).style.display = 'none';
+	}
+	writeLink(id);
+}
+
+var arrRows = [];
+
+function addCol(id) {
+
+	var idRow = document.blockForm.elements['TableRows_'+id].options[document.blockForm.elements['TableRows_'+id].selectedIndex].value;
+	var objTable = document.getElementById('Table_'+id);
+	var iRowIndex = objTable.rows.length;
+	var objTr = objTable.insertRow(iRowIndex);
+	objTr.id = 'tr_'+id+''+iRowIndex;
+	objTr.onmouseout = function() {	showRow(id+''+iRowIndex,0); };
+	objTr.onmousemove = function() { showRow(id+''+iRowIndex,1); };
+	objTr.ondblclick = function() { removeRow(objTr); };
+
+	var objTd = objTr.insertCell(0);
+	objTd.innerHTML = '<input type="hidden" name="content['+id+']['+iRowIndex+'][0]" value="'+idRow+'"> '+arrRows[idRow][2];
+	
+	for(var i=1;i<=arrRows[idRow][0];i++) {
+		var objTd = objTr.insertCell(i);
+		objTd.id = 'TableCell_'+id+'_'+iRowIndex+'_'+i+'';
+		objTd.innerHTML = '<textarea name=\"content['+id+']['+iRowIndex+']['+i+']\" rows=2 cols=20 class=\"txt2 form-control\"></textarea>';
+		if(i==1) {
+			objTd.innerHTML += '<input type=hidden name="content['+id+']['+iRowIndex+'][0]" value="'+idRow+'">';
+		}
+	}
+	
+	return false;
+}
+
+function removeRow(on) {
+	if(confirm('<?=L10N::t('Möchten Sie diese Zeile wirklich löschen?', 'CMS')?>')) {
+		on.parentNode.deleteRow(on.rowIndex);
+	}
+}
+
+</script>
+<?
+
+$my_element = DB::getQueryRow("SELECT UNIX_TIMESTAMP(validfrom) as validfrom,UNIX_TIMESTAMP(validto) as validto, access, number, level, dynamic, id FROM cms_content WHERE id = '".$_VARS['content_id']."'");
+$my_block 	= DB::getQueryRow("SELECT * FROM cms_blocks WHERE id = '".$_VARS['block_id']."'");
+
+// Standardblock für extensions
+if($my_block['block'] == "extension") {
+
+	$strSql = "SELECT id, content, public, uptodate FROM cms_blockdata WHERE (page_id IS NULL OR page_id = ".(int)$_VARS['page_id'].") AND content_id = '".intval($_VARS['content_id'])."' AND data_id = '1' ORDER BY page_id DESC";
+	$arrDataFile = DB::getQueryRow($strSql);
+	if(!$arrDataFile) {
+		DB::executeQuery("INSERT INTO cms_blockdata SET page_id = ".(int)$_VARS['page_id'].", content_id = '".(int)$_VARS['content_id']."', data_id = '1'");
+		$arrDataFile = DB::getQueryRow($strSql);
+	}
+
+	$strSql = "SELECT id, content, public, uptodate FROM cms_blockdata WHERE (page_id IS NULL OR page_id = ".(int)$_VARS['page_id'].") AND content_id = '".intval($_VARS['content_id'])."' AND data_id = '2' ORDER BY page_id DESC";
+	$arrDataTemplate = DB::getQueryRow($strSql);
+	if(!$arrDataTemplate) {
+		DB::executeQuery("INSERT INTO cms_blockdata SET page_id = ".(int)$_VARS['page_id'].", content_id = '".(int)$_VARS['content_id']."', data_id = '2'");
+		$arrDataTemplate = DB::getQueryRow($strSql);
+	}
+
+	$my_block['file'] = $arrDataFile['content'];
+	$my_block['content'] = $arrDataTemplate['content']; 
+}
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Block Administration', 'CMS')?> &raquo; <?=$my_block['title']?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+			
+			<form method="post" action="block_admin.html" name="blockForm" class="form-horizontal" enctype="multipart/form-data">
+			<input type="hidden" name="foo" value="1">
+			<input type="hidden" name="task" value="save">
+			<input type="hidden" name="number" value="<?=(int)$_VARS['number']?>">
+			<input type="hidden" name="content_id" value="<?=(int)$_VARS['content_id']?>">
+			<input type="hidden" name="block_id" value="<?=(int)$_VARS['block_id']?>">
+			<input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>">
+			<input type="hidden" name="language" value="<?=$_VARS['language']?>">
+			<!--<h2><?=L10N::t('Inhalt', 'CMS')?></h2>-->
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<colgroup>
+					<col width="30%">
+					<col width="70%">
+				</colgroup>
+<?
+if(
+	$my_block['file'] &&
+	is_file(Util::getDocumentRoot().'system/legacy/admin/extensions/'.$my_block['file'].'.html')
+) {
+?>
+				<tr>
+					<th><?=L10N::t('Konfiguration der Erweiterung', 'CMS')?></th>
+					<td><button onClick="document.location.href='/admin/extensions/<?=$my_block['file']?>.html?language=<?=$_VARS['language']?>&content_id=<?=$_VARS['content_id']?>&element_id=<?=$_VARS['number']?>&page_id=<?=$_VARS['page_id']?>';return false;" class="btn btn-default"><?=L10N::t('Weiter', 'CMS')?> &raquo;</button></td>
+				</tr>
+<?php
+}
+
+if($my_block['block'] == "extension") {
+
+	$aExtensions = Cms\Service\Extensions::getList();
+	
+	foreach($aExtensions as $sExtension=>$aExtension) {
+		$arrExtensions[$sExtension] = $aExtension['title'];
+	}
+
+?>
+				<?=printFormSelect(L10N::t('Erweiterung', 'CMS'), "content[".$arrDataFile['id']."]",$arrExtensions , $arrDataFile['content'])?>
+				<?=printFormTextarea(L10N::t('Template', 'CMS'), "content[".$arrDataTemplate['id']."]", $arrDataTemplate['content'])?>
+<?php
+
+	$intPos=0;
+	$sNeedle = '#sub:';
+	$blockCode = $arrDataTemplate['content'];
+	$strContentTags = "";
+	while(false !== ($intPos = strpos($blockCode, $sNeedle, $intPos))) {
+		$intEnd = strpos($blockCode,'#',$intPos+1);
+    	$strVar = substr($blockCode, $intPos+strlen($sNeedle), $intEnd-$intPos-strlen($sNeedle));
+		$arrInfo = explode(":",$strVar);
+		if(count($arrInfo) > 1) {
+			if($arrInfo[0] == "extension") {
+				$strContentTags .= "<#content".str_pad($arrInfo[1], 3, "0", STR_PAD_LEFT)."#>"; 
+				// check if entry in cms_content exists
+				$strSql = "	
+							SELECT 
+								*
+							FROM
+								cms_content
+							WHERE
+								page_id = :intPageId AND
+								level = :intLevel AND
+								number = :intNumber
+							";
+				$arrTransfer = array();
+				$arrTransfer['intPageId'] = intval($_VARS['page_id']);
+				$arrTransfer['intLevel'] = intval($my_element['level'])+1;
+				$arrTransfer['intNumber'] = intval($arrInfo[1]);
+				$arrSub = DB::getPreparedQueryData($strSql, $arrTransfer);
+				$arrSub = $arrSub[0];
+				if(!is_array($arrSub)) {
+					$strSqlInsert = "	
+								INSERT INTO 
+									cms_content
+								SET
+									element = 'submodul',
+									file = :strFile,
+									active = 1,
+									page_id = :intPageId,
+									level = :intLevel,
+									number = :intNumber
+								";
+					$arrTransferInsert = array();
+					$arrTransferInsert['strFile'] = $arrInfo[2];
+					$arrTransferInsert['intPageId'] = intval($_VARS['page_id']);
+					$arrTransferInsert['intLevel'] = intval($my_element['level'])+1;
+					$arrTransferInsert['intNumber'] = intval($arrInfo[1]);
+					DB::executePreparedQuery($strSqlInsert, $arrTransferInsert);
+					$arrSub = DB::getPreparedQueryData($strSql, $arrTransfer);
+					$arrSub = $arrSub[0];
+				}
+				// show configuration button
+				if(is_file(Util::getDocumentRoot().'system/legacy/admin/extensions/'.$arrInfo[2].'.html')) {
+?>
+				<tr>
+					<th><?=L10N::t('Konfiguration der Erweiterung', 'CMS')?> (Nummer: <?=$arrInfo[1]?>, Datei: <?=$arrInfo[2]?>)</th>
+					<td><button onclick="go('/admin/extensions/<?=$arrInfo[2]?>.html?language=<?=$_VARS['language']?>&content_id=<?=$arrSub['id']?>&element_id=<?=$arrSub['number']?>&page_id=<?=$arrSub['page_id']?>'); return false;" class="btn"><?=L10N::t('weiter', 'CMS')?>&raquo;</button></td>
+				</tr>
+<?
+				}
+			}
+		}
+		$intPos += strlen($sNeedle);
+	}
+
+	if($strContentTags != "") {
+		$strSql = "	
+					UPDATE
+						cms_content
+					SET
+						content = :strContent
+					WHERE
+						id = :intContentId
+					LIMIT 1
+					";
+		$arrTransfer = array();
+		$arrTransfer['strContent'] = $strContentTags;
+		$arrTransfer['intContentId'] = intval($my_element['id']);
+		DB::executePreparedQuery($strSql, $arrTransfer);
+	}
+
+}
+
+$blockCode = $my_block['content'];
+$editCode = "";
+$sScript  = "";
+
+$asTagPre = array('#wd:', '#block:');
+foreach($asTagPre as $sNeedle) {
+
+	$pos=0;
+	while(false !== ($pos = strpos($blockCode,$sNeedle,$pos))) {
+
+	    $end = strpos($blockCode, '#', $pos+1);
+    	$var = substr($blockCode, $pos+strlen($sNeedle), $end-$pos-strlen($sNeedle));
+		$info = explode(":", $var);
+
+		if(count($info)>1) {
+
+			$query = "SELECT id,content FROM cms_blockdata WHERE (page_id IS NULL OR page_id = ".(int)$_VARS['page_id'].") AND content_id = ".(int)$_VARS['content_id']." AND data_id = ".(int)$info[1]." ".$strWhere." ORDER BY page_id DESC";
+			$my_content = DB::getQueryRow($query);
+
+			if(!$my_content) {
+				if($bolLocalization) {
+					$strSql = "INSERT INTO cms_blockdata SET page_id = ".(int)$_VARS['page_id'].", content_id = ".(int)$_VARS['content_id'].", data_id = ".(int)$info[1].", language = '".\DB::escapeQueryString($_VARS['language'])."'";
+				} else {
+					$strSql = "INSERT INTO cms_blockdata SET page_id = ".(int)$_VARS['page_id'].", content_id = ".(int)$_VARS['content_id'].", data_id = ".(int)$info[1]."";
+				}
+				DB::executeQuery($strSql);
+				$my_content = DB::getQueryRow($query);
+			}
+
+			if($info[0] == "text") {
+				$my_content['content'] = "<tr><th>".L10N::t('Textelement', 'CMS')." '".$info['2']."'</th><td><textarea name=\"content[".$my_content['id']."]\" class=\"txt form-control\" rows=\"5\">".htmlspecialchars($my_content['content'])."</textarea></td></tr>\n";
+			} elseif($info[0] == "imgbuilder") {
+				$my_content['content'] = "<tr><th>Imagebuilder '".$info['2']."'</th><td><textarea name=\"content[".$my_content['id']."]\" class=\"txt form-control\" rows=\"5\">".htmlspecialchars($my_content['content'])."</textarea></td></tr>\n";
+			} elseif($info[0] == "script") {
+				$my_content['content'] = "<tr><th>".L10N::t('Textelement', 'CMS')." '".$info['2']."'</th><td><textarea name=\"content[".$my_content['id']."]\" class=\"txt form-control\" rows=\"5\">".htmlspecialchars($my_content['content'])."</textarea></td></tr>\n";
+			} elseif($info[0] == "html") {
+				$sValue = $my_content['content'];
+				$my_content['content'] = "<tr><th>HTML '".$info['2']."'</th><td>";
+				
+				$my_content['content'] .= "<textarea name=\"content[".$my_content['id']."]\" class=\"txt form-control tinymce\" rows=\"15\">".htmlspecialchars($sValue)."</textarea>";
+				
+				$my_content['content'] .= "</td></tr>\n";
+			} elseif($info[0] == "table") {
+
+				$sTable = \Cms\Service\PageParser::getBlockContent($blockCode,$var);
+				$blockCode = \Cms\Service\PageParser::replaceBlockContent($blockCode,$var, $sNeedle.$var."#");
+
+				$arrContent = Util::decodeSerializeOrJson($my_content['content']);
+
+				$arrRows = \Cms\Service\PageParser::getBlockContentAll($sTable,"row");
+
+				foreach($arrRows as $key=>$val) {
+					preg_match_all("/".$sNeedle."cell/i", $val[1], $regs);
+					$sScript .= "arrRows[".$key."] = new Array('".count($regs[0])."', '".str_replace("'","\'",preg_replace("/(\r\n|\r|\n)/",'\n',$val[1]))."', '".$val[0]."'); ";
+				}
+				$sScript .= "";
+
+				$sCode2 = "";
+
+				$sCode2 = "<table cellpadding=\"2\"cellspacing=\"2\" border=\"0\" class=\"table2\" id=\"Table_".$my_content['id']."\" width=\"100%\">";
+
+				if(!empty($arrContent)) {
+
+					$c=0;
+					foreach((array)$arrContent as $row) {
+						$sCode2 .= "<tr id=\"tr_".$my_content['id']."".$c."\" onDblClick=\"removeRow(this);\">";
+						$sCode2 .= '<td>';
+
+						$sCode2 .= '<input type="hidden" name="content['.$my_content['id'].']['.$c.'][0]" value="'.$row[0].'"> '.$arrRows[$row[0]][0];
+
+						$sCode2 .= '</td>';
+						for($i=1;$i<count($row);$i++) {
+							$sCode2 .= "<td>";
+							$sCode2 .= "<textarea name=\"content[".$my_content['id']."][".$c."][".$i."]\" rows=2 cols=20 class=\"txt form-control\">".$row[$i]."</textarea>";
+							$sCode2 .= "</td>";
+						}
+						$sCode2 .= "</tr>";
+						$c++;
+					}
+
+				}
+
+				$sCode2 .= "</table>";
+
+				$sCode1 = "<select name=\"TableRows_".$my_content['id']."\">";
+
+				foreach($arrRows as $key=>$val) {
+					$sCode1 .= "<option value=\"".$key."\">".$val[0]."";
+				}
+				$sCode1 .= "</select>";
+
+				$my_content['content'] = "<tr><th colspan=\"2\">".L10N::t('Tabelle', 'CMS')." '".$info['2']."'</th></tr><tr><td colspan=\"2\">".$sCode2."</td></tr><tr><td colspan=2>".$sCode1."&nbsp;<button class=\"btn\" onClick=\"return addCol(".$my_content['id'].");\">".L10N::t('hinzufügen', 'CMS')."</button></td></tr>\n";
+
+			} elseif($info[0] == "link") {
+				$buffer = stripslashes($my_content['content']);
+
+				if(strstr($buffer,"this.href")) {
+					$mode = "_blank";
+					$link = substr($buffer,0,strpos($buffer,'"'));
+				} elseif(strstr($buffer,"window.open")) {
+					$mode = "popup";
+					preg_match("/window.open\('([^']*)'/",$buffer,$regx);
+					$link = $regx[1];
+					preg_match("/scrollbars=([0-9]*)/",$buffer,$regx);
+					$scrollbars = $regx[1];
+					preg_match("/resizable=([0-9]*)/",$buffer,$regx);
+					$resizable = $regx[1];
+					preg_match("/width=([0-9]*)/",$buffer,$regx);
+					$width = $regx[1];
+					preg_match("/height=([0-9]*)/",$buffer,$regx);
+					$height = $regx[1];
+				} else {
+					$mode = "_none";
+					$iPos = strpos($buffer,'"');
+					if($iPos > 0) {
+						$link = substr($buffer,0,strpos($buffer,'"'));
+					} else {
+						$link = $buffer;
+					}
+				}
+
+				$strLinkQuery = "";
+
+				if(strstr($buffer, "pagelink#") === false) {
+					$type = "extern";
+					$link = $link;
+				} else {
+					$strLinkQuery = preg_replace("/(#page:([0-9]{1,}):pagelink#)(.*)/i", "$3", $link);
+					$link = preg_replace("/(#page:([0-9]{1,}):pagelink#)(.*)/i", "$1", $link);
+				
+					$type = "intern";
+				}
+
+				$my_content['content'] = "<tr><th>Link '".$info['2']."'</th><td><table cellpadding=2 cellspacing=0 border=0 class=table2><tr><td>";
+				$my_content['content'] .= "<select name=\"link_type[".$my_content['id']."]\" class=\"txt form-control\" onChange=\"changeLinktype(this,'".$my_content['id']."');\"><option value=\"intern\" ".(($type=="intern")?"selected":"").">".L10N::t('Interner Link', 'CMS')."<option value=\"extern\" ".(($type=="extern")?"selected":"").">".L10N::t('Externer Link', 'CMS')."</select>";
+				$my_content['content'] .= "<input type=\"hidden\" name=\"content[".$my_content['id']."]\" value=\"".htmlentities($buffer)."\" class=\"txt\" readonly>";
+
+				$my_content['content'] .= "<br>";
+				$my_content['content'] .= "<select name=\"link_window[".$my_content['id']."]\" class=\"txt form-control\" onChange=\"changeWindow(this,".$my_content['id'].");\"><option value=\"_none\" ".(($mode=="_none")?"selected":"").">keine Auswahl<option value=\"_blank\" ".(($mode=="_blank")?"selected":"").">".L10N::t('Öffnet in neuem Fenster', 'CMS')."<option value=\"popup\" ".(($mode=="popup")?"selected":"").">".L10N::t('Öffnet in PopUp', 'CMS')."</select>";
+
+				$my_content['content'] .= "</td><td>";
+
+				$my_content['content'] .= "<div style=\"display:".(($mode=="popup")?"block":"none").";\" id=\"popup_".$my_content['id']."\">";
+				$my_content['content'] .= "<table cellpadding=0 cellspacing=0 border=0><tr><td>";
+				$my_content['content'] .= "".L10N::t('Breite', 'CMS')."</td><td><input type=\"text\" name=\"popup_width[".$my_content['id']."]\" value=\"".$width."\" class=\"txt form-control\" style=\"width:50px;\" onKeyup=\"changeLink(this,".$my_content['id'].");\">";
+				$my_content['content'] .= "</td></tr><tr><td>";
+				$my_content['content'] .= "".L10N::t('Höhe', 'CMS')."</td><td><input type=\"text\" name=\"popup_height[".$my_content['id']."]\" value=\"".$height."\" class=\"txt form-control\" style=\"width:50px;\" onKeyup=\"changeLink(this,".$my_content['id'].");\">";
+				$my_content['content'] .= "</td></tr><tr><td>";
+				$my_content['content'] .= "".L10N::t('Bildlaufleiste', 'CMS')."</td><td><select name=\"popup_scroll[".$my_content['id']."]\" class=\"txt form-control\" style=\"width:50px;\" onChange=\"changeLink(this,".$my_content['id'].");\"><option value=1 ".(($scrollbars==1)?"selected":"").">".L10N::t('Ja', 'CMS')."<option value=0 ".(($scrollbars!=1)?"selected":"").">".L10N::t('Nein', 'CMS')."</select>";
+				$my_content['content'] .= "</td></tr><tr><td>";
+				$my_content['content'] .= "feste Größe</td><td><select name=\"popup_resize[".$my_content['id']."]\" class=\"txt form-control\" style=\"width:50px;\" onChange=\"changeLink(this,".$my_content['id'].");\"><option value=1 ".(($resizable==1)?"selected":"").">".L10N::t('Nein', 'CMS')."<option value=0 ".(($resizable!=1)?"selected":"").">".L10N::t('Ja', 'CMS')."</select>";
+				$my_content['content'] .= "</td></tr></table>";
+				$my_content['content'] .= "</div>";
+
+				$my_content['content'] .= "</td></tr><tr><td colspan=\"2\">";
+
+				$my_content['content'] .= "<div style=\"display:".(($type=="extern")?"inline":"none").";\" id=\"link_extern_".$my_content['id']."\">";
+				$my_content['content'] .= "<input type=\"text\" name=\"link_extern[".$my_content['id']."]\" value=\"".$link."\" class=\"txt form-control\" onKeyup=\"changeLink(this,".$my_content['id'].");\">";
+				$my_content['content'] .= "</div>";
+
+				$my_content['content'] .= "<div style=\"display:".(($type=="intern")?"inline":"none").";\" id=\"link_intern_".$my_content['id']."\">";
+
+				$my_content['content'] .= printPageSelect("link_intern[".$my_content['id']."]",$link,"","txt form-control","","onChange=\"changeLink(this,".$my_content['id'].");\"", false, 2);
+				$my_content['content'] .= "<input type=\"text\" name=\"link_intern_query[".$my_content['id']."]\" value=\"".\Util::convertHtmlEntities($strLinkQuery)."\" class=\"txt\" onKeyup=\"changeLink(this,".$my_content['id'].");\" autocomplete=\"off\">";
+				$my_content['content'] .= "</div>";
+
+				$my_content['content'] .= "<script>bufferType[".$my_content['id']."] = '".$type."';bufferLink[".$my_content['id']."] = '".$link."';bufferTarget[".$my_content['id']."] = '".$mode."';</script>";
+				$my_content['content'] .= "</td></tr></table></td></tr>\n";
+
+			} elseif($info[0] == "page") {
+
+				$intValue = intval($my_content['content']);
+				$my_content['content'] = "<tr><th>".L10N::t('Interner Link', 'CMS')." '".$info['2']."'</th>";
+				$my_content['content'] .= "<td>".printPageSelect("content[".$my_content['id']."]", $intValue,"","txt form-control","", "", array(""=>"keine Auswahl"), 1)."</td>";
+				$my_content['content'] .= "</tr>\n";
+
+			} elseif($info[0] == "image") {
+				$my_content['content'] = "<tr><th>".L10N::t('Bildelement', 'CMS')." '".$info['2']."'</th><td class=\"form-inline\"><input type=text id=\"content_".$my_content['id']."\" name=\"content[".$my_content['id']."]\" value=\"".$my_content['content']."\" size=60 class=\"txt form-control\" readonly style=\"background-color:#dededf;display: inline-block;\"> <button onclick=\"open_media('content_".$my_content['id']."', 1);return false;\" class=\"btn btn-default\">".L10N::t('auswählen', 'CMS')."</button> <button type=\"button\" onclick=\"document.getElementById('content_".$my_content['id']."').value='';return false;\" class=\"btn btn-default\">".L10N::t('entfernen', 'CMS')."</button></td></tr>\n";
+			} elseif($info[0] == "file") {
+				$my_content['content'] = "<tr><th>".L10N::t('Datei', 'CMS')." '".$info['2']."'</th><td class=\"form-inline\"><input type=text id=\"content_".$my_content['id']."\" name=\"content[".$my_content['id']."]\" value=\"".$my_content['content']."\" size=60 class=\"txt form-control\" readonly style=\"background-color:#dededf;display: inline-block;\"> <button onclick=\"open_media('content_".$my_content['id']."', 0);return false;\" class=\"btn btn-default\">".L10N::t('auswählen', 'CMS')."</button> <button type=\"button\" onclick=\"document.getElementById('content_".$my_content['id']."').value='';return false;\" class=\"btn btn-default\">".L10N::t('entfernen', 'CMS')."</button></td></tr>\n";
+			} elseif($info[0] == "content") {
+				$my_content['content'] = '<tr><th>'.L10N::t('Inhaltsbereich', 'CMS').' \''.$info['2'].'\'</th><td><a href="/admin/content.html?file=content&parent_id='.(int)$_VARS['content_id'].'&number='.$info['1'].'&language='.$_VARS['language'].'&page_id='.(int)$_VARS['page_id'].'" class="btn">'.L10N::t('Bereich editieren', 'CMS').'</a></td></tr>';
+			} else {
+				$my_content['content'] = "<tr><th>".L10N::t('Textelement', 'CMS')." '".$info['2']."'</th><td><textarea name=\"content[".$my_content['id']."]\" class=\"txt form-control\" rows=\"5\">".$my_content['content']."</textarea></td></tr>\n";
+			}
+			$editCode .= $my_content['content'];
+	    	$blockCode = str_replace($sNeedle.$var."#",$my_content['content'],$blockCode);
+		} else {
+			$pos += strlen($sNeedle);
+		}
+	}
+}
+echo $editCode;
+
+?>
+			</table>
+			<script>
+			<?=$sScript?>
+			function showSettings()
+			{
+				document.getElementById('show_settings').style.display='none';
+				document.getElementById('hide_settings').style.display='inline';
+				document.getElementById('settings').style.display='inline';
+			}
+			function hidewSettings()
+			{
+				document.getElementById('show_settings').style.display='inline';
+				document.getElementById('hide_settings').style.display='none';
+				document.getElementById('settings').style.display='none';
+			}
+			</script>
+			<div id="settings" style="display:none;">
+				<br />
+				<h2><?=L10N::t('Erweiterte Einstellungen', 'CMS')?></h2>
+
+					<?
+						if($_VARS['validtype']) {
+							$my_element['validtype'] = $_VARS['validtype'];
+						} else {
+							if($my_element['validto'] > 169200 ) {
+								$my_element['validtype'] = "absolute";
+							} else {
+								$my_element['validtype'] = "relative";
+							}
+						}
+					?>
+					<?=Admin_Html::printFormSelect("Wird angezeigt", "validtype", array("absolute"=>"einmalig (DD.MM.YYYY hh:mm:ss)","relative"=>"t&auml;glich (hh:mm:ss)"), $my_element['validtype'])?>
+					<?
+					if($my_element['validtype'] == "absolute") {
+					?>
+						<?=Admin_Html::printFormDateTime("von", "validfrom", $my_element['validfrom'])?>
+						<?=Admin_Html::printFormDateTime("bis", "validto", $my_element['validto'])?>
+					<?
+					} else {
+					?>
+						<?=Admin_Html::printFormDate("von", "validfrom", $my_element['validfrom'], "", 1, 0, "%X")?>
+						<?=Admin_Html::printFormDate("bis", "validto", $my_element['validto'], "", 1, 0, "%X")?>
+					<?
+					}
+					?>
+
+				<br>
+
+					<?php
+	
+					Admin_Html::printFormSelect(L10N::t('Generierung', 'CMS'), "dynamic", array("1"=> L10N::t("dynamisch", 'CMS'),"0"=> L10N::t("statisch", 'CMS')), $my_element['dynamic'], "", 1, 10);
+					
+					$my_element['access'] = Util::decodeSerializeOrJson($my_element['access']);
+					$aAccess = [
+						'yes' => [],
+						'no' => []
+					];
+					foreach((array)$my_element['access'] as $k=>$v) {
+						if($v == 1) {
+							$aAccess['yes'][] = $k;
+						} else {
+							$aAccess['no'][] = $k;
+						}
+					}
+					
+					$aGroups = CustomerDb\Helper\Functions::getCustomerGroups();
+					
+					Admin_Html::printFormMultiSelect(L10N::t('Nur bei folgenden Beutzergruppen zeigen', 'CMS'), "access", $aGroups, $aAccess['yes'], "", 1, 11);
+					
+					Admin_Html::printFormMultiSelect(L10N::t('Nicht bei folgenden Beutzergruppen zeigen', 'CMS'), "noaccess", $aGroups, $aAccess['no'], "", 1, 12);
+
+					?>
+
+			<br><br>
+			<? if($my_element['level'] < 800) { ?>
+			<div class="form-inline">
+				<button class="btn btn-default" onClick="moveBlock('down');"><?=L10N::t('nach unten verschieben', 'CMS')?></button>&nbsp;
+				<input type="text" name="currentPosition" value="<?=$my_element['level']?>" class="txt form-control" style="text-align:right;width:20px;">&nbsp;
+				<button class="btn" onclick="moveBlock('up');"><?=L10N::t('nach oben verschieben', 'CMS')?></button>&nbsp;
+			</div>
+			<? } ?>
+			</div>
+		</div>
+		<div class="box-footer">
+			<button class="btn btn-default" onclick="parent.jQuery('#cms-modal').modal('hide'); return false;"><?=L10N::t('Fenster schließen', 'CMS')?></button>
+			<input type="submit" class="btn btn-primary pull-right" name="action" value="<?=L10N::t('Änderungen speichern', 'CMS')?>"> 
+			<button class="btn btn-default pull-right" onclick="deleteBlock(); return false;"><?=L10N::t('Block löschen', 'CMS')?></button> 
+			<button id='show_settings' class="btn btn-default pull-right" type="button" onclick="showSettings(); return false;"><?=L10N::t('Erweiterte Einstellungen', 'CMS')?></button> 
+			<button id="hide_settings" type="button" class="btn btn-default pull-right" onclick="hidewSettings(); return false;" style="display:none">&lt;&lt; <?=L10N::t('Erweiterte Einstellungen', 'CMS')?></button>
+<script for="document" event="onkeydown()" type="text/javascript">
+<!--
+ if(window.event.ctrlKey && window.event.keyCode == "83")
+ {
+	document.blockForm.submit();
+ }
+//-->
+</script>
+			</form>
+			
+		</div>
+	</div>
+</section>
+<?php
+
+$sAdditional = '
+<script type="text/javascript" src="/assets/adminlte/components/moment/moment.js"></script>
+<script type="text/javascript" src="/assets/adminlte/components/moment/locale/'.System::getInterfaceLanguage().'.js"></script>
+<script type="text/javascript" src="/admin/assets/js/bootstrap-datetimepicker.min.js"></script>
+
+<script type="text/javascript">
+	$j(function () {
+		$j(\'.datetimepicker\').datetimepicker({
+			sideBySide: true,
+			showTodayButton: true,
+			showClear: true,
+			showClose: true
+		});
+	});
+</script>
+
+';
+
+Admin_Html::loadAdminFooter($sAdditional);
+
+?>

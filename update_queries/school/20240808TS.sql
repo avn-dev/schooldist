@@ -1,0 +1,2 @@
+ALTER TABLE `ts_inquiries_journeys_courses_lessons_contingent` ADD `lessons` DECIMAL(10,2) NULL DEFAULT NULL AFTER `cancelled`, ADD `lessons_unit` ENUM('per_week','absolute') NULL DEFAULT NULL AFTER `lessons`;
+ALTER TABLE `ts_inquiries_journeys_courses_lessons_contingent` ADD `weeks` TINYINT(3) UNSIGNED NULL DEFAULT NULL AFTER `lessons_unit`;

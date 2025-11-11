@@ -1,0 +1,232 @@
+hash: 2962d7de1e4d84081eac5d2e261bb197
+class:
+  wdbasic: Ext_Thebing_Accounting_Teacher_Payment_List
+  data: Ext_Thebing_Accounting_Gui2_Teacher_Payment
+  js: UtilGui
+  icon_status: Ext_Thebing_Gui2_Icon_Accounting_Teacher_Payment
+  row_style: Ext_Thebing_Gui2_Style_Accounting_Teacher_Payment
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+access: thebing_accounting_teacher_payments
+api: false
+encode_data: 
+  - amount
+  - select_type
+  - select_value
+  - block_id
+  - timepoint
+  - salary
+  - hours
+  - course_list
+  - block_list
+  - calculation
+  - days
+  - classname
+  - lessons
+  - hours
+  - single_amount 
+orderby:
+  - Ext_Thebing_Accounting_Gui2_Teacher_Payment
+  - getOrderby
+multiple_selection: true
+id:
+  column: teacher_id
+  alias: union
+limit: 50
+bars:
+  -
+    position: top
+    elements:
+     - 
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column: 
+            - transfer_date
+          alias:
+            - kit
+          default:
+            - Ext_Thebing_Accounting_Gui2_Teacher_Payment
+            - getDefaultFilterFrom
+        until:
+          column:
+           - until
+          default:
+            - Ext_Thebing_Accounting_Gui2_Teacher_Payment
+            - getDefaultFilterUntil
+        searchtype: between
+        skip_query: true
+        text_after: basierend auf Leistungszeitraum
+     -
+        element: seperator
+     - 
+        element: selectfilter
+        label: Vertragsparameter
+        label_as_item: true
+        id: salary_status
+        filter_part: where
+        entries: 
+          - Ext_Thebing_Accounting_Gui2_Teacher_Payment
+          - getSalaryStatusSelectOptions
+        filter_query: 
+          yes: '`salary` > 0'
+          no: '`salary` IS NULL'
+     - 
+        element: selectfilter
+        label: Lehrer
+        label_as_item: true
+        id: teacher_fiter
+        column: teacher_id
+        alias: union
+        entries: 
+          - Ext_Thebing_Accounting_Gui2_Teacher_Payment
+          - getTeacherSelectOptions    
+  -  
+    position: top
+    elements:   
+     - 
+        element: icon
+        label: Zahlung eintragen
+        task: openDialog
+        action: teacher_payment
+        active: 0
+        img: 
+          - Ext_Thebing_Util
+          - getIcon
+          - payment  
+  - position: bottom
+    type: legend
+    elements: 
+      - 
+        element: legend_label
+        label: Status
+      - element: legend_info
+        label: keine Vertragsparameter
+        info:
+          color: bad
+      - 
+        element: legend_info
+        label: Vertretungslehrer
+        info:
+          color: substitute_teacher
+      - 
+        element: legend_label
+        label: Vertretung
+      -
+        element: legend_info
+        label: komplett
+        info:
+          color: substitute_full
+          text: true
+      -
+        element: legend_info
+        label: teilweise
+        info:
+          color: substitute_part
+          text: true
+      - 
+        element: legend_label
+        label: Feiertag
+      - 
+        element: legend_info
+        label: ''
+        info:
+          color: soft_purple
+          text: true
+columns:
+  - 
+    title: Monat/Woche
+    column: select_value
+    data: select_value
+    width: week_title
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Teacher_Payment_Week
+  - 
+    title: Tage
+    column: days
+    data: days
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Teacher_Payment_Day_List  
+  - 
+    title: Lehrer
+    column: firstname
+    data: firstname
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_TeacherName  
+  - 
+    title: Klasse
+    column: classname
+    width: name
+    resize: false
+  - 
+    title: Kurse
+    column: course_list
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Course_List
+  - 
+    title: Schüler
+    column: count_bookings
+    width: id
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Int
+  - 
+    title: Lektionen
+    column: lessons
+    width: name
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Teacher_Payment_Lesson
+  - 
+    title: Stunden
+    column: hours
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Teacher_Payment_Hours
+  - 
+    title: 
+      - Ext_Thebing_Accounting_Gui2_Teacher_Payment
+      - getSingleAmountColumnTitle
+    column: single_amount
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Teacher_Payment_Singleamount
+  - 
+    title: Gehalt
+    column: amount
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  - 
+    title: Kostenkategorie
+    column: costcategory_id
+    width: name
+    format: Ext_Thebing_Gui2_Format_Teacher_Costcategory
+  - 
+    title: Kontoinhaber
+    column: bank_account_holder
+    width: name
+    resize: false
+  - 
+    title: Kontonummer
+    column: bank_account_number
+    width: name
+    resize: false
+  - 
+    title: BLZ
+    column: bank_code
+    width: name
+    resize: false
+  - 
+    title: Name der Bank
+    column: bank_name
+    width: name
+    resize: false
+  - 
+    title: Gebäude
+    column: building_name
+    width: comment
+    resize: false

@@ -1,0 +1,366 @@
+.fidelo-payment-form .container {
+  max-width: 960px;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .card-title h3 {
+    text-align: right;
+  }
+}
+.fidelo-payment-form .col-customer-details h4,
+.fidelo-payment-form .col-payment-details h4 {
+  margin-bottom: 1rem;
+}
+.fidelo-payment-form .col-payment-details ul li {
+  display: flex;
+  justify-content: space-between;
+}
+.fidelo-payment-form .col-payment-details .pay-full-amount {
+  margin-top: 1rem;
+}
+.fidelo-payment-form .col-payment-details .pay-full-amount label {
+  font-weight: bold;
+}
+.fidelo-payment-form .col-payment-details .payment-is-due time {
+  color: #dc3545;
+  font-weight: bold;
+}
+.fidelo-payment-form {
+  position: relative;
+}
+.fidelo-payment-form .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+}
+.fidelo-payment-form .loading-overlay > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: 350px;
+  transform: translateX(-50%) translateY(-50%);
+  text-align: center;
+  font-weight: bold;
+}
+.fidelo-payment-form .loading-overlay > div > p {
+  margin-top: 1rem;
+}
+.fidelo-payment-form .loading-overlay > div i.fas {
+  font-size: 2rem;
+}
+.fidelo-payment-form {
+  /*
+   * THIS CSS WILL BE USED IN SCHOOL REGISTRATION FORM V3 AND PAYMENT FORM
+   */
+}
+.fidelo-payment-form .payment-methods {
+  margin-top: 1rem;
+}
+.fidelo-payment-form .payment-methods .card-title img {
+  max-height: 26px;
+}
+.fidelo-payment-form .payment-methods label.is-invalid {
+  color: #dc3545;
+}
+.fidelo-payment-form .payment-methods .payment-method-label {
+  font-size: 1.5rem;
+  padding-left: 0.5rem;
+}
+.fidelo-payment-form .payment-methods .payment-method-label i,
+.fidelo-payment-form .payment-methods .payment-method-label img {
+  vertical-align: -0.25rem;
+}
+.fidelo-payment-form .payment-methods .payment-method-label::before, .fidelo-payment-form .payment-methods .payment-method-label::after {
+  top: 0.75rem;
+}
+.fidelo-payment-form .payment-methods .payment-method-label .subtitle {
+  display: block;
+  color: #6c757d;
+  font-size: 1rem;
+}
+.fidelo-payment-form .payment-methods.row > div {
+  margin-bottom: 15px;
+}
+@media (min-width: 768px) {
+  .fidelo-payment-form .payment-methods.row > div {
+    margin-bottom: 30px;
+  }
+}
+.fidelo-payment-form .payment-methods.row > div .card {
+  margin-bottom: 0;
+}
+.fidelo-payment-form .payment-methods .card {
+  margin-bottom: 1rem;
+  height: 100%;
+}
+.fidelo-payment-form .payment-methods .card.active {
+  border: 1px solid #007bff;
+}
+.fidelo-payment-form .payment-methods > .card .card-title {
+  margin-bottom: 0;
+}
+.fidelo-payment-form .payment-methods > .card.active > .card-body > .card-title {
+  margin-bottom: 0.75rem;
+}
+.fidelo-payment-form .payment-methods > .card:last-child {
+  margin-bottom: 0;
+}
+.fidelo-payment-form .payment-paypal {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.fidelo-payment-form .payment-paypal.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.fidelo-payment-form .payment-stripe {
+  --input-color: #495057;
+}
+.fidelo-payment-form .payment-stripe .form-control-stripe {
+  padding-top: 0.7em;
+}
+.fidelo-payment-form .payment-stripe .form-control-disabled {
+  background-color: #e9ecef;
+  opacity: 1;
+}
+.fidelo-payment-form .payment-stripe .form-control-focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: rgb(127.5, 189, 255);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .payment-stripe .btn-block {
+  margin-top: 0.5rem;
+}
+.fidelo-payment-form .payment-stripe.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.fidelo-payment-form .payment-klarna {
+  text-align: center;
+}
+.fidelo-payment-form .payment-klarna .btn-block {
+  display: inline-block;
+  max-width: 600px;
+  margin-top: 0.5rem;
+}
+.fidelo-payment-form .payment-transfermate .payment-methods label.custom-control-label {
+  font-size: 1.25rem;
+}
+.fidelo-payment-form .payment-transfermate .payment-methods .card-title img {
+  max-width: 60px;
+}
+.fidelo-payment-form .payment-moneris {
+  height: 510px;
+}
+.fidelo-payment-form {
+  /*!
+   * bsStepper v{version} (https://github.com/Johann-S/bs-stepper)
+   * Copyright 2018 - {year} Johann-S <johann.servoire@gmail.com>
+   * Licensed under MIT (https://github.com/Johann-S/bs-stepper/blob/master/LICENSE)
+   */
+}
+.fidelo-payment-form .bs-stepper .step-trigger {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #6c757d;
+  text-align: center;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+}
+.fidelo-payment-form .bs-stepper .step-trigger:not(:disabled):not(.disabled) {
+  cursor: pointer;
+}
+.fidelo-payment-form .bs-stepper .step-trigger:disabled,
+.fidelo-payment-form .bs-stepper .step-trigger.disabled {
+  pointer-events: none;
+  opacity: 0.65;
+}
+.fidelo-payment-form .bs-stepper .step-trigger:focus {
+  color: #007bff;
+  outline: none;
+}
+.fidelo-payment-form .bs-stepper .step-trigger:hover {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+@media (max-width: 767.98px) {
+  .fidelo-payment-form .bs-stepper-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .fidelo-payment-form .bs-stepper .step {
+    flex: 1 0 50%;
+    text-align: center;
+  }
+  .fidelo-payment-form .bs-stepper-line {
+    display: none;
+  }
+  .fidelo-payment-form .bs-stepper .step-trigger {
+    flex-direction: column;
+    padding: 10px;
+  }
+}
+@media (max-width: 575.98px) {
+  .fidelo-payment-form .bs-stepper .step-trigger {
+    padding: 5px;
+  }
+}
+.fidelo-payment-form .bs-stepper-label {
+  display: inline-block;
+  margin: 0.25rem;
+}
+.fidelo-payment-form .bs-stepper-header {
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 520px) {
+  .fidelo-payment-form .bs-stepper-header {
+    margin: 0 -10px;
+    text-align: center;
+  }
+}
+.fidelo-payment-form .bs-stepper-line,
+.fidelo-payment-form .bs-stepper .line {
+  flex: 1 0;
+  min-width: 1px;
+  min-height: 1px;
+  margin: auto;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+@media (max-width: 400px) {
+  .fidelo-payment-form .bs-stepper-line,
+  .fidelo-payment-form .bs-stepper .line {
+    flex-basis: 20px;
+  }
+}
+.fidelo-payment-form .bs-stepper-circle {
+  display: inline-flex;
+  align-content: center;
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+  padding: 0.5em 0;
+  margin: 0.25rem;
+  line-height: 1em;
+  color: #fff;
+  background-color: #6c757d;
+  border-radius: 1em;
+}
+.fidelo-payment-form .bs-stepper .step.active .bs-stepper-circle {
+  background-color: #007bff;
+}
+.fidelo-payment-form {
+  /*
+  .bs-stepper-content {
+  	padding: 0 20px 20px;
+  }
+
+  @media (max-width: 520px) {
+  	.bs-stepper-content {
+  		padding: 0;
+  	}
+  }
+
+  .bs-stepper.vertical {
+  	display: flex;
+  }
+
+  .bs-stepper.vertical .bs-stepper-header {
+  	flex-direction: column;
+  	align-items: stretch;
+  	margin: 0;
+  }
+
+  .bs-stepper.vertical .bs-stepper-pane,
+  .bs-stepper.vertical .content {
+  	display: block;
+  }
+
+  .bs-stepper.vertical .bs-stepper-pane:not(.fade),
+  .bs-stepper.vertical .content:not(.fade) {
+  	display: block;
+  	visibility: hidden;
+  }
+
+  .bs-stepper-pane:not(.fade),
+  .bs-stepper .content:not(.fade) {
+  	display: none;
+  }
+
+  .bs-stepper .content.fade,
+  .bs-stepper-pane.fade {
+  	visibility: hidden;
+  	transition-duration: .3s;
+  	transition-property: opacity;
+  }
+
+  .bs-stepper-pane.fade.active,
+  .bs-stepper .content.fade.active {
+  	visibility: visible;
+  	opacity: 1;
+  }
+
+  .bs-stepper-pane.active:not(.fade),
+  .bs-stepper .content.active:not(.fade) {
+  	display: block;
+  	visibility: visible;
+  }
+
+  .bs-stepper-pane.dstepper-block,
+  .bs-stepper .content.dstepper-block {
+  	display: block;
+  }
+
+  .bs-stepper:not(.vertical) .bs-stepper-pane.dstepper-none,
+  .bs-stepper:not(.vertical) .content.dstepper-none {
+  	display: none;
+  }
+
+  .vertical .bs-stepper-pane.fade.dstepper-none,
+  .vertical .content.fade.dstepper-none {
+  	visibility: hidden;
+  }*/
+}
+@media (min-width: 768px) {
+  .fidelo-payment-form .payment-paypal {
+    max-width: 50%;
+  }
+}
+.fidelo-payment-form .payment-moneris {
+  height: 650px;
+}
+.fidelo-payment-form i.fa-credit-card,
+.fidelo-payment-form i.fa-landmark {
+  display: inline-block;
+  width: 27px;
+  height: 27px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.fidelo-payment-form i.fa-credit-card {
+  background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M0 432c0 26.5 21.5 48 48 48h480c26.5 0 48-21.5 48-48V256H0v176zm192-68c0-6.6 5.4-12 12-12h136c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H204c-6.6 0-12-5.4-12-12v-40zm-128 0c0-6.6 5.4-12 12-12h72c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H76c-6.6 0-12-5.4-12-12v-40zM576 80v48H0V80c0-26.5 21.5-48 48-48h480c26.5 0 48 21.5 48 48z"/></svg>');
+}
+.fidelo-payment-form i.fa-landmark {
+  background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M501.6 92.1L267.2 2a32 32 0 0 0 -22.5 0L10.4 92.1A16 16 0 0 0 0 107.1V144c0 8.8 7.2 16 16 16h480c8.8 0 16-7.2 16-16v-36.9c0-6.7-4.1-12.6-10.4-15zM64 192v160H48c-8.8 0-16 7.2-16 16v48h448v-48c0-8.8-7.2-16-16-16h-16V192h-64v160h-96V192h-64v160h-96V192H64zm432 256H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h480c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16z"/></svg>');
+}

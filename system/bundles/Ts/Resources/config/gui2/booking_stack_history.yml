@@ -1,0 +1,119 @@
+class:
+  wdbasic: Ext_TS_Accounting_BookingStack_History
+  date_format: Ext_Thebing_Gui2_Format_Date
+  data: Ext_TS_Accounting_BookingStack_History_Gui2_Data
+description: Thebing » Accounting » Booking Stack
+access: thebing_accounting_booking_stack
+title: Buhcungsstapel - Historie
+id:
+  column: id
+  alias: ts_bsh
+orderby :
+  - Ext_TS_Accounting_BookingStack_History_Gui2_Data
+  - getOrderby
+multiple_selection: true
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column:
+            - document_number
+          alias:
+            - k_id
+        -
+          element: seperator
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            column: 
+              - created
+            alias:
+              - ts_bsh
+            default: 
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterFrom
+              - true
+          until:
+            column: 
+              - created
+            alias: 
+              - ts_bsh
+            default: 
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterUntil
+              - true
+          searchtype: between
+          access:
+          text_after: basierend auf Erstellungsdatum
+        -
+          element: selectfilter
+          label: Bereits heruntergeladen
+          column: last_download
+          value: ''
+          entries:
+            - Ext_TC_Util
+            - getYesNoArray
+            - false
+          filter_query:
+            no: '`last_download` IS NULL'
+            yes: '`last_download` IS NOT NULL'
+          label_as_item: true
+        -
+          element: icon
+          img: fa-file-archive-o
+          task: requestAsUrl
+          action: zipExport
+          active: 0
+          label: ZIP-Export
+          multipleId: 1
+columns:
+  -
+    title: Vorgang
+    column: type
+    alias: ts_bsh
+    width: name
+    format: Ext_TS_Accounting_Bookingstack_History_Format_Type
+    resize: true
+  -
+    title: Export
+    column: file_export
+    alias: ts_bsh
+    format: Ext_TS_Accounting_Bookingstack_History_Format_Export
+    width: 40
+  -
+    title: Letzter Download
+    column: last_download
+    alias: ts_bsh
+    format: \TsAccounting\Gui2\Format\Bookingstack\LastDownload
+    width: name
+    default: false
+default_columns:
+  -
+    visible: true
+    set: []
+    title: Ersteller
+    format: Ext_TS_Accounting_Bookingstack_History_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ts_bsh
+    width: user_name
+    resize: false
+    sortable: true
+  -
+    visible: true
+    set: []
+    title: Erstellt
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    column: created
+    alias: ts_bsh
+    width: date
+    resize: false
+    sortable: true
+

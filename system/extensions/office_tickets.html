@@ -1,0 +1,341 @@
+<?php
+
+include_once(\Util::getDocumentRoot()."system/includes/admin.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/functions.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/autoload.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/config.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/dbconnect.inc.php");
+$session_data['public'] = 1;
+include_once(\Util::getDocumentRoot()."system/includes/variables.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/access.inc.php");
+
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.dao.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+/* ================================================== */ // Login
+
+if($user_data['id'] == 0)
+{
+	$oOffice		= new classExtension_Office;
+	$aConfigData	= $objOffice->getConfigData();
+
+?>
+	<table style="background: none repeat scroll 0% 0% rgb(255, 255, 255); color: #797979; font-size: 12px; border: 1px solid #eeeeee;" class="tabNewsletter" align="center" border="0" cellpadding="0" cellspacing="0" width="600">
+		<tr>
+			<td><img src="/media/ticketsystem/header.jpg" alt="Header Newsletter Fidelo Software GmbH"></td>
+		</tr>
+		<tr>
+			<td style="padding-left: 15px; padding-right: 15px;">
+				<h2 style="color:#00539F; font-size: 16px;"><?=L10N::t('Ticketsystem')?></h2>
+				<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+					<div>
+						<input value="<?=$arrConfigData['contact_database']?>" name="table_number" type="hidden">
+						<input value="1" name="loginmodul" type="hidden">
+					</div>
+					<br>
+	    
+					<table style="margin-left: 150px;">
+						<tr>
+							<td style="color: #797979;">Benutzer:</td>
+							<td><input value="" name="customer_login_1" class="txt" style="border:1px solid #b2b2b2; font-size: 11px; width:125px;" type="text"></td>
+						</tr>
+						<tr>
+							<td style="color: #797979;">Passwort:</td>
+							<td><input name="customer_login_3" class="txt" style="border:1px solid #b2b2b2; font-size: 11px; width:125px;" type="password"></td>
+						</tr>
+						<tr>
+							<td style="text-align: right;" colspan="2">
+								<input type="submit" title="Login" value="Login" name="submit" class="txt floatRight" style="position:relative; top:3px;" />
+							</td>
+						</tr>
+					</table>
+				</form>
+			</td>
+	    </tr>
+		<tr>
+			<td>
+				<br>
+				<img src="/media/footer_newsletter.jpg" alt="Footer Newsletter Fidelo Software GmbH">
+			</td>
+		</tr>
+	</table>
+<?
+	die();
+}
+else if(isset($_VARS['loginmodul']) && $_VARS['loginmodul'] == 1)
+{
+	header('Location: ' . $_SERVER['PHP_SELF']);
+	exit();
+}
+
+/* ================================================== */ // Create files path on first call
+
+Ext_Office_Tickets::getUploadPath();
+
+/* ==================================================================================================== */
+
+$aConfigData = $mOptions = array();
+
+/* ================================================== */
+
+// Data array for the view
+$aConfigData['layout_data']['filter']['show']			= 1;
+$aConfigData['layout_data']['filter']['search']['title']= L10N::t('Suche');
+$aConfigData['layout_data']['filter']['search']['show']	= 1;
+$aConfigData['layout_data']['filter']['from']['show']	= 0;
+$aConfigData['layout_data']['filter']['to']['show']		= 0;
+$aConfigData['layout_data']['sortable']					= 1;
+$aConfigData['layout_data']['flexible']					= 1;
+$aConfigData['layout_data']['view']						= 0;
+$aConfigData['layout_data']['manual_height']			= 0;
+$aConfigData['layout_data']['pagination']['show']		= 0;
+$aConfigData['layout_data']['icons']['show']			= 1;
+
+$aConfigData['ajax_data']['table_url']					= "'/admin/extensions/office/ticket.table.ajax.php'";
+$aConfigData['ajax_data']['edit_url']					= "'/admin/extensions/office/ticket.table.ajax.php'";
+$aConfigData['ajax_data']['sort_url']					= "'/admin/extensions/office/ticket.table.ajax.php'";
+
+$aConfigData['dialog_data']['height']					= '600';
+$aConfigData['dialog_data']['width']					= '800';
+
+/* ================================================== */
+
+// Query data for the list
+$aConfigData['query_data'][0] = "SELECT * FROM #table WHERE `active` = 1 ORDER BY `position`";
+$aConfigData['query_data'][1] = array('table' => 'office_tickets');
+$aConfigData['query_data']['filter']['id']['column']		= "id";
+$aConfigData['query_data']['filter']['id']['alias']			= "";
+$aConfigData['query_data']['filter']['search']['column']	= "title,area";
+
+/* ================================================== */ // Table header
+
+$i = 0;
+
+$aConfigData['header_data'][$i]['column']	= 'id';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('ID');
+$aConfigData['header_data'][$i]['style']	= 'width:35px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'created';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Datum');
+$aConfigData['header_data'][$i]['style']	= 'width:135px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'title';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Titel');
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'area';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Bereich');
+$aConfigData['header_data'][$i]['style']	= 'width:250px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'user_id';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Bearbeiter');
+$aConfigData['header_data'][$i]['style']	= 'width:130px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'h_original';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('h-Brutto');
+$aConfigData['header_data'][$i]['style']	= 'width:70px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'h_factored';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('h-Netto');
+$aConfigData['header_data'][$i]['style']	= 'width:70px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'type';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Typ');
+$aConfigData['header_data'][$i]['style']	= 'width:90px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'state';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Status');
+$aConfigData['header_data'][$i]['style']	= 'width:120px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'done';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Fortschritt');
+$aConfigData['header_data'][$i]['style']	= 'width:80px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'system';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('System');
+$aConfigData['header_data'][$i]['style']	= 'width:55px;';
+$i++;
+
+/* ================================================== */ // Data for icons
+
+$i = 0;
+
+$aConfigData['icon_data'][$i]['label']		= L10N::t('Neu:');
+$aConfigData['icon_data'][$i]['action']		= "new";
+$aConfigData['icon_data'][$i]['function']	= "prepareAddDialog();";
+$aConfigData['icon_data'][$i]['icon']		= "/admin/media/page_new.gif";
+$aConfigData['icon_data'][$i]['alt']		= L10N::t('Neu');
+$aConfigData['icon_data'][$i]['title']		= L10N::t('Neu');
+$aConfigData['icon_data'][$i]['separator']	= "::";
+$aConfigData['icon_data'][$i]['active']		= "1";
+$i++;
+
+$aConfigData['icon_data'][$i]['label']		= L10N::t('Bearbeiten:');
+$aConfigData['icon_data'][$i]['action']		= "edit";
+$aConfigData['icon_data'][$i]['function']	= "prepareEditDialog(intRowId);";
+$aConfigData['icon_data'][$i]['icon']		= "/admin/media/pencil.png";
+$aConfigData['icon_data'][$i]['alt']		= L10N::t('Bearbeiten');
+$aConfigData['icon_data'][$i]['title']		= L10N::t('Bearbeiten');
+$aConfigData['icon_data'][$i]['separator']	= "";
+$aConfigData['icon_data'][$i]['active']		= "0";
+$i++;
+
+/* ================================================== */ // Data for edit dialog
+
+$i = 0;
+
+$aConfigData['edit_data'][$i]['column']		= 'title';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Titel');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:2px;';
+$aConfigData['edit_data'][$i]['type']		= 'input';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'area';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Bereich');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:2px;';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'type';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Typ');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:1px;';
+$aConfigData['edit_data'][$i]['type']		= 'select';
+$aConfigData['edit_data'][$i]['data_array']	= array('ext' => L10N::t('Erweiterung'), 'bug' => L10N::t('Bug'));
+$aConfigData['edit_data'][$i]['preselect']	= 'ext';
+$aConfigData['edit_data'][$i]['onchange']	= 'showBilling(this);';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'billing';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Abrechnung');
+$aConfigData['edit_data'][$i]['style']		= 'width:300px; padding:1px;';
+$aConfigData['edit_data'][$i]['type']		= 'select';
+$aConfigData['edit_data'][$i]['data_array']	= array('1' => L10N::t('Abrechnung nach Aufwand'), '0' => L10N::t('Aufwandschätzung anfragen'));
+$aConfigData['edit_data'][$i]['preselect']	= '1';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'done';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Fortschritt');
+$aConfigData['edit_data'][$i]['style']		= 'width:500px; height:150px; padding:2px;';
+$aConfigData['edit_data'][$i]['type']		= 'textarea';
+$i++;
+
+$aConfigData['edit_data'][$i]['column']		= 'description';
+$aConfigData['edit_data'][$i]['value']		= L10N::t('Beschreibung');
+$aConfigData['edit_data'][$i]['style']		= 'width:500px; height:150px; padding:2px;';
+$aConfigData['edit_data'][$i]['type']		= 'textarea';
+$i++;
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+$sCode = '';
+
+$sCode .= '<div style="margin:5px; background-color:rgb(238, 238, 238); padding: 0 5px;" id="editRow_notices" class="row_edit">';
+	$sCode .= '<label for="newNotice" style="padding: 4px 0px; width:100px;">Nachrichten:</label>';
+	$sCode .= '<div style="padding: 4px 4px 2px; float:left;" id="noticesList">';
+		
+	$sCode .= '</div>';
+	$sCode .= '<div style="overflow:hidden; clear:both; height:1px;"/></div>';
+$sCode .= '</div>';
+
+$aConfigData['edit_data'][$i]['column']	= '';
+$aConfigData['edit_data'][$i]['value']	= $sCode;
+$aConfigData['edit_data'][$i]['style']	= "";
+$aConfigData['edit_data'][$i]['type']	= "code";
+$i++;
+
+/* ================================================== */
+
+$oTicket	= new Ext_Office_Tickets_Frontend($aConfigData);
+$sTicketRS	= $oTicket->sRandString;
+$sTicketHS	= $oTicket->getHash();
+
+/* ==================================================================================================== */
+
+$mOptions['additional'] =
+	'<script type="text/javascript" src="/admin/uploader/AC_OETags.js"></script>';
+$mOptions['additional'] .=
+	'<script type="text/javascript" src="/admin/extensions/office/js/js.tickets.php?hash=' . $sTicketHS . '"></script>';
+
+$oTicket->getAdminHeader($mOptions);
+
+/* ==================================================================================================== */
+
+$aStates	= Ext_Office_Tickets::getStates();
+$aProjects	= $oTicket->getProjects();
+
+/* ==================================================================================================== */
+
+?>
+
+<script type="text/javascript">
+<!--
+	var iFrontend = 1;
+
+	function <?=$sTicketRS?>_createFilters()
+	{
+		var HTML  = '';
+
+		HTML += '<?=L10N::t('Projekt')?>: <select class="txt" id="<?=$sTicketRS?>_search_project" onchange="<?=$sTicketRS?>_loadTableList();">';
+			<? foreach((array)$aProjects as $iKey => $aValue) { ?>
+				HTML += '<option value="<?=$aValue['id']?>"><?=$aValue['title']?></option>';
+			<? } ?>
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Status')?>: <select class="txt" id="<?=$sTicketRS?>_search_state" onchange="<?=$sTicketRS?>_loadTableList();">';
+			HTML += '<option value=""><?=L10N::t('alle')?></option>';
+			HTML += '<option value="1_5"><?=L10N::t('Bereit zur Umsetzung')?></option>';
+			<? foreach((array)$aStates as $iKey => $sValue) { ?>
+				<?
+					$sSelected = '';
+					if($iKey == 1)
+					{
+						$sSelected = 'selected="selected"';
+					}
+				?>
+				HTML += '<option value="<?=$iKey?>" <?=$sSelected?>><?=$sValue?></option>';
+			<? } ?>
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Typ')?>: <select class="txt" id="<?=$sTicketRS?>_search_type" onchange="<?=$sTicketRS?>_loadTableList();">';
+			HTML += '<option value=""><?=L10N::t('Alle')?></option>';
+			HTML += '<option value="bug"><?=L10N::t('Bugs')?></option>';
+			HTML += '<option value="ext"><?=L10N::t('Erweiterungen')?></option>';
+		HTML += '</select>';
+
+		HTML += ' <?=L10N::t('Verrechnet')?>: <input type="checkbox" id="<?=$sTicketRS?>_search_cleared" onclick="<?=$sTicketRS?>_loadTableList();" />';
+
+		$('<?=$sTicketRS?>_filter_search').style.width = '100px';
+
+		var oDIV = $('<?=$sTicketRS?>_filter_search').up();
+
+		oDIV.insert({bottom: HTML});
+	}
+-->
+</script>
+
+<div>
+	<div id="ajax_main_content">
+		<?=$oTicket->generateHTML(L10N::t('Tickets'));?>
+	</div>
+</div>
+
+<?=Admin_Html::loadAdminFooter()?>

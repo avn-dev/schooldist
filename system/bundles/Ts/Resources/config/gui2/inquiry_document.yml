@@ -1,0 +1,459 @@
+parent: ts_document
+class:
+  js: StudentlistGui
+  row_style: Ext_Thebing_Gui2_Style_Document_List
+  icon_status: Ext_Thebing_Gui2_Icon_Document_List
+  icon_visible: Ext_Thebing_Gui2_Icon_Document_Visible
+  data: Ext_TS_Inquiry_Document_Gui2_Data
+designer: 
+  filter: ts_inquiry_document
+hash: 1de06b96dc8a403c383aa65899354618
+multiple_selection: false
+sidebar: false
+index:
+  registry: 
+    generate: false
+bars:
+  # Proforma
+  -
+      position: top
+      set: [inquiry_invoice]
+      access:
+        - thebing_invoice_proforma_new
+        - thebing_invoice_proforma_edit
+        - thebing_invoice_proforma_refresh
+        - thebing_invoice_proforma_transform
+        - thebing_invoice_proforma_delete
+      elements: 
+        - 
+          element: labelgroup
+          label: Proforma
+          access:
+            - thebing_invoice_proforma_new
+            - thebing_invoice_proforma_edit
+            - thebing_invoice_proforma_refresh
+            - thebing_invoice_proforma_delete
+        -
+          element: icon
+          label: Neu
+          task: openDialog
+          action: new_proforma
+          access: thebing_invoice_proforma_new
+          request_data: "&convert_document_data=1&type=proforma&bNoDocumentId=1"
+          active: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - add
+        -
+          element: icon
+          label: Editieren
+          task: openDialog
+          action: edit_proforma
+          access: thebing_invoice_proforma_edit
+          request_data: "&convert_document_data=1&type=invoice_text"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Aktualisieren
+          task: openDialog
+          action: refresh_proforma
+          access: thebing_invoice_proforma_refresh
+          request_data: "&convert_document_data=1"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+        -
+          element: icon
+          label: Löschen
+          task: confirm
+          action: delete_proforma
+          access: thebing_invoice_proforma_delete
+          confirm_message: Möchen Sie die Proforma wirklich löschen?
+          request_data: "&action=deleteProformaDocument"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - delete
+        - 
+          element: labelgroup
+          label: Umwandeln
+          access: thebing_invoice_proforma_transform
+        -
+          element: icon
+          label: Umwandeln in Rechnung
+          task: request
+          action: convertProformaDocument
+          access: thebing_invoice_proforma_transform
+          confirm_message: Möchten Sie die Proforma wirklich umwandeln?
+          request_data: "&task=convertProformaDocument"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+        - 
+          element: labelgroup
+          label: Stornieren
+          access: thebing_proforma_document_cancel
+        -
+          element: icon
+          label: Buchung
+          task: request
+          action: mark_as_canceled
+          access: thebing_proforma_document_cancel
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_delete
+  # Rechnungen
+  -
+      position: top
+      set: [inquiry_invoice]
+      access:
+        - thebing_invoice_document_new
+        - thebing_invoice_document_edit
+        - thebing_invoice_document_refresh
+        - thebing_invoice_document_cancel
+        - thebing_invoice_document_delete
+        - thebing_invoice_credit
+        - thebing_invoice_document_accepted
+      elements: 
+        - 
+          element: labelgroup
+          label: Rechnung
+        -
+          element: icon
+          label: Neu
+          task: openDialog
+          action: new_invoice
+          access: thebing_invoice_document_new
+          request_data: "&convert_document_data=1&type=invoice&bNoDocumentId=1"
+          active: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - add
+        -
+          element: icon
+          label: Editieren
+          task: openDialog
+          action: edit_invoice
+          access: thebing_invoice_document_edit
+          request_data: "&convert_document_data=1&type=invoice_text"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Aktualisieren
+          task: openDialog
+          action: refresh_invoice
+          access: thebing_invoice_document_refresh
+          request_data: "&convert_document_data=1"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+        -
+          element: icon
+          label: Gutschrift
+          task: openDialog
+          action: negate_invoice
+          access: thebing_invoice_credit
+          request_data: "&convert_document_data=1"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Löschen
+          task: confirm
+          action: delete_invoice
+          access: thebing_invoice_document_delete
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - delete
+        - 
+          element: labelgroup
+          label: Stornieren
+        -
+          element: icon
+          label: Buchung
+          task: openDialog
+          action: storno
+          access: thebing_invoice_document_cancel
+          confirm: true
+          confirm_message: Möchten Sie die Buchung wirklich stornieren?
+          request_data: "&convert_document_data=1&type=storno&bNoDocumentId=1"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_delete
+        -
+          element: labelgroup
+          label: Entwurf
+          id: draft
+        -
+          element: icon
+          label: Annehmen
+          task: confirm
+          action: finalize
+          access: thebing_invoice_document_accepted
+          confirm_message: Möchten Sie den Entwurf wirklich in eine Rechnung umwandeln?
+          request_data: "&convert_document_data=1"
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+  # Diff 
+  -
+      position: top
+      set: [inquiry_invoice]
+      access:
+        - thebing_invoice_difference_customer
+        - thebing_invoice_difference_customer_credit
+        - thebing_invoice_difference_agency
+      elements: 
+        - 
+          element: labelgroup
+          label: Differenz
+          id: diff_documents
+        -
+          # Button wird benötigt, da man bei normaler Diff nicht unterscheiden kann zw.
+          # weiterer Teilrechnung und Rechnung auf Teilrechnung, die alles gesamt abrechnet
+          element: icon
+          label: Teilrechnung
+          task: openDialog
+          action: diff_customer_partial
+          access: thebing_invoice_difference_partial
+          request_data: "&convert_document_data=1&type=brutto_diff_partial&bNoDocumentId=1"
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Brutto
+          task: openDialog
+          action: diff_customer
+          access: thebing_invoice_difference_customer
+          request_data: "&convert_document_data=1&type=brutto_diff&bNoDocumentId=1"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+#        -
+#          element: icon
+#          label: Kunde mit Guthaben
+#          task: openDialog
+#          action: diff_customer_plus_credit
+#          access: thebing_invoice_difference_customer_credit
+#          request_data: "&convert_document_data=1&type=brutto_diff_special&&bNoDocumentId=1"
+#          img:
+#            - Ext_TC_Util
+#            - getIcon
+#            - page_edit
+        -
+          element: icon
+          label: Netto
+          task: openDialog
+          action: diff_agency
+          access: thebing_invoice_difference_agency
+          request_data: "&convert_document_data=1&type=netto_diff&bNoDocumentId=1"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        - 
+          element: labelgroup
+          label: Creditnote
+          id: creditnote
+          access:
+            - thebing_invoice_creditnote_agency_new
+            - thebing_invoice_creditnote_agency_edit
+            - thebing_invoice_creditnote_agency_refresh
+        -
+          element: icon
+          label: Neu
+          task: openDialog
+          action: creditnote_new
+          access: thebing_invoice_creditnote_agency_new
+          request_data: "&convert_document_data=1&type=creditnote"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - add
+        -
+          element: icon
+          label: Editieren
+          task: openDialog
+          action: creditnote_edit
+          access: thebing_invoice_creditnote_agency_edit
+          request_data: "&convert_document_data=1&type=creditnote_edit"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Aktualisieren
+          task: openDialog
+          action: creditnote_refresh
+          access: thebing_invoice_creditnote_agency_refresh
+          request_data: "&convert_document_data=1&type=creditnote"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+        - 
+          element: labelgroup
+          label: Unteragentur
+          id: creditnote_subagency
+          access:
+            - thebing_invoice_creditnote_agency_new
+            - thebing_invoice_creditnote_agency_edit
+            - thebing_invoice_creditnote_agency_refresh
+        -
+          element: icon
+          label: Neu
+          task: openDialog
+          action: creditnote_subagency_new
+          access: thebing_invoice_creditnote_agency_new
+          request_data: "&convert_document_data=1&type=creditnote_subagency"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - add
+        -
+          element: icon
+          label: Editieren
+          task: openDialog
+          action: creditnote_subagency_edit
+          access: thebing_invoice_creditnote_agency_edit
+          request_data: "&convert_document_data=1&type=creditnote_subagency_edit"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Aktualisieren
+          task: openDialog
+          action: creditnote_subagency_refresh
+          access: thebing_invoice_creditnote_agency_refresh
+          request_data: "&convert_document_data=1&type=creditnote_subagency"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+        -
+          element: labelgroup
+          label: Entwurf
+          id: creditnote_draft
+        -
+          element: icon
+          label: Annehmen
+          task: confirm
+          action: finalize_creditnote
+          access: thebing_invoice_document_accepted
+          confirm_message: Möchten Sie den Gutschriftentwurf wirklich in eine Gutschrift umwandeln?
+          request_data: "&convert_document_data=1&creditnote=1"
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - page_refresh
+  # Dokumente
+  -
+      position: top
+      set: [additional_document]
+      elements: 
+        - 
+          element: labelgroup
+          label: Dokumente
+        -
+          element: icon
+          label: Neu
+          task: openDialog
+          action: new_additional_document
+          request_data: "&convert_document_data=1&type=additional_document&bNoDocumentId=1"
+          active: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - add
+        -
+          element: icon
+          label: Editieren
+          task: openDialog
+          action: edit_additional_document
+          request_data: "&convert_document_data=1&type=additional_document"
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          label: Löschen
+          task: confirm # Explizit nicht deleteRow, damit komische Magie passieren kann
+          action: delete_additional_document # ≙ deleteProformaDocument
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - delete
+        -
+          element: seperator
+        -
+          element: icon
+          label: Merge
+          task: openMultiplePdf # multiple_pdf_class
+          action: merge_additional_document
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+  # Kein Zugriff
+# Auskommentiert da aktuell nicht möglich ist zu prüfen ob ALLE Rechte zutreffen, es wir nur geprüft ob EINS zutrifft..
+#  -
+#      position: top
+#      set: [invoice]
+#      type: hint
+#      access:
+#        - not_thebing_invoice_proforma_new
+#        - not_thebing_invoice_proforma_edit
+#        - not_thebing_invoice_proforma_refresh
+#        - not_thebing_invoice_proforma_transform
+#        - not_thebing_invoice_proforma_delete
+#        - not_thebing_invoice_document_new
+#        - not_thebing_invoice_document_edit
+#        - not_thebing_invoice_document_refresh
+#        - not_thebing_invoice_document_cancel
+#        - not_thebing_invoice_credit
+#        - not_thebing_invoice_difference_customer
+#        - not_thebing_invoice_difference_customer_credit
+#        - not_thebing_invoice_difference_agency
+#      elements:
+#        -
+#          element: text
+#          text: Sie haben keine Rechte zum Erstellen und Bearbeiten von Rechnungen.
+  # Legend
+  - 
+      position: bottom
+      set: []
+      type: legend
+      elements: 
+        - 
+          element: legend_label
+          label: Status
+        - 
+          element: legend_info
+          label: Aktuelles Dokument
+          info:
+            color: marked
+            background: true

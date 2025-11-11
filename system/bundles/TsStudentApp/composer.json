@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/ts-student-app",
+	"version": "1.0.0",
+  "require": {
+    "kreait/firebase-php": "^7.14"
+  }
+}

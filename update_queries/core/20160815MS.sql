@@ -1,0 +1,1 @@
+ALTER TABLE `tc_complaints_histories` ADD `assigned_to` INT(11) UNSIGNED NOT NULL DEFAULT '0';

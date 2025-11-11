@@ -1,0 +1,194 @@
+class:
+  wdbasic: \Ts\Entity\Inquiry\PartialInvoice
+  data: \Ts\Gui2\Data\PartialInvoices
+  date_format: Ext_Thebing_Gui2_Format_Date
+  row_style: \Ts\Gui2\Style\PartialInvoice
+id:
+  column: id
+  alias: ts_ipi
+orderby:
+  - \Ts\Gui2\Data\PartialInvoices
+  - getOrderby
+  - ""
+where:
+  - \Ts\Gui2\Data\PartialInvoices
+  - getListWhere
+multiple_selection: true
+access: 
+    - ts_accounting_partialinvoices
+    - ""
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column:
+            - number
+            - number 
+            - firstname
+            - lastname
+            - email
+          alias:
+            - tc_cn
+            - ts_i
+            - tc_c
+            - tc_c
+            - tc_e
+        -
+          element: seperator
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            column:
+              - date
+            alias:
+              - ts_ipi
+          until:
+            column:
+              - date
+            alias:
+              - ts_ipi
+          searchtype: between
+          text_after: basierend auf Fälligkeitsdatum
+        -
+          element: seperator
+        -
+          element: selectfilter
+          label: Teilrechnungen
+          label_as_item: true
+          alias:
+            - ts_ipi
+          column:
+            - converted
+          value: no
+          entries:
+            - \Ts\Gui2\Data\PartialInvoices
+            - getPartialInvoiceFilterOptions
+          filter_query:
+            yes: 'ts_ipi.converted IS NOT NULL'
+            no: 'ts_ipi.converted IS NULL'
+        -
+          element: selectfilter
+          label: Teilzahlungen
+          label_as_item: true
+          alias:
+            - ts_i
+          column:
+            - partial_invoices_terms
+          entries:
+            - Ext_TS_Payment_Condition
+            - getSelectOptionsForPartialInvoice
+            - true
+    -
+      position: top
+      elements:
+        -
+          element: icon
+          access:
+            - ts_accounting_partialinvoices
+            - new
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - edit
+          task: confirm
+          action: generateInvoice
+          confirm_message: Möchten Sie die markierten Rechnungen jetzt erstellen? Die Rechnungen werden im Hintergrund generiert. Die Rechnungen zu einer Buchung können nur chronologisch erstellt werden.
+          label: Rechnung erstellen
+    -
+      position: bottom
+      type: legend
+      elements: 
+        - 
+          element: legend_label
+          label: Legende
+        - 
+          element: legend_info
+          label: Abgerechnet
+          info:
+            color: good
+            background: true
+columns:
+  -
+    title: Schüler
+    column: lastname
+    alias: tc_c
+    data: traveller
+    width: name
+    resize: true
+    format: Ts\Gui2\Format\Traveller
+  -
+    title: K.Nr.
+    column: customer_number
+    width: name
+    default: false
+  -
+    title: Buchungsnummer
+    column: booking_number
+    width: name
+  -
+    title: E-Mail
+    column: email
+    width: email
+  -
+    title: Teilzahlung
+    column: partial_invoices_terms
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    sortable: false
+    format_params: 
+      - [Ext_TS_Payment_Condition, getSelectOptionsForPartialInvoice]
+    default: false
+  -
+    title: Kurse
+    column: courses
+    width: short_name
+    format: Ext_TC_Gui2_Format_Multiselect
+    sortable: false
+    format_params: 
+      - [Ext_TS_Inquiry_Journey_Course_Gui2_Data, getCourseList, true]
+    default: false
+  -
+    title: Betrag
+    column: amount
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  -
+    title: Erstellt / Erwartet
+    column: partial_invoices_info
+    width: amount
+    format: Ts\Gui2\Format\Accounting\PartialInvoice
+  -
+    title: Bezahlt
+    column: number_partial_invoices_payed
+    width: amount
+    format: Ts\Gui2\Format\Accounting\PartialInvoice
+  -
+    title: PDF
+    column: file
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params: file
+    width: id
+  -
+    title: Fälligkeitsdatum
+    column: date
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Von
+    column: from
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Bis
+    column: until
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date

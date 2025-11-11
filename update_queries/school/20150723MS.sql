@@ -1,0 +1,1 @@
+ALTER TABLE `ts_placementtests_results_details` ADD `answer_correctness` FLOAT(5,2) NULL DEFAULT NULL AFTER `answer_is_right`;

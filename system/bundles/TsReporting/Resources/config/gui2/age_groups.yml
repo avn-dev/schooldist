@@ -1,0 +1,34 @@
+class:
+  wdbasic: \TsReporting\Entity\AgeGroup
+access: ts_reporting_definitions
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsReporting\Gui2\AgeGroupData
+          - createDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsReporting\Gui2\AgeGroupData
+          - createDialog
+      -
+        element: icon_delete
+columns:
+  -
+    visible: true
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    visible: true
+    title: Alter von
+    column: age_from
+  -
+    visible: true
+    title: Alter bis
+    column: age_until

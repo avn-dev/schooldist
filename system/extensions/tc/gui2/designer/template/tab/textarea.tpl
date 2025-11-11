@@ -1,0 +1,1 @@
+<textarea class="txt w100" disabled="disabled"></textarea>

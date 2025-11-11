@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_groups_accommodations` ADD `comment` TEXT NOT NULL AFTER `type`;

@@ -1,0 +1,153 @@
+<?php
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("multi");
+
+getExtensionTranslations('multi');
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<style>
+	body {
+		background-color: #ffffff!important;
+	}
+.newfolder {
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+.select_on {
+	background-color: buttonface;
+	border-bottom: 1px solid buttonhighlight;
+	border-right: 1px solid buttonhighlight;
+	border-top: 1px solid buttonshadow;
+	border-left: 1px solid buttonshadow;
+}
+.select_off {
+	background-color: buttonface;
+	border-top: 1px solid buttonhighlight;
+	border-left: 1px solid buttonhighlight;
+	border-bottom: 1px solid buttonshadow;
+	border-right: 1px solid buttonshadow;
+}
+</style>
+<script>
+
+var folder = "<? echo $folder; ?>";
+/**
+ * Sets/unsets the pointer in browse mode
+ *
+ * @param   object   the table row
+ * @param   object   the color to use for this row
+ * @param   object   the background color
+ *
+ * @return  boolean  whether pointer is set or not
+ */
+var delete_media = new Array();
+ 
+function setPointer(theRow, thePointerColor, theNormalBgColor) {
+
+	for (var i=0;i<document.getElementsByTagName("tr").length;i++) {
+		var a = eval("document.getElementsByTagName('tr')["+i+"];");
+		if(a.id != "") {
+		    var theCells = null;
+		
+		    if(thePointerColor == '' || typeof(a.style) == 'undefined') {
+		        return false;
+		    }
+		    if(typeof(document.getElementsByTagName) != 'undefined') {
+		        theCells = a.getElementsByTagName('td');
+		    } else if (typeof(theRow.cells) != 'undefined') {
+		        theCells = a.cells;
+		    } else {
+		        return false;
+		    }
+		    var rowCellsCnt  = theCells.length;
+		    var currentColor = null;
+		    var newColor     = null;
+			var newTextColor = '#AAAAAA';
+		    // Opera does not return valid values with "getAttribute"
+			currentColor = theCells[0].style.backgroundColor;
+	        newColor     = theNormalBgColor;
+	        newTextColor = '#AAAAAA';
+	        delete_media[a.id] = '0';
+
+	        for (var c = 0; c < rowCellsCnt; c++) {
+				theCells[c].style.backgroundColor = newColor;
+				theCells[c].style.color = newTextColor;
+	        } // end for
+		}
+	}
+
+    var theCells = null;
+
+    if (thePointerColor == '' || typeof(theRow.style) == 'undefined') {
+        return false;
+    }
+
+	if (typeof(document.getElementsByTagName) != 'undefined') {
+        theCells = theRow.getElementsByTagName('td');
+    } else if (typeof(theRow.cells) != 'undefined') {
+        theCells = theRow.cells;
+    } else {
+        return false;
+    }
+
+    var rowCellsCnt  = theCells.length;
+    var currentColor = null;
+    var newColor     = null;
+	var newTextColor = '#000000';
+    // Opera does not return valid values with "getAttribute"
+	currentColor = theCells[0].style.backgroundColor;
+    newColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                 ? theNormalBgColor
+                 : thePointerColor;
+    newTextColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                 ? '#AAAAAA'
+                 : '#000000';
+    delete_media[theRow.id] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                 ? 0
+                 : 1;
+    for (var c = 0; c < rowCellsCnt; c++) {
+		theCells[c].style.backgroundColor = newColor;
+		theCells[c].style.color = newTextColor;
+    } // end for
+
+    return true;
+} // end of the 'setPointer()' function
+
+function upd_form_data(multi_id){
+	parent.document.multi_form_1.multi_id.value = multi_id;
+}
+
+</script>
+ 
+<table cellpadding="1" cellspacing="0" border="0" width="100%" style="table-layout : fixed;">
+<tr style="cursor:pointer;">
+<td width=5% class=select_off>ID</td>
+<td width=95% class=select_off><?=$LANGUAGE_DATA['name']?></td>
+</tr>
+<?
+
+include_once("./multi.inc.html");
+
+//Daten holen
+$multi_abfrage3 = (array)DB::getQueryRows("SELECT * FROM multi_init WHERE active = 1 ORDER BY name");
+
+foreach($multi_abfrage3 as $multi_array3) {
+
+	//Listeneinträge erzeugen
+	echo "<tr style=\"cursor:default;\" id=\"".$multi_array3['id']."\" onDblClick=\"parent.go_detail('entries');\" onclick=\"setPointer(this, 'ACTIVECAPTION', '#FFFFFF'); upd_form_data('".$multi_array3['id']."');\">";
+?>
+		<td><?=$multi_array3['id']?></td>
+		<td nowrap><?=$multi_array3['name']?></td>
+	</tr>
+<?
+}//while
+?>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

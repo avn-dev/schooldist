@@ -1,0 +1,512 @@
+parent: TcComplaints_complaint_list
+class:
+  wdbasic: TsComplaints\Entity\Complaint
+  data: \TsComplaints\Gui2\Data\Complaint
+  date_format: Ext_Thebing_Gui2_Format_Date
+  row_style: TcComplaints\Gui2\Style\Customer\Row\Complaint
+access: thebing_marketing_complaints
+css:
+  - /assets/ts/css/gui2.css
+id:
+  column: id
+  alias: tc_cs
+export: false
+sortable: false
+orderby : 
+  - \TsComplaints\Gui2\Data\Complaint
+  - getOrderby
+  - ""
+bars:
+##########
+# Filter #
+##########
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          alias:
+            - tc_c_n
+            - tc_c
+            - tc_c
+            - tc_ea
+            - kg
+            - ka
+            - ka
+            - ts_a
+            - tc_csc
+            - tc_cc
+          column:
+            - number
+            - firstname
+            - lastname
+            - email
+            - name
+            - ext_1
+            - ext_2
+            - number
+            - short_name
+            - short_name
+        -
+          element: seperator
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            alias:
+              - tc_cs
+            column:
+              - complaint_date
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterFrom
+              - true
+          until:
+            alias:
+              - tc_cs
+            column:
+              - complaint_date
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterUntil
+              - true
+          searchtype: contact
+          based_on:
+            complaint_date:
+              alias: tc_cs
+              column: complaint_date
+            comment_date:
+              alias: tc_ch
+              column: comment_date
+            created:
+              alias: tc_cs
+              column: created
+            followup:
+              alias: tc_ch
+              column: followup
+        -
+          element: seperator
+        -
+          element: selectfilter
+          label: Bereich
+          label_as_item: true
+          column:
+            - type
+          alias:
+            - tc_cc
+          entries:
+              - \TcComplaints\Gui2\Data\Complaint
+              - getAreas
+              - ''
+              - false
+        -
+          element: selectfilter
+          id: filter_category
+          label: Kategorie
+          label_as_item: true
+          searchtype: LIKE
+          column:
+            - category_id
+          alias:
+            - tc_cs
+          entries:
+             - \TsComplaints\Gui2\Data\Category
+             - getCategoriesFilterOptions
+          dependency: true
+        -
+          element: selectfilter
+          id: filter_subcategory
+          label: Unterkategorie
+          label_as_item: true
+          searchtype: LIKE
+          column:
+            - sub_category_id
+          alias:
+            - tc_cs
+          entries:
+            - \TcComplaints\Gui2\Data\SubCategory
+            - getEmptySubCategoriesFilterOptions
+          visibility: true
+        -
+          element: selectfilter
+          label: Status
+          label_as_item: true
+          searchtype: LIKE
+          column:
+            - state
+          alias:
+            - tc_ch
+          entries:
+             - \TcComplaints\Gui2\Data\ComplaintHistory
+             - getState
+             - ''
+          visibility: true
+        -
+          element: selectfilter
+          label: Unterkunft
+          label_as_item: true
+          alias:
+            - tc_cs
+          column:
+            - type_id
+          entries:
+            - Ext_Thebing_Accommodation
+            - getSelectOptions
+          visibility: true
+        -
+          element: selectfilter
+          label: Lehrer
+          label_as_item: true
+          column:
+            - type_id
+          alias:
+            - tc_cs
+          entries:
+             - Ext_Thebing_Teacher
+             - getSelectOptions
+             - true
+        -
+          element: selectfilter
+          label: Transfer
+          label_as_item: true
+          column:
+            - type_id
+          alias:
+            - tc_cs
+          entries:
+            - Ext_Thebing_Pickup_Company
+            - getSelectOptions
+        -
+          element: selectfilter
+          label: Agentur
+          label_as_item: true
+          value:
+            - Ext_Gui2_Factory_Default
+            - getValue
+          alias:
+            - ka
+          column:
+            - id
+          entries:
+            - Ext_TS_Inquiry_Abstract
+            - getAgenciesForSelect
+          visibility: true
+        -
+          element: selectfilter
+          label: Benutzer
+          label_as_item: true
+          column:
+            - editor_id
+          alias:
+            - tc_cs
+          entries:
+             - \TsComplaints\Gui2\Data\Complaint
+             - getUsersFilterOptions
+          visibility: true
+        -
+          element: selectfilter
+          label: Status
+          label_as_item: true
+          alias:
+            - tc_cs
+          column:
+            - status_filter
+          entries:
+            - \TsComplaints\Gui2\Data\Complaint
+            - getStatusOptions
+          filter_query:
+            due_follow_up: "`tc_ch_1`.`followup` < NOW() AND `tc_ch`.`state` NOT LIKE '%resolved%' AND `tc_ch_1`.`followup` != '0' AND `tc_ch_1`.`followup` IS NOT NULL"
+            entered_follow_up: "`tc_ch_1`.`followup` != '0' AND `tc_ch_1`.`followup` IS NOT NULL"
+          visibility: true
+    -
+      position: top
+      type: ""
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - \TsComplaints\Gui2\Data\Complaint
+            - getDialog
+        -
+          element: icon_edit
+          dialog:
+            - \TsComplaints\Gui2\Data\Complaint
+            - getEditDialog
+        -
+          element: icon_delete
+    -
+      position: bottom
+      type: legend
+      elements:
+        -
+          element: legend_label
+          label: Beschwerden
+        -
+          element: legend_info
+          label: Erledigt
+          info:
+            color: lightgreen
+        -
+          element: legend_info
+          label: Nachhaken
+          info:
+            color: red
+columns:
+###########################
+# Nicht sichtbare Spalten #
+###########################
+  -
+    visible: false
+    title: Beschwerdedatum
+    group: Beschwerdedaten
+    column: complaint_date
+    alias: tc_cs
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    visible: false
+    title: Kommentardatum
+    group: Beschwerdedaten
+    column: comment_date
+    alias: tc_ch
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    visible: false
+    title: Erstellungsdatum
+    group: Beschwerdedaten
+    column: created
+    alias: tc_cs
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    visible: false
+    title: Nachhaken
+    group: Beschwerdedaten
+    column: followup
+    alias: tc_ch
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+
+#####################
+# Sichtbare Spalten #
+#####################
+# Schulspalten      #
+#####################
+  -
+    title: Kundennummer
+    group: Persönliche Daten
+    column: number
+    data: customer_number
+    alias: tc_c_n
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - customer_number
+       - true
+    width: name
+    resize: false
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    group: Persönliche Daten
+    column: short
+    alias: kg
+    data: group_short
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - group_name
+  -
+    title: Name
+    group: Persönliche Daten
+    column: lastname
+    alias: tc_c
+    width: name
+    resize: false
+  -
+    title: Vorname
+    group: Persönliche Daten
+    column: firstname
+    alias: tc_c
+    width: name
+    resize: false
+  -
+    title: Geschlecht
+    group: Persönliche Daten
+    column: gender
+    alias: tc_c
+    format: Ext_TC_GUI2_Format_Gender
+    width: gender
+    resize: false
+  -
+    title: Geburtsdatum
+    set: [ts_complaint_list]
+    group: Persönliche Daten
+    column: birthday
+    alias: tc_c
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    title: E-Mail
+    group: Persönliche Daten
+    column: email
+    alias: tc_ea
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - email
+       - true
+    width: email
+    resize: false
+  -
+    title: Korrespondenzsprache
+    group: Persönliche Daten
+    column: corresponding_language
+    alias: tc_c
+    width: name
+    resize: false
+  -
+    title: Muttersprache
+    group: Persönliche Daten
+    column: mother_tongue
+    width: name
+    resize: false
+  -
+    title: Nationalität
+    group: Persönliche Daten
+    column: nationality
+    width: name
+    resize: false
+  -
+    title: Land
+    group: Persönliche Daten
+    column: country_iso
+    alias: tc_a
+    format: Ext_Thebing_Gui2_Format_Country
+    width: name
+    resize: false
+  -
+    title: Agenturnummer
+    column: number
+    alias: ts_a
+    data: agency_number
+    width: number
+    resize: false
+  -
+    title: Agentur
+    column: ext_2
+    alias: ka
+    data: agency_short
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - agency_full_name
+      - true
+    width: short_name
+    resize: false
+  -
+    title: Kategorie
+    group: Beschwerdedaten
+    column: short_name
+    alias: tc_cc
+    data: category_short
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - category_title
+       - true
+    width: name
+    resize: false
+  -
+    title: Unterkategorie
+    group: Beschwerdedaten
+    column: short_name
+    alias: tc_csc
+    data: subcategory_short
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - subcategory_title
+       - true
+    width: name
+    resize: false
+  -
+    title: Bereich
+    group: Beschwerdedaten
+    column: type
+    data: category_area
+    alias: tc_cc
+    format: \TcComplaints\Gui2\Format\DependencyOnFormat
+    width: name
+    resize: false
+  -
+    title: Person
+    group: Beschwerdedaten
+    alias: tc_cs
+    column: type_id
+    format: \TcComplaints\Gui2\Format\DependencyPersonalNames
+    width: name
+    resize: false
+    sortable: false
+  -
+    title: Status
+    group: Beschwerdedaten
+    column: state
+    alias: tc_ch
+    format: \TcComplaints\Gui2\Format\ComplaintState
+    sortable: false
+    width: name
+    resize: false
+  -
+    title: Datum der Beschwerde
+    group: Beschwerdedaten
+    column: complaint_date
+    alias: tc_cs
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    title: Nachhaken
+    group: Beschwerdedaten
+    column: followup
+    alias: tc_ch
+    data: followup
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+    sortable: false
+default_columns:
+  -
+    title: Ersteller
+    column: creator_id
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    sortable: false
+  -
+    title: Erstellt
+    column: created
+    width: date
+    resize: false
+    format: Ext_TC_Gui2_Format_Date
+    sortable: true
+  -
+    title: Bearbeiter
+    column: editor_id
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    sortable: false
+  -
+    title: Verändert
+    column: changed
+    width: date
+    resize: false
+    format: Ext_TC_Gui2_Format_Date
+    sortable: true

@@ -1,0 +1,69 @@
+hash: 08bb23e7e6c0022db9430c4e942c7e25
+class:
+  wdbasic: Ext_Thebing_Tuition_Course_Category
+  data: Ext_Thebing_Tuition_Course_Category_Gui2
+access: thebing_tuition_resource_course_categories
+sortable: true
+only_pagecount: true
+designer: 
+  flex: tuition_course_categories
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        id: search
+        column:
+          - id
+          - name
+        alias:
+          - ''
+          - ''
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Tuition_Course_Category_Gui2
+          - manipulateSearchFilter
+  -
+    position: top
+    elements:
+     -
+      element: icon_new
+      dialog: 
+          - Ext_Thebing_Tuition_Course_Category_Gui2  
+          - getDialog
+     -
+      element: icon_edit
+      dialog:
+          - Ext_Thebing_Tuition_Course_Category_Gui2  
+          - getDialog
+     -
+      element: icon_delete
+      dialog:
+          - Ext_Thebing_Tuition_Course_Category_Gui2  
+          - getDialog
+     -
+        element: icon_file_manager
+columns:
+  -  
+    title: Name
+    column: name
+    width: name
+    resize: true
+    i18n: 
+      pass_language: true
+      interface: frontend
+      show_flag: true
+  -
+    title: Schulen
+    column: schools
+    alias: ktcc
+    width: comment
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]
+
+

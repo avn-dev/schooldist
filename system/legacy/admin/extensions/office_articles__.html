@@ -1,0 +1,142 @@
+<?
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("office");
+
+$range = 1000;
+
+if($_VARS['task'] == "deleteArticle")
+{
+	if(($iArticleID = intval($_VARS['idArticle'])) > 0)
+	{
+		DB::executeQuery("DELETE FROM office_articles WHERE id = ".$iArticleID);
+	}
+}
+
+if($_VARS['task'] == "saveArticle")
+{
+	$_VARS['price'] = str_replace(",", ".", $_VARS['price']);
+	if ($_VARS['idArticle'] == "")
+	{
+		$aNewNumber = DB::getQueryRow("SELECT MAX(id) FROM office_articles");
+		echo $_VARS['number'] = $range + $aNewNumber['MAX(id)']+1;
+		
+		DB::executeQuery("INSERT INTO office_articles SET number = '".$_VARS['number']."', product = '".$_VARS['product']."', unit = '".$_VARS['unit']."', description = '".$_VARS['description']."', price = '".$_VARS['price']."'");
+	} else {
+		DB::executeQuery("UPDATE office_articles SET number = '".$_VARS['number']."', product = '".$_VARS['product']."', unit = '".$_VARS['unit']."', description = '".$_VARS['description']."', price = '".$_VARS['price']."' WHERE id = '".$_VARS['idArticle']."'");
+	}
+}
+$rArticle = DB::getQueryRows("SELECT * FROM office_articles");
+foreach($rArticle as $aArticle) {
+	 $aArticles[$aArticle['id']] = $aArticle['number']." ".$aArticle['product']." (".$aArticle['price']." &euro;)";
+	 $aArticlesDetails[$aArticle['id']] = $aArticle;
+}
+
+if ($_VARS['task'] == "editArticle")
+{
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Office &raquo; Artikel editieren</h1>
+
+		<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+		<input type="hidden" name="task" value="editArticle">
+		<input type="hidden" name="idArticle" value="<? if ($_VARS['idArticle'] != '') { echo $_VARS['idArticle']; }?>">
+		<input type="hidden" name="number" value="<?=$aArticlesDetails[$_VARS['idArticle']]['number']?>">
+		<table cellspacing="0" cellpadding="0" border="0" width="100%">
+		<tr>
+			<td valign="top">
+				<?=printTableStart()?>
+					<?=printFormText("Artikel", "product", $aArticlesDetails[$_VARS['idArticle']]['product'])?>
+					<?=printFormSelect("Einheit", "unit", $aUnits, $aArticlesDetails[$_VARS['idArticle']]['unit'])?>
+					<?=printFormTextarea("Beschreibung", "description", $aArticlesDetails[$_VARS['idArticle']]['description'])?>
+					<?=printFormText("Preis", "price", $aArticlesDetails[$_VARS['idArticle']]['price'])?>
+				<?=printTableEnd()?>
+			</td>
+		</tr>
+		<tr>
+			<td align="right">
+			<br>
+				<table cellspacing="0" cellpadding="5" border="0" width="100%">
+					<tr>
+						<td>&nbsp;</td>
+						<td width="1"><?=printSubmit("speichern", "onclick=\"this.form.task.value='saveArticle';\"")?></td>
+						<td width="1"><?=printSubmit("abbrechen", "onclick=\"this.form.task.value='';\"")?></td>	
+					</tr>
+				</table>
+			</td>
+		</tr>
+		</table>
+		</form>
+
+<?
+} else {
+
+	$rArticle = DB::getQueryRows("SELECT * FROM office_articles");
+	foreach($rArticle as $aArticle) {
+		 $aArticles[$aArticle['id']] = $aArticle;
+	}
+
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Office &raquo; Artikel</h1>
+			<br><br>
+				
+				<p align="right">
+				<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+					<input type="hidden" name="task" value="editArticle">
+					<?=printSubmit("Neuer Artikel", 0)?>
+				</form></p>
+
+				<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+					<tr>
+						<th width="80">Artikelnummer</th>
+						<th width="100">Artikel</th>
+						<th width="100">Einheit</th>
+						<th>Beschreibung</th>
+						<th width="80">Preis</th>
+						<th width="50">Aktion</th>
+					</tr>
+
+<?
+	foreach ((array)$aArticles as $article)
+	{
+?>
+
+					<tr id="tr_<?=$article['id']?>" onmouseout="showRow(<?=$article['id']?>,0)" onmousemove="showRow(<?=$article['id']?>,1);" ondblclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?task=editArticle&idArticle=<?=$article['id']?>&type=<?=$_VARS['type']?>'" style="cursor:pointer;">
+						<td><?=$article['number']?></td>
+						<td><?=$article['product']?></td>
+						<td><?=$article['unit']?></td>
+						<td><?=$article['description']?></td>
+						<td><?=$article['price']?> &euro;</td>
+						<td><a href="<?=$_SERVER['PHP_SELF']?>?task=editArticle&idArticle=<?=$article['id']?>"><img src="/admin/media/edit.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=deleteArticle&idArticle=<?=$article['id']?>" onclick="if(confirm('Löschen?') == false) { return false; } submit();"><img src="/admin/media/delete.png" border="0"></a></td>
+					</tr>
+
+<?
+	}
+?>
+
+				</table>
+				<p align="right">
+				<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+					<input type="hidden" name="task" value="editArticle">
+					<?=printSubmit("Neuer Artikel", 0)?>
+				</form></p>
+					
+<?
+}
+
+?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

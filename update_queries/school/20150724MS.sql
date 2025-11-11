@@ -1,0 +1,1 @@
+ALTER TABLE `ts_placementtests_results_details_notices` CHANGE `active` `active` TINYINT(1) NOT NULL DEFAULT '1';

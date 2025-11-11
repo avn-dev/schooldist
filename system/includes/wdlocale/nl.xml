@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>‘</quotationStart>
+		<quotationEnd>’</quotationEnd>
+		<alternateQuotationStart>“</alternateQuotationStart>
+		<alternateQuotationEnd>”</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar>
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">jan.</month>
+					<month type="2">feb.</month>
+					<month type="3">mrt.</month>
+					<month type="4">apr.</month>
+					<month type="5">mei</month>
+					<month type="6">jun.</month>
+					<month type="7">jul.</month>
+					<month type="8">aug.</month>
+					<month type="9">sep.</month>
+					<month type="10">okt.</month>
+					<month type="11">nov.</month>
+					<month type="12">dec.</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">januari</month>
+					<month type="2">februari</month>
+					<month type="3">maart</month>
+					<month type="4">april</month>
+					<month type="5">mei</month>
+					<month type="6">juni</month>
+					<month type="7">juli</month>
+					<month type="8">augustus</month>
+					<month type="9">september</month>
+					<month type="10">oktober</month>
+					<month type="11">november</month>
+					<month type="12">december</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">zo</day>
+					<day type="mon">ma</day>
+					<day type="tue">di</day>
+					<day type="wed">wo</day>
+					<day type="thu">do</day>
+					<day type="fri">vr</day>
+					<day type="sat">za</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">zondag</day>
+					<day type="mon">maandag</day>
+					<day type="tue">dinsdag</day>
+					<day type="wed">woensdag</day>
+					<day type="thu">donderdag</day>
+					<day type="fri">vrijdag</day>
+					<day type="sat">zaterdag</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">K1</quarter>
+					<quarter type="2">K2</quarter>
+					<quarter type="3">K3</quarter>
+					<quarter type="4">K4</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">1e kwartaal</quarter>
+					<quarter type="2">2e kwartaal</quarter>
+					<quarter type="3">3e kwartaal</quarter>
+					<quarter type="4">4e kwartaal</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>AM</am>
+			<pm>PM</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%e %B %y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%e %b %y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%d-%m-%y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H:%M:%S %Z</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H:%M:%S</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H:%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>Jaar</displayName>
+				</field>
+				<field type="month">
+					<displayName>Maand</displayName>
+				</field>
+				<field type="week">
+					<displayName>Week</displayName>
+				</field>
+				<field type="day">
+					<displayName>Dag</displayName>
+					<relative type="-3">Drie dagen geleden</relative>
+					<relative type="-2">Eergisteren</relative>
+					<relative type="-1">Gisteren</relative>
+					<relative type="0">Vandaag</relative>
+					<relative type="1">Morgen</relative>
+					<relative type="2">Overmorgen</relative>
+					<relative type="3">Over drie dagen</relative>
+				</field>
+				<field type="weekday">
+					<displayName>Dag van de week</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>AM/PM</displayName>
+				</field>
+				<field type="hour">
+					<displayName>Uur</displayName>
+				</field>
+				<field type="minute">
+					<displayName>Minuut</displayName>
+				</field>
+				<field type="second">
+					<displayName>Seconde</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>,</decimal>
+			<group>.</group>
+			<list>;</list>
+			<percentSign>%</percentSign>
+			<nativeZeroDigit>0</nativeZeroDigit>
+			<patternDigit>#</patternDigit>
+			<plusSign>+</plusSign>
+			<minusSign>-</minusSign>
+			<exponential>E</exponential>
+			<perMille>‰</perMille>
+			<infinity>∞</infinity>
+			<nan>NaN</nan>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<percentFormats>
+			<percentFormatLength>
+				<percentFormat>
+					<pattern>#,##0%</pattern>
+				</percentFormat>
+			</percentFormatLength>
+		</percentFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>¤ #,##0.00;¤ #,##0.00-</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+			<unitPattern count="one">{0} {1}</unitPattern>
+			<unitPattern count="other">{0} {1}</unitPattern>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="one">{0} dag</unitPattern>
+			<unitPattern count="other">{0} dagen</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="one">{0} uur</unitPattern>
+			<unitPattern count="other">{0} uur</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="one">{0} minuut</unitPattern>
+			<unitPattern count="other">{0} minuten</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="one">{0} maand</unitPattern>
+			<unitPattern count="other">{0} maanden</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="one">{0} seconde</unitPattern>
+			<unitPattern count="other">{0} seconden</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="one">{0} week</unitPattern>
+			<unitPattern count="other">{0} weken</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="one">{0} jaar</unitPattern>
+			<unitPattern count="other">{0} jaar</unitPattern>
+		</unit>
+	</units>
+</ldml>
+

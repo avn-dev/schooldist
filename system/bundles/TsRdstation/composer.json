@@ -1,0 +1,7 @@
+{
+	"name": "fidelo-bundle/ts-rdstation",
+	"version": "1.0.1",
+	"require": {
+		"league/oauth2-client": "2.*"
+	}
+}

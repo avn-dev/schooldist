@@ -1,0 +1,61 @@
+/* GUI Theme */
+.context-menu-theme-gui {
+	background:#FAFAFA url(cmenu-gui-bg.gif) repeat-y left top;
+	border:1px solid #868686;
+}
+.context-menu-theme-gui .context-menu-item {
+	text-align:left;
+	cursor:pointer;
+	color:black;
+	font-family:Tahoma,Arial;
+	font-size:11px;
+}
+.context-menu-theme-gui .context-menu-separator {
+	margin:0px 0px 0px 32px;
+	font-size:0px;
+	border-top:1px solid #C5C5C5;
+	border-bottom:1px solid #F5F5F5;
+}
+.context-menu-theme-gui .context-menu-item-hover {
+	color: #fff;
+	padding: 1px;
+	/*border: 1px solid white;*/
+}
+.context-menu-theme-gui .context-menu-item .context-menu-item-inner {
+	padding:4px 16px 4px 35px;
+	margin-left:1px;
+	background-color:none;
+	background-repeat:no-repeat;
+	background-position:3px center;
+	background-image:none;
+}
+.context-menu-theme-gui .context-menu-item-hover .context-menu-item-inner {
+	padding:3px 15px 3px 35px;
+	margin-left:0px;
+}
+.context-menu-theme-gui .context-menu-item-disabled {
+	color:#A7A7A7;
+}
+
+
+.context-menu-item-inner-coloricon {
+	padding-left: 11px !important;
+	float: left;
+}
+
+
+.context-menu-item-coloricon {
+	width: 16px;
+	height: 16px;
+	margin: 3px 4px;
+	float: left;
+}
+
+.context-menu-item-coloricon-hover {
+	margin: 2px 4px;
+}
+
+/* Active */
+.context-menu > .active {
+	font-weight: bold;
+}

@@ -1,0 +1,2093 @@
+:root{--vs-colors--lightest:rgba(60,60,60,0.26);--vs-colors--light:rgba(60,60,60,0.5);--vs-colors--dark:#333;--vs-colors--darkest:rgba(0,0,0,0.15);--vs-search-input-color:inherit;--vs-search-input-placeholder-color:inherit;--vs-font-size:1rem;--vs-line-height:1.4;--vs-state-disabled-bg:#f8f8f8;--vs-state-disabled-color:var(--vs-colors--light);--vs-state-disabled-controls-color:var(--vs-colors--light);--vs-state-disabled-cursor:not-allowed;--vs-border-color:var(--vs-colors--lightest);--vs-border-width:1px;--vs-border-style:solid;--vs-border-radius:4px;--vs-actions-padding:4px 6px 0 3px;--vs-controls-color:var(--vs-colors--light);--vs-controls-size:1;--vs-controls--deselect-text-shadow:0 1px 0 #fff;--vs-selected-bg:#f0f0f0;--vs-selected-color:var(--vs-colors--dark);--vs-selected-border-color:var(--vs-border-color);--vs-selected-border-style:var(--vs-border-style);--vs-selected-border-width:var(--vs-border-width);--vs-dropdown-bg:#fff;--vs-dropdown-color:inherit;--vs-dropdown-z-index:1000;--vs-dropdown-min-width:160px;--vs-dropdown-max-height:350px;--vs-dropdown-box-shadow:0px 3px 6px 0px var(--vs-colors--darkest);--vs-dropdown-option-bg:#000;--vs-dropdown-option-color:var(--vs-dropdown-color);--vs-dropdown-option-padding:3px 20px;--vs-dropdown-option--active-bg:#5897fb;--vs-dropdown-option--active-color:#fff;--vs-dropdown-option--deselect-bg:#fb5858;--vs-dropdown-option--deselect-color:#fff;--vs-transition-timing-function:cubic-bezier(1,-0.115,0.975,0.855);--vs-transition-duration:150ms}.v-select{font-family:inherit;position:relative}.v-select,.v-select *{box-sizing:border-box}:root{--vs-transition-timing-function:cubic-bezier(1,0.5,0.8,1);--vs-transition-duration:0.15s}@-webkit-keyframes vSelectSpinner{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}@keyframes vSelectSpinner{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}.vs__fade-enter-active,.vs__fade-leave-active{pointer-events:none;transition:opacity var(--vs-transition-duration) var(--vs-transition-timing-function)}.vs__fade-enter,.vs__fade-leave-to{opacity:0}:root{--vs-disabled-bg:var(--vs-state-disabled-bg);--vs-disabled-color:var(--vs-state-disabled-color);--vs-disabled-cursor:var(--vs-state-disabled-cursor)}.vs--disabled .vs__clear,.vs--disabled .vs__dropdown-toggle,.vs--disabled .vs__open-indicator,.vs--disabled .vs__search,.vs--disabled .vs__selected{background-color:var(--vs-disabled-bg);cursor:var(--vs-disabled-cursor)}.v-select[dir=rtl] .vs__actions{padding:0 3px 0 6px}.v-select[dir=rtl] .vs__clear{margin-left:6px;margin-right:0}.v-select[dir=rtl] .vs__deselect{margin-left:0;margin-right:2px}.v-select[dir=rtl] .vs__dropdown-menu{text-align:right}.vs__dropdown-toggle{-webkit-appearance:none;-moz-appearance:none;appearance:none;background:none;border:var(--vs-border-width) var(--vs-border-style) var(--vs-border-color);border-radius:var(--vs-border-radius);display:flex;padding:0 0 4px;white-space:normal}.vs__selected-options{display:flex;flex-basis:100%;flex-grow:1;flex-wrap:wrap;padding:0 2px;position:relative}.vs__actions{align-items:center;display:flex;padding:var(--vs-actions-padding)}.vs--searchable .vs__dropdown-toggle{cursor:text}.vs--unsearchable .vs__dropdown-toggle{cursor:pointer}.vs--open .vs__dropdown-toggle{border-bottom-color:transparent;border-bottom-left-radius:0;border-bottom-right-radius:0}.vs__open-indicator{fill:var(--vs-controls-color);transform:scale(var(--vs-controls-size));transition:transform var(--vs-transition-duration) var(--vs-transition-timing-function);transition-timing-function:var(--vs-transition-timing-function)}.vs--open .vs__open-indicator{transform:rotate(180deg) scale(var(--vs-controls-size))}.vs--loading .vs__open-indicator{opacity:0}.vs__clear{fill:var(--vs-controls-color);background-color:transparent;border:0;cursor:pointer;margin-right:8px;padding:0}.vs__dropdown-menu{background:var(--vs-dropdown-bg);border:var(--vs-border-width) var(--vs-border-style) var(--vs-border-color);border-radius:0 0 var(--vs-border-radius) var(--vs-border-radius);border-top-style:none;box-shadow:var(--vs-dropdown-box-shadow);box-sizing:border-box;color:var(--vs-dropdown-color);display:block;left:0;list-style:none;margin:0;max-height:var(--vs-dropdown-max-height);min-width:var(--vs-dropdown-min-width);overflow-y:auto;padding:5px 0;position:absolute;text-align:left;top:calc(100% - var(--vs-border-width));width:100%;z-index:var(--vs-dropdown-z-index)}.vs__no-options{text-align:center}.vs__dropdown-option{clear:both;color:var(--vs-dropdown-option-color);cursor:pointer;display:block;line-height:1.42857143;padding:var(--vs-dropdown-option-padding);white-space:nowrap}.vs__dropdown-option--highlight{background:var(--vs-dropdown-option--active-bg);color:var(--vs-dropdown-option--active-color)}.vs__dropdown-option--deselect{background:var(--vs-dropdown-option--deselect-bg);color:var(--vs-dropdown-option--deselect-color)}.vs__dropdown-option--disabled{background:var(--vs-state-disabled-bg);color:var(--vs-state-disabled-color);cursor:var(--vs-state-disabled-cursor)}.vs__selected{align-items:center;background-color:var(--vs-selected-bg);border:var(--vs-selected-border-width) var(--vs-selected-border-style) var(--vs-selected-border-color);border-radius:var(--vs-border-radius);color:var(--vs-selected-color);display:flex;line-height:var(--vs-line-height);margin:4px 2px 0;padding:0 .25em;z-index:0}.vs__deselect{fill:var(--vs-controls-color);-webkit-appearance:none;-moz-appearance:none;appearance:none;background:none;border:0;cursor:pointer;display:inline-flex;margin-left:4px;padding:0;text-shadow:var(--vs-controls--deselect-text-shadow)}.vs--single .vs__selected{background-color:transparent;border-color:transparent}.vs--single.vs--loading .vs__selected,.vs--single.vs--open .vs__selected{opacity:.4;position:absolute}.vs--single.vs--searching .vs__selected{display:none}.vs__search::-webkit-search-cancel-button{display:none}.vs__search::-ms-clear,.vs__search::-webkit-search-decoration,.vs__search::-webkit-search-results-button,.vs__search::-webkit-search-results-decoration{display:none}.vs__search,.vs__search:focus{-webkit-appearance:none;-moz-appearance:none;appearance:none;background:none;border:1px solid transparent;border-left:none;box-shadow:none;color:var(--vs-search-input-color);flex-grow:1;font-size:var(--vs-font-size);line-height:var(--vs-line-height);margin:4px 0 0;max-width:100%;outline:none;padding:0 7px;width:0;z-index:1}.vs__search::-moz-placeholder{color:var(--vs-search-input-placeholder-color)}.vs__search:-ms-input-placeholder{color:var(--vs-search-input-placeholder-color)}.vs__search::placeholder{color:var(--vs-search-input-placeholder-color)}.vs--unsearchable .vs__search{opacity:1}.vs--unsearchable:not(.vs--disabled) .vs__search{cursor:pointer}.vs--single.vs--searching:not(.vs--open):not(.vs--loading) .vs__search{opacity:.2}.vs__spinner{align-self:center;-webkit-animation:vSelectSpinner 1.1s linear infinite;animation:vSelectSpinner 1.1s linear infinite;border:.9em solid hsla(0,0%,39%,.1);border-left-color:rgba(60,60,60,.45);font-size:5px;opacity:0;overflow:hidden;text-indent:-9999em;transform:translateZ(0) scale(var(--vs-controls--spinner-size,var(--vs-controls-size)));transition:opacity .1s}.vs__spinner,.vs__spinner:after{border-radius:50%;height:5em;transform:scale(var(--vs-controls--spinner-size,var(--vs-controls-size)));width:5em}.vs--loading .vs__spinner{opacity:1}
+html, body{
+  margin: 0px;
+  padding: 0px;
+}
+
+.v-select{
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+
+.gui-filter-toolbar {
+  height: auto !important;
+}
+
+.gui-filter-bar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  list-style: none;
+  margin: 3px 0;
+  /*> * {
+  	height: 21px;
+  }*/
+}
+.gui-filter-bar > .divToolbarLabelGroup {
+  margin: 0 0 0 5px;
+  line-height: 21px;
+}
+.gui-filter-bar .form-control-feedback{
+  position: absolute;
+  right: -0.25rem;
+  z-index: 10;
+}
+.gui-filter-bar .gui-sidebar-filter-additional {
+  vertical-align: top;
+  margin-left: 2px;
+}
+
+.gui-sidebar-query .alert-info {
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.gui-filter-bar .gui-sidebar-filter {
+  display: flex;
+  align-items: baseline;
+  margin-left: 5px;
+  flex-wrap: nowrap;
+}
+.gui-filter-bar .gui-sidebar-filter select {
+  margin-top: 0;
+}
+.gui-filter-bar .gui-sidebar-filter .gui-sidebar-filter-additional {
+  display: inline-block;
+}
+
+.gui-sidebar .gui-sidebar-filter .gui-sidebar-filter-additional {
+  margin-top: 10px;
+}
+
+.divHeaderSeparator{
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+[data-mode="dark"] .divHeaderSeparator{
+  --tw-bg-opacity: 1;
+  background-color: rgba(41, 51, 56, 1);
+  background-color: rgba(41, 51, 56, var(--tw-bg-opacity, 1));
+}
+.divHeaderSeparator:has(.Gui2ChildTableDraggable){
+  margin-top: 0.5rem;
+}
+.divHeaderSeparator .header-line{
+  height: 0.25rem !important;
+  border-radius: 9999px !important;
+  background-color: rgba(197, 208, 213, 0.75) !important;
+}
+.divHeaderSeparator .header-line:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1 !important;
+  background-color: rgba(51, 64, 70, 1) !important;
+  background-color: rgba(51, 64, 70, var(--tw-bg-opacity, 1)) !important;
+}
+
+.divHeader{
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+
+[data-mode="dark"] .divHeader{
+  --tw-bg-opacity: 1;
+  background-color: rgba(41, 51, 56, 1);
+  background-color: rgba(41, 51, 56, var(--tw-bg-opacity, 1));
+}
+
+.divBody{
+  position: relative;
+  overflow: hidden;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+
+[data-mode="dark"] .divBody{
+  --tw-bg-opacity: 1;
+  background-color: rgba(41, 51, 56, 1);
+  background-color: rgba(41, 51, 56, var(--tw-bg-opacity, 1));
+}
+
+.divGui2ChildContainer .divHeader{
+  border-radius: 0px;
+  border-top-width: 0px;
+}
+
+.divFooter{
+  border-bottom-right-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+}
+
+[data-mode="dark"] .divFooter{
+  --tw-bg-opacity: 1;
+  background-color: rgba(41, 51, 56, 1);
+  background-color: rgba(41, 51, 56, var(--tw-bg-opacity, 1));
+}
+.divFooter .guiBarElement, .divFooter .divToolbarHtml{
+  margin: 0px;
+  padding: 0px;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.divFooter .divToolbar{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 0.375rem;
+  background-color: rgba(197, 208, 213, 0.5);
+}
+.divFooter .divToolbar:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+}
+
+.guiTableBars > :not([hidden]) ~ :not([hidden]){
+  --tw-divide-y-reverse: 0;
+  border-top-width: calc(1px * (1 - 0));
+  border-top-width: calc(1px * (1 - var(--tw-divide-y-reverse)));
+  border-top-width: calc(1px * calc(1 - 0));
+  border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+  border-bottom-width: calc(1px * 0);
+  border-bottom-width: calc(1px * var(--tw-divide-y-reverse));
+  border-color: rgba(197, 208, 213, 0.5);
+}
+
+[data-mode="dark"] .guiTableBars > :not([hidden]) ~ :not([hidden]){
+  --tw-divide-opacity: 1;
+  border-color: rgba(51, 64, 70, 1);
+  border-color: rgba(51, 64, 70, var(--tw-divide-opacity, 1));
+}
+.guiTableBars:not(:has(.divToolbar)){
+  margin-top: 0.25rem;
+}
+
+.divToolbar{
+  display: flex;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.divToolbar .elements-container{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  -moz-column-gap: 0.5rem;
+       column-gap: 0.5rem;
+  row-gap: 0.125rem;
+  min-height: 29px;
+}
+.divToolbar.with-padding{
+  row-gap: 0.375rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.divToolbar .gui-help-btn{
+  display: flex;
+  cursor: pointer;
+  flex-wrap: nowrap;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  border-color: rgba(197, 208, 213, 0.75);
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.divToolbar .gui-help-btn:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(197, 208, 213, 1);
+  background-color: rgba(197, 208, 213, var(--tw-bg-opacity, 1));
+}
+.divToolbar .gui-help-btn.inactive{
+  opacity: 0.5;
+}
+.divToolbar .divToolbarToggleIcon{
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.25rem;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.divToolbar .divToolbarToggleIcon:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(41, 51, 56, 1);
+  color: rgba(41, 51, 56, var(--tw-text-opacity, 1));
+}
+.divToolbar .divToolbarToggleIcon:hover:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(113, 139, 152, 1);
+  color: rgba(113, 139, 152, var(--tw-text-opacity, 1));
+}
+.divToolbar .guiBarFilter{
+  display: flex;
+  align-items: center;
+  -moz-column-gap: 0.375rem;
+       column-gap: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.divToolbar .guiBarFilter:not(:has(.divToolbarLabel)){
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+.divToolbar .guiBarFilter:not(:has(.divToolbarLabel)) input{
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+}
+.divToolbar .guiBarFilter:has(.divToolbarLabel) > input, .divToolbar .guiBarFilter select{
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
+.divToolbar .guiBarFilter .input-group, .divToolbar .guiBarFilter:not(:has(.divToolbarLabel)), .divToolbar .guiBarFilter:has(.divToolbarLabel) > select, .divToolbar .guiBarFilter input{
+  position: relative;
+  align-items: center;
+  border-radius: 0.25rem;
+  border-style: none;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-color: rgba(197, 208, 213, 0.75);
+}
+.divToolbar .guiBarFilter .input-group:hover, .divToolbar .guiBarFilter:not(:has(.divToolbarLabel)):hover, .divToolbar .guiBarFilter:has(.divToolbarLabel) > select:hover, .divToolbar .guiBarFilter input:hover{
+  --tw-text-opacity: 1;
+  color: rgba(71, 89, 97, 1);
+  color: rgba(71, 89, 97, var(--tw-text-opacity, 1));
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(169, 185, 192, var(--tw-ring-opacity, 1));
+}
+.divToolbar .guiBarFilter .input-group:is([data-mode="dark"] *), .divToolbar .guiBarFilter:not(:has(.divToolbarLabel)):is([data-mode="dark"] *), .divToolbar .guiBarFilter:has(.divToolbarLabel) > select:is([data-mode="dark"] *), .divToolbar .guiBarFilter input:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(71, 89, 97, 1);
+  background-color: rgba(71, 89, 97, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(169, 185, 192, 1);
+  color: rgba(169, 185, 192, var(--tw-text-opacity, 1));
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(91, 115, 125, var(--tw-ring-opacity, 1));
+}
+.divToolbar .guiBarFilter .input-group:hover:is([data-mode="dark"] *), .divToolbar .guiBarFilter:not(:has(.divToolbarLabel)):hover:is([data-mode="dark"] *), .divToolbar .guiBarFilter:has(.divToolbarLabel) > select:hover:is([data-mode="dark"] *), .divToolbar .guiBarFilter input:hover:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(91, 115, 125, 1);
+  background-color: rgba(91, 115, 125, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(197, 208, 213, 1);
+  color: rgba(197, 208, 213, var(--tw-text-opacity, 1));
+}
+.divToolbar .guiBarFilter .input-group, .divToolbar .guiBarFilter:not(:has(.divToolbarLabel)), .divToolbar .guiBarFilter:has(.divToolbarLabel) > select, .divToolbar .guiBarFilter input {
+  height: 24px;
+  box-sizing: border-box;
+}
+.divToolbar .guiBarFilter input, .divToolbar .guiBarFilter select{
+  border-style: none;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+.divToolbar .guiBarFilter input:is([data-mode="dark"] *), .divToolbar .guiBarFilter select:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(71, 89, 97, 1);
+  background-color: rgba(71, 89, 97, var(--tw-bg-opacity, 1));
+}
+.divToolbar .guiBarFilter input:is([data-mode="dark"] *):hover, .divToolbar .guiBarFilter select:is([data-mode="dark"] *):hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(91, 115, 125, 1);
+  background-color: rgba(91, 115, 125, var(--tw-bg-opacity, 1));
+}
+.divToolbar .guiBarFilter input[type=checkbox]{
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+}
+.divToolbar .guiBarFilter .input-group{
+  display: flex;
+}
+.divToolbar .guiBarFilter .input-group input{
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+}
+.divToolbar .guiBarFilter .input-group-btn button{
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.divToolbar .divPagination{
+  display: flex;
+  height: 100%;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+}
+.divToolbar .divPagination .divToolbarIcon{
+  margin: 0px;
+  height: auto;
+  width: 2rem;
+  flex: none;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.divToolbar .divPagination .divToolbarIcon:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(197, 208, 213, 1);
+  background-color: rgba(197, 208, 213, var(--tw-bg-opacity, 1));
+}
+.divToolbar .divPagination .divToolbarIcon:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(71, 89, 97, 1);
+  background-color: rgba(71, 89, 97, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(243, 244, 245, 1);
+  color: rgba(243, 244, 245, var(--tw-text-opacity, 1));
+}
+.divToolbar .divPagination .divToolbarLabel{
+  font-size: 0.75rem;
+  line-height: 1rem;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.divToolbar .divPagination .divToolbarLabel:is([data-mode="dark"] *){
+  --tw-text-opacity: 1;
+  color: rgba(243, 244, 245, 1);
+  color: rgba(243, 244, 245, var(--tw-text-opacity, 1));
+}
+.divToolbar .divPagination .guiBarFilter{
+  margin: 0px;
+}
+.divToolbar .guiBarFilter .divToolbarLabel,
+.divToolbar .divToolbarLabelGroup{
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+
+.divToolbarSeparator{
+  height: 1.5rem;
+  width: 1px;
+  background-color: rgba(197, 208, 213, 0.75);
+  --tw-text-opacity: 1;
+  color: rgba(113, 139, 152, 1);
+  color: rgba(113, 139, 152, var(--tw-text-opacity, 1));
+}
+
+[data-mode="dark"] .divToolbarSeparator{
+  --tw-bg-opacity: 1;
+  background-color: rgba(51, 64, 70, 1);
+  background-color: rgba(51, 64, 70, var(--tw-bg-opacity, 1));
+}
+
+.guiBarElement{
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.25rem;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+
+[data-mode="dark"] .guiBarElement{
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+}
+.guiBarElement:has(.divToolbarHtml){
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.guiBarElement.guiBarLink:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(41, 51, 56, 1);
+  color: rgba(41, 51, 56, var(--tw-text-opacity, 1));
+}
+[data-mode="dark"] .guiBarElement.guiBarLink{
+  --tw-text-opacity: 1;
+  color: rgba(169, 185, 192, 1);
+  color: rgba(169, 185, 192, var(--tw-text-opacity, 1));
+}
+[data-mode="dark"] .guiBarElement.guiBarLink:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(113, 139, 152, 1);
+  color: rgba(113, 139, 152, var(--tw-text-opacity, 1));
+}
+.guiBarElement.guiBarLink, .guiBarElement.guiBarInactive{
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.guiBarElement.guiBarLink .divToolbarLabel, .guiBarElement.guiBarLink .divToolbarLabel, .guiBarElement.guiBarInactive .divToolbarLabel, .guiBarElement.guiBarInactive .divToolbarLabel{
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.Gui2ChildTableDraggable{
+  z-index: 40;
+  --tw-bg-opacity: 1;
+  background-color: rgba(197, 208, 213, 1);
+  background-color: rgba(197, 208, 213, var(--tw-bg-opacity, 1));
+}
+
+.Gui2ChildTableButtonContainer{
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+.Gui2ChildTableButtonContainer .Gui2ChildTableButtons{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-bottom-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+  padding: 0.375rem;
+}
+.Gui2ChildTableButtonContainer .Gui2ChildTableButtons .Gui2ChildTableButton{
+  border-radius: 0.375rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.Gui2ChildTableButtonContainer .Gui2ChildTableButtons .Gui2ChildTableButton:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+}
+
+.guiTableHead{
+  width: 100%;
+}
+
+.guiTableHead > :not([hidden]) ~ :not([hidden]){
+  --tw-divide-y-reverse: 0;
+  border-top-width: calc(1px * (1 - 0));
+  border-top-width: calc(1px * (1 - var(--tw-divide-y-reverse)));
+  border-top-width: calc(1px * calc(1 - 0));
+  border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+  border-bottom-width: calc(1px * 0);
+  border-bottom-width: calc(1px * var(--tw-divide-y-reverse));
+  border-color: rgba(197, 208, 213, 0.5);
+}
+
+.guiTableHead{
+  border-bottom-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+
+[data-mode="dark"] .guiTableHead > :not([hidden]) ~ :not([hidden]){
+  border-color: rgba(33, 41, 46, 0.5);
+}
+
+[data-mode="dark"] .guiTableHead{
+  border-color: rgba(33, 41, 46, 0.5);
+  --tw-text-opacity: 1;
+  color: rgba(113, 139, 152, 1);
+  color: rgba(113, 139, 152, var(--tw-text-opacity, 1));
+}
+.guiTableHead tr > :not([hidden]) ~ :not([hidden]){
+  --tw-divide-x-reverse: 0;
+  border-right-width: calc(1px * 0);
+  border-right-width: calc(1px * var(--tw-divide-x-reverse));
+  border-left-width: calc(1px * (1 - 0));
+  border-left-width: calc(1px * (1 - var(--tw-divide-x-reverse)));
+  border-left-width: calc(1px * calc(1 - 0));
+  border-left-width: calc(1px * calc(1 - var(--tw-divide-x-reverse)));
+  border-color: rgba(197, 208, 213, 0.5);
+}
+.guiTableHead tr:is([data-mode="dark"] *) > :not([hidden]) ~ :not([hidden]){
+  border-color: rgba(33, 41, 46, 0.5);
+}
+.guiTableHead tr:not(:last-child){
+  border-bottom-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+}
+.guiTableHead tr th{
+  align-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: rgba(243, 244, 245, 0.5);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  text-align: left;
+  font-weight: 600;
+}
+.guiTableHead tr th:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(51, 64, 70, 1);
+  background-color: rgba(51, 64, 70, var(--tw-bg-opacity, 1));
+}
+.guiTableHead tr th img{
+  display: inline;
+}
+.guiTableHead tr th.sortasc, .guiTableHead tr th.sortdesc {
+  position: relative;
+  padding-right: 22px;
+}
+.guiTableHead tr th.sortasc:after, .guiTableHead tr th.sortdesc:after {
+  font: normal normal bold 14px/1 "Font Awesome 5 Free";
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: block;
+}
+.guiTableHead tr th.sortasc{
+  --tw-bg-opacity: 1;
+  background-color: rgba(217, 249, 157, 1);
+  background-color: rgba(217, 249, 157, var(--tw-bg-opacity, 1));
+}
+.guiTableHead tr th.sortdesc{
+  --tw-bg-opacity: 1;
+  background-color: rgba(186, 230, 253, 1);
+  background-color: rgba(186, 230, 253, var(--tw-bg-opacity, 1));
+}
+.guiTableHead tr th.sortasc:after {
+  content: "\f884";
+}
+.guiTableHead tr th.sortdesc:after {
+  content: "\f160";
+}
+
+.guiTableBody {
+  border-collapse: collapse;
+}
+.guiTableBody tr{
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.guiTableBody tr:nth-child(even){
+  background-color: rgba(243, 244, 245, 0.5);
+}
+.guiTableBody tr:hover{
+  background-color: rgba(197, 208, 213, 0.5);
+  --tw-text-opacity: 1;
+  color: rgba(21, 26, 29, 1);
+  color: rgba(21, 26, 29, var(--tw-text-opacity, 1));
+}
+.guiTableBody tr:is([data-mode="dark"] *){
+  --tw-text-opacity: 1;
+  color: rgba(113, 139, 152, 1);
+  color: rgba(113, 139, 152, var(--tw-text-opacity, 1));
+}
+.guiTableBody tr:nth-child(even):is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(51, 64, 70, 1);
+  background-color: rgba(51, 64, 70, var(--tw-bg-opacity, 1));
+}
+.guiTableBody tr:not(:last-child) {
+  /*@apply border-b border-gray-50 dark:border-gray-900/50;*/
+  --tw-border-opacity: 1;
+  border-color: rgba(243, 244, 245, 1);
+  border-color: rgba(243, 244, 245, var(--tw-border-opacity, 1));
+}
+.guiTableBody tr:not(:last-child):is([data-mode="dark"] *){
+  border-color: rgba(33, 41, 46, 0.5);
+}
+.guiTableBody tr:not(:last-child) td{
+  border-bottom-width: 1px;
+}
+.guiTableBody tr td{
+  --tw-border-spacing-x: 0px;
+  --tw-border-spacing-y: 0px;
+  border-spacing: 0px 0px;
+  border-spacing: var(--tw-border-spacing-x) var(--tw-border-spacing-y);
+  border-color: rgba(197, 208, 213, 0.25);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+}
+.guiTableBody tr td:is([data-mode="dark"] *){
+  border-color: rgba(33, 41, 46, 0.5);
+}
+.guiTableBody tr td:not(:last-child){
+  border-right-width: 1px;
+}
+.guiTableBody tr td select, .guiTableBody tr td textarea, .guiTableBody tr td input:not([type=checkbox]){
+  width: 100%;
+  border-radius: 0.25rem;
+  border-style: none;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-color: rgba(197, 208, 213, 0.75);
+}
+.guiTableBody tr td .input-group{
+  display: flex;
+  flex-direction: row;
+}
+.guiTableBody tr td .input-group > :not([hidden]) ~ :not([hidden]){
+  --tw-divide-x-reverse: 0;
+  border-right-width: calc(1px * 0);
+  border-right-width: calc(1px * var(--tw-divide-x-reverse));
+  border-left-width: calc(1px * (1 - 0));
+  border-left-width: calc(1px * (1 - var(--tw-divide-x-reverse)));
+  border-left-width: calc(1px * calc(1 - 0));
+  border-left-width: calc(1px * calc(1 - var(--tw-divide-x-reverse)));
+  --tw-divide-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-divide-opacity, 1));
+}
+.guiTableBody tr td .input-group{
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+}
+.guiTableBody tr td .input-group .input-group-addon, .guiTableBody tr td .input-group input:not([type=checkbox]) {
+  padding: 2px 4px;
+}
+.guiTableBody tr td .input-group input:not([type=checkbox]){
+  border-radius: 0px;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+.guiTableBody tr td .guiInplaceEditor{
+  display: table-cell;
+  min-height: 2.5rem;
+  width: 100%;
+}
+
+.divToolbarIconArrowBox{
+  border-radius: 0.375rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(243, 244, 245, 1);
+  border-color: rgba(243, 244, 245, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  --tw-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: 0 0 rgba(0,0,0,0), 0 0 rgba(0,0,0,0), 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 rgba(0,0,0,0)), var(--tw-ring-shadow, 0 0 rgba(0,0,0,0)), var(--tw-shadow);
+}
+
+.modal{
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.modal-header{
+  display: flex;
+  align-items: center;
+  --tw-border-opacity: 1;
+  border-color: rgb(58, 72, 147);
+  border-color: rgb(var(--primary-color-800, 58 72 147) / var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  --tw-text-opacity: 1;
+  color: rgba(0, 0, 0, 1);
+  color: rgba(0, 0, 0, var(--tw-text-opacity, 1));
+}
+
+[data-mode="dark"] .modal-header{
+  --tw-text-opacity: 1;
+  color: rgba(243, 244, 245, 1);
+  color: rgba(243, 244, 245, var(--tw-text-opacity, 1));
+}
+
+@media (min-width: 640px){
+  .modal-header{
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+.modal-header button.close{
+  display: flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.modal-header button.close:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(197, 208, 213, 1);
+  background-color: rgba(197, 208, 213, var(--tw-bg-opacity, 1));
+}
+.modal-header button.close:hover:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+}
+
+.modal-title {
+  /* RoundedBox.vue */
+  flex-grow: 1;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.modal-content{
+  border-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+  --tw-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+  box-shadow: 0 0 rgba(0,0,0,0), 0 0 rgba(0,0,0,0), 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 rgba(0,0,0,0)), var(--tw-ring-shadow, 0 0 rgba(0,0,0,0)), var(--tw-shadow);
+}
+.modal-content .GUIDialogContentPadding{
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-top: 0.5rem;
+}
+.modal-content iframe{
+  border-radius: 0.375rem;
+}
+
+.modal-footer{
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.modal-footer .form-inline{
+  display: flex;
+  width: 100%;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.375rem;
+  background-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.modal-footer .form-inline:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+}
+.modal-footer .form-inline *:first-child:not(button){
+  flex-grow: 1;
+}
+.modal-footer .form-inline select{
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-inset: inset;
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(197, 208, 213, var(--tw-ring-opacity, 1));
+}
+.modal-footer .GUIDialogMessages{
+  margin-bottom: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25rem;
+}
+.modal-footer .GUIDialogMessages .GUIDialogNotification{
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+}
+.modal-footer .GUIDialogMessages .GUIDialogNotification h4{
+  font-weight: 600;
+}
+.modal-footer .GUIDialogMessages .alert h3{
+  margin: 0px !important;
+  border-style: none !important;
+  background-color: transparent !important;
+  padding: 0px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.modal-footer .GUIDialogMessages .alert.alert-info{
+  --tw-border-opacity: 1;
+  border-color: rgba(29, 78, 216, 1);
+  border-color: rgba(29, 78, 216, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(59, 130, 246, 1);
+  background-color: rgba(59, 130, 246, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(239, 246, 255, 1);
+  color: rgba(239, 246, 255, var(--tw-text-opacity, 1));
+}
+.modal-footer .GUIDialogMessages .alert.alert-warning{
+  --tw-border-opacity: 1;
+  border-color: rgba(133, 77, 14, 1);
+  border-color: rgba(133, 77, 14, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(234, 179, 8, 1);
+  background-color: rgba(234, 179, 8, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(254, 252, 232, 1);
+  color: rgba(254, 252, 232, var(--tw-text-opacity, 1));
+}
+.modal-footer .GUIDialogMessages .alert.alert-danger{
+  --tw-border-opacity: 1;
+  border-color: rgba(153, 27, 27, 1);
+  border-color: rgba(153, 27, 27, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(185, 28, 28, 1);
+  background-color: rgba(185, 28, 28, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(254, 242, 242, 1);
+  color: rgba(254, 242, 242, var(--tw-text-opacity, 1));
+}
+.modal-footer .GUIDialogMessages .alert.alert-success{
+  --tw-border-opacity: 1;
+  border-color: rgba(22, 101, 52, 1);
+  border-color: rgba(22, 101, 52, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(21, 128, 61, 1);
+  background-color: rgba(21, 128, 61, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(240, 253, 244, 1);
+  color: rgba(240, 253, 244, var(--tw-text-opacity, 1));
+}
+
+.modal-body{
+  padding-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.modal-body:not(:has(.GUIDialogTabDiv)){
+  border-top-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(243, 244, 245, 1);
+  border-color: rgba(243, 244, 245, var(--tw-border-opacity, 1));
+}
+.modal-body h1:not(.box-title):not(.GUIDialogNotification h1){
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.modal-body h2:not(.box-title):not(.GUIDialogNotification h2){
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.modal-body h3:not(.box-title):not(.GUIDialogNotification h3){
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.modal-body h4:not(.box-title):not(.GUIDialogNotification h4){
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.modal-body h5:not(.box-title):not(.GUIDialogNotification h5){
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.modal-body h1:not(.box-title):not(.GUIDialogNotification h1),
+.modal-body h2:not(.box-title):not(.GUIDialogNotification h2){
+  margin-bottom: 0.5rem;
+  border-bottom-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+  font-weight: 600;
+  --tw-text-opacity: 1;
+  color: rgba(33, 41, 46, 1);
+  color: rgba(33, 41, 46, var(--tw-text-opacity, 1));
+}
+.modal-body h3:not(.box-title):not(.GUIDialogNotification h3),
+.modal-body h4:not(.box-title):not(.GUIDialogNotification h4),
+.modal-body h5:not(.box-title):not(.GUIDialogNotification h5){
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  border-radius: 0.375rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+  font-weight: 600;
+}
+.modal-body h3:not(.box-title):not(.designDiv h3),
+.modal-body h4:not(.box-title):not(.designDiv h4),
+.modal-body h5:not(.box-title):not(.designDiv h5){
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+}
+.modal-body .GUIDialogTabDiv{
+  border-bottom-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(243, 244, 245, 1);
+  border-color: rgba(243, 244, 245, var(--tw-border-opacity, 1));
+  padding-bottom: 0.5rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+.modal-body .GUIDialogTabDiv ul{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+}
+.modal-body .GUIDialogTabDiv ul li{
+  flex: none;
+}
+.modal-body .GUIDialogTabDiv:not(:has(.tabs_scroll_left)){
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.modal-body .GUIDialogTabDiv .GUIDialogTabHeader{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.375rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+}
+.modal-body .GUIDialogTabDiv .GUIDialogTabHeader:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+}
+.modal-body .GUIDialogTabDiv .tabs_scroll_left,
+.modal-body .GUIDialogTabDiv .tabs_scroll_right{
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+.modal-body .GUITab .divBody{
+  padding: 0px;
+}
+.modal-body .divHeaderSeparator.gui2{
+  display: none;
+}
+.modal-body .nav-tabs{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-bottom-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(243, 244, 245, 1);
+  border-color: rgba(243, 244, 245, var(--tw-border-opacity, 1));
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.modal-body .nav-tabs li{
+  border-radius: 0.375rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+}
+.modal-body .nav-tabs li:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+}
+.modal-body .nav-tabs li a{
+  --tw-text-opacity: 1;
+  color: rgba(71, 89, 97, 1);
+  color: rgba(71, 89, 97, var(--tw-text-opacity, 1));
+}
+.modal-body .tab-content .tab-pane{
+  display: none;
+}
+.modal-body .tab-content .tab-pane.active{
+  display: block;
+}
+.modal-body {
+  /* Dialog-GUI2 */
+}
+.modal-body .GUIDialogContentDiv.gui2, .modal-body .GUITab.gui2{
+  border-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+}
+.modal-body .GUIDialogContentDiv.gui2 .divHeaderSeparator, .modal-body .GUITab.gui2 .divHeaderSeparator{
+  margin-top: 0.25rem;
+}
+.modal-body .GUIDialogContentDiv.gui2 .divHeaderSeparator,
+.modal-body .GUIDialogContentDiv.gui2 .divFooter, .modal-body .GUITab.gui2 .divHeaderSeparator,
+.modal-body .GUITab.gui2 .divFooter{
+  border-radius: 0px;
+}
+.modal-body .GUIDialogContentDiv.gui2 .divFooter, .modal-body .GUITab.gui2 .divFooter{
+  padding-left: 0px;
+  padding-right: 0px;
+}
+.modal-body .GUIDialogContentDiv.gui2 .divGui2ChildContainer .divFooter:not(:has(.divToolbar)), .modal-body .GUITab.gui2 .divGui2ChildContainer .divFooter:not(:has(.divToolbar)){
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+.GUIDialogRow{
+  position: relative;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  --tw-text-opacity: 1;
+  color: rgba(33, 41, 46, 1);
+  color: rgba(33, 41, 46, var(--tw-text-opacity, 1));
+}
+
+@media (min-width: 640px){
+  .GUIDialogRow{
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-gap: 1rem;
+    gap: 1rem;
+  }
+}
+.GUIDialogRow .i18n-fields{
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-gap: 0.25rem;
+  gap: 0.25rem;
+}
+.GUIDialogRow .i18n-fields .mce-container{
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+  margin-right: 0.125rem;
+}
+.GUIDialogRow {
+  /*&:not(:last-child) {
+  	@apply border-b border-gray-50;
+  }*/
+}
+.GUIDialogRow .GUIDialogRowLabelDiv,
+.GUIDialogRow .GUIDialogRowLabelDivSmall,
+.GUIDialogRow .GUIDialogRowLabelDivBig{
+  position: relative;
+  display: block;
+  text-align: right;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+@media (min-width: 640px){
+  .GUIDialogRow .GUIDialogRowLabelDiv,
+.GUIDialogRow .GUIDialogRowLabelDivSmall,
+.GUIDialogRow .GUIDialogRowLabelDivBig{
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.375rem;
+  }
+  .GUIDialogRow .GUIDialogRowLabelDiv{
+    grid-column: span 3 / span 3;
+  }
+  .GUIDialogRow .GUIDialogRowLabelDivSmall{
+    grid-column: span 2 / span 2;
+  }
+  .GUIDialogRow .GUIDialogRowLabelDivBig{
+    grid-column: span 4 / span 4;
+  }
+  .GUIDialogRow:has(.GUIDialogRowLabelDiv) .GUIDialogRowInputDiv{
+    grid-column: span 9 / span 9;
+  }
+  .GUIDialogRow:has(.GUIDialogRowLabelDivSmall) .GUIDialogRowInputDiv{
+    grid-column: span 10 / span 10;
+  }
+  .GUIDialogRow:has(.GUIDialogRowLabelDivBig) .GUIDialogRowInputDiv{
+    grid-column: span 8 / span 8;
+  }
+}
+.GUIDialogRow .GUIDialogRowInputDiv{
+  position: relative;
+  margin-top: 0.25rem;
+}
+@media (min-width: 640px){
+  .GUIDialogRow .GUIDialogRowInputDiv{
+    margin-top: 0.5rem;
+    margin-top: 0px;
+    align-items: center;
+  }
+}
+.GUIDialogRow .GUIDialogRowInputDiv.GUIDialogRowInputGridDiv{
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  grid-column-gap: 0.25rem;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+}
+.GUIDialogRow .GUIDialogRowInputDiv *.GuiDialogErrorInput{
+  --tw-border-opacity: 1 !important;
+  border-color: rgba(239, 68, 68, 1) !important;
+  border-color: rgba(239, 68, 68, var(--tw-border-opacity, 1)) !important;
+}
+.GUIDialogRow .GUIDialogRowInputDiv:not(.i18n-fields):has(.mce-tinymce){
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  padding: 0.25rem;
+}
+.GUIDialogRow .GUIDialogRowInputDiv .help-block{
+  margin-top: 0.125rem;
+  display: block;
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+}
+.GUIDialogRow .GUIDialogRowLabelDiv input:not(.ui-widget-content):not([type=checkbox]):not([type=file]):not(.bootstrap-tagsinput > input),
+.GUIDialogRow .GUIDialogRowLabelDiv select,
+.GUIDialogRow .GUIDialogRowLabelDiv textarea,
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput,
+.GUIDialogRow .GUIDialogRowInputDiv input:not(.ui-widget-content):not([type=checkbox]):not([type=file]):not(.bootstrap-tagsinput > input),
+.GUIDialogRow .GUIDialogRowInputDiv select,
+.GUIDialogRow .GUIDialogRowInputDiv textarea,
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput{
+  width: 100%;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  --tw-shadow: 0 0 rgba(0,0,0,0);
+  --tw-shadow-colored: 0 0 rgba(0,0,0,0);
+  box-shadow: 0 0 rgba(0,0,0,0), 0 0 rgba(0,0,0,0), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 rgba(0,0,0,0)), var(--tw-ring-shadow, 0 0 rgba(0,0,0,0)), var(--tw-shadow);
+}
+.GUIDialogRow .GUIDialogRowLabelDiv input:not(.ui-widget-content):not([type=checkbox]):not([type=file]):not(.bootstrap-tagsinput > input):focus,
+.GUIDialogRow .GUIDialogRowLabelDiv select:focus,
+.GUIDialogRow .GUIDialogRowLabelDiv textarea:focus,
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput:focus,
+.GUIDialogRow .GUIDialogRowInputDiv input:not(.ui-widget-content):not([type=checkbox]):not([type=file]):not(.bootstrap-tagsinput > input):focus,
+.GUIDialogRow .GUIDialogRowInputDiv select:focus,
+.GUIDialogRow .GUIDialogRowInputDiv textarea:focus,
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput:focus{
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv input:not(.ui-widget-content):not([type=checkbox]):not([type=file]):not(.bootstrap-tagsinput > input):not([readonly]),
+.GUIDialogRow .GUIDialogRowLabelDiv select:not([readonly]),
+.GUIDialogRow .GUIDialogRowLabelDiv textarea:not([readonly]),
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput:not([readonly]),
+.GUIDialogRow .GUIDialogRowInputDiv input:not(.ui-widget-content):not([type=checkbox]):not([type=file]):not(.bootstrap-tagsinput > input):not([readonly]),
+.GUIDialogRow .GUIDialogRowInputDiv select:not([readonly]),
+.GUIDialogRow .GUIDialogRowInputDiv textarea:not([readonly]),
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput:not([readonly]){
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+.GUIDialogRow .GUIDialogRowLabelDiv input[type=checkbox],
+.GUIDialogRow .GUIDialogRowInputDiv input[type=checkbox]{
+  margin-top: 0.625rem;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput,
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput{
+  padding: 0.25rem;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput input,
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput input{
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput .tag,
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput .tag{
+  margin-top: 0px;
+  margin-bottom: 0px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(197, 208, 213, 1);
+  background-color: rgba(197, 208, 213, var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  --tw-text-opacity: 1;
+  color: rgba(71, 89, 97, 1);
+  color: rgba(71, 89, 97, var(--tw-text-opacity, 1));
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .bootstrap-tagsinput .tag *[data-role=remove],
+.GUIDialogRow .GUIDialogRowInputDiv .bootstrap-tagsinput .tag *[data-role=remove]{
+  margin: 0px;
+  padding: 0px;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv:has(.gui2_uploads),
+.GUIDialogRow .GUIDialogRowInputDiv:has(.gui2_uploads){
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files{
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads .gui2_upload,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads .gui2_upload_existing_file,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files .gui2_upload,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files .gui2_upload_existing_file,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads .gui2_upload,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads .gui2_upload_existing_file,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files .gui2_upload,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files .gui2_upload_existing_file{
+  display: flex;
+  width: 100%;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads .gui2_upload a,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads .gui2_upload_existing_file a,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files .gui2_upload a,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files .gui2_upload_existing_file a,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads .gui2_upload a,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads .gui2_upload_existing_file a,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files .gui2_upload a,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files .gui2_upload_existing_file a{
+  flex-grow: 1;
+  padding: 0.5rem;
+}
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads .gui2_upload input,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_uploads .gui2_upload_existing_file input,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files .gui2_upload input,
+.GUIDialogRow .GUIDialogRowLabelDiv .gui2_upload_existing_files .gui2_upload_existing_file input,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads .gui2_upload input,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_uploads .gui2_upload_existing_file input,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files .gui2_upload input,
+.GUIDialogRow .GUIDialogRowInputDiv .gui2_upload_existing_files .gui2_upload_existing_file input{
+  flex-grow: 1;
+  padding: 0.375rem;
+}
+.GUIDialogRow .GUIDialogRowInputDivContainer{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+}
+.GUIDialogRow:not(.GUIDialogMultiRow) .bootstrap-tagsinput{
+  width: 100%;
+}
+
+.GUIDialogMultiRow .GUIDialogRowInputDiv,
+.GUIDialogMultiRow .GUIDialogRowInputDiv .row:not(.grid-row){
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-wrap: nowrap;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv:has(.GUIDialogRowInputDivContainer),
+.GUIDialogMultiRow .GUIDialogRowInputDiv .row:not(.grid-row):has(.GUIDialogRowInputDivContainer){
+  flex-direction: column;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv input[type=checkbox],
+.GUIDialogMultiRow .GUIDialogRowInputDiv .row:not(.grid-row) input[type=checkbox]{
+  margin-top: 0px;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row{
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: center;
+  grid-gap: 1rem;
+  gap: 1rem;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-1{
+  grid-column: span 1 / span 1;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-2{
+  grid-column: span 2 / span 2;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-3{
+  grid-column: span 3 / span 3;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-4{
+  grid-column: span 4 / span 4;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-5{
+  grid-column: span 5 / span 5;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-6{
+  grid-column: span 6 / span 6;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-7{
+  grid-column: span 7 / span 7;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-8{
+  grid-column: span 8 / span 8;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-9{
+  grid-column: span 9 / span 9;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-10{
+  grid-column: span 10 / span 10;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-11{
+  grid-column: span 11 / span 11;
+}
+.GUIDialogMultiRow .GUIDialogRowInputDiv .grid-row .col-md-12{
+  grid-column: span 12 / span 12;
+}
+.GUIDialogMultiRow .bootstrap-tagsinput {
+  min-width: 150px;
+}
+
+.GUIDialogFlexRowList{
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.GUIDialogFlexRowList .GUIDialogRow{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+}
+.GUIDialogFlexRowList label{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.GUIDialogJoinedObjectContainer{
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+  border-radius: 0.75rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+}
+.GUIDialogJoinedObjectContainer.bordered{
+  border-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+  background-color: transparent;
+}
+.GUIDialogJoinedObjectContainer .add-btn-container{
+  display: flex;
+}
+.modal-footer .GUIDialogJoinedObjectContainer .add-btn-container{
+  display: flex;
+  width: 100%;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.375rem;
+  background-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.modal-footer .GUIDialogJoinedObjectContainer .add-btn-container:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+}
+.modal-footer .GUIDialogJoinedObjectContainer .add-btn-container *:first-child:not(button){
+  flex-grow: 1;
+}
+.modal-footer .GUIDialogJoinedObjectContainer .add-btn-container select{
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-inset: inset;
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(197, 208, 213, var(--tw-ring-opacity, 1));
+}
+
+.GUIDialogJoinedObjectContainerCountField{
+  float: left;
+  width: 50px;
+}
+
+.GUIDialogJoinedObjectContainerRow{
+  border-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+}
+
+#guiLoadingDiv, .guiLoadingDiv{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(169, 185, 192, 1);
+  background-color: rgba(169, 185, 192, var(--tw-bg-opacity, 1));
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  --tw-text-opacity: 1;
+  color: rgba(21, 26, 29, 1);
+  color: rgba(21, 26, 29, var(--tw-text-opacity, 1));
+  opacity: 0.5;
+}
+
+.box_container .add-btn-container{
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+
+.modal-footer .box_container .add-btn-container{
+  display: flex;
+  width: 100%;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.375rem;
+  background-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.modal-footer .box_container .add-btn-container:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+}
+
+.modal-footer .box_container .add-btn-container *:first-child:not(button){
+  flex-grow: 1;
+}
+
+.modal-footer .box_container .add-btn-container select{
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-inset: inset;
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(197, 208, 213, var(--tw-ring-opacity, 1));
+}
+.box_container .add-btn-container input{
+  width: 2rem;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  --tw-shadow: 0 0 rgba(0,0,0,0);
+  --tw-shadow-colored: 0 0 rgba(0,0,0,0);
+  box-shadow: 0 0 rgba(0,0,0,0), 0 0 rgba(0,0,0,0), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 rgba(0,0,0,0)), var(--tw-ring-shadow, 0 0 rgba(0,0,0,0)), var(--tw-shadow);
+}
+.box_container .add-btn-container input:focus{
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.box-group > .box {
+  margin-bottom: 0;
+}
+.box-group > .box .box-header h4 {
+  display: block;
+}
+.box-group > .box .box-header h4 a {
+  display: block;
+}
+
+.gui-info-icon {
+  cursor: help;
+}
+.gui-info-icon.inactive {
+  opacity: 0.2;
+}
+.gui-info-icon.editable {
+  cursor: pointer;
+}
+
+.datepicker{
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.datepicker td{
+  padding: 0.375rem;
+}
+
+.dropdown-menu{
+  position: absolute;
+  z-index: 9999;
+}
+
+.divTooltip{
+  position: absolute;
+  max-width: 32rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-color: rgba(197, 208, 213, 0.75);
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.divLegend{
+  display: flex;
+  align-items: center;
+  border-radius: 0.375rem;
+  background-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+[data-mode="dark"] .divLegend{
+  --tw-bg-opacity: 1;
+  background-color: rgba(51, 64, 70, 1);
+  background-color: rgba(51, 64, 70, var(--tw-bg-opacity, 1));
+}
+
+.colorkey{
+  border-radius: 0.25rem;
+}
+
+.divCleaner{
+  clear: both;
+}
+
+/* TODO entfernen oder umbennen */
+.designDivShadow,
+.designDiv:not(.box){
+  border-radius: 0.25rem;
+  border-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+}
+.designDivShadow h3:not(.box-title),
+.designDivShadow h4:not(.box-title),
+.designDivShadow h5:not(.box-title),
+.designDiv:not(.box) h3:not(.box-title),
+.designDiv:not(.box) h4:not(.box-title),
+.designDiv:not(.box) h5:not(.box-title){
+  background-color: rgba(197, 208, 213, 0.5);
+  --tw-text-opacity: 1;
+  color: rgba(71, 89, 97, 1);
+  color: rgba(71, 89, 97, var(--tw-text-opacity, 1));
+}
+.designDivShadow .designDivButtonContainer,
+.designDiv:not(.box) .designDivButtonContainer{
+  display: flex;
+  gap: 0.25rem;
+}
+.modal-footer .designDivShadow .designDivButtonContainer,.modal-footer 
+.designDiv:not(.box) .designDivButtonContainer{
+  display: flex;
+  width: 100%;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem;
+  border-radius: 0.375rem;
+  background-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.modal-footer .designDivShadow .designDivButtonContainer:is([data-mode="dark"] *),.modal-footer 
+.designDiv:not(.box) .designDivButtonContainer:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(33, 41, 46, 1);
+  background-color: rgba(33, 41, 46, var(--tw-bg-opacity, 1));
+}
+.modal-footer .designDivShadow .designDivButtonContainer *:first-child:not(button),.modal-footer 
+.designDiv:not(.box) .designDivButtonContainer *:first-child:not(button){
+  flex-grow: 1;
+}
+.modal-footer .designDivShadow .designDivButtonContainer select,.modal-footer 
+.designDiv:not(.box) .designDivButtonContainer select{
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-inset: inset;
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(197, 208, 213, var(--tw-ring-opacity, 1));
+}
+
+.placeholderTools{
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  padding: 0.5rem;
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+}
+.placeholderTools input{
+  position: relative;
+  align-items: center;
+  border-radius: 0.25rem;
+  border-style: none;
+  --tw-bg-opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(91, 115, 125, 1);
+  color: rgba(91, 115, 125, var(--tw-text-opacity, 1));
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 rgba(0,0,0,0);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 rgba(0,0,0,0));
+  --tw-ring-color: rgba(197, 208, 213, 0.75);
+}
+.placeholderTools input:hover{
+  --tw-text-opacity: 1;
+  color: rgba(71, 89, 97, 1);
+  color: rgba(71, 89, 97, var(--tw-text-opacity, 1));
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(169, 185, 192, var(--tw-ring-opacity, 1));
+}
+.placeholderTools input:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(71, 89, 97, 1);
+  background-color: rgba(71, 89, 97, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(169, 185, 192, 1);
+  color: rgba(169, 185, 192, var(--tw-text-opacity, 1));
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgba(91, 115, 125, var(--tw-ring-opacity, 1));
+}
+.placeholderTools input:hover:is([data-mode="dark"] *){
+  --tw-bg-opacity: 1;
+  background-color: rgba(91, 115, 125, 1);
+  background-color: rgba(91, 115, 125, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(197, 208, 213, 1);
+  color: rgba(197, 208, 213, var(--tw-text-opacity, 1));
+}
+
+.placeholderContentScroll{
+  overflow: scroll;
+  padding-bottom: 1rem;
+}
+
+.placeholdertable tr.loop td{
+  background-color: rgba(197, 208, 213, 0.5);
+}
+.placeholdertable tr.parent td,
+.placeholdertable td.indent{
+  background-color: rgba(243, 244, 245, 0.5);
+}
+
+/* Multiselect ---------------------------------- */
+.ui-multiselect{
+  position: relative;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.ui-multiselect ul {
+  -moz-user-select: none;
+}
+
+.ui-multiselect li{
+  margin: 0px;
+  cursor: default;
+  list-style-type: none;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+  font-size: 0.75rem;
+  line-height: 1rem;
+  line-height: 15px;
+  height: 15px;
+}
+
+.ui-multiselect li a{
+  float: left;
+  display: block;
+  cursor: pointer;
+  padding: 0px;
+  --tw-text-opacity: 1;
+  color: rgba(51, 64, 70, 1);
+  color: rgba(51, 64, 70, var(--tw-text-opacity, 1));
+  text-decoration-line: underline;
+}
+
+.ui-multiselect li.ui-draggable-dragging {
+  padding-left: 10px;
+}
+
+.ui-multiselect li.ui-state-default{
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgba(71, 89, 97, 1);
+  color: rgba(71, 89, 97, var(--tw-text-opacity, 1));
+}
+
+.ui-multiselect div.selected {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  float: right;
+  width: 50%;
+}
+
+.ui-multiselect ul.selected{
+  border-bottom-right-radius: 0.25rem;
+  position: relative;
+  padding: 0;
+  overflow: auto;
+  overflow-x: hidden;
+  background: #fff;
+  margin: 0;
+  list-style: none;
+  border: 0;
+  width: 100%;
+}
+
+.ui-multiselect ul.selected.ui-sortable li {
+  padding-left: 15px !important;
+}
+
+.ui-multiselect div.available {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  float: left;
+  width: 50%;
+}
+
+.ui-multiselect ul.available{
+  border-bottom-left-radius: 0.25rem;
+  border-right-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  position: relative;
+  padding: 0;
+  overflow: auto;
+  overflow-x: hidden;
+  background: #fff;
+  margin: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.ui-multiselect ul.available li, .ui-multiselect ul.selected li{
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  overflow: hidden;
+}
+
+.ui-multiselect div.available .actions{
+  width: 100%;
+  border-right-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+}
+
+.ui-multiselect .ui-state-default {
+  border: none;
+  margin-bottom: 1px;
+  position: relative;
+  padding-left: 20px;
+}
+
+.ui-multiselect .ui-state-hover {
+  border: none;
+}
+
+.ui-multiselect .ui-widget-header{
+  height: 1.5rem;
+  background-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: "tnum";
+  font-size: 0.75rem;
+  line-height: 1rem;
+  border: none;
+  margin-bottom: 1px;
+}
+
+.ui-multiselect .available .ui-widget-header{
+  border-top-left-radius: 0.25rem;
+}
+
+.ui-multiselect .selected .ui-widget-header{
+  border-top-right-radius: 0.25rem;
+}
+
+.ui-multiselect .available .li-text {
+  float: left;
+}
+
+.ui-multiselect .add-all {
+  float: right;
+  padding: 4px 0;
+}
+
+.ui-multiselect .remove-all {
+  float: right;
+  padding: 4px 0;
+}
+
+.ui-multiselect .search {
+  float: left;
+}
+
+.ui-multiselect .count {
+  float: left;
+  padding: 4px 0;
+}
+
+.ui-multiselect li span.ui-icon-arrowthick-2-n-s {
+  position: absolute;
+  left: 1px;
+}
+
+.ui-multiselect li a.action{
+  right: 0.25rem;
+  position: absolute;
+  top: -2px;
+}
+
+.ui-multiselect input.search{
+  border-radius: 0.25rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  margin-top: 3px;
+  width: 150px;
+  float: left;
+  font-size: 10px;
+}
+
+.ui-multiselect.readonly {
+  border-style: dotted !important;
+  opacity: 0.6;
+}
+
+.ui-multiselect.readonly a,
+.ui-multiselect.readonly .ui-widget-header > .search {
+  visibility: hidden;
+}
+
+.input-group .mce-tinymce.mce-panel{
+  border-style: none;
+}

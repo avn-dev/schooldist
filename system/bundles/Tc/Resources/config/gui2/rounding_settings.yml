@@ -1,0 +1,81 @@
+class:
+  wdbasic: Ext_TC_Rounding_Currency
+id:
+  column: iso4217
+  alias: 
+limit : 9999
+access: 
+  - core_admin_rounding_settings
+  - 
+orderby : 
+  - Ext_TC_Rounding_Gui2_Data
+  - getOrderby
+pagination: false
+export: false
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+          - iso4217
+
+columns:
+  -
+    title: Währung
+    column: name
+    alias: 
+    width: name
+    resize: true
+  -
+    title: ISO
+    column: iso4217
+    alias: 
+    width: name
+  -
+    title: Beträge allgemein
+    column: invoice_precision
+    alias: 
+    width: name
+    group:		Nachkommastellen auf Rechnungsdokumenten
+    inplace_editor: true
+    format:		Ext_Gui2_View_Format_Int
+  -
+    title: USt. der Positionen 
+    column: invoice_line_item_tax_precision
+    alias: 
+    width: name
+    group:		Nachkommastellen auf Rechnungsdokumenten
+    inplace_editor: true
+    format:		Ext_Gui2_View_Format_Int
+  -
+    title: Inkrement
+    column: increment
+    alias: 
+    width: name
+    group:		Nachkommastellen auf Rechnungsdokumenten
+    inplace_editor: true
+    format:		Ext_Gui2_View_Format_Int
+
+default_columns:
+  -
+    visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: tc_rs
+    width: user_name
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: changed
+    alias: tc_rs
+    width: date_time

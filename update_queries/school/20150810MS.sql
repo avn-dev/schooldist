@@ -1,0 +1,1 @@
+ALTER TABLE `ts_placementtests_results` CHANGE `user_id` `editor_id` INT(11) NOT NULL;

@@ -1,0 +1,411 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = new Ext_TC_Gui2(md5('core_admin_pdf_layouts'), 'Ext_TC_Pdf_Layout_Gui2_Data');
+
+$oGui->access = array('core_admin_templates_pdf_layouts', '');
+
+$oGui->setWDBasic('Ext_TC_Pdf_Layout');
+$oGui->setTableData('orderby', array('tc_pl.name'=>'ASC'));
+
+// Listen Optionen
+$oGui->column_sortable		= 1; // es geht nur eine sortierart!
+$oGui->row_sortable			= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'tc_pl';
+
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+
+$oGui->calendar_format		= Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGui->class_js				= 'AdminPdfLayoutsGui';
+
+$sGuiDescription = $oGui->gui_description;
+
+/**
+ * Daten vorbereiten
+ */
+$aPaperSize = array(
+	0 =>			L10N::t('Benutzerdefiniert', $sGuiDescription),
+	'a4' =>			L10N::t('DIN A4 - Hochformat', $sGuiDescription),
+	'a4_q' =>		L10N::t('DIN A4 - Querformat', $sGuiDescription),
+	'letter' =>		L10N::t('Letter - Hochformat', $sGuiDescription),
+	'letter_q' =>	L10N::t('Letter - Querformat', $sGuiDescription)
+);
+
+$aPositionsSelect = array(
+	0 => L10N::t('Nein', $sGuiDescription),
+	1 => L10N::t('Ja, mit Einzelbeträgen', $sGuiDescription),
+	2 => L10N::t('Ja, ohne Einzelbeträge', $sGuiDescription)
+);
+
+$oFont = new Ext_TC_System_Font;
+$aFonts = $oFont->getArrayList(true);
+$aSubFonts = Ext_TC_Util::addEmptyItem($aFonts, L10N::t('Standard', $sGuiDescription));
+$aFonts = Ext_TC_Util::addEmptyItem($aFonts, Ext_TC_L10N::getEmptySelectLabel('please_choose'));
+
+$aFontStyles = array(
+	'' => L10N::t('Normal',$sGuiDescription),
+	'B' => L10N::t('Fett',$sGuiDescription),
+	'I' => L10N::t('Kursiv',$sGuiDescription),
+	'U' => L10N::t('Unterstrichen',$sGuiDescription)
+);
+
+$aFiles	= Ext_TC_Upload::search('pdf_background');
+$aFiles = Ext_TC_Util::convertArrayForSelect($aFiles, 'description');
+$aFiles = Ext_TC_Util::addEmptyItem($aFiles);
+
+$aVatDisplay = array(
+	'column_value' => $oGui->t('Steuern als Wert in extra Spalte'),
+	'row_sum' => $oGui->t('Gesamtbetrag je Steuersatz in Extrazeile unten'),
+	'column_percent' => $oGui->t('Steuersatz in % in Extra-Spalte darstellen'),
+	'column_name' => $oGui->t('Name des Steuersatzes in einer Extra-Spalte darstellen')
+);
+
+// OBERE LISTE
+
+$oDialog = $oGui->createDialog($oGui->t('Layout "{name}" editieren'), $oGui->t('Neues Layout anlegen'));
+$oDialog->height = 700;
+
+$oTab1		= $oDialog->createTab(L10N::t('Layout', $sGuiDescription));
+
+$oDiv		= $oDialog->createRow( L10N::t('Name', $sGuiDescription), 'input',	array('db_column' => 'name', 'db_alias' => '', 'required' => 1));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Format', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Papiergröße', $sGuiDescription), 'select',	array('db_column' => 'page_format', 'db_alias' => '', 'select_options' => $aPaperSize));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Breite (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_format_width', 'db_alias' => '', 'required' => 1, 'format'=>  Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Höhe (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_format_height', 'db_alias' => '', 'required' => 1, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Platzierung', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Startpunkt links (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_margin_left', 'db_alias' => '', 'required' => 0, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Startpunkt oben (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_margin_right', 'db_alias' => '', 'required' => 0, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Abstand horizontal (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_spacing_x', 'db_alias' => '', 'required' => 0, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Abstand vertikal (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_spacing_y', 'db_alias' => '', 'required' => 0, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Hintergrund', $sGuiDescription), 'select',	array('db_column' => 'page_background', 'db_alias' => '', 'required' => 0, 'select_options'=>$aFiles));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Schrift', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Standard-Schriftart', $sGuiDescription), 'select',	array('db_column' => 'font_type', 'db_alias' => '', 'required' => 1, 'select_options'=>$aFonts));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Minimierung der Dateigröße durch Reduzierung der Schrift auf die verwendeten Zeichen (Generierung dauert länger)', $sGuiDescription), 'checkbox',	array('db_column' => 'font_subsetting', 'db_alias' => ''));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Standard-Schriftgröße', $sGuiDescription), 'input',	array('db_column' => 'font_size', 'db_alias' => '', 'required' => 1, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Standard-Laufweite', $sGuiDescription), 'input',	array('db_column' => 'font_spacing', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Seitenränder: Erste Seite (in mm)', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Oben', $sGuiDescription), 'input',	array('db_column' => 'first_page_border_top', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Rechts', $sGuiDescription), 'input',array('db_column' => 'first_page_border_right', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Unten', $sGuiDescription), 'input',	array('db_column' => 'first_page_border_bottom', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Links', $sGuiDescription), 'input',	array('db_column' => 'first_page_border_left', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Seitenränder: Folgeseite (in mm)', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Oben', $sGuiDescription), 'input',	array('db_column' => 'additional_page_border_top', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Rechts', $sGuiDescription), 'input',array('db_column' => 'additional_page_border_right', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Unten', $sGuiDescription), 'input',	array('db_column' => 'additional_page_border_bottom', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Links', $sGuiDescription), 'input',	array('db_column' => 'additional_page_border_left', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oTab1->setElement($oDiv);
+
+$oDialog->setElement($oTab1);
+
+$oTab2 = $oDialog->createTab(L10N::t('Einstellungen', $sGuiDescription));
+
+$oH2= new Ext_Gui2_Html_H2();
+$oH2->setElement(L10N::t('Positionstabelle', $sGuiDescription));
+$oTab2->setElement($oH2);
+
+$oDiv = $oDialog->createRow( 
+	L10N::t('Umsatzsteuer-Darstellung', $sGuiDescription), 
+	'select',	
+	array(
+		'db_column'			=> 'vat_display', 
+		'db_alias'			=> '', 
+		'multiple'			=> 3,
+		'jquery_multiple'	=> 1,
+		'select_options' => $aVatDisplay,
+		'searchable' => true
+	)
+);
+$oTab2->setElement($oDiv);
+
+$oDialog->setElement($oTab2);
+
+## ENDE DIALOG TAB ##
+
+
+# START - Leiste 1 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oFilter = $oBar->createFilter();
+	$oFilter->db_column = array('name');
+	$oFilter->db_alias = array('tc_pl');
+	$oFilter->id = 'search';
+	$oFilter->placeholder = $oGui->t('Suche').'…';
+	$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+# Leiste 2 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGui->gui_description),
+			$oDialog,
+			L10N::t('Neuer Eintrag', $oGui->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oGui->gui_description),
+				$oDialog,
+				L10N::t('Editieren', $oGui->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+# Leiste 3 #
+$oBar = $oGui->createBar();
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelGroup = $oBar->createLabelGroup($oGui->t('Export'));
+	$oBar->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGui->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGui->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+
+# ENDE - Leiste 3 #
+
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'name';
+$oColName->db_alias						= 'tc_pl';
+$oColName->select_column				= 'name';
+$oColName->title						= L10N::t('Name', $sGuiDescription);
+$oColName->width						= Ext_TC_Util::getTableColumnWidth('name');
+$oColName->width_resize					= true;
+$oColName->format						= 'Text';
+
+$oGui->setColumn($oColName);
+
+$oDefaultColumn = $oGui->getDefaultColumn();
+$oDefaultColumn->setAliasForAll('tc_pl');
+$oGui->setDefaultColumn($oDefaultColumn);
+
+$oGui->addDefaultColumns();
+
+
+// UNTERE LISTE
+
+$aTypes = $oGui->getDataObject()->getTypes();
+
+$aPages = array(
+					'first'			=> L10N::t('Erste Seite', $sGuiDescription),
+					'additional'	=> L10N::t('Folgeseiten', $sGuiDescription),
+					'all'			=> L10N::t('alle Seiten', $sGuiDescription)
+				);
+
+
+$oGuiPdfLayoutElements = new Ext_TC_Gui2(md5($sGuiDescription.'unten'), 'Ext_TC_Pdf_Layout_Gui2_Data');
+
+$oGuiPdfLayoutElements->setWDBasic('Ext_TC_Pdf_Layout_Element');
+
+// Listen Optionen
+$oGuiPdfLayoutElements->gui_description				= $sGuiDescription;
+$oGuiPdfLayoutElements->gui_title					= L10N::t('Elemente', $oGuiPdfLayoutElements->gui_description).' '.$sTitleAddon;
+$oGuiPdfLayoutElements->column_sortable				= 0; // es geht nur eine sortierart!
+$oGuiPdfLayoutElements->row_sortable					= 1; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiPdfLayoutElements->multiple_selection			= 0;
+$oGuiPdfLayoutElements->query_id_column				= 'id';
+$oGuiPdfLayoutElements->query_id_alias				= 'tc_ple';
+
+$oGuiPdfLayoutElements->calendar_format				= new Ext_Tc_Gui2_Format_Date();
+$oGuiPdfLayoutElements->class_js						= 'AdminPdfLayoutsGui';
+
+
+## ENDE DIALOG TAB ##
+$oDialog2 = $oGuiPdfLayoutElements->createDialog($oGui->t('Layout-Element "{name}" editieren'), $oGui->t('Neues Layout-Element anlegen'));
+
+$oDiv	= $oDialog2->createRow( L10N::t('Name', $sGuiDescription), 'input',	array('db_column' => 'name', 'db_alias' => '', 'required' => 1));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Position X-Achse', $sGuiDescription), 'input',	array('db_column' => 'x', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Position Y-Achse', $sGuiDescription), 'input',	array('db_column' => 'y', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Breite (in mm)', $sGuiDescription), 'input',	array('db_column' => 'element_width', 'db_alias' => '', 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Art', $sGuiDescription), 'select',	array('db_column' => 'element_type', 'db_alias' => '', 'selection' => new Ext_TC_Pdf_Layout_Gui2_Types($aTypes)));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Bildbreite (in mm)', $sGuiDescription), 'input',	array('db_column' => 'img_width', 'db_alias' => ''));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Bildhöhe (in mm)', $sGuiDescription), 'input',	array('db_column' => 'img_height', 'db_alias' => ''));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Seiten', $sGuiDescription), 'select',	array('db_column' => 'page', 'db_alias' => '', 'select_options' => $aPages));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Editierbar', $sGuiDescription), 'checkbox',	array('db_column' => 'editable', 'db_alias' => ''));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('HTML-Editor', $sGuiDescription), 'checkbox',	array('db_column' => 'wysiwyg', 'db_alias' => ''));
+$oDialog2->setElement($oDiv);
+
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Schrift', $sGuiDescription));
+$oDialog2->setElement($oH3);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Schriftart', $sGuiDescription), 'select',	array('db_column' => 'font_type', 'db_alias' => '', 'select_options'=>$aSubFonts));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Schriftstil', $sGuiDescription), 'select',	array('db_column' => 'font_style', 'db_alias' => '', 'select_options'=>$aFontStyles));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Schriftgröße', $sGuiDescription), 'input',	array('db_column' => 'font_size', 'db_alias' => '', 'required' => 1, 'format'=>Ext_TC_Factory::getObject('Ext_Tc_Gui2_Format_Float')));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Laufweite', $sGuiDescription), 'input',	array('db_column' => 'font_spacing', 'db_alias' => '', 'format'=>new Ext_Tc_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDialog2->width = 950;
+$oDialog2->height = 500;
+
+
+
+# START - Leiste 1 #
+$oBar = $oGuiPdfLayoutElements->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGuiPdfLayoutElements->gui_description),
+			$oDialog2,
+			L10N::t('Neuer Eintrag', $oGui->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oGuiPdfLayoutElements->gui_description),
+				$oDialog2,
+				L10N::t('Editieren', $oGui->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiPdfLayoutElements->gui_description), L10N::t('Löschen', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+$oGuiPdfLayoutElements->setBar($oBar);
+
+$oBar = $oGuiPdfLayoutElements->createBar();
+
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelGroup = $oBar->createLabelGroup($oGui->t('Export'));
+	$oBar->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGui->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGui->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGuiPdfLayoutElements->setBar($oBar);
+
+# ENDE - Leiste 3 #
+
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'name';
+$oColName->db_alias						= 'tc_ple';
+$oColName->select_column				= 'name';
+$oColName->title						= L10N::t('Name', $sGuiDescription);
+$oColName->width						= Ext_TC_Util::getTableColumnWidth('name');
+$oColName->width_resize					= true;
+$oColName->format						= 'Text';
+$oGuiPdfLayoutElements->setColumn($oColName);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'element_type';
+$oColTyp->db_alias						= 'tc_ple';
+$oColTyp->select_column					= 'element_type';
+$oColTyp->title							= L10N::t('Typ', $sGuiDescription);
+$oColTyp->width							= Ext_TC_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Gui2_View_Format_Selection($aTypes);
+$oGuiPdfLayoutElements->setColumn($oColTyp);
+
+$oDefaultColumn = $oGuiPdfLayoutElements->getDefaultColumn();
+$oDefaultColumn->setAliasForAll('tc_ple');
+$oGuiPdfLayoutElements->setDefaultColumn($oDefaultColumn);
+
+$oGuiPdfLayoutElements->addDefaultColumns();
+
+$aOptionalHeaderData = array();
+$aOptionalHeaderData[] = '<script type="text/javascript" src="/admin/extensions/tc/admin/js/pdf_layouts.js"></script>';
+$aOptionalHeaderData[] = '<link type="text/css" rel="stylesheet" href="/admin/extensions/tc/gui2/gui2.css"></script>';
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiPdfLayoutElements, array('hash' => $oGui->hash, 'foreign_key' => 'layout_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display($aOptionalHeaderData);

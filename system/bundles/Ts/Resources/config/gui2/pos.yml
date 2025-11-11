@@ -1,0 +1,44 @@
+class:
+  wdbasic: \Ts\Entity\PointOfSale
+  data: \Ts\Gui2\Data\PointOfSale
+access: 
+    - ts_admin_pos
+    - ""
+designer:
+  flex: admin_pos
+id:
+  column: id
+  alias: ts_p
+orderby:
+  - \Ts\Gui2\Data\PointOfSale
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\PointOfSale
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\PointOfSale
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  - visible: true
+    title: Name
+    column: name
+    width: name
+    resize: true

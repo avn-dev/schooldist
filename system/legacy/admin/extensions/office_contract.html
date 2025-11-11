@@ -1,0 +1,134 @@
+<?
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("office_contracts");
+
+/* RHYTHMEN */
+
+$scale = array("Wochen" => "Wochen", "Monate" => "Monate");
+
+/* SPEICHERN */
+
+if ($_VARS['task'] == "saveProtocol") {
+	echo "test";
+	DB::executeQuery("INSERT INTO office_protocol SET customer_id = '".$_VARS['customer_id']."', contact_id = '".$_VARS['contact_person_id']."', editor_id = '".$_VARS['editor_id']."', topic = '".$_VARS['type']."', subject = '".\DB::escapeQueryString($_VARS['subject'])."'");
+}
+
+/* AUSLESEN DER DATEN */
+
+// Firma
+$aCustomers = array(0 => '-');
+$rCustomer = DB::getQueryRows("SELECT id, ext_1, ext_2, ext_3, ext_4, ext_5, ext_6 FROM customer_db_".$database." WHERE active = 1");
+foreach($rCustomer as $aCustomer) {
+	$aCustomers[$aCustomer['id']] = $aCustomer['ext_1'];
+	$aCustomersFull[$aCustomer['id']] = $aCustomer;
+}
+
+
+/* PROTOKOLL */
+?>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?
+if ($_VARS['task'] == "editContract") {
+	unset($aAdditionalSections["-"]);
+?>
+			<h1>Office &raquo; Daueraufträge &raquo; Neuer Dauerauftrag</h1>
+			<br><br>
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="type" value="<?=$_VARS['type']?>">
+			<input type="hidden" name="task" value="editProtocol">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+							<?=printTableStart()?>
+								<?=printFormSelect("Kunde", "customer_id", $aCustomers, $_VARS['customer_id'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?>
+								<tr>
+									<th width="40%">Intervall</th>
+								
+									<td width="60%"><input type="text" name="<?=$name?>" class="txt" value="" > <select name="interval"><option></option></select></td>
+								</tr>
+								<?=printFormSelect("Aktivität", "type", $aAdditionalSections, $_VARS['type'], "style=\"width:300px;\"")?>
+								<?=printFormTextarea("Betreff", "subject", "", 3, 3)?>
+							<?=printTableEnd()?>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("Dauerauftrag speichern", "onclick=\"this.form.task.value='saveContract';\"".(($_VARS['customer_id'] == 0)?"disabled":""))?></td>
+								</tr>
+							</table>
+<?
+} else {
+?>
+			<h1>Office &raquo; Daueraufträge</h1>
+			<br><br>
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="type" value="<?=$_VARS['type']?>">
+			<input type="hidden" name="task" value="">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+							<?=printTableStart()?>
+								<?=printFormSelect("Kunde", "customer_id", $aCustomers, $_VARS['customer_id'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?>
+							<?=printTableEnd()?>
+<?
+
+?>
+							<br>
+							<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+								<tr>
+									<th>Auftrag</th>
+									<th width="80" nowrap>Startdatum</th>
+									<th width="80" nowrap>Intervall</th>
+									<th width="105" nowrap>Kunde</th>
+								</tr>
+<?
+	if ($_VARS['customer_id'] != "") {
+		foreach ((array)$aContracts as $id => $contract) {
+			$document = DB::getQueryRow("SELECT * FROM office_documents WHERE id = '".$contract['document_id']."'");
+?>
+								<tr id="tr_<?=$contract['id']?>" onmouseout="showRow(<?=$contract['id']?>,0)" onmousemove="showRow(<?=$contract['id']?>,1);" style="cursor:pointer;">
+									<td nowrap><?=$document['number']?>&nbsp;</td>
+									<td nowrap><?=date("d.m.Y", $contract['start'])?></td>
+									<td nowrap><?=$contract['interval']?> <?=$contract['scale']?></td>
+									<td nowrap><?=$aCustomers[$contract['customer_id']]?></td>
+								</tr>
+<?
+		}
+	}
+?>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("Neuer Dauerauftrag", "onclick=\"this.form.task.value='editContract';\"")?></td>
+								</tr>
+							</table>
+<?
+}
+?>
+						
+						</td>
+					</tr>
+				</table>
+			</form>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

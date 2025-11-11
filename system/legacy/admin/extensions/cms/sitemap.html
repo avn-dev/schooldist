@@ -1,0 +1,208 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("page_admin");
+
+ob_start();
+
+Admin_Html::loadAdminHeader();
+
+global $objWebDynamicsDAO;
+$objWebDynamicsDAO = new Cms\Helper\Data;
+
+$system_data['sites'] = $objWebDynamicsDAO->getSites();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Seitenübersicht', 'CMS')?></h1>
+</section>
+
+<section class="content">
+			
+<?
+
+$slanguage = $_VARS['slanguage'];
+
+if(!isset($_VARS['site_id'])) {
+	$iSessionSiteId = \Cms\Helper\Data::getSessionSiteId();
+	if(!empty($iSessionSiteId)) {
+		$_VARS['site_id'] = $iSessionSiteId;
+	} else {
+		$arrSite = reset($system_data['sites']);
+		$_VARS['site_id'] = $arrSite['id'];
+	}
+}
+
+$oSite = \Cms\Entity\Site::getInstance($_VARS['site_id']);
+$aLanguageCodes = $oSite->getLanguages(1);
+$aLanguages = $oSite->getLanguages();
+
+\Cms\Helper\Data::setSessionSiteId((int)$oSite->id);
+
+if(
+	!$slanguage || 
+	!in_array($slanguage, $aLanguageCodes)
+) {
+	$slanguage = $aLanguages[0]['code'];
+	$_VARS['slanguage'] = $slanguage;
+}
+
+?>
+			
+			<form method="get" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="slanguage" value="<?=$_VARS['slanguage']?>" />
+			<input type="hidden" name="task" value="<?=$_VARS['task']?>" />
+			<select name="site_id" class="form-control" onChange="this.form.submit();" style="width: <?=intval($system_data['frame_width'] - 10)?>px;">
+<?
+				foreach((array)$system_data['sites'] as $arrSite) {
+?>
+				<option value="<?=$arrSite['id']?>" <?=(($arrSite['id'] == $_VARS['site_id'])?'selected="selected"':'')?>><?=$arrSite['name']?></option>
+<?
+				}
+?>
+			</select>
+			</form>
+	<br>
+	<div class="nav-tabs-custom">
+<?
+
+$topics = array();
+foreach((array)$aLanguages as $val) {
+	$topics[] = array($val['code'], $val['name']);
+}
+
+printAdminMenue($topics, $headtitle, "slanguage", "site_id=".$_VARS['site_id']."&task=".$_VARS['task']);
+
+if($_VARS['task'] == "overview") {
+
+	$aAdditional = array();
+	
+	\System::wd()->executeHook('sitemap_overview', $aAdditional);
+
+	global $aItems,$iLevel,$aGroups, $aAdditional, $_VARS, $system_data, $page_data;
+	
+	$page_data['language'] = $slanguage;
+	$iLevel = 0;
+	$system_data['site_id'] = $_VARS['site_id'];
+    $aItems = new \Cms\Helper\MenueItems();
+	$aGroups = CustomerDb\Helper\Functions::getCustomerGroups();
+
+	function printSitemap($id) {
+		global $aItems,$iLevel,$aGroups, $aAdditional, $_VARS;
+
+		$my = $aItems->items[$id];
+
+		?>
+				<tr id="tr_<?=$my['data']['id']?>">
+					<td style="vertical-align:top;" align="right"><?=$my['data']['id']?></td>
+					<td style="vertical-align:top;"><img src="/admin/media/spacer.gif" height="1" width="<?=($iLevel*15)?>" border="0" align="absmiddle"><?=$my['data']['title']?></td>
+					<td style="vertical-align:top;">
+					<?
+					$aAccess = (array)Util::decodeSerializeOrJson($my['data']['access']);
+					$iAccess = count($aAccess);
+					$i=1;
+					foreach((array)$aAccess as $key=>$val) {
+						echo $aGroups[$key];
+						if($iAccess > $i) echo "<br>";
+						$i++;
+					}
+					?>
+					&nbsp;</td>
+<?
+					foreach((array)$aAdditional['cols'] as $aCol) {
+						$aCol['content'] = str_replace('{page_id}', $my['data']['id'], $aCol['content']);
+						$aCol['content'] = str_replace('{site_id}', $_VARS['site_id'], $aCol['content']);
+?>
+					<td style="<?=$aCol['content_style']?>"><?=$aCol['content']?></td>
+<?
+					}
+?>
+				</tr>
+		<?
+		foreach((array)$my['children'] as $child) {
+			$iLevel++;
+			printSitemap($child);
+			$iLevel--;
+		}
+	}
+	
+?>
+
+			<table class="table table-striped table-hover">
+				<tr>
+					<th style="width: 40px;"><?=L10N::t('ID', 'CMS')?></th>
+					<th style="width: auto;"><?=L10N::t('Seite', 'CMS')?></th>
+					<th style="width: 200px;"><?=L10N::t('Rechte', 'CMS')?></th>
+<?
+					foreach((array)$aAdditional['cols'] as $aCol) {
+?>
+					<th style="<?=$aCol['title_style']?>"><?=$aCol['title']?></th>
+<?
+					}
+?>
+				</tr>
+<?
+				printSitemap(0);
+?>
+			</table>
+		</div>
+<?
+
+} else {
+
+?>
+
+			
+<script>
+var activepage = false;
+function setactive(on) {
+	if(document.getElementById(on)) {
+		if(activepage) {
+			document.getElementById(activepage).style.fontWeight = 'normal';
+		}
+		document.getElementById(on).style.fontWeight  = 'bold';
+		activepage = on;
+	}
+}
+</script>
+
+			<table cellpadding=4 cellspacing=0 border=0 width=100% class="table">
+				<tr bgcolor=#FFFFFF>
+					<td width="300" valign="top" style="vertical-align:top;white-space: nowrap;">
+<?
+
+global $showflags, $structure, $extended, $target, $intSiteId, $slanguage;
+
+if(count((array)$languages)>1)
+	$showflags = "yes";
+else
+	$showflags = "no";
+
+$structure = "folder";
+$extended = "on";
+$target = "self.frames[0].location";
+$system_data['sitemap_save']=0;
+$intSiteId = $_VARS['site_id'];
+$slanguage = $_VARS['slanguage'];
+
+include("./sitemap.inc.php");
+?>
+					<img src="/media/spacer.gif" width="250" height="1" border="0">
+					</td>
+					<td width=99% valign="top" style="vertical-align:top;">
+						<iframe src="sitemap_detail.html?site_id=<?=$_VARS['site_id']?>&slanguage=<?=$slanguage?>&id=&path_name=&level=0&level_2=1" width="100%" height="380" name="detail" frameborder="1" scrolling=yes></iframe>
+					</td>
+				</tr>
+			</table>
+<?
+}
+?>
+		</section>
+
+<?
+ob_end_flush();
+?>
+
+<?=Admin_Html::loadAdminFooter()?>

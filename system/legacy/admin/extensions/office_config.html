@@ -1,0 +1,1845 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("office_config");
+ 
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.dao.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+function office_printFormMediaOneRow($strTitle, $strName, $strValue="", $strParameter="", $strType) {
+?>
+	<input type="text" name="<?=$strName?>" class="txt" value="<?=htmlspecialchars($strValue)?>" size="140" class="form_elem" readonly style="background-color:#dededf;" <?=$strParameter?>>&nbsp;<button onclick="window.open('/admin/frame.html?file=media&mode=selecticon&form_name=office_form&input_name=&submit_button_value=<?=urlencode('�bernehmen')?>&form_submit=0&type=<?=$strType?>&search=&input_name_title=&input_name_name=<?=$strName?>', 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');">ausw.</button>&nbsp;<input type="button" onclick="this.form.elements['<?=$strName?>'].value='';" value="entf.">
+<?
+}
+
+$objOffice = new classExtension_Office;
+$arrConfigData = $objOffice->getConfigData();
+
+$objDao = $objOfficeDao;
+
+$sHead = '<style>input.txt[readonly="readonly"] {background: #f0f0f0!important;}</style>';
+
+Admin_Html::loadAdminHeader($sHead);
+
+// Default Sprache
+if(!isset($_VARS['language'])) {
+	$_VARS['language'] = System::d('systemlanguage');
+}
+
+/* SPEICHERN DER KONFIGURATION */
+
+if ($_VARS['task'] == "saveConfig") {
+
+	$sLanguage = '';
+	if(
+		$_VARS['config'] == "email_templates" ||
+		$_VARS['config'] == "contract" ||
+		$_VARS['config'] == "tickets" ||
+		$_VARS['config'] == "paymill_pdf_config" ||
+		$_VARS['config'] == "vat_hints"
+	) {
+		$sLanguage = '_'.$_VARS['language'];
+	}
+
+	foreach ((array)$_VARS['config_data'] as $key => $value) {
+		
+		//salutations
+		if ($key == "salutations") {
+
+			foreach($value as $iKey=>$aSalutation) {
+				if(
+					empty($aSalutation['name']) ||
+					empty($aSalutation['template_0']) ||
+					empty($aSalutation['template_1']) ||
+					empty($aSalutation['template_2'])
+				) {
+					unset($value[$iKey]);
+				}
+			}
+			
+			$value = json_encode($value);
+
+		} elseif ($key == "vat") {
+			
+			foreach ($value as $subkey => $subvalue) {
+
+				if(
+					isset($subvalue['rate']) && 
+					is_numeric($subvalue['rate'])
+				) {
+					$strKey = ($subvalue['rate']/100).'';
+					$vat[$strKey] = $subvalue;
+				}
+			}
+
+			$value = json_encode($vat);
+
+		} elseif ($key == "units") {
+			foreach ($value as $subkey => $subvalue) {
+				if ($subvalue != "") {
+					$units[$subvalue] = $subvalue;
+				}
+			}
+			$value = json_encode($units);
+
+		} elseif ($key == "payment") {
+			foreach ($value as $subkey => $subvalue) {
+				if ($subvalue['key'] != "" and $subvalue['value'] != "") {
+					$payment[$subvalue['key']] = $subvalue['value'];
+				}
+			}
+			$value = json_encode($payment);
+
+		} elseif ($key == "activities") {
+			foreach ((array)$value as $subkey => $subvalue) {
+				if ($value['increment'] < 1) $value['increment'] = 1;
+				
+				if ($subkey == "new" and $subvalue != "") {
+					$activities["add_".$value['increment']] = $subvalue;
+					$activities['increment'] = $value['increment'] + 1;
+				} elseif ($subvalue != "") {
+					$activities[$subkey] = $subvalue;
+				}
+			}
+			$value = json_encode($activities);
+		} elseif($key == 'document_columns') {
+			
+			$value = json_encode($value);
+			
+		}
+
+		if (substr($key, 0, 6) == "range_") {
+			if(trim($value) != '')
+			{
+				$value = intval($value);
+			}
+		}
+
+		$key = $key.$sLanguage;
+
+		// check if entry already exists		
+		$aSQL = array(
+			'sKey'		=> $key,
+			'iClientID'	=> (int)\Core\Handler\SessionHandler::getInstance()->get('office_client_id')
+		);
+
+		$sSQL = "
+			SELECT
+				`id`
+			FROM
+				`office_config`
+			WHERE
+				`key`		= :sKey AND
+				`client_id`	= :iClientID
+			LIMIT 1
+		";
+		$mRow = DB::getQueryOne($sSQL, $aSQL);
+
+		if($mRow) {
+
+			$sSQL = "
+				UPDATE
+					`office_config`
+				SET
+					`value` = :sValue
+				WHERE
+					`key` 		= :sKey AND
+					`client_id`	= :iClientID
+				LIMIT 1
+			";
+		} else {
+			$sSQL = "
+				INSERT INTO
+					`office_config`
+				SET
+					`value` 	= :sValue,
+					`key`		= :sKey,
+					`client_id`	= :iClientID
+			";
+		}
+
+		$aSQL = array(
+			'sValue'	=> $value,
+			'sKey'		=> $key,
+			'iClientID'	=> (int)\Core\Handler\SessionHandler::getInstance()->get('office_client_id')
+		);
+
+		DB::executePreparedQuery($sSQL, $aSQL);
+	}
+
+	$arrConfigData = $objOffice->getConfigData(true);
+
+	Ext_Office_Config::reset();
+
+}
+
+/* TEMPLATES */
+
+if ($_VARS['task'] == "saveTemplate") {
+	$_VARS['text'] = clean_text($_VARS['text']);
+	if ($_VARS['template'] == "new") {
+		DB::executeQuery("INSERT INTO office_templates SET name = '".\DB::escapeQueryString($_VARS['name'])."', text = '".\DB::escapeQueryString($_VARS['text'])."'");
+	} else {
+		DB::executeQuery("UPDATE office_templates SET name = '".\DB::escapeQueryString($_VARS['name'])."', text = '".\DB::escapeQueryString($_VARS['text'])."' WHERE id = '".\DB::escapeQueryString($_VARS['template'])."' LIMIT 1");
+	}
+	unset($_VARS['template']);
+}
+
+if ($_VARS['task'] == "deleteTemplate" and $_VARS['id'] != "") {
+	DB::executeQuery("DELETE FROM office_templates WHERE id = '".$_VARS['id']."'");
+}
+
+/* DATENBANKEN */
+
+$aDatabase = CustomerDb\Helper\Functions::getCustomerTables();
+
+/* ANSPRECHPARTNER */
+
+if ($_VARS['task'] == "saveContact") {
+	foreach ((array)$_VARS['contacts'] as $id => $arrContact) {
+		if ($id == "new" and $arrContact['firstname'] != "" and $arrContact['lastname'] != "" ) {
+			$strSql = "INSERT INTO 
+						office_contacts 
+					SET 
+						customer_id = '".\DB::escapeQueryString($_VARS['customer_id'])."', 
+						firstname = '".\DB::escapeQueryString($arrContact['firstname'])."', 
+						lastname = '".\DB::escapeQueryString($arrContact['lastname'])."', 
+						email = '".\DB::escapeQueryString($arrContact['email'])."', 
+						phone = '".\DB::escapeQueryString($arrContact['phone'])."', 
+						fax = '".\DB::escapeQueryString($arrContact['fax'])."', 
+						description = '".\DB::escapeQueryString($arrContact['description'])."',
+						created = NOW(),
+						changed = NOW(), 
+						active = 1";
+			DB::executeQuery($strSql);
+		} else {
+			$strSql = "UPDATE 
+						office_contacts 
+					SET 
+						customer_id = '".\DB::escapeQueryString($_VARS['customer_id'])."', 
+						firstname = '".\DB::escapeQueryString($arrContact['firstname'])."', 
+						lastname = '".\DB::escapeQueryString($arrContact['lastname'])."', 
+						email = '".\DB::escapeQueryString($arrContact['email'])."', 
+						phone = '".\DB::escapeQueryString($arrContact['phone'])."', 
+						fax = '".\DB::escapeQueryString($arrContact['fax'])."', 
+						description = '".\DB::escapeQueryString($arrContact['description'])."',
+						changed = NOW()
+					WHERE 
+						id = '".$id."' LIMIT 1
+						";
+			DB::executeQuery($strSql);
+		}
+	}
+}
+
+if ($_VARS['task'] == "deleteContact" and $_VARS['id'] != "") {
+	DB::executeQuery("DELETE FROM office_contacts WHERE id = '".$_VARS['id']."' LIMIT 1");
+	$_VARS['task'] == "admin";
+}
+
+/* AUSLESEN DER DATEN */
+
+// Firma
+$aCustomersFull = $objDao->getCustomers();
+$aCustomers = array(0 => 'bitte w&auml;hlen');
+foreach((array)$aCustomersFull as $aCustomer) {
+	$aCustomers[$aCustomer['id']] = $aCustomer['name'].' ('.$aCustomer['number'].')';
+}
+
+// Bearbeiter
+$rEditor = DB::getQueryRows("SELECT id, firstname, lastname FROM system_user WHERE active = 1 ORDER BY lastname");
+foreach($rEditor as $aEditor) {
+	$aEditors[$aEditor['id']] = $aEditor['lastname'].", ".$aEditor['firstname'];
+}
+
+// Konfiguration
+$aConfig = array(
+	"" => "bitte ausw&auml;hlen...",
+	"discount_amount" => "Abschlagsrechnung",
+	"address" => "Adressdaten",
+	"activities" => "Aktivit&auml;ten (Protokoll)",
+	"cti" => "Computer Telefonie Integration",
+	'email_templates' => 'E-Mail Vorlagen',
+	'email_smtp' => 'SMTP-Einstellungen',
+	"units" => "Einheiten",
+	"database" => "Kundendatenbank",
+	"types" => "Dokumente",
+	"vat" => "Umsatzsteuer",
+	"vat_hints" => "Umsatzsteuer Hinweise",
+	"smskaufen" => "SMS Kaufen Gateway",
+	"accounts_seetings" => "Bankkonten",
+	'contract' => 'Verträge',
+	'tickets' => 'Ticket',
+	'employee_timeclock' => 'Zeiterfassung',
+	'projects' => 'Projekte',
+	'salutations' => 'Anreden',
+	'customers_locatioins_anonymous' => 'Anonymität der Kundenstandorte',
+	'paymill_pdf_config' => 'Stripe PDF Einstellungen',
+	'paymill_api_keys' => 'Stripe API Keys',
+	'redmine_api' => 'Redmine API'
+);
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?
+
+/* ANSPRECHPARTNER */
+if ($_VARS['admin'] == "contacts") {
+	$aDocuments = DB::getQueryRow("SELECT *, UNIX_TIMESTAMP(`date`) as date_ts FROM office_documents WHERE id = '".$_VARS['idDocument']."'");
+	$rContact = DB::getQueryRows("SELECT * FROM office_contacts WHERE active = 1 and customer_id = '".$_VARS['customer_id']."'");
+	foreach($rContact as $aContact) {
+		$aContacts[$aContact['id']] = $aContact;
+	}
+?>
+			<h2>Ansprechpartner verwalten</h2>
+			<br><br>
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="admin">
+			<input type="hidden" name="admin" value="contacts">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+							<?=printTableStart()?>
+								<?=printFormSelect("Kunde", "customer_id", $aCustomers, $_VARS['customer_id'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?></td>
+							<?=printTableEnd()?>
+							<br>
+							<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+								<tr>
+									<th>Vorname</th>
+									<th>Nachname</th>
+									<th>E-Mail</th>
+									<th>Telefon</th>
+									<th>Telefax</th>
+									<th>Anmerkungen</th>
+									<th>Aktion</th>
+								</tr>
+<?
+	foreach ((array)$aContacts as $id => $contact) {
+?>
+								<tr>
+									<td><input type="text" name="contacts[<?=$id?>][firstname]" value="<?=$contact['firstname']?>"></td>
+									<td><input type="text" name="contacts[<?=$id?>][lastname]" value="<?=$contact['lastname']?>"></td>
+									<td><input type="text" name="contacts[<?=$id?>][email]" value="<?=$contact['email']?>"></td>
+									<td><input type="text" name="contacts[<?=$id?>][phone]" value="<?=$contact['phone']?>"></td>
+									<td><input type="text" name="contacts[<?=$id?>][fax]" value="<?=$contact['fax']?>"></td>
+									<td><input type="text" name="contacts[<?=$id?>][description]" value="<?=$contact['description']?>"></td>
+									<td><a href="<?=$_SERVER['PHP_SELF']?>?task=deleteContact&admin=contacts&customer_id=<?=$_VARS['customer_id']?>&id=<?=$id?>" onClick="return confirm('Löschen?'); submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+								</tr>
+<?
+	}
+?>
+								<tr>
+									<td><input type="text" name="contacts[new][firstname]" value=""></td>
+									<td><input type="text" name="contacts[new][lastname]" value=""></td>
+									<td><input type="text" name="contacts[new][email]" value=""></td>
+									<td><input type="text" name="contacts[new][phone]" value=""></td>
+									<td><input type="text" name="contacts[new][fax]" value=""></td>
+									<td><input type="text" name="contacts[new][description]" value=""></td>
+									<td>&nbsp;</td>
+								</tr>
+							</table>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("speichern", "onclick=\"this.form.task.value='saveContact'\"")?></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</form>
+<?
+/* TICKETS BENACHRICHTIGUNGEN EINSTELLUNGEN */
+} elseif ($_VARS['config'] == "tickets_advices") {
+
+	if(isset($_VARS['save_tickets_advices_settings']))
+	{
+		foreach((array)$_VARS['config_data'] as $sKey => $mValue)
+		{
+			$sSQL = "
+				REPLACE `office_config`
+				SET
+					`key` = :sKey,
+					`value` = :mValue
+			";
+			$aSQL = array(
+				'sKey'		=> $sKey,
+				'mValue'	=> $mValue
+			);
+			DB::executePreparedQuery($sSQL, $aSQL);
+		}
+	}
+
+	$sSQL = "
+		SELECT
+			`key`, `value`
+		FROM
+			`office_config`
+		WHERE
+			`key` = 'tickets_advices_leaders'
+	";
+	$aConfig = DB::getQueryPairs($sSQL);
+
+?>
+
+	<h2>Tickets Benachrichtigungen</h2>
+	<br /><br />
+	<form method="post" action="">
+		<?=printTableStart()?>
+			<?=printFormHidden('save_tickets_advices_settings', 'save_tickets_advices_settings')?>
+			<tr>
+				<th>Immer alle Mitarbeiter-Projektleiter benachrichtigen</th>
+				<td>
+					<input type="hidden" name="config_data[tickets_advices_leaders]" value="0" />
+					<input type="checkbox" <? if($aConfig['tickets_advices_leaders']) {?>checked="checked"<? } ?> name="config_data[tickets_advices_leaders]" value="1" />
+				</td>
+			</tr>
+		<?=printTableEnd()?>
+		<?=printSubmit('Speichern')?>
+	</form>
+
+<?
+
+/* SIGNATUREN LISTE */
+} elseif ($_VARS['admin'] == "signatures") {
+	
+	$sSignaturesDir = \Util::getDocumentRoot().'storage/office/signatures/';
+	
+	$sSQL = "
+		SELECT
+			system_user.id AS system_id,
+			system_user.firstname,
+			system_user.lastname,
+			office_users.id AS office_id,
+			office_users.*
+		FROM
+			`system_user`
+		LEFT JOIN
+			`office_users`
+		ON
+			system_user.id = office_users.id
+	";
+	
+	$aUsers = DB::getQueryData($sSQL);
+
+?>
+
+	<h2>Signaturen</h2>
+	<br /><br />
+	<?=printTableStart()?>
+		<tr>
+			<th>Benutzer</th>
+			<th>Signatur</th>
+			<th>&nbsp;</th>
+		</tr>
+		<? foreach((array)$aUsers as $iKey => $aValue) { ?>
+			<tr>
+				<td>
+					<?=$aValue['firstname']?> <?=$aValue['lastname']?>
+				</td>
+				<td>
+					<? if($aValue['signature'] != '') { ?>
+						<img style="width:200px;" src="/storage/office/signatures/<?=$aValue['signature']?>" alt="Signatur" />
+					<? } else { ?>
+						- Keine Signatur -
+					<? } ?>
+				</td>
+				<td>
+					<a href="<?=$_SERVER['PHP_SELF']?>?task=admin&amp;admin=editSignature&amp;user_id=<?=$aValue['system_id']?>">
+						<img src="/admin/media/pencil.png" alt="Signatur bearbeiten" />
+					</a>
+				</td>
+			</tr>
+		<? } ?>
+	<?=printTableEnd()?>
+<?
+/* SIGNATUREN BEARBEITEN */
+} elseif ($_VARS['admin'] == "editSignature") {
+	
+	$sSignaturesDir = \Util::getDocumentRoot().'storage/office/signatures/';
+	
+	if(!is_dir($sSignaturesDir)) {
+		mkdir($sSignaturesDir, $system_data['chmod_mode_dir']);
+	}
+
+	$mText = false;
+	
+	if(isset($_VARS['action']) && $_VARS['action'] == 'saveSignature')
+	{
+		if(is_file($_FILES['signature']['tmp_name']))
+		{
+			// image data
+			$aImage = getimagesize($_FILES['signature']['tmp_name']);
+	
+			// file name
+			$sFile = $_VARS['user_id'].strtolower(substr($_FILES['signature']['name'], strrpos($_FILES['signature']['name'], '.')));
+
+			if(
+				$aImage['mime'] == 'image/jpeg' || 
+				$aImage['mime'] == 'image/png'
+			) {
+				move_uploaded_file($_FILES['signature']['tmp_name'], $sSignaturesDir.$sFile);
+	
+				$sSQL = "
+					REPLACE
+						`office_users`
+					SET
+						`id`		= :iID,
+						`signature`	= :sSignature
+				";
+				$aSQL = array(
+					'iID'			=> $_VARS['user_id'],
+					'sSignature'	=> $sFile
+				);
+				DB::executePreparedQuery($sSQL, $aSQL);
+	
+				$mText = '<div style="color:#008000;"><b>Signatur wurde erfolgreich gespeichert!</b></div>';
+			}
+			else
+			{
+				$mText = '<div style="color:#CC0000;"><b>Bitte wählen Sie eins der beschriebenen Bildformate aus.</b></div>';
+			}
+		}
+	}
+	
+	$sSQL = "
+		SELECT
+			id,
+			firstname,
+			lastname
+		FROM
+			`system_user`
+		WHERE
+			`id` = :iID
+		LIMIT
+			1
+	";
+	$aSQL = array('iID' => $_VARS['user_id']);
+	$aUser = DB::getPreparedQueryData($sSQL, $aSQL);
+	$aUser = $aUser[0];
+
+?>
+
+	<h2>Signaturen &raquo; <?=$aUser['firstname']?> <?=$aUser['lastname']?></h2>
+	<br />
+	<? if($mText) { ?>
+		<div style="text-align:center;">
+			<?=$mText?>
+		</div>
+		<br /><br /><br />
+	<? } ?>
+	<div style="border: 1px solid #CCC; padding:10px; background-color:#FAFAFA;">
+		<b>INFO</b>
+		<br /><br />
+		Es werden die Bildformate JPEG und PNG mit einer maximalen Breite von 590 Pixel (ca. 150 DPI) unterstüzt.
+		<br /><br />
+		Für Bilder im JPEG Format sind alle Varianten zulässig: <i>Graustufenbilder, Truecolor (24 Bit), CMYK (32 Bit)</i>
+		<br /><br />
+		Beim PNG Format werden folgende Varianten unterstützt: <i>Graustufenbilder (8 Bit, 256 Graustufen), Farbpaletten, Truecolor (24 Bit)</i>
+	</div>
+	<br />
+	<form method="post" action="" enctype="multipart/form-data">
+		<div>
+			<input type="hidden" name="action" value="saveSignature" />
+		</div>
+		<?=printTableStart()?>
+			<?=printFormFile('Signatur', 'signature')?>
+		<?=printTableEnd()?>
+		<?=printSubmit('Speichern')?>
+	</form>
+
+<?
+/* ADMINISTRATION */
+} elseif ($_VARS['admin'] == "config") {
+?>
+
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="admin">
+			<input type="hidden" name="admin" value="config">
+			<input type="hidden" name="config" value="<?=$_VARS['config']?>">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+							<?=printTableStart()?>
+								<?=printFormSelect("Administration", "config", $aConfig, $_VARS['config'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?></td>
+								<?=printFormSelect("Mandant", "client_id", $aClients, \Core\Handler\SessionHandler::getInstance()->get('office_client_id'), "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?></td>
+<?
+	if (
+		$_VARS['config'] == "email_templates" ||
+		$_VARS['config'] == "contract" ||
+		$_VARS['config'] == "vat_hints" ||
+		$_VARS['config'] == "tickets" ||
+		$_VARS['config'] == "salutations" ||
+		$_VARS['config'] == "paymill_pdf_config"
+	) {
+		$aLanguages = System::getBackendLanguages(true);
+?>
+								<?=printFormSelect("Sprache", "language", $aLanguages, $_VARS['language'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?></td>
+<?
+	}
+?>
+							<?=printTableEnd()?>
+							<br>
+<?
+
+	if ($_VARS['config'] == "salutations") {
+		$aSalutations = (array)json_decode($arrConfigData['salutations'], true);
+		$aSalutations[] = array(
+			'name' => '',
+			'template_0' => '',
+			'template_2' => '',
+			'template_1' => ''
+		);
+?>
+							
+			<table width="940" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th style="width: 00px;">&nbsp;</th>
+					<th style="width: 100px;">Schlüssel</th>
+					<th style="width: 130px;">Name</th>
+					<th style="width: 220px;">Vorlage neutral</th>
+					<th style="width: 220px;">Vorlage weiblich</th>
+					<th style="width: 220px;">Vorlage männlich</th>
+				</tr>
+					<? 
+					foreach($aSalutations as $iSalutation=>$aSalutation) { 
+						$bNew = false;
+						if(empty($aSalutation['key'])) {
+							$aSalutation['key'] = $iSalutation+1;
+							$bNew = true;
+						}
+					?>
+					<tr>
+						<td><input type="radio" name="config_data[default_salutation]" value="<?=\Util::convertHtmlEntities($aSalutation['key'])?>" <?=(($aSalutation['key']==$arrConfigData['default_salutation'])?'checked="checked"':'')?>>
+						<td><input type="text" class="txt" style="width: 92px;" name="config_data[salutations][<?=$iSalutation?>][key]" value="<?=\Util::convertHtmlEntities($aSalutation['key'])?>" <?=(($bNew)?"":'readonly="readonly"')?>></td>
+						<td><input type="text" class="txt" style="width: 122px;" name="config_data[salutations][<?=$iSalutation?>][name]" value="<?=\Util::convertHtmlEntities($aSalutation['name'])?>"></td>
+						<td><input type="text" class="txt" style="width: 222px;" name="config_data[salutations][<?=$iSalutation?>][template_0]" value="<?=\Util::convertHtmlEntities($aSalutation['template_0'])?>"></td>
+						<td><input type="text" class="txt" style="width: 222px;" name="config_data[salutations][<?=$iSalutation?>][template_2]" value="<?=\Util::convertHtmlEntities($aSalutation['template_2'])?>"></td>
+						<td><input type="text" class="txt" style="width: 222px;" name="config_data[salutations][<?=$iSalutation?>][template_1]" value="<?=\Util::convertHtmlEntities($aSalutation['template_1'])?>"></td>
+					</tr>
+					<? 					
+					} 
+					?>
+			</table>
+
+			<?
+			$aSalutationPlaceholder = array(
+				'{CustomerContactFirstname}'	=> ' - Kunde, Ansprechpartner, Vorname<br />',
+				'{CustomerContactLastname}'		=> ' - Kunde, Ansprechpartner, Nachname<br />',
+			);
+			Ext_Office_Document::displayPlaceholders($aSalutationPlaceholder);
+			?>
+<?
+	} elseif ($_VARS['config'] == "projects") {
+
+		if(!isset($arrConfigData['projects_show_reporting_list'])) {
+			$arrConfigData['projects_show_reporting_list'] = 1;
+		}
+		
+?>
+			<?=printTableStart()?>
+				<?=printFormCheckbox('Kurzauswertung in Liste anzeigen', 'config_data[projects_show_reporting_list]', 1, $arrConfigData['projects_show_reporting_list'])?>
+			<?=printTableEnd()?>
+
+<?
+
+	} elseif ($_VARS['config'] == "employee_timeclock") {
+
+?>
+			<?=printTableStart()?>
+				<?=printFormCheckbox('Nicht geschlossene Einträge automatisch schließen', 'config_data[timeclock_auto_close]', 1, $arrConfigData['timeclock_auto_close'])?>
+<?
+		if($arrConfigData['timeclock_auto_close'] == 1) {
+			$bValidTime = WDDate::isDate($arrConfigData['timeclock_auto_close_time'], WDDate::TIMES);
+			if(!$bValidTime) {
+				$arrConfigData['timeclock_auto_close_time'] = '';
+			}
+?>
+				<?=printFormText('Folgende Uhrzeit eintragen', 'config_data[timeclock_auto_close_time]', $arrConfigData['timeclock_auto_close_time'])?>
+<?
+		}
+?>
+				<?=printFormCheckbox('Prüfung der maximalen täglichen Arbeitszeit (§ 3 ArbZG)', 'config_data[timeclock_check_max_worktime]', 1, $arrConfigData['timeclock_check_max_worktime'])?>
+				<?=printFormCheckbox('Prüfung der Ruhepausen (§ 4 ArbZG)', 'config_data[timeclock_check_break]', 1, $arrConfigData['timeclock_check_break'])?>
+				<?=printFormText('Prüfung der Ruhepausen (§ 4 ArbZG)', 'config_data[timeclock_admin_email]', $arrConfigData['timeclock_admin_email'])?>
+			<?=printTableEnd()?>
+
+<?
+
+	} elseif ($_VARS['config'] == "tickets") {
+
+		$aTerms = classExtensionDao_Office::getPaymentTerms(2);
+?>
+			<?=printTableStart()?>
+				<?=printFormSelect('Zahlungsbedingung', 'config_data[tickets_payment]', $aTerms, $arrConfigData['tickets_payment'])?>
+				<?=printFormTextarea('Starttext', 'config_data[tickets_starttext]', $arrConfigData['tickets_starttext_'.$_VARS['language']])?>
+				<?=printFormTextarea('Endtext', 'config_data[tickets_endtext]', $arrConfigData['tickets_endtext_'.$_VARS['language']])?>
+			<?=printTableEnd()?>
+
+<?
+
+	} elseif ($_VARS['config'] == "vat_hints") {
+?>
+			<?=printTableStart()?>
+				<?=printFormTextarea('Hinweis EU-Ausland mit gültiger VAT-ID', 'config_data[vat_hint_eu]', Ext_Office_Config::get('vat_hint_eu', $_VARS['language']))?>
+				<?=printFormTextarea('Hinweis Drittländer', 'config_data[vat_hint_thirdcountries]', Ext_Office_Config::get('vat_hint_thirdcountries', $_VARS['language']))?>
+			<?=printTableEnd()?>
+
+<?
+
+	} elseif ($_VARS['config'] == "contract") {
+
+		$aTerms = classExtensionDao_Office::getPaymentTerms(2);
+		$aForms = DB::getQueryPairs("SELECT `id`, `name` FROM office_forms ORDER BY `name`");
+?>
+			<?=printTableStart()?>
+				<?=printFormSelect('Zahlungsbedingung', 'config_data[contract_payment]', $aTerms, Ext_Office_Config::get('contract_payment', $_VARS['language']))?>
+				<?=printFormSelect('Formular', 'config_data[contract_form]', $aForms, Ext_Office_Config::get('contract_form', $_VARS['language']))?>
+				<?=printFormTextarea('Starttext', 'config_data[contract_starttext]', Ext_Office_Config::get('contract_starttext', $_VARS['language']))?>
+				<?=printFormTextarea('Endtext', 'config_data[contract_endtext]', Ext_Office_Config::get('contract_endtext', $_VARS['language']))?>
+			<?=printTableEnd()?>
+
+<?
+
+	} elseif ($_VARS['config'] == "database") {
+?>
+
+							<?=printTableStart()?>
+								<?=printFormSelect("Kundendatenbank", "config_data[database]", $aDatabase, $arrConfigData['database']);?>
+							<?=printTableEnd()?>
+							<br />
+							<?=printTableStart()?>
+								<?=printFormSelect("Ansprechspartner", "config_data[contact_database]", $aDatabase, $arrConfigData['contact_database']);?>
+							<?=printTableEnd()?>
+
+<?
+		if($aConfigData['database'] > 0) {
+			$aTemp = CustomerDb\Helper\Functions::getCustomerFields($aConfigData['database']);
+			$aFields = array();
+			foreach((array)$aTemp as $intKey=>$mixField) {
+				if(is_numeric($intKey)) {
+					$aFields['ext_'.$intKey] = $mixField;
+				} else {
+					$aFields[$intKey] = $mixField;
+				}
+			}
+
+?>
+							<br>
+							<?=printTableStart()?>
+								<?=printFormSelect("Kundennummer", "config_data[field_number]", $aFields, $arrConfigData['field_number']);?>
+								<?=printFormSelect("Matchcode", "config_data[field_matchcode]", $aFields, $arrConfigData['field_matchcode']);?>
+								<?=printFormSelect("Firma", "config_data[field_company]", $aFields, $arrConfigData['field_company']);?>
+								<?=printFormSelect("Adresse", "config_data[field_address]", $aFields, $arrConfigData['field_address']);?>
+								<?=printFormSelect("Zusatz", "config_data[field_addition]", $aFields, $arrConfigData['field_addition']);?>
+								<?=printFormSelect("PLZ", "config_data[field_zip]", $aFields, $arrConfigData['field_zip']);?>
+								<?=printFormSelect("Ort", "config_data[field_city]", $aFields, $arrConfigData['field_city']);?>
+								<?=printFormSelect("Land", "config_data[field_country]", $aFields, $arrConfigData['field_country']);?>
+								<?=printFormSelect("Telefon", "config_data[field_phone]", $aFields, $arrConfigData['field_phone']);?>
+								<?=printFormSelect("Telefax", "config_data[field_fax]", $aFields, $arrConfigData['field_fax']);?>
+							<?=printTableEnd()?>
+<?
+		}
+?>
+
+<?
+	} elseif ($_VARS['config'] == "email_templates") {
+		//TODO: Nummernkreise
+		$aTypeNames['paymentcomplete'] = 'Bestätigungsmail';
+		$aTypeNames['paymentreminder'] = 'Zahlungserinnerung 1';
+		$aTypeNames['paymentreminder2'] = 'Zahlungserinnerung 2';
+
+		foreach((array)$aTypeNames as $sKey => $sValue) {
+
+			if(isset($arrConfigData[$sKey.'_subject_'.$_VARS['language']])) {
+				$sSubject = $arrConfigData[$sKey.'_subject_'.$_VARS['language']];
+				$sBody = $arrConfigData[$sKey.'_body_'.$_VARS['language']];
+			} else {
+				$sSubject = $arrConfigData[$sKey.'_subject'];
+				$sBody = $arrConfigData[$sKey.'_body'];
+			}
+
+?>
+								<?=printTableStart()?>
+									<?=printFormText($sValue." - Betreff", "config_data[".$sKey."_subject]", $sSubject, 3, 3);?>
+									<?=printFormTextarea($sValue." - Text", "config_data[".$sKey."_body]",  $sBody, 3, 3);?>
+								<?=printTableEnd()?>
+								<br />
+							<? } ?>
+							
+							<div class="divBoxContainer">
+							<div class="divBoxHeader" onClick="switchBox('divEmailPlaceHolders');">Verfügbare Platzhalter &raquo;</div> 
+							<div class="divBoxContent" id="divEmailPlaceHolders">
+								<div>
+								<?
+									$aEmailPlaceholders = classExtension_Office::getEmailPlaceholders();
+									foreach((array)$aEmailPlaceholders as $sValue)
+									{
+										echo $sValue.'<br />';
+									}
+								?>
+								</div>
+							</div>
+						</div>
+						<script language="JavaScript" type="text/javascript">
+				  			Element.hide('divEmailPlaceHolders');
+						</script>
+
+<?
+	} elseif ($_VARS['config'] == "address") {
+?>
+
+							<?=printTableStart()?>
+								<?=printFormTextarea("Header Adresse", "config_data[contact_small]",  $arrConfigData['contact_small'], 3, 3);?>
+								<?=printFormTextarea("Footer Adresse", "config_data[contact_large]",  $arrConfigData['contact_large'], 3, 3);?>
+								<?=printFormTextarea("Footer Zusatz",  "config_data[contact_footer]", $arrConfigData['contact_footer'], 3, 3);?>
+							<?=printTableEnd()?>
+<?
+	/* ============================================= */
+	/* NUMMERNKREISE =============================== */
+	/* ============================================= */
+	} elseif ($_VARS['config'] == "types") {
+
+		$aDocumentColumns = array(
+			'country' => 'Land',
+			'editor' => 'Bearbeiter',
+			'gross' => 'Brutto',
+			'vat_id' => 'USt.-ID',
+			'product_area' => 'Produktbereich'
+		);
+
+?>
+							<h3>Nummernkreise</h3>
+							<p>
+								Bitte hier <b>nur</b> Zahlen eingeben
+							</p>
+							<?=printTableStart()?>
+								<tr>
+									<th>Art</th>
+									<th>Nummernkreis</th>
+									<th>Jährlich wiederholend</th>
+								</tr>
+								<? foreach ((array)$aTypeNames as $type => $name) { ?>
+									<? if ($type != "all") { ?>
+										<tr>
+											<th>
+												<?=$name?>
+											</th>
+											<td>
+												<input type="text" name="<?="config_data[range_" . $type."]"?>" class="txt w300" value="<?=\Util::convertHtmlEntities($arrConfigData['range_' . $type])?>">
+											</td>
+											<td>
+												<input type="hidden" name="<?="config_data[range_".$type."_repeat]"?>" value="0" />
+												<? if(isset($arrConfigData['range_' . $type . '_repeat']) && $arrConfigData['range_' . $type . '_repeat'] == 1) { $sSelected = ' checked="checked" ';} else { $sSelected = ''; } ?>
+												<input type="checkbox" name="<?="config_data[range_".$type."_repeat]"?>" <?=$sSelected?> value="1" />
+											</td>
+										</tr>
+									<? } ?>
+							<? } ?>
+							<?=printTableEnd()?>
+							<h3>Dateinamen</h3>
+							<?=printTableStart()?>
+								<? foreach ((array)$aTypeNames as $type => $name) { ?>
+									<? if ($type != "all") { ?>
+										<?=printFormText($name, "config_data[filename_".$type."]", $arrConfigData['filename_'.$type]);?>
+									<? } ?>
+								<?	} ?>
+							<?=printTableEnd()?>
+							<h3>Listeneinstellungen</h3>
+							
+							<?=printTableStart()?>
+								<?=printFormMultiSelect("Spalten anzeigen", "config_data[document_columns][]", $aDocumentColumns, $arrConfigData['document_columns'], 'rows="5" style="width: 300px;"');?>
+							<?=printTableEnd()?>
+							
+<?
+	} elseif ($_VARS['config'] == "vat") {
+?>
+							
+							<?=printTableStart()?>
+								<?=printFormText("Umsatzsteuer-ID", "config_data[vat_id]",  $arrConfigData['vat_id']);?>
+							<?=printTableEnd()?>
+							<br>
+							<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+								<?php
+								foreach ((array)$arrConfigData['vat'] as $key => $value) { 
+									
+									if(!is_array($value)) {
+										$value = [
+											'description' => 'n/a',
+											'rate' => $value
+										];
+									}
+									
+								?>
+								<tr>
+									<th width="40%">Umsatzsteuer <?=$value['rate']?>%</th>
+									<td width="25%"><input type="text" id="<?=$key?>_description" name="config_data[vat][<?=$key?>][description]" class="txt" value="<?=htmlspecialchars($value['description'])?>"></td>
+									<td width="25%"><input type="text" id="<?=$key?>_value" name="config_data[vat][<?=$key?>][rate]" class="txt" value="<?=htmlspecialchars($value['rate'])?>"></td>
+									<td width="3%"><a href="#" onClick="document.getElementById('<?=$key?>_value').value=''; document.mask.task.value='saveConfig'; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+								</tr>
+								<? } ?>
+								<tr>
+									<th width="40%">Neu (z.B. 16)</th>
+									<td colspan="2" width="60%"><input type="text" name="config_data[vat][]" class="txt" value=""></td>
+								</tr>
+							<?=printTableEnd()?>
+<?
+	} elseif ($_VARS['config'] == "units") {
+?>
+							<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+								<? foreach ((array)$arrConfigData['units'] as $key => $value) { ?>
+								<tr>
+									<th width="40%">Einheit</th>
+									<td width="57%"><input type="text" id="<?=$key?>_value" name="config_data[units][<?=$key?>]" class="txt" value="<?=$value?>"></td>
+									<td width="3%"><a href="#" onClick="document.getElementById('<?=$key?>_value').value=''; document.mask.task.value='saveConfig'; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+								</tr>
+								<? } ?>
+								<tr>
+									<th width="40%">Neu</th>
+									<td colspan="2" width="60%"><input type="text" name="config_data[units][new]" class="txt" value=""></td>
+								</tr>
+							<?=printTableEnd()?>
+<?
+	} elseif ($_VARS['config'] == "payment") {
+?>
+							<?=printTableStart()?>
+								<?=printFormTextarea("Zahlungshinweis (mit Platzhalter <#date#>, <#days#>)", "config_data[payment_advice]", $arrConfigData['payment_advice'], 3, 3);?>
+							<?=printTableEnd()?>
+							<br>
+							<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+								<? foreach ((array)$arrConfigData['payment'] as $key => $value) { ?>
+								<tr>
+									<th width="40%"><?=$key?> Tage</th>
+									<td width="3%"><input type="text" id="<?=$key?>_key" name="config_data[payment][<?=$key?>][key]" class="txt" style="width:20px" value="<?=$key?>"></td>
+									<td width="54%"><input type="text" id="<?=$key?>_value" name="config_data[payment][<?=$key?>][value]" class="txt" value="<?=htmlspecialchars($value)?>"></td>
+									<td width="3%"><a href="#" onClick="document.getElementById('<?=$key?>_value').value=''; document.mask.task.value='saveConfig'; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+								</tr>
+								<? } ?>
+								<tr>
+									<th width="40%">Neu</th>
+									<td width="3%"><input type="text" name="config_data[payment][new][key]" class="txt" style="width:20px" value=""></td>
+									<td colspan="2" width="57%"><input type="text" name="config_data[payment][new][value]" class="txt" value=""></td>
+								</tr>
+							<?=printTableEnd()?>
+
+<?
+	} elseif ($_VARS['config'] == "discount_amount") {
+?>
+
+	<h2>Abschlagsrechnung</h2>
+	<?=printTableStart()?>
+		<?=printFormSelect('<span style="float:left;">Einheit:</span> <span style="float:right;">1x</span>', "config_data[discount_amount_unit]", $aUnits, $arrConfigData['discount_amount_unit'])?>
+		<?=printFormText("Titel", "config_data[discount_amount_title]", $arrConfigData['discount_amount_title']);?>
+		<?=printFormTextarea("Text", "config_data[discount_amount_text]", $arrConfigData['discount_amount_text'], 3, 3);?>
+	<?=printTableEnd()?>
+
+	<br />
+
+	<div class="divBoxContainer">
+		<div class="divBoxHeader" onclick="switchBox('divPlaceHolders');">Verfügbare Platzhalter &raquo;</div> 
+		<div class="divBoxContent" id="divPlaceHolders">
+			<div>
+				{Number} - Angebotsnummer<br />
+				{OfferDate} - Angebotsdatum<br />
+				{Date} - Auftragserteilungdatum<br />
+				{Percent} - Prozentsatz
+			</div>
+		</div>
+	</div>
+	<script language="JavaScript" type="text/javascript">
+  		Element.hide('divPlaceHolders');
+	</script>
+<?
+	} elseif ($_VARS['config'] == "cti") {
+?>
+
+
+	<h2>Computer Telefonie Integration</h2>
+	<?=printTableStart()?>
+		<?=printFormText("URL-Kommando (Schema, z.B. callto, tel)", "config_data[cti_command]", $arrConfigData['cti_command']);?>
+		<?=printFormText("PBX-Präfix (z.B. 0)", "config_data[cti_prefix]", $arrConfigData['cti_prefix']);?>
+	<?=printTableEnd()?>
+
+
+<?
+	} elseif ($_VARS['config'] == "smskaufen") {
+?>
+
+
+	<h2>SMS Kaufen Gateway</h2>
+	<?=printTableStart()?>
+		<?=printFormText("Benutzername", "config_data[smskaufen_username]", $arrConfigData['smskaufen_username']);?>
+		<?=printFormText("Passwort", "config_data[smskaufen_password]", $arrConfigData['smskaufen_password']);?>
+		<?=printFormText("E-Mail", "config_data[smskaufen_email]", $arrConfigData['smskaufen_email']);?>
+		<?=printFormText("Fax-Nummer", "config_data[smskaufen_faxnumber]", $arrConfigData['smskaufen_faxnumber']);?>
+		<?=printFormText("Fax-Absender", "config_data[smskaufen_faxname]", $arrConfigData['smskaufen_faxname']);?>
+	<?=printTableEnd()?>
+
+<?
+	} elseif ($_VARS['config'] == "accounts_seetings") {
+?>
+
+
+	<h2>Bankkonten</h2>
+	<?=printTableStart()?>
+		<?=printFormText("Benachrichtigungs-E-Mail", "config_data[office_accounts_notification_email]", $arrConfigData['office_accounts_notification_email']);?>
+	<?=printTableEnd()?>
+
+<?
+	} elseif ($_VARS['config'] == "activities") {
+?>
+							<input type="hidden" name="config_data[activities][increment]" class="txt" value="<?=$arrConfigData['activities']['increment']?>">
+							<?=printTableStart()?>
+								<? foreach ((array)$arrConfigData['activities'] as $key => $value) { ?>
+									<? if ($key != "increment") { ?>
+								<tr>
+									<th width="40%"><?=$value?></th>
+									<td width="57%"><input type="text" id="<?=$key?>_value" name="config_data[activities][<?=$key?>]" class="txt" value="<?=htmlspecialchars($value)?>"></td>
+									<td width="3%"><a href="#" onClick="document.getElementById('<?=$key?>_value').value=''; document.mask.task.value='saveConfig'; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+								</tr>
+								<?	}
+								} ?>
+								<tr>
+									<th width="40%">Neu</th>
+									<td colspan="2" width="60%"><input type="text" name="config_data[activities][new]" class="txt" value=""></td>
+								</tr>
+							<?=printTableEnd()?>
+<?
+	} elseif ($_VARS['config'] == "customers_locatioins_anonymous") {
+
+		$oCustomerGroupRepository = \Ext_Office_Customer_Group::getRepository();
+		$aCustomerGroups = $oCustomerGroupRepository->findAll();
+		?>
+			<h2>Konfiguration bei Anonymität eines Kundenstandortes</h2>
+			<p>Hier können Sie den Standardnamen und das Standardlogo einer Kundengruppe konfigurieren. Diese Standards werden bei einem als anonym gekennzeichnetem Standort anstelle des standortspezifischen Namens und Logos benutzt.</p>
+		<?
+		foreach ($aCustomerGroups as $i => $oCustomerGroup){
+			$sCustomerGroupId = strtolower($oCustomerGroup->id);
+			$sCustomerGroupName = strtolower($oCustomerGroup->name);
+			printTableStart();
+			?><h3>Kundengruppe: <?echo $sCustomerGroupName;?></h3><?			
+			printFormText("Standardname", "config_data[customers_locations_standard_name_".$sCustomerGroupId."]", Ext_Office_Config::get("customers_locations_standard_name_".$sCustomerGroupId));
+			printFormText("Relativer Pfad des Standardlogos", "config_data[customers_locations_standard_logo_".$sCustomerGroupId."]", Ext_Office_Config::get("customers_locations_standard_logo_".$sCustomerGroupId));
+			printTableEnd();
+			?><br /><?
+		}
+
+	} elseif ($_VARS['config'] == "paymill_pdf_config") {
+?>
+	<h2>Stripe Konfiguration</h2>
+	<?=printTableStart()?>
+		<?=printFormText("Ziel-URL", "config_data[paymill_target_url]", Ext_Office_Config::get('paymill_target_url', $_VARS['language']));?>
+		<?=printFormText("Link-Label", "config_data[paymill_link_label]", Ext_Office_Config::get('paymill_link_label', $_VARS['language']));?>
+	<?=printTableEnd()?>
+
+<?
+	} elseif ($_VARS['config'] == "paymill_api_keys") {
+?>
+	<h2>Stripe Konfiguration</h2>
+	<?=printTableStart()?>
+		<?=printFormText("Private key", "config_data[paymill_private_key]", Ext_Office_Config::get('paymill_private_key'));?>
+		<?=printFormText("Public key", "config_data[paymill_public_key]", Ext_Office_Config::get('paymill_public_key'));?>
+	<?=printTableEnd()?>
+
+<?
+	} elseif ($_VARS['config'] == "redmine_api") {
+?>
+	<h2>Redmine Konfiguration</h2>
+	<?=printTableStart()?>
+		<?=printFormText("URL", "config_data[redmine_api_url]", Ext_Office_Config::get('redmine_api_url'));?>		
+		<?=printFormText("API-Zugriffsschlüssel", "config_data[redmine_api_key]", Ext_Office_Config::get('redmine_api_key'));?>
+		<?=printFormText("CustomField-ID: Abrechnen", "config_data[redmine_api_customfield_billing]", Ext_Office_Config::get('redmine_api_customfield_billing'));?>
+		<?=printFormText("CustomField-ID: Abgerechnet", "config_data[redmine_api_customfield_billed]", Ext_Office_Config::get('redmine_api_customfield_billed'));?>
+	<?=printTableEnd()?>
+
+<?
+	} elseif ($_VARS['config'] == "email_smtp") {
+?>
+	<h2>SMTP-Einstellungen</h2>
+	<?=printTableStart()?>
+		<?=printFormText("E-Mail-Adresse", "config_data[email_smtp_email]", Ext_Office_Config::get('email_smtp_email'));?>		
+		<?=printFormText("Absender", "config_data[email_smtp_name]", Ext_Office_Config::get('email_smtp_name'));?>		
+		<?=printFormText("Host", "config_data[email_smtp_host]", Ext_Office_Config::get('email_smtp_host'));?>	
+		<?=printFormSelect(L10N::t("Verschlüsselung", 'Framework'), "config_data[email_smtp_encryption]", [''=> L10N::t('Ohne', 'Framework'), 'ssl' => L10N::t('SSL', 'Framework'), 'tls' => L10N::t('TLS', 'Framework')], Ext_Office_Config::get('email_smtp_encryption'))?>	
+		<?=printFormText("Port", "config_data[email_smtp_port]", Ext_Office_Config::get('email_smtp_port'));?>
+		<?=printFormText("Benutzer", "config_data[email_smtp_user]", Ext_Office_Config::get('email_smtp_user'));?>
+		<?=printFormText("Password", "config_data[email_smtp_pass]", Ext_Office_Config::get('email_smtp_pass'));?>
+	<?=printTableEnd()?>
+
+<?
+	}
+?>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?if ($_VARS['config'] != "") echo printSubmit($aConfig[$_VARS['config']]." speichern", "onclick=\"this.form.task.value='saveConfig';\""); ?></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</form>
+<?
+/* FORMULARE */
+} elseif ($_VARS['admin'] == "forms") {
+	// TODO: Formulare
+	
+	$aFonts = $objDao->getFonts();
+
+	$aFontsSelect = array();
+	foreach((array)$aFonts as $aFont) {
+		$sName = $aFont['name'];
+		if($aFont['style']) {
+			$sName .= " (".$aFont['style'].")";
+		}
+		$aFontsSelect[$aFont['id']] = $sName;
+	}
+
+	if($_VARS['action'] == "delete") {
+		
+		if($_VARS['id'] > 0) {
+			$objDao->removeForm($_VARS['id']);
+		}
+
+	} elseif($_VARS['action'] == "save") {
+
+		// get clean pdf_name filename
+		$sPDFFilename = trim((string)$_VARS['pdf_name']);
+		if($sPDFFilename == '')
+		{
+			$sPDFFilename = '{DocumentType}_{DocumentNumber}';
+		}
+
+		$strSetQueryPart = " 
+				`client_id` 			= '".\DB::escapeQueryString(\Core\Handler\SessionHandler::getInstance()->get('office_client_id'))."',
+				`name` 					= '".\DB::escapeQueryString($_VARS['name'])."',
+				`margin_top` 			= '".\DB::escapeQueryString($_VARS['margin_top'])."',
+				`margin_right` 			= '".\DB::escapeQueryString($_VARS['margin_right'])."',
+				`margin_bottom` 		= '".\DB::escapeQueryString($_VARS['margin_bottom'])."',
+				`margin_left` 			= '".\DB::escapeQueryString($_VARS['margin_left'])."',
+				`start_position` 		= '".\DB::escapeQueryString($_VARS['start_position'])."',
+				`line_color` 			= '".\DB::escapeQueryString($_VARS['form_line_color'])."',
+				`head_bg_color` 		= '".\DB::escapeQueryString($_VARS['form_head_bg_color'])."',
+				`font_color` 			= '".\DB::escapeQueryString($_VARS['form_font_color'])."',
+				`font_id` 				= '".\DB::escapeQueryString($_VARS['form_font_id'])."',
+				`font_size` 			= '".\DB::escapeQueryString($_VARS['form_font_size'])."',
+				`font_size_table` 		= '".\DB::escapeQueryString($_VARS['form_font_size_table'])."',
+				`display_starttext` 	= '".\DB::escapeQueryString($_VARS['display_starttext'])."',
+				`display_endtext` 		= '".\DB::escapeQueryString($_VARS['display_endtext'])."',
+				`display_table` 		= '".\DB::escapeQueryString($_VARS['display_table'])."',
+				`display_tablefoot` 	= '".\DB::escapeQueryString($_VARS['display_tablefoot'])."',
+				`use_tcpdf` 			= '".\DB::escapeQueryString($_VARS['use_tcpdf'])."',
+				`currency` 				= '".\DB::escapeQueryString($_VARS['currency'])."',
+				`price_highlighting` 	= '".\DB::escapeQueryString($_VARS['price_highlighting'])."',
+				`translations` 			= '".\DB::escapeQueryString(json_encode($_VARS['translations']))."',
+				`disable_minus`			= '".\DB::escapeQueryString($_VARS['disable_minus'])."',
+				`pdf_name`				= '".\DB::escapeQueryString($sPDFFilename)."'
+		";
+				
+		
+		if($_VARS['id'] > 0) {
+			$strQuery = "
+						UPDATE 
+							office_forms 
+						SET
+							".$strSetQueryPart."
+						WHERE 
+							id = '".\DB::escapeQueryString($_VARS['id'])."'";
+			DB::executeQuery($strQuery);
+		} else {
+			$strQuery = "
+						INSERT INTO 
+							office_forms 
+						SET 
+							created = NOW(),
+							".$strSetQueryPart."";
+			DB::executeQuery($strQuery);
+			$_VARS['id'] = DB::fetchInsertID();
+		}
+
+
+		$objDao->updateFormTables($_VARS['id'], $_VARS['tableattributes']);
+
+		if(move_uploaded_file($_FILES['pdf_first']['tmp_name'], $strPdfPath.$_VARS['id'].'_first.pdf')) {
+			// successfull
+		}
+		if(move_uploaded_file($_FILES['pdf_next']['tmp_name'], $strPdfPath.$_VARS['id'].'_next.pdf')) {
+			// successfull
+		}
+
+		$_VARS['action'] = "edit";
+		
+	} else if ($_VARS['action'] == "copy") {
+
+        $form = $objDao->getForm($_VARS['id']);
+        $fields = $form['fields'];
+        $items = $objDao->getFormItems($_VARS['id']);
+
+        unset($form['id']);
+        unset($form['changed']);
+        unset($form['created']);
+        unset($form['fields']);
+
+        $form['name'] .= ' - Kopie';
+
+        $newFormId = \DB::insertData('office_forms', $form);
+
+        foreach ($fields as $field) {
+            unset($field['id']);
+            unset($field['changed']);
+            unset($field['created']);
+            $field['form_id'] = $newFormId;
+            \DB::insertData('office_forms_tables', $field);
+        }
+
+        foreach ($items as $item) {
+            unset($item['id']);
+            unset($item['changed']);
+            unset($item['created']);
+            $item['form_id'] = $newFormId;
+            \DB::insertData('office_forms_items', $item);
+        }
+
+        header('Location: /admin/extensions/office_config.html?task=admin&admin=forms');
+        exit;
+
+    }
+	
+	if($_VARS['action'] == "edit") {
+			
+		if($_VARS['id'] > 0) {
+			$arrForm = $objDao->getForm($_VARS['id']);
+			$strPdfFirst = 'kein PDF vorhanden';
+			$strPdfSecond = 'kein PDF vorhanden';
+			if(is_file($strPdfPath.$arrForm['id'].'_first.pdf')) {
+				$strPdfFirst = 'PDF vorhanden';
+			}
+			if(is_file($strPdfPath.$arrForm['id'].'_next.pdf')) {
+				$strPdfSecond = 'PDF vorhanden';
+			}
+			$arrForm['translations'] = json_decode($arrForm['translations'], true);
+		}
+
+?>
+
+	<? /* ==================================================================================================== */ ?>
+	<? /* FORMULARE EDITIEREN ================================================================================ */ ?>
+	<? /* ==================================================================================================== */ ?>
+
+	<h2>Formulare &raquo; Editieren</h2>
+	<br>
+	<script type="text/javascript">
+		function selectTableDisplay(oBox, iField)
+		{
+			// Table-CheckBox
+			if(iField == 1)
+			{
+				if(oBox.checked == false)
+				{
+					document.getElementById('display_tablefoot').checked = false;
+				}
+			}
+			else if(iField == 2)
+			{
+				if(oBox.checked == true)
+				{
+					document.getElementById('display_table').checked = true;
+				}
+			}
+		}
+	</script>
+	
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+	<input type="hidden" name="task" value="admin" />
+	<input type="hidden" name="admin" value="forms" />
+	<input type="hidden" name="action" value="save" />
+	<input type="hidden" name="id" value="<?=$arrForm['id']?>" />
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+		<?=printFormSelect("Mandant", "client_id", $aClients, $arrForm['client_id'])?>
+		<?=printFormText("Name","name",$arrForm['name'])?>
+		<?=printFormFile("PDF Hintergrund, erste Seite (".$strPdfFirst.")", "pdf_first")?>
+		<?=printFormFile("PDF Hintergrund, Folgeseite (".$strPdfSecond.")", "pdf_next")?>
+		<?=printFormSelect("Schriftart", "form_font_id", $aFontsSelect, $arrForm['font_id'])?>
+		<?=printFormText("Schriftgröße - Text",	"form_font_size", $arrForm['font_size'])?>
+		<?=printFormText("Schriftgröße - Tabelle",	"form_font_size_table", $arrForm['font_size_table'])?>
+		<?=printFormText("Schriftfarbe (z.B. 202020)",	"form_font_color", $arrForm['font_color'])?>
+		<?=printFormText("Linienfarbe (z.B. 202020)",	"form_line_color", $arrForm['line_color'])?>
+		<?=printFormText("Hintergrundfarbe Tabellenkopf (Hex)",	"form_head_bg_color", $arrForm['head_bg_color'])?>
+		<?=printFormText("Abstand oben",	"margin_top", $arrForm['margin_top'])?>
+		<?=printFormText("Abstand rechts",	"margin_right", $arrForm['margin_right'])?>
+		<?=printFormText("Abstand unten",	"margin_bottom", $arrForm['margin_bottom'])?>
+		<?=printFormText("Abstand links",	"margin_left", $arrForm['margin_left'])?>
+		<?=printFormText("Startposition des Textes", "start_position", $arrForm['start_position'])?>
+
+		<?=printFormCheckbox("Starttext anzeigen", "display_starttext", 1, (bool)$arrForm['display_starttext'])?>
+		<?=printFormCheckbox("Schlußtext anzeigen", "display_endtext", 1, (bool)$arrForm['display_endtext'])?>
+		<?=printFormCheckbox("Tabelle anzeigen", "display_table", 1, (bool)$arrForm['display_table'], 1, 0, 40, 'onclick="selectTableDisplay(this, 1);"')?>
+		<?=printFormCheckbox("Tabellenfuss anzeigen", "display_tablefoot", 1, (bool)$arrForm['display_tablefoot'], 1, 0, 40, 'onclick="selectTableDisplay(this, 2);"')?>
+		<?=printFormCheckbox("Gutschriften PDF's ohne Minus (-)", "disable_minus", 1, (bool)$arrForm['disable_minus'])?>
+
+		<?=printFormCheckbox("TCPDF anstelle von FPDF benutzen", "use_tcpdf", 1, (bool)$arrForm['use_tcpdf'])?>
+
+	</table>
+
+	<p align="right">
+		<?=printSubmit("speichern")?>
+	</p>
+
+	<? /* ==================================================================================================== */ ?>
+	<? /* SPALTENEINSTELLUNGEN RECHNUNG ANGEBOT GUTSCHRIFT =================================================== */ ?>
+	<? /* ==================================================================================================== */ ?>
+
+	<h2>Spalteneinstellungen (Rechnung, Angebot, Gutschrift)</h2>
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+        <thead>
+            <tr>
+                <th>Schlüssel</th>
+                <th>Titel</th>
+                <th>Breite (mm)</th>
+                <th>Nachkommastellen</th>
+                <th>Aktiv</th>
+            </tr>
+        </thead>
+        <tbody class="sortable">
+
+<?php
+	$iHighestPosition = 0;
+	if(!empty($arrForm['fields'])) {
+		$iHighestPosition = max(array_column($arrForm['fields'], 'position'));
+	}
+
+    if ($iHighestPosition !== null) {
+        $aTableKeysKeys = array_keys($aTableKeys);
+        usort($aTableKeysKeys, function ($sKey1, $sKey2) use ($arrForm) {
+            return ($arrForm['fields'][$sKey1]['position'] < $arrForm['fields'][$sKey2]['position']) ? -1 : 1;
+        });
+
+        $aTableKeys = array_merge(array_flip($aTableKeysKeys), $aTableKeys);
+    }
+
+	foreach((array)$aTableKeys as $sKey => $aValues)
+	{
+		$bOut = false;
+		echo '<tr><td>';
+		echo '<span style="cursor: move">'.$aValues['title'].'</span>';
+		echo '</td><td>';
+	
+		$sChecked = '';
+		if($arrForm['fields'][$sKey]['active'] == 1) {
+			$sChecked = 'checked="checked"';
+		}
+
+		$sTitle 		= '<input class="txt" name="tableattributes['.$sKey.'][title]" value="'.\Util::convertHtmlEntities($arrForm['fields'][$sKey]['title']).'" style="width:150px; padding:1px;" />';
+		$sWidth			= '<input class="txt" name="tableattributes['.$sKey.'][width]" value="'.\Util::convertHtmlEntities($arrForm['fields'][$sKey]['width']).'" style="width:50px; padding:1px;" />';
+		$sDecimalPlaces	= '<input class="txt" name="tableattributes['.$sKey.'][decimal_places]" value="'.(int)\Util::convertHtmlEntities($arrForm['fields'][$sKey]['decimal_places']).'" style="width:50px; padding:1px;" />';
+		$sActive		= '<input type="checkbox" name="tableattributes['.$sKey.'][active]" '.$sChecked.' value="1" />';
+
+		echo $sTitle;
+		echo '</td><td>';
+		echo $sWidth;
+		echo '</td><td>';
+
+		if(
+			$sKey == 'quantity' ||
+			$sKey == 'amount' ||
+			$sKey == 'discount' ||
+			$sKey == 'vat' ||
+			$sKey == 'totalamount'
+		)
+		{
+			echo $sDecimalPlaces;	
+		}
+		echo '&nbsp;';
+
+		echo '</td><td>';
+		echo $sActive;
+		echo '</td></tr>';
+	}
+
+?>
+        </tbody>
+	</table>
+
+	<p align="right">
+		<?=printSubmit("speichern")?>
+	</p>
+
+	<? /* ==================================================================================================== */ ?>
+	<? /* SPALTENEINSTELLUNGEN MAHNUNGEN ===================================================================== */ ?>
+	<? /* ==================================================================================================== */ ?>
+
+	<h2>Spalteneinstellungen (Mahnung)</h2>
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+		<tr>
+			<th>Schlüssel</th>
+			<th>Breite (mm)</th>
+		</tr>
+
+<?
+	foreach((array)$aReminderTableKeys as $sKey => $aValue)
+	{
+		echo '<tr><td>';
+		echo $aValue['title'];
+		echo '</td><td>';
+
+		echo $sActive = '<input type="hidden" name="tableattributes['.$sKey.'][active]" value="1" />';
+		echo $sWidth = '<input class="txt" name="tableattributes['.$sKey.'][width]" value="'.\Util::convertHtmlEntities($arrForm['fields'][$sKey]['width']).'" style="width:50px; padding:1px;" />';
+
+		echo '</td></tr>';
+	}
+?>
+
+	</table>
+
+	<? /* ==================================================================================================== */ ?>
+	<? /* BESCHRIFTUNGEN ===================================================================================== */ ?>
+	<? /* ==================================================================================================== */ ?>
+
+	<h2>Beschriftungen</h2>
+	<?=printTableStart()?>
+		<?=printFormText("Währung", "currency", $arrForm['currency'])?>
+		<?=printFormText("Übertrag", "translations[carryover]", $arrForm['translations']['carryover'])?>
+		<?=printFormText("Zwischensumme", "translations[subtotal]", $arrForm['translations']['subtotal'])?>
+		<?=printFormText("abzgl. %s %% Gesamtrabatt", "translations[less_discount]", $arrForm['translations']['less_discount'])?>
+		<tr>
+			<th>Gesamt Netto</th>
+			<td>
+				<input name="translations[net_total]" class="txt w300" value="<?=$arrForm['translations']['net_total']?>" />
+				<input type="radio" name="price_highlighting" value="net_total" <? if($arrForm['price_highlighting'] == 'net_total') { ?>checked="checked"<? } ?> />
+				hervorheben bei Angeboten
+			</td>
+		</tr>
+		<?=printFormText("zzgl. %s %% USt. auf", "translations[plus_vat]", $arrForm['translations']['plus_vat'])?>
+		<tr>
+			<th>Gesamtbetrag </th>
+			<td>
+				<input name="translations[total]" class="txt w300" value="<?=$arrForm['translations']['total']?>" type="text">
+				<input type="radio" name="price_highlighting" value="total" <? if($arrForm['price_highlighting'] == 'total' || $arrForm['price_highlighting'] == '') { ?>checked="checked"<? } ?> />
+				hervorheben bei Angeboten
+			</td>
+		</tr>
+	<?=printTableEnd()?>
+
+	<? /* ==================================================================================================== */ ?>
+	<? /* DOKUMENTENARTEN BETREFF ============================================================================ */ ?>
+	<? /* ==================================================================================================== */ ?>
+
+	<h2>Dokumentenarten / Betreff</h2>
+	<?=printTableStart()?>
+<?php 
+	foreach ((array)$aTypeNames as $sType => $sName) {
+		if(empty($arrForm['translations']['type_'.$sType])) {
+			$arrForm['translations']['type_'.$sType] = $sName.' Nr.';
+		}
+?>
+		<?=printFormText($sName, "translations[type_".$sType."]", $arrForm['translations']['type_'.$sType])?>
+<?php 
+	}
+?>
+	<?=printTableEnd()?>
+	
+	<? /* ==================================================================================================== */ ?>
+	<? /* VARIABLER PDF DATEI NAME =========================================================================== */ ?>
+	<? /* ==================================================================================================== */ ?>
+	
+	<h2>Variabler PDF Datei-Name</h2>
+
+	<?=printTableStart()?>
+		<?=printFormText("PDF Name", "pdf_name", $arrForm['pdf_name'])?>
+	<?=printTableEnd()?>
+
+
+	<br/>
+
+		<?
+		Ext_Office_Document::displayPlaceholders($aBlockPlaceholders);
+		?>
+
+	<script language="JavaScript" type="text/javascript">
+		Element.hide('divPlaceHolders');
+	</script>
+	
+
+	<p align="right">
+		<?=printSubmit("speichern")?>
+	</p>
+
+<?
+	} elseif($_VARS['action'] == "details") {
+
+		if($_VARS['id'] > 0) {
+
+			if(is_array($_VARS['item'])) {
+				$objDao->saveFormItems($_VARS['id'], $_VARS['item']);
+			}
+
+			$arrForm = $objDao->getForm($_VARS['id']);
+
+			if(is_numeric($_VARS['remove'])) {
+				$objDao->removeFormItem($arrForm['id'], $_VARS['remove']);
+			}
+
+			$aFormItems = $objDao->getFormItems($arrForm['id']);
+
+		}
+
+		if(is_numeric($_VARS['add'])) {
+			$aFormItems[] = array();
+		}
+
+?>
+
+		<h2>Formulare &raquo; <?=$arrForm['name']?></h2>
+		<br>
+		<form name="office_form" method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<input type="hidden" name="task" value="admin">
+		<input type="hidden" name="admin" value="forms">
+		<input type="hidden" name="action" value="details">
+		<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+		<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+			<colgroup>
+				<col width="10%">
+				<col width="10%">
+				<col width="5%">
+				<col width="5%">
+				<col width="10%">
+				<col width="10%">
+				<col width="10%">
+				<col width="10%">
+				<col width="25%">
+				<col width="5%">
+			</colgroup>
+			<tr>
+				<th>X-Pos.</th>
+				<th>Y-Pos.</th>
+				<th>Breite</th>
+				<th>Schriftgröße</th>
+				<th>Schriftfarbe</th>
+				<th>Schriftart</th>
+				<th>Ausrichtung</th>
+				<th>Anzeige</th>
+				<th>Inhalt</th>
+				<th>Aktion</th>
+			</tr>
+<?
+			foreach((array)$aFormItems as $iItemKey=>$aItem) {
+?>
+			<tr>
+				<td valign="top">
+					<input type="text" name="item[<?=$iItemKey?>][position_x]" value="<?=$aItem['position_x']?>" class="txt w30" size="2" maxlength="40"/>
+				</td>
+				<td valign="top">
+					<input type="text" name="item[<?=$iItemKey?>][position_y]" value="<?=$aItem['position_y']?>" class="txt w30" size="2" maxlength="40"/>
+				</td>
+				<td valign="top">
+					<input type="text" name="item[<?=$iItemKey?>][width]" value="<?=$aItem['width']?>" class="txt w30" size="2" maxlength="40"/>
+				</td>
+				<td valign="top">
+					<input type="text" name="item[<?=$iItemKey?>][font_size]" value="<?=$aItem['font_size']?>" class="txt w30" size="2" maxlength="40"/>
+				</td>
+				<td valign="top">
+					<input type="text" name="item[<?=$iItemKey?>][font_color]" value="<?=$aItem['font_color']?>" class="txt w60" size="6" maxlength="6"/>
+				</td>
+				<td valign="top">
+					<select name="item[<?=$iItemKey?>][font_id]" class="txt">
+						
+						<?php
+        				foreach((array)$aFontsSelect as $strKey=>$sFile)
+        				{
+        				?>
+        					<option value="<?=$strKey?>" <?=(($aItem['font_id'] == $strKey)?'selected="selected"':'')?>><?=$sFile?></option>
+        				<?php
+        				}
+        				?>
+					</select>
+				</td>
+				<td valign="top">
+					<select name="item[<?=$iItemKey?>][alignment]" class="txt">
+						<option value="L" <?=(($aItem['alignment'] == 'L')?'selected="selected"':'')?>>links</option>
+						<option value="C" <?=(($aItem['alignment'] == 'C')?'selected="selected"':'')?>>zentriert</option>
+						<option value="R" <?=(($aItem['alignment'] == 'R')?'selected="selected"':'')?>>rechts</option>
+						<option value="J" <?=(($aItem['alignment'] == 'J')?'selected="selected"':'')?>>Blocksatz</option>
+					</select>
+				</td>
+				<td valign="top">
+					<select name="item[<?=$iItemKey?>][display]" class="txt">
+						<option value="FIRST" <?=(($aItem['display'] == 'FIRST')?'selected="selected"':'')?>>erste Seite</option>
+						<option value="FOLLOWING" <?=(($aItem['display'] == 'FOLLOWING')?'selected="selected"':'')?>>Folgeseite</option>
+						<option value="BOTH" <?=(($aItem['display'] == 'BOTH')?'selected="selected"':'')?>>alle Seiten</option>
+					</select>
+				</td>
+				<td valign="top">
+					<textarea name="item[<?=$iItemKey?>][content]" class="txt" style="width:200px;" rows="3"><?=$aItem['content']?></textarea>
+				</td>
+				<td align="center" valign="top">
+					<a href="<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=details&remove=<?=$iItemKey?>&id=<?=$arrForm['id']?>"><img src="/admin/media/delete.png"></a>
+				</td>
+			</tr>
+<?
+			}
+?>
+		</table>
+
+		<p align="right">
+			<input type="submit" class="btn" value="speichern">
+			&nbsp;
+			<input type="button" class="btn" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=details&add=1&id=<?=$arrForm['id']?>';" value="Feld hinzufügen">
+		</p>
+		</form>
+		<br/>
+
+		<?
+		Ext_Office_Document::displayPlaceholders($aBlockPlaceholders);
+		?>
+
+		<script language="JavaScript" type="text/javascript">
+  			Element.hide('divPlaceHolders');
+		</script>
+  
+		<p align="right">
+			<input type="button" class="btn" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms';" value="&laquo; zur&uuml;ck">
+		</p>
+<?
+	} else {
+?>
+
+		<h2>Formulare</h2>
+		<br>
+		<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+			<colgroup>
+				<col width="90%">
+				<col width="10%">
+			</colgroup>
+			<tr>
+				<th>Name</th>
+				<th>Aktionen</th>
+			</tr>
+<?
+		$resForms = DB::getQueryRows("SELECT * FROM office_forms ORDER BY `name`");
+		foreach($resForms as $arrForms) {
+?>
+			<tr>
+				<td><a href="<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=details&id=<?=$arrForms['id']?>"><?=$arrForms['name']?></a></td>
+				<td align="center" nowrap>
+					<a href="<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=details&id=<?=$arrForms['id']?>"><img src="/admin/media/icon_sitemap.png" border="0" /></a>
+					<a href="<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=edit&id=<?=$arrForms['id']?>"><img src="/admin/media/edit.png" border="0" /></a>
+					<a href="#" onClick="if(confirm('Möchten Sie dieses Formular wirklich löschen?')) document.location.href='<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=delete&id=<?=$arrForms['id']?>';"><img src="/admin/media/delete.png" border="0" /></a>
+                    <a href="<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=copy&id=<?=$arrForms['id']?>"><img src="/admin/media/page_copy.png" border="0" /></a>
+                </td>
+			</tr>
+<?
+		}
+?>
+		</table>
+		<p align="right">
+			<input type="button" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>?task=admin&admin=forms&action=edit';" class="btn" value="Formular hinzuf&uuml;gen">
+		</p>
+
+
+<? }
+/* SCHRIFTARTEN */
+} elseif(isset($_VARS['admin']) && $_VARS['admin'] == 'fonts') {
+
+	/* LÖSCHEN DER SCHRIFTARTEN */
+	if(isset($_VARS['action']) && $_VARS['action'] == 'deleteFont')
+	{
+		$sSQL = "
+			DELETE FROM
+				`office_fonts`
+			WHERE
+				`id` = :ID
+		";
+		$aSQL = array('ID' => $_VARS['id']);
+		DB::executePreparedQuery($sSQL, $aSQL);
+	
+	}
+
+	if(isset($_VARS['action']) && $_VARS['action'] == 'addFont')
+	{
+
+		if(isset($_VARS['name']) && isset($_FILES['font']) && $_FILES['font'] != '')
+		{
+			
+			$mReturn = classExtension_Office::addFont($_VARS['name'], $_VARS['style'], $_FILES['font']['tmp_name']);
+			
+			if(!is_numeric($mReturn)) {
+				$sFontError = '<p class="error">Es ist ein Fehler aufgetreten.<br/><br/>('.$mReturn.')</p>';
+			} elseif($mReturn === -1) {
+				$sFontError = '<p class="error">Es ist ein Fehler aufgetreten. Diese Schriftart existiert bereits</p>';
+			} else {
+				// True
+			}
+
+		}
+
+	}
+	$sSQL = "
+		SELECT
+			*
+		FROM
+			`office_fonts`
+	";
+	$aFontsList = DB::getQueryData($sSQL);
+?>
+<h2>Schriftarten</h2>
+
+<?=printTableStart()?>
+	<tr>
+		<th>Name</th>
+		<th>Style</th>
+		<th>X</th>
+	</tr>
+	<?
+		foreach((array)$aFontsList as $iKey => $aValue)
+		{
+	?>
+	<tr>
+		<td><?=$aValue['name']?>&nbsp;</td>
+		<td><?=$aValue['style']?>&nbsp;</td>
+		<td style="text-align:center;">
+			<a href="?task=admin&admin=fonts&action=deleteFont&id=<?=$aValue['id']?>">
+				<img src="/admin/media/cross.png" border="0">
+			</a>
+		</td>
+	</tr>
+	<?
+		}
+	?>
+<?=printTableEnd()?>
+
+<br /><br />
+<p>Viele Schriftart-Dateien (*.TTF) befinden sich unter Windows in C:\Windows\Fonts\</p>
+
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post" enctype="multipart/form-data">
+<input type="hidden" name="admin" value="fonts" />
+<input type="hidden" name="action" value="addFont" />
+<?=$sFontError?>
+<?=printTableStart()?>
+	<?=printFormText("Name der Schriftart", "name")?>
+	<tr>
+		<th>Style der Schriftart</th>
+		<td>
+			<select name="style">
+				<option value="n">normal</option>
+				<option value="b">fett</option>
+				<option value="i">kursiv</option>
+				<option value="bi">fett und kursiv</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<th>*.TTF-Datei</th>
+		<td>
+			<input name="font" type="file" size="37" />
+		</td>
+	</tr>
+<?=printTableEnd()?>
+<p style="text-align:right;">
+	<input type="submit" class="btn" value="Schriftart hinzuf&uuml;gen" />
+</p>
+</form>
+<?
+
+/* VORLAGEN */
+} elseif ($_VARS['admin'] == "template") {
+	$rTemplate = DB::getQueryRows("SELECT * FROM office_templates ORDER BY name");
+	foreach($rTemplate as $aTemplate) {
+		$aTemplates[$aTemplate['id']] = $aTemplate;
+		$aTemplatesList[$aTemplate['id']] = $aTemplate['name'];
+	}
+?>
+			<h2>Textbausteine</h2>
+			<br><br>
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="admin">
+			<input type="hidden" name="admin" value="template">
+			<input type="hidden" name="template" value="<?=$_VARS['template']?>">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+<?
+	if ($_VARS['template'] == "") {
+?>
+							<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+								<tr>
+									<th>Name</th>
+									<th width="1%">Aktion</th>
+								</tr>
+<?
+	foreach ((array)$aTemplatesList as $id => $template) {
+?>
+								<tr id="tr_<?=$id?>" onmouseout="showRow(<?=$id?>,0)" onmousemove="showRow(<?=$id?>,1);" onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?task=admin&admin=template&template=<?=$id?>';" style="cursor:pointer;">
+									<td><?=$template?></td>
+									<td><a href="<?=$_SERVER['PHP_SELF']?>?task=admin&admin=template&template=<?=$id?>"><img src="/admin/media/edit.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=deleteTemplate&admin=template&id=<?=$id?>" onClick="return confirm('Löschen?'); submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+								</tr>
+<?
+	}
+?>
+							</table>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("Neue Vorlage", "onclick=\"this.form.task.value='admin'; this.form.template.value='new';\"")?></td>
+									<td width="1"><?=printSubmit("Vorlage speichern", "onclick=\"this.form.task.value='saveTemplate';\"")?></td>
+								</tr>
+							</table>
+<?
+	} elseif ($_VARS['template'] != "") {
+?>
+							<?=printTableStart()?>
+								<?=printFormText("Name", "name", $aTemplates[$_VARS['template']]['name']);?>
+								<?=printFormHTMLarea("Text", "text", $aTemplates[$_VARS['template']]['text']);?>
+							<?=printTableEnd()?>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("zur&uuml;ck", "onclick=\"this.form.task.value='admin'; this.form.template.value='';\"")?></td>
+									<td width="1"><?=printSubmit("Vorlage speichern", "onclick=\"this.form.task.value='saveTemplate';\"")?></td>
+								</tr>
+							</table>
+<?
+	}
+?>
+
+						</td>
+					</tr>
+				</table>
+			</form>
+			<br />
+	
+			<?
+		Ext_Office_Document::displayPlaceholders($aBlockPlaceholders);
+		?>
+	
+			<script language="JavaScript" type="text/javascript">
+	  			Element.hide('divPlaceHolders');
+			</script>
+<?
+}
+?>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>
+
+<script src="/assets/adminlte/components/jquery-ui/jquery-ui.min.js?v=<?=\System::d('version')?>"></script>
+
+<script>
+    $j(".sortable").sortable({
+        update: function( event, ui ) {
+            console.log('test');
+        }
+    });
+</script>

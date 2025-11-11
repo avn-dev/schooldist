@@ -1,0 +1,408 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("page_admin");
+
+$sAdditional = "<style>body{background: #fff!important;}</style>";
+Admin_Html::loadAdminHeader($sAdditional);
+
+$file_ext = "html";
+
+//Startseitenzuweisung sichern
+if($_VARS['new_index_page_id'] > 1) {
+
+	$sSql = "
+		UPDATE 
+			cms_pages 
+		SET 
+			indexpage = 0
+		WHERE 
+			site_id = ".intval($_VARS['site_id'])." AND 
+			path = '".\DB::escapeQueryString($_VARS['path_name'])."' AND 
+			(
+				language = '".\DB::escapeQueryString($_VARS['slanguage'])."' OR 
+				language = ''
+			)";
+	DB::executeQuery($sSql);
+
+	$sSql = "
+		UPDATE 
+			cms_pages 
+		SET 
+			indexpage = 1
+		WHERE 
+			id = ".intval($_VARS['new_index_page_id'])."";
+	DB::executeQuery($sSql);
+
+}//if
+
+if($_VARS['moveto'] == "go") {
+
+	movePage($_VARS['page_id'], $_VARS['site_pfad']);
+
+	$intLevel = substr_count($_VARS['site_pfad'], "/") + 1; 
+	$_VARS['level'] 	= $intLevel;
+	$_VARS['path_name'] = $_VARS['site_pfad'];
+	$_VARS['level_2'] 	= ++$intLevel;
+}
+?>
+<style>
+div{
+	font-size : 9px;
+}
+.newfolder {
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+.select_on {
+	background-color: buttonface;
+	border-bottom: 1px solid buttonhighlight;
+	border-right: 1px solid buttonhighlight;
+	border-top: 1px solid buttonshadow;
+	border-left: 1px solid buttonshadow;
+}
+.select_off {
+	background-color: buttonface;
+	border-top: 1px solid buttonhighlight;
+	border-left: 1px solid buttonhighlight;
+	border-bottom: 1px solid buttonshadow;
+	border-right: 1px solid buttonshadow;
+}
+</style>
+<script>
+
+function showall() {
+i=0;
+while(document.all.tags("div")[i]) {
+      document.all.tags("div")[i].style.setAttribute("display","block","false");
+i++;
+}
+}
+function show(divName) {
+     dis = document.all["user"+divName].style.getAttribute("display","false");
+     if (dis=="block") {
+        document.all["user"+divName].style.setAttribute("display","none","false");
+        } else {
+        document.all["user"+divName].style.setAttribute("display","block","false");
+        }
+}
+function deletepage(title,id) {
+	var conf = confirm('Sie sind im Begriff die Seite "'+title+'" zu löschen!\nMöchten Sie diese wirklich löschen?');
+	if(conf == true) {
+		document.location.href = '<? echo "".$_SERVER['PHP_SELF']."?site_id=".(int)$_VARS['site_id']."&action=delete&did='+id+'&path_name=".$_VARS['path_name']."&level=".$_VARS['level']."&level_2=".$_VARS['level_2']."&slanguage=".$_VARS['slanguage']."&id=".(int)$_VARS['id'];?>';
+	}
+}
+
+function moveto() {
+document.location.href = '<?=$_SERVER['PHP_SELF']?>?site_id=<?=(int)$_VARS['site_id']?>&moveto=go&slanguage=<?=$_VARS['slanguage']?>&page_id='+document.formular.page_id.value+'&site_pfad='+document.formular.site_pfad.value;
+}
+
+function startDrag(id) {
+	document.dragPosition.page_id.value = id;
+}
+
+function endDrag(id) {
+	if(confirm('Möchten Sie diese Seite wirklich verschieben?')) {
+		document.dragPosition.submit();
+	}
+}
+ 
+</script>
+<?
+
+// start function setposition
+// set a new cms_pages position (up or down)
+if($_VARS['action'] == "delete") {
+    
+    $iDid = $_VARS['did'];
+    
+	$my_page = DB::getQueryRow("SELECT id,title FROM cms_pages WHERE id = '$iDid' AND (path != '' OR (file != '' AND file != 'index'))");
+	if($my_page['id'] > 0) {
+		postdeletion('cms_pages', $iDid, $my_page['title']);
+		enterlog($iDid,"Seite wurde gelöscht.");
+	} else {
+	?>
+		<script>
+			alert("Die Seite konnte nicht in den Papierkorb verschoben werden!");
+		</script>
+	<?
+	}
+
+} elseif($_VARS['action'] == "setactive") {
+
+	DB::executeQuery("UPDATE cms_pages SET active = ".(int)$_VARS['set']." WHERE id = ".(int)$_VARS['id']."");
+
+}
+
+if($_VARS['action'] == "dragposition") {
+	$my_page = DB::getQueryRow("SELECT position FROM cms_pages WHERE id = '".(int)$_VARS['drag_page_id']."'");
+	DB::executeQuery("UPDATE cms_pages SET position = '".$my_page['position']."' WHERE id = '".(int)$_VARS['page_id']."'");
+	changePosition("up",$_VARS['id'],"cms_pages","WHERE site_id = ".intval($_VARS['site_id'])." AND ((path LIKE '".$_VARS['path_name']."' AND file != 'index' AND level = '".$_VARS['level']."') OR (path LIKE '".$_VARS['path_name']."%' AND file = 'index' AND level = '".$_VARS['level_2']."')) AND (language = '".$_VARS['slanguage']."' OR language = '') AND active != 2");
+	enterlog($_VARS['id'],"Seitenposition wurde verändert.");
+}
+
+if($_VARS['action'] == "setposition") {
+	changePosition($_VARS['dir'],$_VARS['id'],"cms_pages","WHERE site_id = ".intval($_VARS['site_id'])." AND ((path LIKE '".$_VARS['path_name']."' AND file != 'index' AND level = '".$_VARS['level']."') OR (path LIKE '".$_VARS['path_name']."%' AND file = 'index' AND level = '".$_VARS['level_2']."')) AND (language = '".$_VARS['slanguage']."' OR language = '') AND active != 2");
+	enterlog($_VARS['id'],"Seitenposition wurde verändert.");
+}
+// end function setposition
+?>
+<script>
+var objPreload;
+if(parent) {
+	objPreload = parent;
+}
+
+</script>
+
+<table cellpadding="1" cellspacing="0" border="0" width="100%" style="table-layout : fixed;">
+	<tr style="cursor:default ;">
+		<td width=48% class=select_off ><?=L10N::t('Seitenname', 'CMS')?></td>
+		<td width=32% class=select_off ><?=L10N::t('Edit', 'CMS')?></td>
+		<td width=10% class=select_off ><?=L10N::t('Aktiv', 'CMS')?></td>
+		<td width=10% class=select_off align=right><?=L10N::t('Pos.', 'CMS')?>&nbsp;</td>
+	</tr>
+<?
+$div_id = 0;
+$jscript = "";
+function sitemap($path_name, $level, $level_2) {
+	global $_VARS, $user_data,$jscript,$div_id,$level_close,$db_data,$file_ext,$functions,$status;
+
+	$query = "
+				SELECT 
+					* 
+				FROM 
+					cms_pages 
+				WHERE 
+					site_id = ".intval($_VARS['site_id'])." AND 
+					(
+						(
+							path LIKE '$path_name' AND 
+							file != 'index' AND 
+							level = '$level'
+						) OR (
+							path LIKE '$path_name%' AND 
+							file = 'index' AND 
+							level = '$level_2'
+						)
+					) AND 
+					(
+						language = :language || 
+						language = ''
+					) AND 
+					active != '2' AND 
+					element != 'template' 
+				ORDER BY 
+					position ASC";
+	$aSql = array('language'=>$_VARS['slanguage']);
+	$result_sitemap_1 = (array)DB::getQueryRows($query, $aSql);
+
+	if(empty($result_sitemap_1)) {
+		echo "<tr><td colspan=3>Es wurden keine Einträge gefunden.</td></tr></table></body></html>";
+		die();
+	}
+	$i_cs[$level_2] = 1;
+	$count_sitemap = count($result_sitemap_1);
+	if($level > 1) {
+		echo "<div id=user".$div_id." style=\"display:block\">\n";
+	}
+	$div_id++;
+	foreach($result_sitemap_1 as $my_sitemap_1) {
+		
+		$oPage = \Cms\Entity\Page::getInstance($my_sitemap_1['id']);
+		
+		$oPageAccess = new \Cms\Helper\Access\Page($oPage);
+
+		if(!$oPageAccess->checkRightInPath('edit_view_pages')) {
+			continue;
+		}
+		
+		$bRightEditPagePref = $oPageAccess->checkRightInPath('page_pref');
+		$bRightEditDelete = $oPageAccess->checkRightInPath('edit_delete_pages');
+		$bRightEditPublish = $oPageAccess->checkRightInPath('publish'); 
+		
+		$uptodate = getPageStatus($my_sitemap_1['id']);
+
+		if($count_sitemap > $i_cs[$level_2]) {
+			if($my_sitemap_1['file']=="index") {
+				$icon = "img-folder-open-0.gif";
+				$image = "<img src=../../media/sitemap_5.gif align=\"texttop\">";
+			} else {
+				$icon = "page_";
+				if($my_sitemap_1['indexpage'] == 1)
+					$icon .= "home_";
+				else
+					$icon .= "normal_";
+				
+				if($uptodate == 1)
+					$icon .= "published";
+				else
+					$icon .= "publish";
+				
+				if($my_sitemap_1['active'] == 0 || $my_sitemap_1['menue'] == 0)
+					$icon .= "_inactive";
+				if($my_sitemap_1['access'] != "")
+					$icon .= "_secure";
+				$icon .= ".gif";
+				$image = "<img src=../../media/sitemap_3.gif align=\"texttop\">";
+			}
+			$level_close[$level] = "yes";
+		} else {
+			if($my_sitemap_1['file'] == "index") {
+				$icon = "img-folder-open-0.gif";
+				$show_id = $div_id - 1;
+				$image = "<a href=\"javascript:void(0);\" onClick=\"show('".$div_id."');\"><img src=../../media/sitemap_1.gif align=\"texttop\" border=0></a>";
+			} else {
+				$icon = "page_";
+				if($my_sitemap_1['indexpage'] == 1)
+					$icon .= "home_";
+				else
+					$icon .= "normal_";
+				
+				if($uptodate == 1)
+					$icon .= "published";
+				else
+					$icon .= "publish";
+				if($my_sitemap_1['active'] == 0 || $my_sitemap_1['menue'] == 0)
+					$icon .= "_inactive";
+				if($my_sitemap_1['access'] != "")
+					$icon .= "_secure";
+				$icon .= ".gif";
+				$image = "<img src=../../media/sitemap_2.gif align=\"texttop\">";
+			}
+		}
+		echo "<tr ondragstart=\"startDrag('".$my_sitemap_1['id']."')\" ondragover=\"document.dragPosition.drag_page_id.value = '".$my_sitemap_1['id']."';\" ondragend=\"endDrag('".$my_sitemap_1['id']."');\">";
+		$u = $level+1;
+		$v = $level_2+1;
+		$path_name = $my_sitemap_1['path'];
+		$path_name_2 = $my_sitemap_1['path'];
+		if ($my_sitemap_1['file'] == "index") {
+			$l = 2;
+		} else {
+			$l = 1;
+		}
+		$dir_name = (array)explode("/",$path_name_2);
+		$path_name_2 = "";
+		$j=0;
+		$count_dir = count($dir_name) - $l;
+		while($j < $count_dir) {
+			if(!strstr($dir_name[$j],".".$file_ext)) {
+				$path_name_2 .= $dir_name[$j]."/";
+			}
+			$j++;
+		}
+		$vars = "&path_name=".$path_name_2."&level=".$level."&level_2=".$level_2."";
+
+		if($my_sitemap_1['active'] == 0) {
+			if(!$bRightEditPagePref) {
+				$icon_active = "<img style=\"filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=30)';\" src=\"../../media/sitemap_inactive.gif\" border=0 align=absmiddle>";
+			} else {
+				$icon_active = "<a href=".$_SERVER['PHP_SELF']."?site_id=".$_VARS['site_id']."&slanguage=".$_VARS['slanguage']."&action=setactive&id=".$my_sitemap_1['id']."&set=1$vars><img src=\"../../media/sitemap_inactive.gif\" border=0 align=absmiddle></a>";
+			}
+		} else {
+			if(!$bRightEditPagePref) {
+				$icon_active = "<img style=\"filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=30)';\" src=\"../../media/sitemap_active.gif\" border=0 align=absmiddle>";
+			} else {
+				$icon_active = "<a href=".$_SERVER['PHP_SELF']."?site_id=".$_VARS['site_id']."&slanguage=".$_VARS['slanguage']."&action=setactive&id=".$my_sitemap_1['id']."&set=0$vars><img src=\"../../media/sitemap_active.gif\" border=0 align=absmiddle></a>";
+			}
+		}
+
+		echo "
+		<td><img src=/admin/media/".$icon." style=\"cursor:move;\" border=0 align=\"texttop\"><img src=/admin/media/spacer.gif width=3 height=1 border=0><a href=\"/admin/cms/page/".$oPage->id."/".$_VARS['slanguage']."/live\" target=\"_parent\">".stripslashes($my_sitemap_1['title'])."</a></td>
+		<td align=left nowrap>";
+
+		if(!$bRightEditDelete) {
+			echo "<img style=\"filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=30)';\" src=\"/admin/media/sitemap_delete.png\" border=0 alt=\"Seite löschen\">\n";
+		} else {
+			echo "<a href=\"javascript:void(0);\" onclick=\"deletepage('".str_replace("'","\'",htmlentities($my_sitemap_1['title'],ENT_COMPAT))."','".$my_sitemap_1['id']."');\"><img id=\"del".$my_sitemap_1['id']."\" src=\"/admin/media/sitemap_delete.png\" border=0 alt=\"Seite löschen\"></a> \n";
+		}
+		if(!$bRightEditPagePref) {
+			echo "<img style=\"filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=30)';\" src=\"/admin/media/edit.png\" border=0 alt=\"Eintrag editieren\">\n";
+			echo "<img style=\"filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=30)';\" src=\"/admin/media/sitemap_move.gif\" border=0 alt=\"Eintrag verschieben\">\n";
+			if($my_sitemap_1['indexpage'] != 1 && $my_sitemap_1['file'] != "index"){
+				echo "<img style=\"filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=30)';\" src=\"/admin/media/startseite_1.gif\" border=0 alt=\"als Startseite festlegen\">\n";
+			} else {
+				echo "<img src=/admin/media/spacer.gif width=15 height=16>\n";
+			}
+		} else {
+			echo "<a href=\"javascript:void(0);\" onclick=\"window.open('preferences.html?site_id=".$_VARS['site_id']."&page_id=".$my_sitemap_1['id']."','preferences','status=no,resizable=no,menubar=no,scrollbars=yes,width=1100,height=700');\"><img src=\"/admin/media/edit.png\" border=0 alt=\"Eintrag editieren\"></a> \n";
+			//echo "<a href=# onclick=\"window.open('ins_sitemap.$file_ext?site_id=".$_VARS['site_id']."&slanguage=".$_VARS['slanguage']."&sfunction=opener.moveto&target=opener.document.formular.site_pfad','moveto','status=no,resizable=yes,menubar=no,scrollbars=yes,width=750,height=550');document.formular.page_id.value='".$my_sitemap_1['id']."'\"><img src=\"/admin/media/sitemap_move.gif\" border=0 alt=\"Eintrag verschieben\"></a> \n";
+			if($my_sitemap_1['indexpage'] != 1 && $my_sitemap_1['file'] != "index"){
+				echo "<a href=\"javascript:void(0);\" onclick=\"document.getElementById('make_indexpage').new_index_page_id.value = '".$my_sitemap_1['id']."'; document.getElementById('make_indexpage').submit();\"><img src=\"/admin/media/startseite_1.gif\" border=0 alt=\"als Startseite festlegen\"></a>\n";
+			} else {
+				echo "<img src=/admin/media/spacer.gif width=15 height=16>\n";
+			}
+		}
+		
+		if(
+			$uptodate == 0 && 
+			$bRightEditPublish
+		) {
+			echo "<a href=\"javascript:void(0);\" onclick=\"objPreload.generate('accept',".$my_sitemap_1['id'].",".$my_sitemap_1['active'].");\"><img src=\"/admin/media/sitemap_publish_yes.gif\" border=0 alt=\"Inhalt veröffentlichen\"></a> \n";
+			echo "<a href=\"javascript:void(0);\" onclick=\"objPreload.generate('deny',".$my_sitemap_1['id'].",".$my_sitemap_1['active'].");\"><img src=\"/admin/media/sitemap_publish_no.gif\" border=0 alt=\"Inhalt verwerfen\"></a> \n";
+		}
+		
+		echo "</td>
+		<td align=center>$icon_active</td>";
+		echo "<td nowrap align=right>";
+		echo "<img src=/admin/media/spacer.gif width=3 height=1>";
+		if($bRightEditPagePref) {
+			echo "<a href=".$_SERVER['PHP_SELF']."?site_id=".$_VARS['site_id']."&slanguage=".$_VARS['slanguage']."&action=setposition&dir=up&id=".$my_sitemap_1['id']."&path_name=".$path_name_2."&level=".$level."&level_2=".$level_2."><img src=\"../../media/sitemap_up.png\" border=0 alt=\"hoch (Position: ".$my_sitemap_1['position'].")\"></a>
+			<a href=".$_SERVER['PHP_SELF']."?site_id=".$_VARS['site_id']."&slanguage=".$_VARS['slanguage']."&action=setposition&dir=down&id=".$my_sitemap_1['id']."&path_name=".$path_name_2."&level=".$level."&level_2=".$level_2."><img src=\"../../media/sitemap_down.png\" border=0 alt=\"runter (Position: ".$my_sitemap_1['position'].")\"></a>&nbsp;";
+		}
+		echo "</td>\n";
+		echo "</tr>\n";
+		
+		$i_cs[$level_2]++;
+	}
+	if($level > 1) {
+		echo "</div>";
+	}
+}
+
+if(!$_VARS['level_2']) {
+	$_VARS['level_2'] = 1;
+}
+
+sitemap($_VARS['path_name'], $_VARS['level'], $_VARS['level_2']);
+
+?>
+</td></tr></table>
+<form name="formular">
+<input type="hidden" name="page_id" value="">
+<input type="hidden" name="site_pfad" value="">
+</form>
+
+<?
+//Formular für die Startseitzuweisung
+?>
+<form name="make_indexpage" method="post" action="<?=$_SERVER['PHP_SELF']?>" id="make_indexpage">
+<input type="hidden" name="new_index_page_id" value="">
+<input type="hidden" name="site_id" value="<?=$_VARS['site_id']?>">
+<input type="hidden" name="path_name" value="<?=$_VARS['path_name']?>">
+<input type="hidden" name="level" value="<?=$_VARS['level']?>">
+<input type="hidden" name="level2" value="<?=$_VARS['level_2']?>">
+<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+<input type="hidden" name="slanguage" value="<?=$_VARS['slanguage'];?>">
+</form>
+
+<form name="dragPosition" method="post" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="action" value="dragposition">
+<input type="hidden" name="path_name" value="<?=$_VARS['path_name']?>">
+<input type="hidden" name="site_id" value="<?=$_VARS['site_id']?>">
+<input type="hidden" name="level" value="<?=$_VARS['level']?>">
+<input type="hidden" name="level2" value="<?=$_VARS['level_2']?>">
+<input type="hidden" name="page_id" value="">
+<input type="hidden" name="drag_page_id" value="">
+<input type="hidden" name="slanguage" value="<?=$_VARS['slanguage'];?>">
+</form>
+
+<script>
+<?
+echo $jscript;
+?>
+</script>
+<?=Admin_Html::loadAdminFooter()?>

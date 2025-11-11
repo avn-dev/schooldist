@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/ts-canvas",
+	"version": "1.0.0",
+  "require": {
+    "smtech/canvaspest": "1.*"
+  }
+}

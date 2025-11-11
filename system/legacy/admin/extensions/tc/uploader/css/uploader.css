@@ -1,0 +1,109 @@
+
+.uploader .drop { 
+    margin: 0px; 
+    height: 120px; 
+    border: 1px solid #CCC;
+    position: relative;
+}
+
+.uploader h3 {
+    color: #000;
+}
+
+.uploader .btn {
+    border: 1px solid #B2B2B2;
+    color: #000000;
+    font-family: Verdana,Arial,Helvetica,sans-serif;
+    font-size: 11px;
+    font-weight: normal;
+    margin: 5px 0 0 5px;
+    float: right;
+}
+
+.uploader .start_btn {
+    margin-right: 20px;
+}
+
+.uploader .hidden {
+    display:none;
+}
+
+.uploader .bg {
+    background-image: url('/admin/extensions/tc/uploader/images/dragdrop.bmp'); 
+    background-repeat: no-repeat; 
+    background-position: -30px -15px;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    opacity:0.2;
+    filter:alpha(opacity=20); /* For IE8 and earlier */
+    height: 95px;
+}
+
+.uploader .content {
+    position: absolute;
+    float: left; 
+    cursor: move;
+    font-size: 10px; 
+    width: 100%;
+	/* overwrite AdminLTE */
+	padding: 0 !important;
+	margin: 0 !important;
+	min-height: 0 !important;
+}
+
+.uploader .content .progress {
+    float: left;
+}
+
+.uploader .progress_info {
+    
+}
+
+.uploader .fileinfo {
+    height: 75px;
+    margin-top: 10px;
+    width: 100%;    
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.upload_response {
+    float: left;
+    margin-top: 6px;
+}
+
+.uploader .error {
+    color: red;
+    position: absolute;
+    width: 194px;
+    height: 80px;
+    padding: 3px;
+    font-size: 10px;
+    overflow: auto;
+    background: #FFF;
+}
+
+.uploader .preview {
+    max-height: 62px;
+    float: left; 
+    border: 1px solid #CCC; 
+    margin: 5px;
+    cursor: pointer;
+}
+
+.uploader .content .progress {
+    background-image: url('/admin/extensions/tc/uploader/images/ajax-loader.gif'); 
+    width: 43px; 
+    height: 11px;    
+    margin-top: 5px;
+}
+
+.uploader .content .progress_spacer {
+    float: left; 
+    padding: 3px;
+}
+
+.uploader .content .progress_percent {
+    float: right;
+}

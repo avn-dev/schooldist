@@ -1,0 +1,257 @@
+#Angefangen, noch nicht fertig
+hash: 9159f4df3e8167d9d9a65f1158fe04c5
+class:
+  wdbasic: Ext_Thebing_Tuition_Class
+  data: Ext_Thebing_Tuition_Class_Gui2
+  js: Classes
+access: thebing_tuition_classes
+js:
+  - [tuition/js/classes.js, thebing]
+limit: 30
+sidebar: true
+id:
+  column: id
+  alias: ktcl
+orderby:
+  - Ext_Thebing_Tuition_Class_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Tuition_Class_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        id: search
+        alias:
+          - ktcl
+          - ktcl
+          - cdb1
+          - cdb1
+          - kt
+          - kt
+          - kt_substitute
+          - kt_substitute
+        column:
+          - id
+          - name
+          - lastname
+          - firstname
+          - firstname
+          - lastname
+          - firstname
+          - lastname
+        searchtype: LIKE
+      -
+        element: selectfilter
+        id: week_filter
+        column: week
+        alias: ktb
+        label: Kurswoche
+        query_value_key: filter_week
+#        $oFilter->show_in_bar = true;
+#        $oFilter->simple = true;
+#        $oFilter->required			= true;
+        searchtype: =
+        value:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getCurrentWeekStart
+        entries:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getWeeks
+      -
+        element: selectfilter
+        id: course_category
+        column: category_id
+        alias: ktc
+        label: Kurskategorie
+        searchtype: =
+        entries:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getSelectFilterEntriesCourseCategories
+      -
+        element: selectfilter
+        label: Lehrer
+        column: teacher_id
+        alias: ktb
+        searchtype: =
+        entries:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getSelectFilterEntriesTeacher
+        filter_query:
+          -1: '`ktb`.`teacher_id` = 0'
+      -
+        element: selectfilter
+        label: Kurs
+        alias: ktclc_filter
+        column: course_id
+        searchtype: =
+        entries:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getSelectFilterEntriesCourse
+      -
+        element: selectfilter
+        label: Kurssprache
+        column: courselanguage_id
+        alias: ktcl
+        entries:
+          - Ext_Thebing_Tuition_LevelGroup
+          - getSelectOptions
+        searchtype: =
+      -
+        element: selectfilter
+        label: Status
+        column: state
+        alias: ktb_filter
+        searchtype: &
+        entries:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getSelectFilterEntriesState
+  -
+    position: top
+    elements:
+      -
+        element: icon_show
+        dialog:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getDialogEdit
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getDialogNew
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Tuition_Class_Gui2
+          - getDialogEdit
+      -
+        element: icon_delete
+      -
+        element: icon_file_manager
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Legende
+      -
+        element: legend_info
+        label: Lehrer mit Abwesenheit
+        info:
+          color: red_font
+          text: true
+      -
+        element: legend_info
+        label: Lehrer außerhalb der Verfügbarkeit (zum Zeitpunkt der Zuweisung)
+        info:
+          color: red
+          text: true
+      -
+        element: legend_info
+        label: Lehrer außerhalb der Qualifikation (zum Zeitpunkt der Zuweisung)
+        info:
+          color: soft_orange
+          text: true
+      -
+        element: legend_info
+        label: Vertretungslehrer
+        info:
+          color: 333
+          text: true
+          italic: true
+columns:
+  -
+    title: Schule
+    column: school_id
+    alias: ktcl
+    width: name
+    resize: true
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Tuition_Class_Gui2, getFormatParamsSchool]
+  -
+    title: Name der Klasse
+    column: name
+    alias: ktcl
+    width: name
+    resize: true
+  -
+    title: Tage
+    column: days
+    width: name
+    format: Ext_Thebing_Gui2_Format_School_Tuition_DaysWithTime
+  -
+    title: Schüler
+    column: students
+    width: customer_name
+    format: Ext_Thebing_Gui2_Format_Concat
+  -
+    title: Laufzeit
+    column: weeks_count
+    width: courseweek_from_until
+    format: Ext_Thebing_Gui2_Format_FromUntil
+    format_params:
+      - weeks_count
+      - weeks_alt
+  -
+    title: Startlevel
+    column: start_level
+    width: short_name
+  -
+    title: Aktuelles Level
+    column: current_level
+    width: short_name
+    small: true
+  -
+    title: Lehrer
+    column: teachers
+    width: 240
+    format: Ext_Thebing_Gui2_Format_School_Tuition_Teachers
+  -
+    title: Räume
+    column: rooms
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_Concat
+    sortable: false
+#    $oFormat->bUseIdFields	= false;
+#    $oFormat->oExtraFormatClass = new Ext_Thebing_Gui2_Format_Select($aRooms);
+#    $oFormat->bUseEmptyValues = true;
+  -
+    title: Farbe
+    column: color_name
+    width: name
+    style: Ext_Gui2_View_Style_Color
+    style_params: color_code
+  -
+    title: Kurssprache
+    alias: ktcl
+    column: courselanguage_id
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Tuition_LevelGroup, getSelectOptions]
+  -
+    title: Kurskategorie
+    column: category_id
+    alias: ktc
+    data: course_category_ids
+    width: name
+    default: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Tuition_Class_Gui2, getSelectFilterEntriesCourseCategories]
+  -
+    title: Kurse
+    column: id
+    data: course_ids
+    alias: ktc
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Tuition_Class_Gui2, getSelectFilterEntriesCourse]
+    default: false

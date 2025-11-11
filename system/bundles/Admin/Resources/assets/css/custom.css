@@ -1,0 +1,84 @@
+:root {
+  --primary-color: "%primaryColor%";
+  --primary-color-lightness: "%primaryColorLightness%";
+  --primary-color-base: "%primaryBase%";
+  --primary-color-shades: "%primaryShades%";
+  --primary-color-50: "%primary50%";
+  --primary-color-100: "%primary100%";
+  --primary-color-200: "%primary200%";
+  --primary-color-300: "%primary300%";
+  --primary-color-400: "%primary400%";
+  --primary-color-500: "%primary500%";
+  --primary-color-600: "%primary600%";
+  --primary-color-700: "%primary700%";
+  --primary-color-800: "%primary800%";
+  --primary-color-900: "%primary900%";
+  --primary-color-950: "%primary950%";
+  /* Contrast ratio >= 3 */
+  --primary-color-contrast-50: "%primaryContrast50%";
+  --primary-color-contrast-100: "%primaryContrast100%";
+  --primary-color-contrast-200: "%primaryContrast200%";
+  --primary-color-contrast-300: "%primaryContrast300%";
+  --primary-color-contrast-400: "%primaryContrast400%";
+  --primary-color-contrast-500: "%primaryContrast500%";
+  --primary-color-contrast-600: "%primaryContrast600%";
+  --primary-color-contrast-700: "%primaryContrast700%";
+  --primary-color-contrast-800: "%primaryContrast800%";
+  --primary-color-contrast-900: "%primaryContrast900%";
+  --primary-color-contrast-950: "%primaryContrast950%";
+  --primary-color-contrast-light: "%primaryContrastLight%";
+  --primary-color-contrast-dark: "%primaryContrastDark%";
+  /* Contrast ratio >= 4.5 */
+  --primary-color-contrast-text-50: "%primaryContrastText50%";
+  --primary-color-contrast-text-100: "%primaryContrastText100%";
+  --primary-color-contrast-text-200: "%primaryContrastText200%";
+  --primary-color-contrast-text-300: "%primaryContrastText300%";
+  --primary-color-contrast-text-400: "%primaryContrastText400%";
+  --primary-color-contrast-text-500: "%primaryContrastText500%";
+  --primary-color-contrast-text-600: "%primaryContrastText600%";
+  --primary-color-contrast-text-700: "%primaryContrastText700%";
+  --primary-color-contrast-text-800: "%primaryContrastText800%";
+  --primary-color-contrast-text-900: "%primaryContrastText900%";
+  --primary-color-contrast-text-950: "%primaryContrastText950%";
+  --primary-color-contrast-text-light: "%primaryContrastTextLight%";
+  --primary-color-contrast-text-dark: "%primaryContrastTextDark%";
+}
+
+/* Legacy */
+.guiSelectedRow {
+  background-color: "%primary300Rgb%" !important;
+  color: "%primaryContrastText300Rgb%" !important;
+}
+.guiSelectedRow td {
+  border-right-color: "%primary200Rgb%" !important;
+}
+
+body[data-mode=light] .modal-content .header-line {
+  background-color: "%primaryContrastLightRgb%";
+}
+body[data-mode=light] .btn-primary,
+body[data-mode=light] .Gui2ChildTableButtonActive,
+body[data-mode=light] .GUIDialogTabHeaderActive,
+body[data-mode=light] .modal-body .nav li.active,
+body[data-mode=light] .primary-color-element {
+  background-color: "%primaryContrastLightRgb%" !important;
+  color: "%primaryContrastLightTextRgb%" !important;
+}
+body[data-mode=light] .modal-body .nav li.active a {
+  color: "%primaryContrastLightTextRgb%" !important;
+}
+
+body[data-mode=dark] .modal-content .header-line {
+  background-color: "%primaryContrastDarkRgb%";
+}
+body[data-mode=dark] .btn-primary,
+body[data-mode=dark] .Gui2ChildTableButtonActive,
+body[data-mode=dark] .GUIDialogTabHeaderActive,
+body[data-mode=dark] .modal-body .nav li.active,
+body[data-mode=dark] .primary-color-element {
+  background-color: "%primaryContrastDarkRgb%" !important;
+  color: "%primaryContrastDarkTextRgb%" !important;
+}
+body[data-mode=dark] .modal-body .nav li.active a {
+  color: "%primaryContrastDarkTextRgb%" !important;
+}

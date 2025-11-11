@@ -1,0 +1,1 @@
+ALTER TABLE `tc_flex_sections_fields` ADD `editor_id` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0';

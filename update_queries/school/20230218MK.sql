@@ -1,0 +1,14 @@
+DROP TABLE `kolumbus_provisions`;
+DROP TABLE `kolumbus_provision_new`;
+RENAME TABLE `kolumbus_agency_provison_groups` TO `ts_agencies_to_commission_categories`;
+RENAME TABLE `kolumbus_provision_groups` TO `ts_commission_categories`;
+RENAME TABLE `kolumbus_provision` TO `ts_commission_categories_values_old`;
+ALTER TABLE `ts_commission_categories` DROP `client_id`;
+ALTER TABLE `ts_commission_categories_values_old` DROP `client_id`;
+ALTER TABLE `ts_commission_categories` ADD `old_structure` TINYINT NOT NULL DEFAULT '0' AFTER `position`;
+UPDATE `ts_commission_categories` SET `old_structure` = 1;
+ALTER TABLE `ts_commission_categories` ADD `commission_course` TINYINT NOT NULL DEFAULT '3', ADD `commission_additional_course` TINYINT NOT NULL DEFAULT '3', ADD `commission_accommodation` TINYINT NOT NULL DEFAULT '3', ADD `commission_additional_accommodation` TINYINT NOT NULL DEFAULT '3', ADD `commission_additional_general` TINYINT NOT NULL DEFAULT '3', ADD `commission_insurance` TINYINT NOT NULL DEFAULT '3', ADD `commission_activity` TINYINT NOT NULL DEFAULT '3';
+ALTER TABLE `ts_commission_categories` ADD `school_id` INT NULL DEFAULT NULL AFTER `user_id`;
+CREATE TABLE `ts_commission_categories_rates` (  `category_id` int(11) NOT NULL,  `type` varchar(100) NOT NULL,  `type_id` int(11) DEFAULT NULL,  `parent_type` varchar(100) NOT NULL,  `parent_type_id` int(11) NOT NULL,  `rate` decimal(8,5) NOT NULL DEFAULT 0.00000) ;
+ALTER TABLE `ts_commission_categories_rates`  ADD UNIQUE KEY `unqiue` (`category_id`,`type`,`type_id`,`parent_type`,`parent_type_id`),  ADD KEY `category_id` (`category_id`);
+ALTER TABLE `ts_agencies_to_commission_categories` ADD `school_id` INT NULL DEFAULT NULL AFTER `group_id`;

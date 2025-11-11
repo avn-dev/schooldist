@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_courses` CHANGE `automatic_extension` `catch_up_on_cancelled_lessons` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0';

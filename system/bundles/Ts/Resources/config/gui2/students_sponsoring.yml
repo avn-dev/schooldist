@@ -1,0 +1,30 @@
+parent: ts_inquiry
+set: students_sponsoring
+title: ""
+description: ""
+access:
+  - ts_students_sponsoring_list
+  -
+leftframe: true
+multiple_selection: true
+view: students_sponsoring
+hash: cecfafb28c52b832bcb45a3de95334a2
+index:
+  registry: 
+    generate: false
+where : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getStudentSponsoringlistWhere
+designer:
+  dialog: ""
+  filter: ts_students_sponsoring
+  flex: student_record_sponsoring
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo
+filter_values:
+  course_from:
+    from: -P1W
+    until: P4W
+options:
+  only_documents_from_same_gui: true

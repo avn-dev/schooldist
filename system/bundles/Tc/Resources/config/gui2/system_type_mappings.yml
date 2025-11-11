@@ -1,0 +1,46 @@
+class:
+  wdbasic: \Tc\Entity\SystemTypeMapping
+  data: \Tc\Gui2\Data\SystemTypeMapping
+id:
+  column: id
+  alias: tc_stm
+access:
+  - thebing_admin_users_functions #TODO
+  - ""
+sets:
+  users:
+    options:
+      entity_type: users
+    where:
+      - \Tc\Gui2\Data\SystemTypeMapping
+      - getUserListWhere
+  contacts:
+    options:
+      entity_type: contacts
+    where:
+      - \Tc\Gui2\Data\SystemTypeMapping
+      - getContactListWhere
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Tc\Gui2\Data\SystemTypeMapping
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Tc\Gui2\Data\SystemTypeMapping
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Bezeichnung
+    column: name
+    alias: tc_stm
+    width: name
+    resize: true

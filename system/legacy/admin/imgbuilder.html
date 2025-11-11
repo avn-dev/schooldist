@@ -1,0 +1,726 @@
+<?php
+
+include("includes/main.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+addSystemRight('imgbuilder', 'Einstellungen & Funktionen &raquo; Grafikgenerierung');
+
+function printFormMediaOneRow($strName, $strValue="", $strParameter="", $iType=1) {
+	$sId = Util::getCleanFilename($strName);
+?>
+	<input type="text" id="<?=$sId?>" name="<?=$strName?>" class="txt form-control" value="<?=htmlspecialchars($strValue)?>" class="form_elem" style="background-color:#dededf;" <?=$strParameter?>>
+	<button class="btn" onclick="window.open('/tinymce/resource/filemanager/dialog.php?type=<?=$iType?>&lang=<?=System::getInterfaceLanguage()?>&field_id=<?=$sId?>&popup=1', 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550'); return false;">auswählen</button>
+	<input class="btn" type="button" onclick="this.form.elements['<?=$strName?>'].value=''; return false;" value="entfernen">
+<?
+}
+
+// Sortieren von Arrays nach [position]
+function sortDataByPosition($a, $b) {
+	if ($a['position'] == $b['position']) {
+       return 0; 
+   }
+   return ($a['position'] < $b['position']) ? -1 : 1;
+} 
+
+// Set speichern
+if($_VARS['action'] == "save") {
+
+	// Rauten in Farbwerten filtern
+	if (substr($_VARS['bg_colour'], 0, 1) == "#") {
+		$_VARS['bg_colour'] = substr($_VARS['bg_colour'], 1, 6);
+	}
+	foreach ((array)$_VARS['data'] as $vkey => $vval) {
+		if (substr($vval['colour'], 0, 1) == "#") {
+			$_VARS['data'][$vkey]['colour'] = substr($vval['colour'], 1, 6);
+		}
+	}
+	
+	$aData = [
+		'title' => (string)$_VARS['title'],
+		'x_dynamic' => (int)$_VARS['x_dynamic'],
+		'y_dynamic' => (int)$_VARS['y_dynamic'],
+		'x' => (int)$_VARS['x'],
+		'y' => (int)$_VARS['y'],
+		'type' => (string)$_VARS['type'],
+		'data' => Util::encodeJson($_VARS['data']),
+		'bg_colour' => (string)$_VARS['bg_colour'],
+		'bg_transparent' => (string)$_VARS['bg_transparent']
+	];
+
+	if($_VARS['quality'] !== '') {
+		$aData['quality'] = (int)$_VARS['quality'];
+	} else {
+		$aData['quality'] = null;
+	}
+
+	if($_VARS['id'] != "") {
+		DB::updateData('system_imgbuilder', $aData, ['id'=>$_VARS['id']]);
+	} else {
+		$_VARS['id'] = DB::insertData('system_imgbuilder', $aData);
+	}
+
+}
+
+// Set löschen
+if ($_VARS['action'] == "delete") {
+	if(!empty($_VARS['id'])) {
+		DB::executeQuery("DELETE FROM system_imgbuilder WHERE id = ".(int)$_VARS['id']."");
+	}
+}
+
+// Verschieben von Elementen
+if (in_array($_VARS['action'], array("shiftElementUp", "shiftElementDown", "deleteElement"))) {
+	$aData = DB::getQueryRow("SELECT data FROM system_imgbuilder WHERE id = '".$_VARS['id']."'");
+	$aData['data'] = Util::decodeSerializeOrJson($aData['data']);
+	
+	unset($iCheckActions);
+	if ($_VARS['action'] == "shiftElementUp") {
+		foreach ((array)$aData['data'] as $vkey => $vval) {
+			if ($vval['position'] == ($_VARS['element'] - 1)) {
+				$aData['data'][$vkey]['position'] = $_VARS['element'];
+				$iCheckActions++;
+			}
+			if ($vval['position'] == ($_VARS['element'])) {
+				$aData['data'][$vkey]['position'] = ($_VARS['element'] - 1);
+				$iCheckActions++;
+			}
+		}
+	}
+	if ($_VARS['action'] == "shiftElementDown") {
+		foreach ((array)$aData['data'] as $vkey => $vval) {
+			if ($vval['position'] == ($_VARS['element'] + 1)) {
+				$aData['data'][$vkey]['position'] = $_VARS['element'];
+				$iCheckActions++;
+			}
+			if ($vval['position'] == ($_VARS['element'])) {
+				$aData['data'][$vkey]['position'] = ($_VARS['element'] + 1);
+				$iCheckActions++;
+			}
+		}
+	}
+	if ($iCheckActions == 2) {
+		usort($aData['data'], "sortDataByPosition");
+		DB::executeQuery("UPDATE system_imgbuilder SET data = '".Util::encodeJson($aData['data'])."' WHERE id = '".$_VARS['id']."' LIMIT 1");
+	}
+}
+
+// Löschen von Elementen
+if ($_VARS['action'] == "deleteElement") {
+	$aData = DB::getQueryRow("SELECT data FROM system_imgbuilder WHERE id = '".$_VARS['id']."'");
+	$aData['data'] = Util::decodeSerializeOrJson($aData['data']);
+	
+	foreach ($aData['data'] as $vkey => $vval) {
+		if ($vval['position'] == ($_VARS['element'])) {
+			unset($aData['data'][$vkey]);
+		}
+	}
+	usort($aData['data'], "sortDataByPosition");
+	$j = 1;
+	foreach ($aData['data'] as $vkey => $vval) {
+		$aData['data'][$vkey]['position'] = $j++;
+	}
+	DB::executeQuery("UPDATE system_imgbuilder SET data = '".Util::encodeJson($aData['data'])."' WHERE id = '".$_VARS['id']."' LIMIT 1");
+}
+
+// Hinzufügen von Elementen
+if (in_array($_VARS['action'], array("addElementImage", "addElementText", "addElementRectangle", "addElementMask"))) {
+	$aData = DB::getQueryRow("SELECT data FROM system_imgbuilder WHERE id = '".$_VARS['id']."'");
+	$aData['data'] = Util::decodeSerializeOrJson($aData['data']);
+	$iNewPosition = (count($aData['data']) + 1);
+	if ($_VARS['action'] == "addElementImage") {
+		$aData['data'][] = array("file" => "", "x" => "0", "y" => "0", "from" => "1", "size" => "0", "colour" => "", "type" => "images", "position" => $iNewPosition);
+	} elseif ($_VARS['action'] == "addElementText") {
+		$aData['data'][] = array("file" => "", "x" => "0", "y" => "0", "from" => "1", "size" => "10", "colour" => "000000", "type" => "fonts", "position" => $iNewPosition);
+	} elseif ($_VARS['action'] == "addElementRectangle") {
+		$aData['data'][] = array("x" => "0", "y" => "0", "from" => "1", "type" => "rectangle", "position" => $iNewPosition);
+	} elseif ($_VARS['action'] == "addElementMask") {
+		$aData['data'][] = array("file" => "", "x" => "0", "y" => "0", "from" => "1", "size" => "0", "colour" => "", "type" => "mask", "position" => $iNewPosition);
+	}
+	DB::executeQuery("UPDATE system_imgbuilder SET data = '".Util::encodeJson($aData['data'])."' WHERE id = '".$_VARS['id']."' LIMIT 1");
+}
+
+$aItems = DB::getQueryRows("SELECT * FROM system_imgbuilder ORDER BY id ASC");
+$aSets = [];
+foreach($aItems as $aItem) {
+	$aSets[$aItem['id']] = $aItem;
+	$aSets[$aItem['id']]['data'] = Util::decodeSerializeOrJson($aItem['data']);
+}
+
+// Buttons
+$aTypes = array("jpg" => "JPG-Datei", "png" => "PNG-Datei");
+if (function_exists("imagegif")) {
+	$aTypes['gif'] = "GIF-Datei";
+}
+$aElements = array("fonts" => "Text", "images" => "Bild", "rectangle" => "Rechteck", "mask" => "Maske");
+$aFixed = array("0" => "feste Breite / Höhe");
+$aFromCorner = array("1" => "links oben", "2" => "links unten", "3" => "rechts oben", "4" => "rechts unten");
+$aPreview = array("0" => "imgbuilder", "1" => $_VARS['id']);
+$aResize = array(-1=>"Proportional skalieren (maximal)", 0=>"keine Änderung", 1=>"Proportional skalieren (minimal)");
+$aAlignment = array("L"=>"links", "C"=>"zentriert", "R"=>"rechts");
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Grafikgenerierung')?></h1>
+</section>
+
+<section class="content">
+	
+	<div class="box box-default">
+        <div class="box-body">
+             
+<?
+if ($_VARS['task'] == "") {
+?>
+
+			<form name="imgbuilder_form" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="action" value="">
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th width="40">Set ID</th>
+					<th>Titel</th>
+					<th width="36">Typ</th>
+					<th width="36">Aktion</th>
+				</tr>
+<?
+	foreach ((array)$aSets as $id => $set) {
+?>
+				<tr id="tr_<?=$id?>" onmouseout="showRow(<?=$id?>,0)" onmousemove="showRow(<?=$id?>,1);" onclick="document.location.href('?task=edit&id=<?=$id?>');" style="cursor:pointer;">
+					<td><?=$id?></td>
+					<td><?=$set['title']?></td>
+					<td><?=$set['type']?></td>
+					<td align="center"><a href="?task=edit&id=<?=$id?>"><img src="/admin/media/edit.png" border="0"></a> <a href="?id=<?=$id?>&action=delete"><img src="/admin/media/edit_delete.gif" border="0" onClick="return confirm('Set löschen?'); submit();"></a></td>
+				</tr>
+<?
+	}
+?>
+			</table>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td align="right"><?=printSubmit("Neues Set", "onclick=\"this.form.task.value='edit'\"")?></td>
+				</tr>
+			</table>
+			</form>
+
+<?
+} elseif ($_VARS['task'] == "edit") {
+	$iParameter = 1;
+	foreach ((array)$aSets[$_VARS['id']]['data'] as $data) {
+		if ($data['user'] == 1) {
+			$aFixed[] = "Parameter ".count($aFixed);
+			$aPreview[] = "Parameter ".$iParameter;
+			$iParameter++;
+		}
+	}
+?>
+			<h2><? if ($_VARS['id'] != "") { ?>Set <?=$_VARS['id']?>: <?=$aSets[$_VARS['id']]['title']?><? } else { ?>Neues Set<? } ?></h2>
+			<h3>Titel/Typ</h3>
+			<form name="imgbuilder_form" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="task" value="edit">
+			<input type="hidden" name="action" value="">
+			<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+			<?=printTableStart()?>
+				<?=printFormText("Titel", "title", $aSets[$_VARS['id']]['title'])?>
+				<?=printFormSelect("Ausgabetyp", "type", $aTypes, $aSets[$_VARS['id']]['type'])?>
+				<?=printFormText("Qualität (PNG: 0-9, JPG: 0-100)", "quality", $aSets[$_VARS['id']]['quality'])?>
+				
+<?
+	if ($_VARS['id'] != "") {
+?>
+			<tr>
+				<th>Hintergrundfarbe</th>
+				<td><input type="text" name="bg_colour" value="<?=strtoupper($aSets[$_VARS['id']]['bg_colour'])?>" class="txt form-control" style="width:80px"> <input type="checkbox" name="bg_transparent" value="1" <? if ($aSets[$_VARS['id']]['bg_transparent'] == 1) {?>checked<? } ?>> transparent</td>
+			</tr>
+			<tr>
+				<th>Breite</th>
+				<td>
+					<select name="x_dynamic" class="txt form-control" onchange="this.form.action.value='save'; submit();">
+<?
+		foreach ((array)$aFixed as $xkey => $xval) {
+			if ($aSets[$_VARS['id']]['x_dynamic'] == $xkey) {
+				$selected = "selected";	
+			}
+?>
+						<option value="<?=$xkey?>" <?=$selected?>><?=$xval?></option>
+<?
+			unset($selected);
+		}
+?>
+					</select><? if ($aSets[$_VARS['id']]['x_dynamic'] > 0) { ?>&nbsp;+&nbsp;<? } ?><input type="text" name="x" class="txt form-control" value="<?=$aSets[$_VARS['id']]['x']?>" style="width:120px">
+				</td>
+			</tr>
+<tr>
+				<th>Höhe</th>
+				<td>
+					<select name="y_dynamic" class="txt form-control" onchange="this.form.action.value='save'; submit();">
+<?
+		foreach ((array)$aFixed as $xkey => $xval) {
+			if ($aSets[$_VARS['id']]['y_dynamic'] == $xkey) {
+				$selected = "selected";	
+			}
+?>
+						<option value="<?=$xkey?>" <?=$selected?>><?=$xval?></option>
+<?
+			unset($selected);
+		}
+?>
+					</select><? if ($aSets[$_VARS['id']]['y_dynamic'] > 0) { ?>&nbsp;+&nbsp;<? } ?><input type="text" name="y" value="<?=$aSets[$_VARS['id']]['y']?>" class="txt form-control" style="width:120px">
+				</td>
+			</tr>
+<?
+	}
+	echo printTableEnd();
+	
+	if ($_VARS['id'] != "") {
+?>
+			<h3>Elemente</h3>
+			
+<?
+		$j = 1;
+		foreach ((array)$aSets[$_VARS['id']]['data'] as $count => $data) {
+			if ($data['type'] == "fonts") {
+
+				if(!isset($data['scale_factor'])) {
+					$data['scale_factor'] = 4;
+				}
+
+?>
+			<h3><?=$aElements[$data['type']]?></h3>
+			<input type="hidden" name="data[<?=$count?>][type]" value="<?=$data['type']?>">
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th width="40">Schriftart</th>
+					<td nowrap><?=printFormMediaOneRow("data[".$count."][file]", $data['file'], "style=\"width: 250px;\"", 2)?></td>
+				</tr>
+				<tr>
+					<th width="40%">X / Y</th>
+						<td nowrap>
+						<input type="text" name="data[<?=$count?>][x]" class="txt form-control" value="<?=intval($data['x'])?>" style="width:120px"> / <input type="text" name="data[<?=$count?>][y]" value="<?=intval($data['y'])?>" class="txt form-control" style="width:120px">
+						<select name="data[<?=$count?>][from]" class="txt form-control">
+<?
+				foreach ((array)$aFromCorner as $fkey => $fval) {
+					if ($data['from'] == $fkey) {
+						$selected = 'selected="selected"';	
+					}
+?>
+								<option value="<?=$fkey?>" <?=$selected?>><?=$fval?></option>
+<?
+					unset($selected);
+				}
+?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>Text / Zuordnung (wd:Tag)</th>
+					<td nowrap>
+<?
+				$iUser = 1; unset($aUserIndex);
+				if ($data['user'] == 1) {
+					foreach ((array)$aSets[$_VARS['id']]['data'] as $uval) {
+						if ($uval['user'] == 1) {
+							$aUserIndex[$iUser] = "Parameter ".$iUser;
+							$iUser++;
+						}
+					}
+?>
+						<select name="data[<?=$count?>][index]" class="txt form-control" style="width:100px">
+<?
+					foreach ((array)$aUserIndex as $ukey => $uval) {
+						if ($data['index'] == $ukey) {
+							$selected = "selected";
+						}
+?>
+							<option value="<?=$ukey?>" <?=$selected?>><?=$uval?></option>
+<?
+						unset($selected);
+					}
+?>		
+						</select>
+						<input type="hidden" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>">
+<?
+				} else {
+?>
+						<input type="text" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>" style="width:250px">
+<?
+				}
+?>
+					</td>
+				</tr>
+				<tr>
+					<th>User</th>
+					<td nowrap><input type="checkbox" name="data[<?=$count?>][user]" value="1" <? if ($data['user'] == 1) {?>checked<? } ?> onclick="this.form.action.value='save'; submit();">
+				</tr>
+				<tr>
+					<th>Größe</th>
+					<td nowrap><input type="text" name="data[<?=$count?>][size]" class="txt form-control" value="<?=$data['size']?>" style="width:120px"></td>
+				</tr>
+				<?=printFormText("Zeichenabstand", "data[".$count."][spacing]", (float)$data['spacing'])?>
+				<?=printFormText("Zeilenabstand", "data[".$count."][lineheight]", (float)$data['lineheight'])?>
+				<?=printFormText("Breite", "data[".$count."][w]", (int)$data['w'])?>
+				<?=printFormText("Maximale Zeilenanzahl", "data[".$count."][rows]", (int)$data['rows'])?>
+				<?=printFormText("Suffix", "data[".$count."][suffix]", (string)$data['suffix'])?>
+				<?=printFormSelect("Ausrichtung", "data[".$count."][align]", $aAlignment, $data['align'])?>
+				<tr>
+					<th>Farbe</th>
+					<td nowrap><input type="text" name="data[<?=$count?>][colour]" class="txt form-control" value="<?=strtoupper($data['colour'])?>" style="width:80px"></td>
+				</tr>
+				<tr>
+					<th>Hintergrund</th>
+					<td nowrap><input type="text" name="data[<?=$count?>][bg_colour]" class="txt form-control" value="<?=strtoupper($data['bg_colour'])?>" style="width:80px"></td>
+				</tr>
+				<tr>
+					<th>Schärfe</th>
+					<td nowrap><input type="text" name="data[<?=$count?>][scale_factor]" class="txt form-control" value="<?=intval($data['scale_factor'])?>" style="width:120px"></td>
+				</tr>
+				<tr>
+					<th>Aktion</th>
+					<td nowrap><input type="hidden" name="data[<?=$count?>][position]" class="txt form-control" value="<?=($data['position'] != "") ? $data['position'] : $j?>"><a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementUp&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_up.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementDown&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_down.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=deleteElement&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+				</tr>
+			</table>
+<?
+			} elseif ($data['type'] == "images") {
+
+				if(empty($data['align'])) {
+					$data['align'] = 'C';
+				}
+
+?>
+
+			<h3><?=$aElements[$data['type']]?></h3>
+			<input type="hidden" name="data[<?=$count?>][type]" value="<?=$data['type']?>">
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th width="40">Bild</th>
+					<td nowrap><?=printFormMediaOneRow("data[".$count."][file]", $data['file'], "style=\"width: 250px;\"", 1)?></td>
+				</tr>
+				<tr>
+					<th width="40%">X / Y</th>
+					<td nowrap>
+						<input type="text" name="data[<?=$count?>][x]" class="txt form-control" value="<?=intval($data['x'])?>" style="width:120px"> / <input type="text" name="data[<?=$count?>][y]" value="<?=intval($data['y'])?>" class="txt form-control" style="width:120px">
+						<select name="data[<?=$count?>][from]" class="txt form-control">
+<?
+				foreach ((array)$aFromCorner as $fkey => $fval) {
+					if ($data['from'] == $fkey) {
+						$selected = 'selected="selected"';	
+					}
+?>
+								<option value="<?=$fkey?>" <?=$selected?>><?=$fval?></option>
+<?
+					unset($selected);
+				}
+?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>Text / Zuordnung (wd:Tag)</th>
+					<td nowrap>
+<?
+				$iUser = 1; unset($aUserIndex);
+				if ($data['user'] == 1) {
+					foreach ((array)$aSets[$_VARS['id']]['data'] as $uval) {
+						if ($uval['user'] == 1) {
+							$aUserIndex[$iUser] = "Parameter ".$iUser;
+							$iUser++;
+						}
+					}
+?>
+						<select name="data[<?=$count?>][index]" class="txt form-control" style="width:100px">
+<?
+					foreach ((array)$aUserIndex as $ukey => $uval) {
+						if ($data['index'] == $ukey) {
+							$selected = "selected";
+						}
+?>
+							<option value="<?=$ukey?>" <?=$selected?>><?=$uval?></option>
+<?
+						unset($selected);
+					}
+?>		
+						</select>
+						<input type="hidden" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>">
+<?
+
+
+				} else {
+?>
+						<input type="text" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>" style="width:250px">
+<?
+				}
+?>
+					</td>
+				</tr>
+				<tr>
+					<th>User</th>
+					<td nowrap><input type="checkbox" name="data[<?=$count?>][user]" value="1" <? if ($data['user'] == 1) {?>checked<? } ?> onclick="this.form.action.value='save'; submit();">
+				</tr>
+				<tr>
+					<th>Größe</th>
+					<td nowrap>
+						<input type="text" name="data[<?=$count?>][w]" class="txt form-control" value="<?=intval($data['w'])?>" style="width:120px"> / <input type="text" name="data[<?=$count?>][h]" value="<?=intval($data['h'])?>" class="txt form-control" style="width:120px">
+						<select name="data[<?=$count?>][resize]" class="txt form-control">
+<?
+				foreach ((array)$aResize as $fkey => $fval) {
+					if ($data['resize'] == $fkey) {
+						$selected = 'selected="selected"';	
+					}
+?>
+								<option value="<?=$fkey?>" <?=$selected?>><?=$fval?></option>
+<?
+					unset($selected);
+				}
+?>
+						</select>
+					</td>
+				</tr>
+				<?=printFormSelect("Ausrichtung", "data[".$count."][align]", $aAlignment, $data['align'])?>
+				<?=printFormCheckbox("Schwarz/Weiß", "data[".$count."][grayscale]", 1, $data['grayscale'])?>
+				<tr>
+					<th>Hintergrund</th>
+					<td nowrap><input type="text" name="data[<?=$count?>][bg_colour]" class="txt form-control" value="<?=strtoupper($data['bg_colour'])?>" style="width:80px"></td>
+				</tr>
+				<tr>
+					<th>Drehung (in Grad)</th>
+					<td nowrap><input type="text" name="data[<?=$count?>][rotate]" class="txt form-control" value="<?=floatval($data['rotate'])?>" style="width:120px"></td>
+				</tr>
+				<tr>
+					<th>Spiegelung</th>
+					<td nowrap>
+						<select name="data[<?=$count?>][flip]" class="txt form-control">
+								<option value="">keine</option>
+								<option value="horizontal" <?=(($data['flip']=='horizontal')?'selected="selected"':'')?>>Horizontal</option>
+								<option value="vertical" <?=(($data['flip']=='vertical')?'selected="selected"':'')?>>Vertikal</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>Aktion</th>
+					<td nowrap><input type="hidden" name="data[<?=$count?>][position]" class="txt form-control" value="<?=($data['position'] != "") ? $data['position'] : $j?>"><a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementUp&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_up.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementDown&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_down.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=deleteElement&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+				</tr>
+			</table>
+			
+
+<?
+			} elseif ($data['type'] == "mask") {
+?>
+
+			<h3><?=$aElements[$data['type']]?></h3>
+			<input type="hidden" name="data[<?=$count?>][type]" value="<?=$data['type']?>">
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th width="40">Maske</th>
+					<td nowrap><?=printFormMediaOneRow("data[".$count."][file]", $data['file'], "style=\"width: 250px;\"", 1)?></td>
+				</tr>
+				<tr>
+					<th width="40%">X / Y</th>
+					<td nowrap>
+						<input type="text" name="data[<?=$count?>][x]" class="txt form-control" value="<?=intval($data['x'])?>" style="width:120px"> / <input type="text" name="data[<?=$count?>][y]" value="<?=intval($data['y'])?>" class="txt form-control" style="width:120px">
+						<select name="data[<?=$count?>][from]" class="txt form-control">
+<?
+				foreach ((array)$aFromCorner as $fkey => $fval) {
+					if ($data['from'] == $fkey) {
+						$selected = 'selected="selected"';	
+					}
+?>
+								<option value="<?=$fkey?>" <?=$selected?>><?=$fval?></option>
+<?
+					unset($selected);
+				}
+?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>Hintergrund (wd:Tag)</th>
+					<td nowrap>
+<?
+				$iUser = 1; unset($aUserIndex);
+				if ($data['user'] == 1) {
+					foreach ((array)$aSets[$_VARS['id']]['data'] as $uval) {
+						if ($uval['user'] == 1) {
+							$aUserIndex[$iUser] = "Parameter ".$iUser;
+							$iUser++;
+						}
+					}
+?>
+						<select name="data[<?=$count?>][index]" class="txt form-control" style="width:100px">
+<?
+					foreach ((array)$aUserIndex as $ukey => $uval) {
+						if ($data['index'] == $ukey) {
+							$selected = "selected";
+						}
+?>
+							<option value="<?=$ukey?>" <?=$selected?>><?=$uval?></option>
+<?
+						unset($selected);
+					}
+?>		
+						</select>
+						<input type="hidden" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>">
+<?
+
+
+				} else {
+?>
+						<input type="text" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>" style="width:250px">
+<?
+				}
+?>
+					</td>
+				</tr>
+				<tr>
+					<th>User</th>
+					<td nowrap><input type="checkbox" name="data[<?=$count?>][user]" value="1" <? if ($data['user'] == 1) {?>checked<? } ?> onclick="this.form.action.value='save'; submit();">
+				</tr>
+				<tr>
+					<th>Aktion</th>
+					<td nowrap><input type="hidden" name="data[<?=$count?>][position]" class="txt form-control" value="<?=($data['position'] != "") ? $data['position'] : $j?>"><a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementUp&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_up.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementDown&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_down.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=deleteElement&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+				</tr>
+			</table>
+			
+
+<?
+			} elseif ($data['type'] == "rectangle") {
+?>
+
+			<h3><?=$aElements[$data['type']]?></h3>
+			<input type="hidden" name="data[<?=$count?>][type]" value="<?=$data['type']?>">
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th width="40%">X / Y</th>
+					<td nowrap>
+						<input type="text" name="data[<?=$count?>][x]" class="txt form-control" value="<?=intval($data['x'])?>" style="width:120px"> / <input type="text" name="data[<?=$count?>][y]" value="<?=intval($data['y'])?>" class="txt form-control" style="width:120px">
+						<select name="data[<?=$count?>][from]" class="txt form-control">
+<?
+				foreach ((array)$aFromCorner as $fkey => $fval) {
+					if ($data['from'] == $fkey) {
+						$selected = 'selected="selected"';	
+					}
+?>
+								<option value="<?=$fkey?>" <?=$selected?>><?=$fval?></option>
+<?
+					unset($selected);
+				}
+?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>Farbcode / Zuordnung (wd:Tag)</th>
+					<td nowrap>
+<?
+				$iUser = 1; unset($aUserIndex);
+				if ($data['user'] == 1) {
+					foreach ((array)$aSets[$_VARS['id']]['data'] as $uval) {
+						if ($uval['user'] == 1) {
+							$aUserIndex[$iUser] = "Parameter ".$iUser;
+							$iUser++;
+						}
+					}
+?>
+						<select name="data[<?=$count?>][index]" class="txt form-control" style="width:100px">
+<?
+					foreach ((array)$aUserIndex as $ukey => $uval) {
+						if ($data['index'] == $ukey) {
+							$selected = "selected";
+						}
+?>
+							<option value="<?=$ukey?>" <?=$selected?>><?=$uval?></option>
+<?
+						unset($selected);
+					}
+?>		
+						</select>
+						<input type="hidden" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>">
+<?
+				} else {
+?>
+						<input type="text" name="data[<?=$count?>][text]" class="txt form-control" value="<?=$data['text']?>" style="width:250px">
+<?
+				}
+?>
+					</td>
+				</tr>
+				<tr>
+					<th>User</th>
+					<td nowrap><input type="checkbox" name="data[<?=$count?>][user]" value="1" <? if ($data['user'] == 1) {?>checked<? } ?> onclick="this.form.action.value='save'; submit();">
+				</tr>
+				<tr>
+					<th>Größe</th>
+					<td nowrap>
+						<input type="text" name="data[<?=$count?>][w]" class="txt form-control" value="<?=intval($data['w'])?>" style="width:120px"> / <input type="text" name="data[<?=$count?>][h]" value="<?=intval($data['h'])?>" class="txt form-control" style="width:120px">
+					</td>
+				</tr>
+				<tr>
+					<th>Aktion</th>
+					<td nowrap><input type="hidden" name="data[<?=$count?>][position]" class="txt form-control" value="<?=($data['position'] != "") ? $data['position'] : $j?>"><a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementUp&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_up.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=shiftElementDown&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/sitemap_down.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?task=edit&action=deleteElement&id=<?=$_VARS['id']?>&element=<?=$j?>"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+				</tr>
+			</table>
+			
+
+<?
+			}
+			
+			$j++;
+		}
+
+	}
+	if ($_VARS['id'] != "") {
+		
+		try {
+			$strPreview = imgBuilder::doImgBuilder($aPreview);
+		} catch(Exception $e) {
+			__out($e);	
+		}
+
+?>
+			<h2>Vorschau</h2>
+			<table width="100%" cellpadding="20" cellspacing="0" border="0" class="table" id="tblPreview" style="background: <?=$_VARS['preview_bg_color']?>;">
+				<tr>
+					<td align="center"><img src="<?=$strPreview?>"></td>
+				</tr>
+			</table>
+			
+			<p>
+				<button class="btn" onclick="$('tblPreview').setStyle({backgroundColor: $F('preview_bg_color')});return false;">Hintergrundfarbe wechseln</button> <input type="text" class="txt form-control" id="preview_bg_color" name="preview_bg_color" value="<?=$_VARS['preview_bg_color']?>" />
+			</p>
+<?
+	}
+?>
+			<table width="100%" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+<?
+	if ($_VARS['id'] != "") {
+?>
+					<td align="left">
+						<input type="submit" value="Neues Bildelement" onclick="this.form.action.value='addElementImage'" class="btn btn-default" />
+						<input type="submit" value="Neues Textelement" onclick="this.form.action.value='addElementText'" class="btn btn-default" />
+						<input type="submit" value="Neues Rechteck" onclick="this.form.action.value='addElementRectangle'" class="btn btn-default" />
+						<input type="submit" value="Neue Maske" onclick="this.form.action.value='addElementMask'" class="btn btn-default" />
+					</td>
+<?
+	}
+?>
+					<td align="right">
+						<input type="submit" value="Zurück" onclick="this.form.task.value=''; this.form.action.value='';" class="btn btn-default" />
+						<input type="submit" value="Speichern" onclick="this.form.action.value='save';" class="btn btn-primary" />							
+					</td>
+				</tr>
+			</table>
+
+			</form>
+			
+<?
+}
+?>
+ 
+        </div>
+    </div>
+	
+</section>
+<?
+Admin_Html::loadAdminFooter();
+?>

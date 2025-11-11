@@ -1,0 +1,43 @@
+{
+  "name": "fidelo-bundle/tinymce",
+  "version": "1.0.1",
+  "require": {
+    "tinymce/tinymce": "4.9.*",
+    "trippo/responsivefilemanager": "9.14.*"
+  },
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "trippo/responsivefilemanager",
+        "version": "9.14.0",
+        "dist": {
+          "url": "https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.14.0/responsive_filemanager.zip",
+          "type": "zip"
+        }
+      }
+    }
+  ],
+  "scripts": {
+    "post-update-cmd": [
+      "cp -fR ./vendor/trippo/responsivefilemanager/tinymce/plugins/responsivefilemanager/ ./vendor/tinymce/tinymce/plugins/ || true",
+      "cp -f ./vendor/trippo/responsivefilemanager/tinymce/plugins/responsivefilemanager/plugin.min.js ./vendor/tinymce/tinymce/plugins/responsivefilemanager/plugin.js || true",
+      "cp -fR ./vendor/trippo/responsivefilemanager/responsive_filemanager/tinymce/plugins/responsivefilemanager/ ./vendor/tinymce/tinymce/plugins/ || true",
+      "cp -f ./vendor/trippo/responsivefilemanager/responsive_filemanager/tinymce/plugins/responsivefilemanager/plugin.min.js ./vendor/tinymce/tinymce/plugins/responsivefilemanager/plugin.js || true",
+      "cp ./system/bundles/Tinymce/Resources/public/filemanager/include.commercial.js ./vendor/trippo/responsivefilemanager/filemanager/js/include.js || true",
+      "cp ./system/bundles/Tinymce/Resources/public/filemanager/config.php ./vendor/trippo/responsivefilemanager/filemanager/config/config.php || true",
+      "cp ./system/bundles/Tinymce/Resources/public/filemanager/include.commercial.js ./vendor/trippo/responsivefilemanager/responsive_filemanager/filemanager/js/include.js || true",
+      "cp ./system/bundles/Tinymce/Resources/public/filemanager/config.php ./vendor/trippo/responsivefilemanager/responsive_filemanager/filemanager/config/config.php || true",
+      "mkdir -p ./storage/public/filemanager || true",
+      "mkdir -p ./storage/public/filemanager || true",
+      "mkdir -p ./storage/public/filemanager/source || true",
+      "mkdir -p ./storage/public/filemanager/thumbs || true",
+      "chmod -R 0777 ./storage/public/filemanager || true",
+      "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/trans/t_rf_rans/g' {} + # The laravel helpers and the filemanager have both a function named trans()",
+      "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/iframe-t_rf_ransport.js/iframe-transport.js/g' {} + # The laravel helpers and the filemanager have both a function named trans()",
+	  "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/! is_resource($this->imageResized)/!is_resource($this->imageResized) \\&\\& !is_object($this->imageResized)/g' {} + # PHP8 Bugfix",
+	  "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/mb_http_input('UTF-8');/#mb_http_input('UTF-8');/g' {} + # PHP8 Bugfix"
+		
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "fidelo-bundle/pdf",
+  "version": "1.0.0",
+  "require": {
+    "setasign/fpdi": "2.*",
+    "tecnickcom/tcpdf": "6.*",
+    "setasign/fpdi_pdf-parser": "2.*"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://accounting%40fidelo.com:L86EMQi2ae7jtkwe2eHM@www.setasign.com/downloads/"
+    }
+  ],
+  "scripts": {
+    "post-update-cmd": [
+      "cp -fR ./vendor/tecnickcom/tcpdf/fonts/* ./system/bundles/Pdf/Resources/fonts",
+      "chmod -R 0777 ./system/bundles/Pdf/Resources/fonts || true"
+    ]
+  }
+}

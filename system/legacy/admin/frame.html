@@ -1,0 +1,34 @@
+<?
+
+include("./includes/main.inc.php");
+
+?>
+
+<?=Admin_Html::loadAdminHeader("",1, "onload=\"doSize();\"")?>
+
+<?
+Access_Backend::checkAccess('control');
+?>
+<script>
+
+function resizewin(num) {
+	window.resizeBy(num,0);
+}
+
+function resetwin() {
+	window.resizeTo(1140,800);
+}
+
+function doSize() {
+	resetwin();
+	window.focus();
+}
+
+doSize();
+
+</script>
+<frameset name="frameset_1" cols="*" frameborder="0">
+	<frame src="<? echo $_VARS['file'].".html?".$_SERVER['QUERY_STRING']; ?>" name="dataframe" marginwidth="0" marginheight="0" noresize>
+</frameset>
+
+<?=Admin_Html::loadAdminFooter("",1)?>

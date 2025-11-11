@@ -1,0 +1,2 @@
+ALTER TABLE `system_trash` CHANGE `time` `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE `system_trash` CHANGE `page_id` `page_id` INT(11) NULL DEFAULT NULL, CHANGE `parent_id` `parent_id` INT(11) NULL DEFAULT NULL;

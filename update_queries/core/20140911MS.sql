@@ -1,0 +1,1 @@
+ALTER TABLE  `tc_vat_rates_values` CHANGE  `rate`  `rate` DECIMAL( 8, 5 ) NOT NULL;

@@ -1,0 +1,28 @@
+parent: ts_document
+set: proforma
+access: thebing_accounting_proforma
+multiple_selection: true
+hash: ts_document_proforma
+where:
+  - Ext_Thebing_Document_Gui2
+  - getProformaListWhere
+index:
+  registry:
+    generate: false
+bars:
+  -
+    position: top
+    set: [proforma]
+    elements:
+      -
+        element: icon
+        label: Proforma umwandeln
+        active: 0
+        access: thebing_invoice_proforma_transform
+        action: convertProformaDocument
+        task: request
+        request_data: "&action=convertProformaDocument"
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - refresh

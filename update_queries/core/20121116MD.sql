@@ -1,0 +1,1 @@
+ALTER TABLE `tc_gui2_filtersets_bars_elements_basedon` ADD `position` TINYINT NOT NULL;

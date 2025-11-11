@@ -1,0 +1,237 @@
+<?php	
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = new Ext_TC_Gui2(md5('tc_cancellation_conditions_groups'));
+
+$oGui->access = array('core_cancellation_conditions', '');
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+
+$oGui->setWDBasic('Ext_TC_Cancellationconditions_Group');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_cc.name' => 'ASC'));
+
+// Dialog
+
+$oDialog = $oGui->createDialog($oGui->t('Stornogruppe "{name}" editieren'), $oGui->t('Stornogruppe anlegen'));
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Name'), 'input', array(
+	'db_alias'  => 'tc_cc',
+	'db_column' => 'name',
+	'required'  => 1
+)));
+
+$oDialog->height = '500';
+
+// Filter
+
+$oBar = $oGui->createBar();
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oBar->setElement($oBar->createSeperator());
+$oFilter = $oBar->createValidFilter($oGui->t('Gültigkeit'));
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+//Icon
+
+$oBar = $oGui->createBar();
+
+$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeactivateIcon($oGui->t('Deaktivieren'), $oGui->t('Deaktivieren'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+// Loading/Pagination
+
+$oBar = $oGui->createBar();
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// List 
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_cc';
+$oColumn->title			= $oGui->t('Name');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+//------------------------------------------------------------------------------
+
+#Stornogebühren
+
+//------------------------------------------------------------------------------
+
+$aDynamicKinds = Ext_TC_Cancellationconditions_Dynamic::getDynamicFeeKinds(true);
+$aTaxes = Ext_TC_Vat::getSelectOptions();
+$aTypes = Ext_TC_Factory::executeStatic('Ext_TC_Cancellationconditions_Fee', 'getDynamicFeeTypes', array(true));
+$aCurrencies = Ext_TC_Factory::executeStatic('Ext_TC_Cancellationconditions_Fee', 'getCurrencies', array(true));
+
+$oGuiFee = new Ext_TC_Gui2(md5('tc_cancellation_conditions_fees'));
+$oGuiFee->gui_title = $oGui->t('Stornogebühren');
+$oGuiFee->access = array('core_cancellation_conditions', '');
+$oGuiFee->include_jquery = true;
+$oGuiFee->include_jquery_multiselect = true;
+$oGuiFee->class_js = 'CancellationFee';
+
+$oGuiFee->setWDBasic('Ext_TC_Cancellationconditions_Fee');
+$oGuiFee->setTableData('limit', 30);
+$oGuiFee->setTableData('orderby', array('tc_ccf.name' => 'ASC'));
+
+// Dialog
+
+$oDialogFee = $oGuiFee->createDialog($oGuiFee->t('Stornogebühr "{name}" editieren'), $oGuiFee->t('Stornogebühr anlegen'));
+
+$oDialogFee->setElement($oDialogFee->createRow($oGuiFee->t('Name'), 'input', array(
+	'db_alias'  => 'tc_ccf',
+	'db_column' => 'name',
+	'required'  => 1
+)));
+
+$oDialogFee->setElement($oDialogFee->createRow($oGuiFee->t('Währung'), 'select', array(
+	'db_alias'  => 'tc_ccf',
+	'db_column' => 'currency_iso',
+	'select_options' => Ext_TC_Util::addEmptyItem($aCurrencies),
+	'required'  => 1
+)));
+
+$oH3 = $oDialogFee->create('h4');
+$oH3->setElement($oGui->t('Stornobedingungen'));
+$oDialogFee	->setElement($oH3);
+
+$oDialogFee->setElement($oDialogFee->createRow($oGuiFee->t('Tage vor Leistungsbeginn'), 'input', array(
+	'db_alias'  => 'tc_ccf',
+	'db_column' => 'days',
+	'style'		=> 'width: 60px;',
+	'required'  => 1
+)));
+
+$oJoinContainer = $oDialogFee->createJoinedObjectContainer('dynamic_fees', array('min'=>1, 'max'=>5));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Betrag'), 'input', array(
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'amount',
+	'style' => 'width: 70px;',
+	'required' => 1
+)));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Prozent/Währung'), 'select', array(
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'kind',
+	'required' => 1,
+	'select_options' => $aDynamicKinds,
+	'class' => 'type_change'
+)));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Typ'), 'select', array(
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'type',
+	'select_options' => Ext_TC_Util::addEmptyItem($aTypes),
+	'required' => 1
+)));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Steuer'), 'select', array(
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'tax_category_id',
+	'select_options' => Ext_TC_Util::addEmptyItem($aTaxes),
+)));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Mindestbetrag'), 'input', array(
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'lowest_amount',
+	'style' => 'width: 70px;',
+	'required' => 1
+)));
+
+$oDialogFee->setElement($oJoinContainer);
+
+
+// Filter
+
+$oBar = $oGuiFee->createBar();
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGuiFee->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oGuiFee->setBar($oBar);
+
+//Icon
+
+$oBar = $oGuiFee->createBar();
+
+$oIcon = $oBar->createNewIcon($oGuiFee->t('Neuer Eintrag'), $oDialogFee, $oGuiFee->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon($oGuiFee->t('Editieren'), $oDialogFee, $oGuiFee->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGuiFee->t('Löschen'), $oGuiFee->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGuiFee->setBar($oBar);
+
+// Loading/Pagination
+
+$oBar = $oGuiFee->createBar();
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiFee->setBar($oBar);
+
+// List 
+
+$oColumn				= $oGuiFee->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_ccf';
+$oColumn->title			= $oGuiFee->t('Name');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGuiFee->setColumn($oColumn);
+
+$oColumn				= $oGuiFee->createColumn();
+$oColumn->db_column		= 'days';
+$oColumn->db_alias		= 'tc_ccf';
+$oColumn->title			= $oGuiFee->t('Tage');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('id');
+$oColumn->width_resize	= false;
+$oGuiFee->setColumn($oColumn);
+
+$oGuiFee->addDefaultColumns();
+
+//------------------------------------------------------------------------------
+
+$aOptionalInfo			= array();
+$aOptionalInfo['js'][] = '/admin/extensions/tc/admin/js/cancellation_fee.js';
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiFee, array('hash' => $oGui->hash, 'foreign_key' => 'group_id',  'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display($aOptionalInfo);

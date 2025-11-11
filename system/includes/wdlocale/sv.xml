@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>”</quotationStart>
+		<quotationEnd>”</quotationEnd>
+		<alternateQuotationStart>’</alternateQuotationStart>
+		<alternateQuotationEnd>’</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar>
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">jan</month>
+					<month type="2">feb</month>
+					<month type="3">mar</month>
+					<month type="4">apr</month>
+					<month type="5">maj</month>
+					<month type="6">jun</month>
+					<month type="7">jul</month>
+					<month type="8">aug</month>
+					<month type="9">sep</month>
+					<month type="10">okt</month>
+					<month type="11">nov</month>
+					<month type="12">dec</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">januari</month>
+					<month type="2">februari</month>
+					<month type="3">mars</month>
+					<month type="4">april</month>
+					<month type="5">maj</month>
+					<month type="6">juni</month>
+					<month type="7">juli</month>
+					<month type="8">augusti</month>
+					<month type="9">september</month>
+					<month type="10">oktober</month>
+					<month type="11">november</month>
+					<month type="12">december</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">sön</day>
+					<day type="mon">mån</day>
+					<day type="tue">tis</day>
+					<day type="wed">ons</day>
+					<day type="thu">tors</day>
+					<day type="fri">fre</day>
+					<day type="sat">lör</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">söndag</day>
+					<day type="mon">måndag</day>
+					<day type="tue">tisdag</day>
+					<day type="wed">onsdag</day>
+					<day type="thu">torsdag</day>
+					<day type="fri">fredag</day>
+					<day type="sat">lördag</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">K1</quarter>
+					<quarter type="2">K2</quarter>
+					<quarter type="3">K3</quarter>
+					<quarter type="4">K4</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">1:a kvartalet</quarter>
+					<quarter type="2">2:a kvartalet</quarter>
+					<quarter type="3">3:e kvartalet</quarter>
+					<quarter type="4">4:e kvartalet</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>fm</am>
+			<pm>em</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%d %B %y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%d %b %y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%Y-%m-%d</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H.%M.%S %Z</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H.%M.%S</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H.%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>år</displayName>
+				</field>
+				<field type="month">
+					<displayName>månad</displayName>
+				</field>
+				<field type="week">
+					<displayName>vecka</displayName>
+				</field>
+				<field type="day">
+					<displayName>dag</displayName>
+					<relative type="-3">för tre dagar sedan</relative>
+					<relative type="-2">i förrgår</relative>
+					<relative type="-1">igår</relative>
+					<relative type="0">idag</relative>
+					<relative type="1">imorgon</relative>
+					<relative type="2">i övermorgon</relative>
+					<relative type="3">om tre dagar</relative>
+				</field>
+				<field type="weekday">
+					<displayName>veckodag</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>fm/em</displayName>
+				</field>
+				<field type="hour">
+					<displayName>timme</displayName>
+				</field>
+				<field type="minute">
+					<displayName>minut</displayName>
+				</field>
+				<field type="second">
+					<displayName>sekund</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>,</decimal>
+			<group> </group>
+			<list>;</list>
+			<percentSign>%</percentSign>
+			<nativeZeroDigit>0</nativeZeroDigit>
+			<patternDigit>#</patternDigit>
+			<plusSign>+</plusSign>
+			<minusSign>−</minusSign>
+			<exponential>×10^</exponential>
+			<perMille>‰</perMille>
+			<infinity>∞</infinity>
+			<nan>¤¤¤</nan>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<percentFormats>
+			<percentFormatLength>
+				<percentFormat>
+					<pattern>#,##0 %</pattern>
+				</percentFormat>
+			</percentFormatLength>
+		</percentFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>#,##0.00 ¤</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+			<unitPattern count="one">{0} {1}</unitPattern>
+			<unitPattern count="other">{0} {1}</unitPattern>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="one">{0} dag</unitPattern>
+			<unitPattern count="other">{0} dagar</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="one">{0} timme</unitPattern>
+			<unitPattern count="other">{0} timmar</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="one">{0} minut</unitPattern>
+			<unitPattern count="other">{0} minuter</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="one">{0} månad</unitPattern>
+			<unitPattern count="other">{0} månader</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="one">{0} sekund</unitPattern>
+			<unitPattern count="other">{0} sekunder</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="one">{0} vecka</unitPattern>
+			<unitPattern count="other">{0} veckor</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="one">{0} år</unitPattern>
+			<unitPattern count="other">{0} år</unitPattern>
+		</unit>
+	</units>
+</ldml>
+

@@ -1,0 +1,74 @@
+class:
+  wdbasic: \TsActivities\Entity\Activity\Provider
+  data: \TsActivities\Gui2\Data\ProviderData
+access: thebing_activities_icon
+title: Anbieter
+id:
+  column: id
+  alias: ts_actp
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          alias:
+            - contact
+            - contact
+            - tc_a
+          column:
+            - lastname
+            - firstname
+            - company
+        -
+          element: seperator
+        -
+          element: validfilter
+          label: Gültigkeit
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          label: Neuer Eintrag
+          dialog:
+          - \TsActivities\Gui2\Data\ProviderData
+          - getDialog
+        -
+          element: icon_edit
+          dialog:
+          - \TsActivities\Gui2\Data\ProviderData
+          - getDialog
+        -
+          element: icon_delete
+        -
+          element: icon_deactivate
+        -
+          element: icon_file_manager
+columns:
+  -
+    title: Firma
+    column: company
+    alias: tc_a
+    width: name
+  -
+    title: Ansprechpartner
+    column: lastname
+    alias: contact
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Name
+  -
+    title: Telefon
+    column: phone
+    alias: tc_cd
+    width: description
+    sortable: false
+  -
+    title: E-Mail
+    column: email
+    alias: ts_e
+    sortable: false
+    width: email

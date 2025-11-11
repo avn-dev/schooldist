@@ -1,0 +1,3 @@
+
+.rebar #featureHistory { display: inline; }	/* Change to display: none to disable history feature */
+.rebar #featureSource  { display: inline; }	/* Change to display: none to disable source feature */

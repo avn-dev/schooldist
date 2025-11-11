@@ -1,0 +1,62 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_students_contact_request");
+
+$oFactory = new Ext_Gui2_Factory('ts_enquiry');
+$oGui = $oFactory->createGui();
+$oInquiryAdditionalDocuments = new Ext_Thebing_Inquiry_Document_Additional();
+$oRowIconActive										= new Ext_Thebing_Gui2_Icon_Request();
+$oInquiryAdditionalDocuments->icon_status_active	= $oRowIconActive;
+$oInquiryAdditionalDocuments->use_template_type		= 'document_student_requests';
+$oInquiryAdditionalDocuments->class_js				= 'Enquiry';
+$oInquiryAdditionalDocuments->add_language_filter	= false;
+$oGui->addAdditionalDocumentsOptions($oInquiryAdditionalDocuments); 
+
+if(Ext_Thebing_Access::hasRight('thebing_students_contact_gui')) {
+	
+	$oGui->row_icon_status_active = new Ext_Thebing_Gui2_Icon_Enquiry_Icon();
+	
+	$oPage = new Ext_TS_Gui2_Page();
+	$oPage->setGui($oGui);
+
+	$oCombinationFactory	= new Ext_Gui2_Factory('ts_enquiry_combination');
+	$oCombinationGui = $oCombinationFactory->createGui('enquiry_combination');
+	$oCombinationGui->addJs('enquiry/combination/gui2.js', 'ts');
+	$oCombinationGui->gui_description = $oGui->gui_description;
+	
+	$oDefaultColumn = $oCombinationGui->getDefaultColumn();
+	$oDefaultColumn->changeEditorIdDbColumn('editor_id');
+	$oCombinationGui->setDefaultColumn($oDefaultColumn);
+
+	$oPage->setGui($oCombinationGui, array(
+		'hash' => $oGui->hash,
+		'foreign_key' => 'enquiry_id',
+		'parent_primary_key' => 'id',
+		'reload' => true
+	));
+
+	$oOfferFactory	= new Ext_Gui2_Factory('ts_enquiry_offers');
+	$oOfferGui = $oOfferFactory->createGui('enquiry_offers');
+	$oOfferGui->addJs('enquiry/convert/gui2.js', 'ts');
+	$oOfferGui->gui_description = $oGui->gui_description;
+
+	$oDefaultColumn = $oOfferGui->getDefaultColumn();
+	$oDefaultColumn->changeEditorIdDbColumn('editor_id');
+	$oOfferGui->setDefaultColumn($oDefaultColumn);
+
+	$oPage->setGui($oOfferGui, array(
+		'hash' => $oGui->hash,
+		'foreign_key' => 'enquiry_id',
+		'parent_primary_key' => 'id',
+		'reload' => true
+	));
+	
+	$oPage->display();
+
+} else {
+
+	$oGui->display();
+
+}

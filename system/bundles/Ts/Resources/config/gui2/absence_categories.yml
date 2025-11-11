@@ -1,0 +1,50 @@
+hash: 31fab242d08e6ebbec8e7e824f2ad34a
+class:
+  wdbasic: Ext_Thebing_Absence_Category
+  data: \Ts\Gui2\Data\AbsenceCategories
+access: thebing_admin_absence_categories
+orderby:
+  - \Ts\Gui2\Data\AbsenceCategories
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\AbsenceCategories
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        id: search
+        column:
+          - id
+          - name
+        searchtype: LIKE 
+  -
+    position: top
+    elements: 
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\AbsenceCategories
+          - getDialog 
+     -       
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\AbsenceCategories
+          - getDialog 
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Name
+    column: name
+    width: name
+    resize: true
+    inplaceEditorStart: true
+  - 
+    title: Farbe	
+    column: color
+    width: name
+    style: Ext_Gui2_View_Style_Color

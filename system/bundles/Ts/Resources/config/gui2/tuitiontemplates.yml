@@ -1,0 +1,77 @@
+hash: 5ca30cad2b35be74daf2a61a02b04d92
+class:
+  wdbasic: Ext_Thebing_Tuition_Template
+  data: Ext_Thebing_Tuition_Gui2_Template
+access: thebing_tuition_resource_tuition_templates
+orderby:
+  - Ext_Thebing_Tuition_Gui2_Template
+  - getOrderby
+where:
+  - Ext_Thebing_Tuition_Gui2_Template
+  - getWhere
+sortable: true
+only_pagecount: true
+multiple_selection: false
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+          - id
+          - name
+        searchtype: LIKE
+     -
+        element: seperator   
+     -
+        element: validfilter
+        label: Gültigkeit
+        alias: ktt         
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Tuition_Gui2_Template
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Tuition_Gui2_Template
+          - getDialog
+     -
+        element: icon_delete
+     -
+        element: icon_deactivate
+columns:
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true
+    inplace_editor: false
+  - 
+    title: Zeit von
+    column: from
+    width: time
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Time
+  - 
+    title: Zeit bis	
+    column: until
+    width: time
+    resize: false
+    inplace_editor: false
+    format: Ext_Thebing_Gui2_Format_Time
+  - 
+    title: Lektionen (Pro Tag)	
+    column: lessons
+    width: name
+    resize: false
+    inplace_editor: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    

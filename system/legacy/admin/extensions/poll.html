@@ -1,0 +1,2871 @@
+<?php
+
+include("../includes/main.inc.php");
+
+use Poll\Entity\Plausicheck;
+
+Access_Backend::checkAccess("modules_admin");
+
+function intervall($sek) {
+    $i = sprintf('%02d:%02d:%02d',
+            $sek / 3600,
+            $sek / 60 % 60,
+            $sek % 60
+         );
+    return $i;
+}
+
+$objWebDynamicsDAO = new \Cms\Helper\Data();
+
+// Auslesen der Sprachen aus der Datenbank
+$aLanguages = array();
+$aLanguageSelect = array();
+$aItems = $objWebDynamicsDAO->getWebSiteLanguages(0);
+foreach((array)$aItems as $aresLanguages) {
+	$aLanguages[$aresLanguages['id']] =  trim($aresLanguages['code']);
+	$aLanguageSelect[$aresLanguages['code']] =  trim($aresLanguages['name']);
+}
+
+session_start();
+
+if ($_VARS['session'] == "destroy") {
+	session_destroy();	
+}
+
+// Pflichtfrage Titel-Addon
+$aImportant = array("0" => "", "1" => "*");
+
+$aPollConfig = array("error" => "Nicht alle Pflichtfragen beantwortet", "last" => "zur letzten Seite", "next" => "zur nächsten Seite", "page" => "aktuelle Seite (<#current#> / <#total#>)");
+$aFormCsv = array("," => "Windows", ";" => "Excel 2003 / Macintosh", ",+UTF8" => "Windows (UTF-8)");
+$aDisplayOptions = array("0" => "", "1" => "versteckt", "2" => "nur Ausgabe", "3" => "Platzhalterfrage");
+
+if(in_array($system_data['systemlanguage'], $aLanguages)) {
+	$page_data['language'] = $system_data['systemlanguage'];
+} else {
+	$page_data['language'] = reset($aLanguages);
+}
+
+// STANDARDTEMPLATES
+$aTemplateTypes = array("select" => "Dropdown", "list" => "Mehrfachauswahl", "radio" => "Radiobutton", "check" => "Checkbox", "block_start" => "Blockanfang", "block_item" => "Blockelement", 'date'=>'Datum');
+$aTemplateSelect = array("text" => "Eingabefeld", "textarea" => "Eingabebereich", "select" => "Dropdown", "list" => "Mehrfachauswahl", "radio" => "Radiobutton", "check" => "Checkbox", "block_start" => "Blockanfang", "block_item" => "Blockelement", "reference" => "Datenbankverknüpfung", "slider" => "Slider", "template" => "Template", 'matrix'=>'Multi-Fragen-Matrix', 'stars'=>'Sterne', 'html'=>'HTML', 'date'=>'Datum');
+
+if(isset($_VARS['poll_id'])) {
+	$oPoll = new Ext_Poll_Poll($_VARS['poll_id']);
+	$aLanguages = $oPoll->getLanguages();
+}
+
+// UMFRAGE ERSTELLEN UND BEARBEITEN
+if ($_VARS['task'] == "poll") {
+	if ($_VARS['activity'] == "savePoll") {
+
+		// Sprachabhängige Felder anlegen
+		foreach($aLanguageSelect as $sIso=>$sLanguage) {
+
+			DB::addField('poll_init', $sIso.'_data', 'TEXT NOT NULL');
+			
+			DB::addField('poll_paragraphs', $sIso.'_title', 'TEXT NOT NULL');
+			DB::addField('poll_paragraphs', $sIso.'_description', 'TEXT NOT NULL');
+			
+			DB::addField('poll_questions', $sIso.'_title', 'TEXT NOT NULL');
+			DB::addField('poll_questions', $sIso.'_description', 'TEXT NOT NULL');
+			DB::addField('poll_questions', $sIso.'_block_head', 'TEXT NOT NULL');
+			
+		}
+		
+		if ($_VARS['create'] == 1) {
+			$aSql = array('name'=>$_VARS['name']);
+			$sSql = "INSERT INTO poll_init SET `created` = NOW(), name = :name, `languages` = '".DB::escapeQueryString(json_encode((array)$_VARS['languages']))."'";
+			foreach ($aLanguages as $key => $val) {
+				// Diese Felder müssen immer (!) im Array stehen
+				$_VARS[$val.'_data']['error']	= "###ERROR###";
+				$_VARS[$val.'_data']['last']	= "###LAST###";
+				$_VARS[$val.'_data']['next']	= "###NEXT###";
+				$_VARS[$val.'_data']['page']	= "###PAGE###";
+				$_VARS[$val.'_data']			= json_encode($_VARS[$val.'_data']);
+				$sSql .= ", ".$val."_data = :".$val."_data";
+				$aSql[$val.'_data'] = $_VARS[$val.'_data'];
+			}
+			$query .= ", active = 1";
+			DB::executePreparedQuery($sSql, $aSql);
+			
+			$_VARS['poll_id'] = DB::fetchInsertID();
+			
+			$query = "INSERT INTO poll_paragraphs SET idPoll = ".(int)$_VARS['poll_id'].", isPage = 1";
+			foreach ($aLanguages as $key => $val) {
+				$query .= ", ".$val."_title = '###pagebreak###'";
+			}
+			$query .= ", position = '1', active = '1'";
+			DB::executeQuery($query);
+			
+			$oPoll = new Ext_Poll_Poll($_VARS['poll_id']);
+			$oPoll->createReportTable();
+			$oPoll->updateReportTable();
+
+		} else {
+			
+			$sSql = "UPDATE poll_init SET `languages` = '".DB::escapeQueryString(json_encode((array)$_VARS['languages']))."'";
+			foreach ($aLanguages as $key => $val) {
+				// Diese Felder müssen immer (!) im Array stehen
+				$_VARS[$val.'_data']['error']	= ($_VARS[$val.'_data']['error'] == "")?"###ERROR###":($_VARS[$val.'_data']['error']);
+				$_VARS[$val.'_data']['last']	= ($_VARS[$val.'_data']['last'] == "")?"###LAST###":($_VARS[$val.'_data']['last']);
+				$_VARS[$val.'_data']['next']	= ($_VARS[$val.'_data']['next'] == "")?"###NEXT###":($_VARS[$val.'_data']['next']);
+				$_VARS[$val.'_data']['page']	= ($_VARS[$val.'_data']['page'] == "")?"###PAGE###":($_VARS[$val.'_data']['page']);
+				$_VARS[$val.'_data']			= json_encode($_VARS[$val.'_data']);
+				$sSql .= ", ".$val."_data = '".DB::escapeQueryString($_VARS[$val.'_data'])."'";
+
+			}
+			$sSql .= " WHERE id = ".(int)$_VARS['poll_id']." LIMIT 1";
+			$bQuery = DB::executeQuery($sSql);
+
+			$oPoll = new Ext_Poll_Poll($_VARS['poll_id']);
+			$oPoll->createReportTable();
+			$oPoll->updateReportTable();
+
+		}
+		
+		$oPoll->name = $_VARS['name'];
+		$oPoll->url = $_VARS['url'];
+		$oPoll->connect_customer = (int)$_VARS['connect_customer'];
+		$oPoll->save();
+
+		unset($_VARS['poll_id']);
+		unset($_VARS['task']);
+		unset($_VARS['activity']);
+		unset($_VARS['create']);
+	}
+}
+
+// UMFRAGE LÖSCHEN
+if (
+	$_VARS['task'] == "" && 
+	$_VARS['activity'] == "deletePoll" && 
+	$_VARS['poll_id'] != ""
+) {
+	
+	$oPoll = Ext_Poll_Poll::getInstance($_VARS['poll_id']);
+	$oPoll->delete();
+
+	unset($_VARS['poll_id']);
+}
+
+// TEMPLATES ERSTELLEN UND BEARBEITEN
+if ($_VARS['task'] == "templates") {
+	if ($_VARS['activity'] == "saveTemplate" or $_VARS['activity'] == "updateTemplate") {
+		foreach ((array)$_VARS['data'] as $key => $val) {
+			foreach ($aLanguages as $subkey => $subval) {
+				if ($val[$subval] != "") $doNotDelete = TRUE;
+			}
+			if ($doNotDelete == FALSE) unset($_VARS['data'][$key]);
+			unset($doNotDelete);
+		}
+		$_VARS['data'] = json_encode($_VARS['data']);
+		if ($_VARS['create'] == 1) {
+			DB::executeQuery("INSERT INTO poll_templates SET title = '".$_VARS['title']."', type = '".$_VARS['type']."', data = '".$_VARS['data']."'");
+			echo DB::fetchLastErrorMessage();
+			$_VARS['template_id'] = get_insert_id();
+			DB::executeQuery("UPDATE poll_templates SET alias = 'user_".$_VARS['template_id']."' WHERE id = '".$_VARS['template_id']."' LIMIT 1");
+		} else {
+			DB::executeQuery("UPDATE poll_templates SET title = '".$_VARS['title']."', type = '".$_VARS['type']."', data = '".$_VARS['data']."' WHERE id = '".$_VARS['template_id']."' LIMIT 1");
+		}
+		if ($_VARS['activity'] != "updateTemplate") {
+			unset($_VARS['activity']);
+		}
+		unset($_VARS['create']);
+	}
+}
+
+// TEMPLATE LÖSCHEN
+if ($_VARS['task'] == "templates" and $_VARS['activity'] == "deleteTemplate" and $_VARS['template_id'] != "") {
+	DB::executeQuery("DELETE FROM poll_templates WHERE id = '".$_VARS['template_id']."' LIMIT 1");
+}
+
+
+// BLOCK ERSTELLEN UND BEARBEITEN
+if ($_VARS['task'] == "paragraphs") {
+	if ($_VARS['activity'] == "saveParagraph") {
+		$_VARS['title'] = preg_replace("/(<\/?p[^<]*>|<[^<]*br[^<]*>|)/ims", "", $_VARS['title']);
+		if ($_VARS['create'] == 1) {
+			$position = DB::getRowAssoc(DB::executeQuery("SELECT MAX(position) max_position FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."'"));
+			$pageIdPosition = DB::getRowAssoc(DB::executeQuery("SELECT idPage FROM poll_paragraphs WHERE position = '".$position['MAX(position)']."' AND idPoll = '".$_VARS['poll_id']."'"));
+			$pageId = DB::getRowAssoc(DB::executeQuery("SELECT MAX(idPage) max_page_id FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."'"));
+			if ($pageIdPosition['idPage'] == 0) {
+				$pageId['max_page_id']++;
+			}
+			
+			$query = "INSERT INTO poll_paragraphs SET idPoll = '".$_VARS['poll_id']."', idPage = '".$pageId['max_page_id']."'";
+			foreach ($aLanguages as $key => $val) {
+				$query .= ", ".$val."_title = '".\DB::escapeQueryString($_VARS[$val.'_title'])."', ".$val."_description = '".\DB::escapeQueryString($_VARS[$val.'_description'])."'";
+			}
+			$query .= ", `css` = '".DB::escapeQueryString($_VARS['css'])."', `label_width` = '".DB::escapeQueryString($_VARS['label_width'])."', `sorting` = '".DB::escapeQueryString($_VARS['sorting'])."' ";
+			$query .= ", position = '".($position['max_position']+1)."', active = '1'";
+			
+			DB::executeQuery($query);
+		} else {
+			$query = "UPDATE poll_paragraphs SET idPoll = '".$_VARS['poll_id']."'";
+			foreach ($aLanguages as $key => $val) {
+				$query .= ", ".$val."_title = '".\DB::escapeQueryString($_VARS[$val.'_title'])."', ".$val."_description = '".\DB::escapeQueryString($_VARS[$val.'_description'])."'";
+			}
+			$query .= ", `css` = '".DB::escapeQueryString($_VARS['css'])."', `label_width` = '".DB::escapeQueryString($_VARS['label_width'])."', `sorting` = '".DB::escapeQueryString($_VARS['sorting'])."' ";
+			$query .= " WHERE id = '".$_VARS['paragraph_id']."'";
+			DB::executeQuery($query);
+
+		}
+		unset($_VARS['paragraph_id']);
+		unset($_VARS['activity']);
+		unset($_VARS['create']);
+	}
+	if ($_VARS['activity'] == "shiftParagraphUp") {
+		$aSource = DB::getRowAssoc(DB::executeQuery("SELECT * FROM poll_paragraphs WHERE id = '".$_VARS['paragraph_id']."'"));
+		$aTarget = DB::getRowAssoc(DB::executeQuery("SELECT * FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' AND position < '".$aSource['position']."' ORDER BY position DESC LIMIT 1 "));
+		if ($aSource['isPage'] == 1) { 
+			$aTarget['idPage']++; 
+			$aSource['idPage'] = 0;	
+		}
+		if ($aTarget['isPage'] == 1) { 
+			$aSource['idPage']--; 
+			$aTarget['idPage'] = 0;
+		}
+		// Source
+		DB::executeQuery("UPDATE poll_paragraphs SET idPage = '".$aSource['idPage']."', position = '".($aSource['position'] - 1)."' WHERE id = '".$_VARS['paragraph_id']."'");
+		// Target
+		DB::executeQuery("UPDATE poll_paragraphs SET idPage = '".$aTarget['idPage']."', position = '".($aSource['position'])."' WHERE id = '".$aTarget['id']."'");
+	}
+	if ($_VARS['activity'] == "shiftParagraphDown") {
+		$aSource = DB::getRow(DB::executeQuery("SELECT * FROM poll_paragraphs WHERE id = '".$_VARS['paragraph_id']."'"));
+		$aTarget = DB::getRow(DB::executeQuery("SELECT * FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' AND position > '".$aSource['position']."' ORDER BY position ASC LIMIT 1 "));
+		if ($aSource['isPage'] == 1) {
+			$aTarget['idPage']--; 
+			$aSource['idPage'] = 0;	
+		}
+		if ($aTarget['isPage'] == 1) {
+			$aSource['idPage']++; 
+			$aTarget['idPage'] = 0;
+		}
+		// Source
+		DB::executeQuery("UPDATE poll_paragraphs SET idPage = '".$aSource['idPage']."', position = '".($aSource['position'] + 1)."' WHERE id = '".$_VARS['paragraph_id']."'");
+		// Target
+		DB::executeQuery("UPDATE poll_paragraphs SET idPage = '".$aTarget['idPage']."', position = '".($aSource['position'])."' WHERE id = '".$aTarget['id']."'");
+	}
+
+	// Update page id
+	$oPoll = Ext_Poll_Poll::getInstance($_VARS['poll_id']);
+	$intPages = $oPoll->countPages($_VARS['paragraph_id']);
+	DB::executeQuery("UPDATE poll_paragraphs SET idPage = '".(int)$intPages."' WHERE id = '".(int)$_VARS['paragraph_id']."'");
+
+}
+
+// BLOCK LÖSCHEN
+if ($_VARS['task'] == "paragraphs" and $_VARS['activity'] == "deleteParagraph" and $_VARS['paragraph_id'] != "") {
+	$aIsPageBreak = DB::getRow(DB::executeQuery("SELECT * FROM poll_paragraphs WHERE id = '".$_VARS['paragraph_id']."'"));
+	$aresSetNewPage = DB::executeQuery("SELECT * FROM poll_paragraphs WHERE idPoll = '".$aIsPageBreak['idPoll']."' AND position > '".$aIsPageBreak['position']."'");
+	while ($aSetNewPage = DB::getRow($aresSetNewPage)) {
+		if ($aSetNewPage['isPage'] != 1) {
+			$aSetNewPage['idPage']--;
+			
+		}
+		DB::executeQuery("UPDATE poll_paragraphs SET idPage = '".$aSetNewPage['idPage']."', position = '".($aSetNewPage['position'] - 1)."' WHERE id = '".$aSetNewPage['id']."'");
+	}
+	DB::executeQuery("DELETE FROM poll_paragraphs WHERE id = '".$_VARS['paragraph_id']."' LIMIT 1");
+}
+
+// Seite kopieren
+if (
+    $_VARS['task'] == "paragraphs" &&
+    $_VARS['activity'] == "copyPage" &&
+    $_VARS['paragraph_id'] != "" &&
+    $_VARS['page_id'] != ""
+) {
+
+    $oPoll->copyPage($_VARS['paragraph_id'], $_VARS['page_id']);
+    header('Location: poll.html?poll_id='.(int)$_VARS['poll_id'].'&task=paragraphs');
+    die();
+
+}
+
+// Block kopieren
+if (
+	$_VARS['task'] == "paragraphs" && 
+	$_VARS['activity'] == "copyParagraph" && 
+	$_VARS['paragraph_id'] != ""
+) {
+	
+	$oPoll->copyParagraph($_VARS['paragraph_id']);
+	header('Location: poll.html?poll_id='.(int)$_VARS['poll_id'].'&task=paragraphs');
+	die();
+
+}
+
+// SEITENWECHSEL ERSTELLEN UND BEARBEITEN
+if ($_VARS['task'] == "paragraphs") {
+	if ($_VARS['activity'] == "makePagebreak") {
+		$position = DB::getRow(DB::executeQuery("SELECT MAX(position) FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."'"));
+		
+		$query = "INSERT INTO poll_paragraphs SET idPoll = '".$_VARS['poll_id']."', isPage = 1";
+		foreach ($aLanguages as $key => $val)
+			$query .= ", ".$val."_title = '###pagebreak###'";
+		$query .= ", position = '".($position['MAX(position)']+1)."', active = '1'";
+		
+		DB::executeQuery($query);
+		
+		unset($_VARS['paragraph_id']);
+		unset($_VARS['activity']);
+		unset($_VARS['create']);
+	}
+}
+
+if(isset($_VARS['task']) && $_VARS['task'] == 'sort_questions')
+{
+	$iPosition = 2;
+	$iLastPage = 1;
+
+	$aUpdates = array($iLastPage => array());
+
+	foreach((array)$_VARS['tr'] as $iID)
+	{
+		$oSource = new WDBasic($iID, 'poll_paragraphs');
+
+		if($oSource->isPage == 1)
+		{
+			$iLastPage++;
+		}
+
+		$aUpdates[$iLastPage][$iPosition++] = $iID;
+	}
+
+	foreach((array)$aUpdates as $iPage => $aParagraphs)
+	{
+		foreach((array)$aParagraphs as $iPosition => $iID)
+		{
+			$oSource = new WDBasic($iID, 'poll_paragraphs');
+
+			$oSource->position = $iPosition;
+
+			if($oSource->isPage == 0)
+			{
+				$oSource->idPage = $iPage;
+			}
+
+			$oSource->save();
+		}
+	}
+
+	exit();
+}
+
+// ELEMENTE ERSTELLEN UND BEARBEITEN
+if ($_VARS['task'] == "content") {
+
+	if (in_array($_VARS['activity'], array("saveContent", "updateContent"))) {
+
+		if($_VARS['template'] === 'matrix') {
+
+			$_VARS['data']['answer_groups'] = array_values($_VARS['data']['answer_groups']);
+
+			// Leere Einträge entfernen
+			foreach ((array)$_VARS['data']['answer_groups'] as $iKey => $aAnswerGroup) {
+				if(empty($aAnswerGroup['key'])) {
+					unset($_VARS['data']['answer_groups'][$iKey]);
+				} else {
+					if(isset($_VARS['data']['answer_groups'][$iKey]['options'])) {
+						$_VARS['data']['answer_groups'][$iKey]['options'] = array_values($_VARS['data']['answer_groups'][$iKey]['options']);
+						foreach ((array)$aAnswerGroup['options'] as $iOptionKey => $aQuestionOption) {
+							if(empty($aQuestionOption['value'])) {
+								unset($_VARS['data']['answer_groups'][$iKey]['options'][$iOptionKey]);
+							}
+						}
+					}
+				}
+			}
+
+			$_VARS['data']['questions'] = array_values($_VARS['data']['questions']);
+			
+			foreach ((array)$_VARS['data']['questions'] as $iKey => $aQuestion) {
+				if(empty($aQuestion['key'])) {
+					unset($_VARS['data']['questions'][$iKey]);
+				}
+			}
+		
+		} elseif($_VARS['template'] === 'stars') {
+			
+			$_VARS['data']['options'] = array_values($_VARS['data']['options']);
+			
+			foreach ((array)$_VARS['data']['options'] as $key => $val) {
+				foreach ($aLanguages as $subkey => $subval) {
+					if ($val[$subval] != "") $doNotDelete = TRUE;
+				}
+				if ($_VARS['template'] != "reference") {
+					$_VARS['data']['options'][$key]['position'] = intval($_VARS['data']['options'][$key]['position']);
+					if ($doNotDelete == FALSE) unset($_VARS['data']['options'][$key]);
+					unset($doNotDelete);	
+				}
+			}
+			
+		} else {
+
+			foreach ((array)$_VARS['data'] as $key => $val) {
+				foreach ($aLanguages as $subkey => $subval) {
+					if ($val[$subval] != "") $doNotDelete = TRUE;
+				}
+				if ($_VARS['template'] != "reference") {
+					$_VARS['data'][$key]['position'] = intval($_VARS['data'][$key]['position']);
+					if ($doNotDelete == FALSE) unset($_VARS['data'][$key]);
+					unset($doNotDelete);	
+				}
+			}
+			
+		}
+
+		if (!in_array($_VARS['template'], ['matrix', 'stars'])) {
+			uasort($_VARS['data'], function ($a, $b) {
+				if ($a['position'] == $b['position']) {
+					return 0;
+				}
+				return ($a['position'] < $b['position']) ? -1 : 1;
+			});
+
+			$_VARS['data'] = array_combine(range(1, count($_VARS['data'])), $_VARS['data']);
+		}
+
+		foreach ((array)$_VARS['parameter'] as $key => $val) {
+			if ($val == "") unset($_VARS['parameter'][$key]);
+		}
+		$_VARS['data'] = json_encode($_VARS['data']);
+		$_VARS['css_value'] = json_encode($_VARS['css_value']);
+		$_VARS['parameter'] = json_encode($_VARS['parameter']);
+
+		if (substr($_VARS['list'], 0, 4) == "user") {
+			$insert_template = DB::getRow(DB::executeQuery("SELECT data, type FROM poll_templates WHERE alias = '".$_VARS['list']."'"));
+			$_VARS['data'] = $insert_template['data'];
+			$_VARS['parameter'] = $insert_template['parameter'];
+			$_VARS['template'] = $insert_template['type'];
+		}
+
+		$query = "";
+		foreach ($aLanguages as $key => $val) {
+			$query .= ",
+				".$val."_title = '".DB::escapeQueryString($_VARS[$val.'_title'])."',
+				".$val."_description = '".DB::escapeQueryString($_VARS[$val.'_description'])."',
+				".$val."_block_head = '".DB::escapeQueryString($_VARS[$val.'_block_head'])."'";
+		}
+
+		$query .= ", data = '".DB::escapeQueryString($_VARS['data'])."',
+			parameter = '".DB::escapeQueryString($_VARS['parameter'])."',
+			input_addon = '".DB::escapeQueryString($_VARS['input_addon'])."',
+			input_css = '".DB::escapeQueryString($_VARS['input_css'])."',
+			`weighting` = '".DB::escapeQueryString($_VARS['weighting'])."',
+			css = '".DB::escapeQueryString($_VARS['css'])."',
+			css_value = '".DB::escapeQueryString($_VARS['css_value'])."',
+			css_input = '".DB::escapeQueryString($_VARS['css_input'])."',
+			route = '".DB::escapeQueryString($_VARS['route'])."',
+			template = '".DB::escapeQueryString($_VARS['template'])."',
+			important = '".DB::escapeQueryString($_VARS['important'])."',
+			hidden = '".$_VARS['hidden']."'";
+
+		if ($_VARS['create'] == 1) {
+			
+			$sSql = "SELECT * FROM poll_report_".(int)$_VARS['poll_id']." LIMIT 1";
+			$aRow = DB::getQueryRow($sSql);
+			$iTotalFields = count($aRow);
+
+			if($iTotalFields < 2150) {
+				
+				$position = DB::getRow(DB::executeQuery("SELECT MAX(position) FROM poll_questions WHERE idPoll = '".(int)$_VARS['poll_id']."' AND idParagraph = '".(int)$_VARS['paragraph_id']."'"));
+				
+				$query = "
+					INSERT INTO 
+						poll_questions 
+					SET 
+						`idPoll` = '".(int)$_VARS['poll_id']."', 
+						`idParagraph` = '".(int)$_VARS['paragraph_id']."',
+						`position` = '".($position['MAX(position)']+1)."',
+						`active` = 1
+						".$query;
+				
+				DB::executeQuery($query);
+				
+				$id = get_insert_id();
+								
+			} else {
+				echo '<p class="error">Es können keine neuen Fragen angelegt werden. Bitte löschen Sie zuerst vorhandene Fragen!<br/>(Aktuell: '.(int)$iTotalFields.')</p>';
+			}
+
+			$oPoll->updateReportTable();
+
+		} else {
+
+			$query = "UPDATE poll_questions SET idPoll = ".(int)$_VARS['poll_id'].", idParagraph = ".(int)$_VARS['paragraph_id']." ".$query;
+			$query .= "WHERE id = ".(int)$_VARS['content_id']."";
+			DB::executeQuery($query);
+
+		}
+
+		if ($_VARS['activity'] != "updateContent") {
+			unset($_VARS['activity']);
+			unset($_VARS['content_id']);
+		}
+		unset($_VARS['create']);
+
+	} elseif ($_VARS['activity'] == "saveQuestions") {
+	
+		if(!empty($_VARS['rotation_parameter'])) {
+			
+			foreach($_VARS['rotation_parameter'] as $iQuestionId=>$sRotationParameter) {
+				$aSql = [
+					'id' => $iQuestionId,
+					'rotation_parameter' => $sRotationParameter
+				];
+				$sSql = "UPDATE poll_questions SET rotation_parameter = :rotation_parameter WHERE id = :id";
+				DB::executePreparedQuery($sSql, $aSql);
+			}
+			
+		}
+
+	}
+
+	if ($_VARS['activity'] == "saveRouting") {
+		$_VARS['route'] = json_encode($_VARS['route']);
+		DB::executeQuery("UPDATE poll_questions SET route = '".$_VARS['route']."' WHERE id = '".$_VARS['content_id']."'");
+		
+		$content = DB::getRow(DB::executeQuery("SELECT idParagraph FROM poll_questions WHERE idPoll = '".$_VARS['poll_id']."' AND id = '".$_VARS['content_id']."'"));
+		$page = DB::getRow(DB::executeQuery("SELECT idPage FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' AND id = '".$content['idParagraph']."'"));
+		$position = DB::getRow(DB::executeQuery("SELECT MIN(position) FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' AND idPage = '".$page['idPage']."'"));
+		DB::executeQuery("UPDATE poll_paragraphs SET isNonlinear = 1 WHERE position = '".($position['MIN(position)'] - 1)."'");
+	}
+
+	if ($_VARS['activity'] == "shiftContentUp") {
+		changePosition("up", $_VARS['content_id'], "poll_questions", "WHERE idPoll = ".(int)$_VARS['poll_id']." AND idParagraph = ".(int)$_VARS['paragraph_id']."");
+	}
+	
+	if ($_VARS['activity'] == "shiftContentDown") {
+		changePosition("down", $_VARS['content_id'], "poll_questions", "WHERE idPoll = ".(int)$_VARS['poll_id']." AND idParagraph = ".(int)$_VARS['paragraph_id']."");
+	}
+
+	if (in_array($_VARS['activity'], array("shiftValueUp", "shiftValueDown"))) {
+
+		$aData = get_data(DB::executeQuery("SELECT data FROM poll_questions WHERE id = ".(int)$_VARS['content_id']." and idPoll = ".(int)$_VARS['poll_id'].""));
+		$aData['data'] = Util::decodeSerializeOrJson($aData['data']);
+
+		$iTempPosition = 1;
+		foreach ($aData['data'] as $vkey => $vval) {
+			$aData['data'][$vkey]['position'] = $iTempPosition;
+			$iTempPosition++;
+		}
+
+		unset($iCheckActions);
+		if ($_VARS['activity'] == "shiftValueUp") {
+			foreach ($aData['data'] as $vkey => $vval) {
+				if ($vkey == ($_VARS['element'] - 1)) {
+					$aData['data'][$vkey]['position'] += 1;
+					$iCheckActions++;
+				}
+				if ($vkey == ($_VARS['element'])) {
+					$aData['data'][$vkey]['position'] -= 1;
+					$iCheckActions++;
+				}
+			}
+		}
+		if ($_VARS['activity'] == "shiftValueDown") {
+			foreach ($aData['data'] as $vkey => $vval) {
+				if ($vval['position'] == ($_VARS['element'] + 1)) {
+					$aData['data'][$vkey]['position'] -= 1;
+					$iCheckActions++;
+				}
+				if ($vval['position'] == ($_VARS['element'])) {
+					$aData['data'][$vkey]['position'] += 1;
+					$iCheckActions++;
+				}
+			}
+		}
+		if ($iCheckActions == 2) {
+
+			uasort($aData['data'], function($a, $b) {
+				if ($a['position'] == $b['position']) {
+					return 0;
+				}
+				return ($a['position'] < $b['position']) ? -1 : 1;
+			});
+
+			$aData['data'] = array_combine(range(1, count($aData['data'])), $aData['data']);
+
+			DB::executeQuery("UPDATE poll_questions SET data = '".DB::escapeQueryString(json_encode($aData['data']))."' WHERE id = '".$_VARS['content_id']."' and idPoll = '".$_VARS['poll_id']."' LIMIT 1");
+		}
+	}
+
+    if (in_array($_VARS['activity'], array("sortContentValues"))) {
+
+        $aPositions = $_VARS['tr'];
+
+		$aData = get_data(DB::executeQuery("SELECT data FROM poll_questions WHERE id = ".(int)$_VARS['content_id']." and idPoll = ".(int)$_VARS['poll_id'].""));
+		$aData['data'] = Util::decodeSerializeOrJson($aData['data']);
+
+        $aRows = [];
+        $bSave = false;
+
+        foreach ($aPositions as $iNewPosition => $iElementKey) {
+            if (isset($aData['data'][$iElementKey])) {
+                // Fängt bei 1 an
+				$aData['data'][$iElementKey]['position'] = ($iNewPosition + 1);
+                $aRows[] = ['row' => $iElementKey, 'position' => $aData['data'][$iElementKey]['position']];
+				$bSave = true;
+            }
+        }
+
+		if ($bSave) {
+
+			uasort($aData['data'], function($a, $b) {
+				if ($a['position'] == $b['position']) {
+					return 0;
+				}
+				return ($a['position'] < $b['position']) ? -1 : 1;
+			});
+
+			$aData['data'] = array_combine(range(1, count($aData['data'])), $aData['data']);
+
+			DB::executeQuery("UPDATE poll_questions SET data = '".DB::escapeQueryString(json_encode($aData['data']))."' WHERE id = '".$_VARS['content_id']."' and idPoll = '".$_VARS['poll_id']."' LIMIT 1");
+		}
+
+		echo json_encode(['success' => true, 'new_sort' => $aRows]);
+		die();
+
+    }
+
+}
+
+// ELEMENT löschen
+if ($_VARS['task'] == "content" and $_VARS['activity'] == "deleteContent" and $_VARS['content_id'] != "") {
+	DB::executeQuery("DELETE FROM poll_questions WHERE id = '".$_VARS['content_id']."' LIMIT 1");
+}
+
+// ELEMENT kopieren
+if(
+	$_VARS['task'] == "content" && 
+	$_VARS['activity'] == "copyContent" && 
+	$_VARS['content_id'] != ""
+) {
+	$oPoll->copyQuestion($_VARS['content_id']);
+	header('Location: poll.html?poll_id='.(int)$_VARS['poll_id'].'&paragraph_id='.(int)$_VARS['paragraph_id'].'&task=content');
+	die();
+}
+
+// ROUTING löschen
+if ($_VARS['task'] == "pages" and $_VARS['activity'] == "deleteRouting" and $_VARS['content_id'] != "") {
+	DB::executeQuery("UPDATE poll_questions SET route = 'N;' WHERE id = '".$_VARS['content_id']."' LIMIT 1");
+	
+	$content = DB::getRow(DB::executeQuery("SELECT idParagraph FROM poll_questions WHERE idPoll = '".$_VARS['poll_id']."' AND id = '".$_VARS['content_id']."'"));
+	$page = DB::getRow(DB::executeQuery("SELECT idPage FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' AND id = '".$content['idParagraph']."'"));
+	$position = DB::getRow(DB::executeQuery("SELECT MIN(position) FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' AND idPage = '".$page['idPage']."'"));
+	DB::executeQuery("UPDATE poll_paragraphs SET isNonlinear = 0 WHERE position = '".($position['MIN(position)'] - 1)."'");
+}
+
+$resPoll = DB::executeQuery("SELECT * FROM poll_init ORDER BY name");
+
+while($aresPoll = DB::getRow($resPoll)) {
+	$aPoll[$aresPoll['id']] = $aresPoll['name'];
+}
+
+$aParagraphsList[0] = "kein Routing";
+$resParagraphs = DB::executeQuery("SELECT * FROM poll_paragraphs WHERE idPoll = '".$_VARS['poll_id']."' ORDER BY position");
+while($aresParagraphs = DB::getRow($resParagraphs)) {
+	$aParagraphs[$aresParagraphs['id']] = $aresParagraphs;
+	$aParagraphsList[$aresParagraphs['id']] = $aresParagraphs[$page_data['language'].'_title'];
+}
+
+$resContent = DB::executeQuery("SELECT * FROM poll_questions WHERE idPoll = '".$_VARS['poll_id']."' ORDER BY position");
+while($aresContent = DB::getRow($resContent)) {
+	$aresContent['data'] = Util::decodeSerializeOrJson($aresContent['data']);
+	if (is_array($aresContent['data'])) {
+		uasort($aresContent['data'], array('Ext_Poll_Poll', "sortDataByPosition"));
+	}
+	$aresContent['parameter'] = Util::decodeSerializeOrJson($aresContent['parameter']);
+	$aresContent['route'] = Util::decodeSerializeOrJson($aresContent['route']);
+	$aresContent['css_value'] = Util::decodeSerializeOrJson($aresContent['css_value']);
+	$aContentCount[$aresContent['idParagraph']]++;
+	$aContent[$aresContent['id']] = $aresContent;
+	$aContentParagraph[$aresContent['idParagraph']][$aresContent['id']] = $aresContent;
+}
+
+$aTemplateUser = array("-" => "bitte auswählen...");
+$resTemplate = DB::executeQuery("SELECT * FROM poll_templates");
+while($aresTemplate = DB::getRow($resTemplate)) {
+	$aresTemplate['data'] = Util::decodeSerializeOrJson($aresTemplate['data']);
+	$aTemplate[$aresTemplate['id']] = $aresTemplate;
+	$aTemplateUser[$aresTemplate['alias']] = $aresTemplate['title'];
+}
+
+$resPages = DB::executeQuery("SELECT idPage FROM poll_paragraphs WHERE idPoll = ".(int)$_VARS['poll_id']." AND idPage <> 0 GROUP BY idPage");
+$aPages = array();
+while($aresPages = DB::getRow($resPages)) {
+	$sPages++;
+	$aPages[$sPages] = 'Seite '.$sPages;
+}
+
+$aHeader = array(
+	'jslib' => 'jquery_1_10'
+);
+
+Admin_Html::loadAdminHeader($aHeader);
+?>
+
+<script language="JavaScript" type="text/javascript">
+	
+	function displayDiv(strDiv) {
+		var objDiv = document.getElementById(strDiv);
+		if (objDiv.style.display == '') {
+			objDiv.style.display = 'none';
+		} else if (objDiv.style.display == 'none') {
+			objDiv.style.display = '';
+		}
+	}
+	
+	function changeImage(strImg) {
+		var objImg = document.getElementById(strImg);
+		if (objImg.src == '../media/2downarrow.gif') {
+			objImg.src = '../media/2uparrow.gif';
+		} else if (objImg.src == '../media/2uparrow.gif') {
+			objImg.src = '../media/2downarrow.gif';
+		}
+	}
+	
+	function openRouting(iPollId, sItem, iItemId) {
+		
+		var sHref = '/admin/extensions/poll/poll_routing.html?poll_id='+iPollId+'&item='+sItem+'&item_id='+iItemId+'';
+
+        $.fancybox({
+            'autoScale': true,
+            'width': 1000,
+			'height':500,
+			'autoDimensions':false,
+            'centerOnScroll': true,
+			'type': 'iframe',
+			'href': sHref,
+			'titleShow': false
+        });
+		
+	}
+	
+</script>
+
+<div class="divHeader">
+	<h1>Umfragen</h1>
+</div>
+
+
+<div style="width:1150px;">
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?php
+
+//	if($oPoll instanceof Ext_Poll_Poll) {
+//		echo '<h2>'.$oPoll->name.'</h2>';
+//	}
+
+?>
+
+<?
+
+if ($_VARS['page_id'] && $_VARS['element_id']) {
+	
+	if ($_VARS['activity'] == "config") {
+		if(class_exists('\\Cms\\Helper\\ExtensionConfig')) {
+			$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		} else {
+			$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		}
+		$config->poll_id = (int)$_VARS['poll_id'];
+		$config->use_smarty = $_VARS['use_smarty'];
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	if(class_exists('\\Cms\\Helper\\ExtensionConfig')) {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	} else {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	}
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="activity" value="config">
+			<input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=(int)$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=(int)$_VARS['content_id']?>">
+			<?=printTableStart()?>
+				<?=printFormSelect("Umfrage", "poll_id", $aPoll, $config->poll_id)?>
+<?php
+				if($oConfig->use_smarty === '0') {
+					echo printFormCheckbox("Smarty-Template benutzen", "use_smarty", "1", $oConfig->use_smarty);
+				} else {
+					echo printFormHidden('use_smarty', 1);
+				}
+?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+<?
+} else {
+	// INHALTSELEMENTE: NEU & EINSTELLUNGEN
+	if(
+		$_VARS['task'] == "content" && 
+		(
+			(
+				$_VARS['content_id'] != "" && 
+				in_array($_VARS['activity'], array("editContent", "shiftValueUp", "shiftValueDown"))
+			) || 
+			$_VARS['create'] == 1 || 
+			$_VARS['activity'] == "updateContent"
+		)
+	) {
+
+		$bRouting = false;
+		
+		$oQuestion = Poll\Entity\Question::getInstance($_VARS['content_id']);		
+
+		if($_VARS['content_id'] > 0) {
+			$sClass = 'Poll\Entity\Question\Condition';
+			$oRepo = $sClass::getRepository();
+			$oRouting = $oRepo->findOneBy(array('question_id'=>(int)$_VARS['content_id']));
+			if(
+				$oRouting !== null &&
+				$oRouting->settings != ''
+			) {
+				$bRouting = true;
+			}
+		}
+
+		if ($_VARS['create'] == 1) {
+			unset($_VARS['content_id']);
+		}
+?>
+			<h2><?=$oPoll->name?></h2>
+			<h3><?=($_VARS['create'] == 1)?$aParagraphsList[$_VARS['paragraph_id']]." &raquo; Neues Frage-Element":$aParagraphsList[$aContent[$_VARS['content_id']]['idParagraph']]." &raquo; ".$aContent[$_VARS['content_id']]['position'].". ".$aContent[$_VARS['content_id']][$page_data['language'].'_title']?></h3>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=(int)$_VARS['poll_id']?>">
+			<input type="hidden" name="paragraph_id" value="<?=($aContent[$_VARS['content_id']]['idParagraph'] != "")?$aContent[$_VARS['content_id']]['idParagraph']:$_VARS['paragraph_id']?>">
+			<input type="hidden" name="content_id" value="<?=(int)$_VARS['content_id']?>">
+			<input type="hidden" name="task" value="content">
+			<? if ($_VARS['create'] != 1) { ?>
+			<input type="hidden" name="activity" value="updateContent">
+			<? } else { ?>
+			<input type="hidden" name="activity" value="saveContent">
+			<? } ?>
+			<input type="hidden" name="create" value="<?=($_VARS['create'])?>">
+			<?=printTableStart()?>
+				<? foreach ($aLanguages as $key => $val) { ?>
+					<?=printFormTextarea("Titel (".$val.")", $val."_title", ($_VARS['create'] == 1)?"":$aContent[$_VARS['content_id']][$val.'_title'])?>
+				<? } ?>
+				<tr>
+					<th>Fragetyp</th>
+					<td>
+						<select name="template" class="txt" style="width: 300px;" onchange="submit();">
+					<?
+					foreach($aTemplateSelect as $key => $val) {
+							echo "<option value=\"".$key."\" ".(($key == $aContent[$_VARS['content_id']]['template'])?"selected":"").">".$val."</option>";
+					}
+					?>
+						</select>
+					<? if ($aContent[$_VARS['content_id']]['template'] == "template") { ?>
+						<select name="list" class="txt" onchange="submit();">
+					<?
+						foreach($aTemplateUser as $subkey => $subval) {
+								echo "<option value=\"".$subkey."\" ".(($subkey == "-")?"selected":"").">".$subval."</option>";
+						}
+					} ?>
+						</select>
+					</td>
+				</tr>
+
+<?php
+
+				foreach ($aLanguages as $key => $val) {
+					if ($_VARS['show_description'] == 1 or $aContent[$_VARS['content_id']][$val.'_description'] != "") {
+						echo printFormHTMLarea("Beschreibung (".$val.")", $val."_description", $aContent[$_VARS['content_id']][$val.'_description']);
+					} else {
+						echo "<input type=\"hidden\" name=\"".$val."_description\" value=\"".$aContent[$_VARS['content_id']][$val.'_description']."\">";	
+					}
+				}
+				if ($_VARS['show_description'] == 0) {
+					echo printFormCheckbox("Beschreibung", "show_description", "1", 0, 1, 0, 40, "onclick=\"submit();\"");
+				}
+				echo printFormCheckbox("Pflichtfrage", "important", "1", ($_VARS['create'] == 1)?TRUE:$aContent[$_VARS['content_id']]['important']);
+				echo printFormSelect("Sonderoptionen", "hidden", $aDisplayOptions, $aContent[$_VARS['content_id']]['hidden']);
+				echo printFormText("Parameter", "input_addon", $aContent[$_VARS['content_id']]['input_addon']);
+				echo printFormText("CSS", "input_css", $aContent[$_VARS['content_id']]['input_css']);
+				echo printFormText("Gewichtung", "weighting", $aContent[$_VARS['content_id']]['weighting']);
+				echo '<tr '.(($bRouting)?'style="background-color: cornflowerblue;':'').'">
+					<th>Anzeigebedingung</th>
+					<td><input type="button" onclick="openRouting('.(int)$_VARS['poll_id'].', \'question\', '.(int)$_VARS['content_id'].'); return false;" value="bearbeiten" /> '.(($bRouting)?'Bedingung vorhanden':'').'</td>
+				</tr>';
+				echo printTableEnd();
+
+				echo '<h3 onclick="$(\'#additional\').toggle();" style="cursor:pointer;">Zusätzliche Einstellungen</h3>';
+				echo '<div id="additional" style="display:none;">';
+				echo printTableStart();
+				echo printFormTextarea("CSS-Style, Frage", "css", $aContent[$_VARS['content_id']]['css']);
+				echo printFormTextarea("CSS-Style, Formularelement", "css_input", $aContent[$_VARS['content_id']]['css_input']);
+				if($aContent[$_VARS['content_id']]['template'] == 'block_start') {
+					foreach((array)$aLanguages as $sCode) {
+						echo printFormHTMLarea("Alternative Blocküberschrift (".$sCode.")", $sCode."_block_head", $aContent[$_VARS['content_id']][$sCode.'_block_head']);
+					}
+				}
+				
+				echo printTableEnd();
+				echo '</div>';
+
+				if ($oQuestion->isOptionField()) {
+					
+?>
+
+			<h3>Optionen</h3>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th width="100">&nbsp;</th>
+					<? foreach ($aLanguages as $key => $val) { ?>
+					<th>Titel (<?=$val?>)</th>
+					<? } ?>
+					<th width="50">Wert</th>
+					<th width="80">Parameter</th>
+					<th width="120">CSS-Style</th>
+					<th width="60">&nbsp;</th>
+				</tr>
+<?
+					$j = 1;
+					foreach ((array)$aContent[$_VARS['content_id']]['data'] as $key => $val) {
+						$strParameter = htmlspecialchars($aContent[$_VARS['content_id']]['parameter'][$key]);
+?>
+				<tr>
+					<th>Wert <?=$j?></th>
+					<? foreach ($aLanguages as $subkey => $subval) { ?>
+					<td><input type="text" id="<?=$j?>_value_<?=$subval?>" name="data[<?=$j?>][<?=$subval?>]" class="txt" style="width: 150px;" value="<?=Util::getEscapedString($val[$subval])?>"></td>
+					<? } ?>
+					<td><input type="text" id="<?=$j?>_value" name="data[<?=$j?>][value]" class="txt" style="width: 50px;" value="<?=Util::getEscapedString($val['value'])?>"></td>
+					<td><input type="text" id="<?=$j?>_parameter" name="parameter[<?=$j?>]" class="txt" style="width: 80px;" value="<?=Util::getEscapedString($strParameter)?>"></td>
+					<td>
+						<input type="text" id="<?=$j?>_css" name="css_value[<?=$j?>]" class="txt" style="width: 120px;" value="<?=Util::getEscapedString($aContent[$_VARS['content_id']]['css_value'][$key])?>">
+					</td>
+					<td>
+						<input type="hidden" id="<?=$j?>_position" name="data[<?=$j?>][position]" class="txt" style="width: 80px;" value="<?=($val['position'] != "") ? $val['position'] : $j?>">
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$_VARS['paragraph_id']?>&content_id=<?=$_VARS['content_id']?>&task=content&activity=shiftValueUp&element=<?=$j?>"><img src="/admin/media/sitemap_up.png" border="0"></a>
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$_VARS['paragraph_id']?>&content_id=<?=$_VARS['content_id']?>&task=content&activity=shiftValueDown&element=<?=($val['position'] != "") ? $val['position'] : $j?>"><img src="/admin/media/sitemap_down.png" border="0"></a>
+						<a href="#" onClick="<? foreach ($aLanguages as $subkey => $subval) { ?>document.getElementById('<?=$key?>_value_<?=$subval?>').value='';<? } ?>document.getElementById('<?=$key?>_value').value=''; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a>
+					</td>
+				</tr>
+<?
+						$j++;
+					}
+?>
+				<tr>
+					<th>Neuer Wert</th>
+					<? foreach ($aLanguages as $subkey => $subval) { ?>
+					<td><input type="text" name="data[<?=$j?>][<?=$subval?>]" class="txt" style="width: 150px;" value=""></td>
+					<? } ?>
+					<td><input type="text" name="data[<?=$j?>][value]" class="txt" style="width: 50px;" value="<?=$val['value']+1?>"></td>
+					<td><input type="text" name="parameter[<?=$j?>]" class="txt" style="width: 80px;" value=""></td>
+					<td>
+						<input type="text" name="css_value[<?=$j?>]" class="txt" style="width: 120px;" value="">
+					</td>
+					<td><input type="hidden" name="data[<?=$j?>][position]" class="txt" style="width: 80px;" value="<?=$j?>">&nbsp;</td>
+				</tr>
+			</table>
+			<? } elseif ($aContent[$_VARS['content_id']]['template'] == "reference") {
+					
+					echo printTableStart();
+
+					$aTables = array(0=>L10N::t("bitte auswählen...", 1));
+					$aItems = DB::listTables();
+					foreach((array)$aItems as $sTable) {
+						$aTables[$sTable] = $sTable;
+					}
+
+					echo printFormSelect("Datenbank", "data[db_table]", $aTables, $aContent[$_VARS['content_id']]['data']['db_table']);
+					if ($aContent[$_VARS['content_id']]['data']['db_table']) {
+
+						$rFields = DB::executeQuery("SHOW COLUMNS FROM ".$aContent[$_VARS['content_id']]['data']['db_table']);
+						$aFields[0] = "bitte auswählen...";
+						while ($aField = DB::getRow($rFields)) {
+							$aFields[$aField['Field']] = $aField['Field'];
+						}
+						echo printFormSelect("Wert", "data[db_field_value]", $aFields, $aContent[$_VARS['content_id']]['data']['db_field_value']);
+						echo printFormText("Bezeichnung", "data[db_field_text]", $aContent[$_VARS['content_id']]['data']['db_field_text']);
+
+					}
+					echo printFormTextarea("Query (WHERE id > 2 ORDER BY id)", "data[db_query]", $aContent[$_VARS['content_id']]['data']['db_query']);
+					echo printTableEnd();
+
+				} elseif ($oQuestion->isMatrix()) {
+
+					$aQuestionData = $oQuestion->getDataArray();
+
+					if(!isset($aQuestionData['questions'])) {
+						$aQuestionData['questions'] = array();
+					}
+					
+					array_push($aQuestionData['questions'], array('key'=>''));
+
+					if(!isset($aQuestionData['answer_groups'])) {
+						$aQuestionData['answer_groups'] = array();
+					}
+					
+					array_push($aQuestionData['answer_groups'], array('key'=>''));
+
+					$aMatrixTemplateSelect = array_intersect_key($aTemplateSelect, array("text"=>1, "select"=>1, "radio"=>1, "check"=>1));
+					
+					?>
+
+					<h3>Antwortmöglichkeiten</h3>
+
+					<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows" id="sortableAnswerGroups" style="position:static;">
+						<tr>
+							<th width="100">Fragetyp</th>
+							<? foreach ($aLanguages as $key => $val) { ?>
+							<th>Antwortgruppe (<?=$val?>)</th>
+							<? } ?>
+							<th width="80">Schlüssel</th>
+							<th width="80">Parameter</th>
+							<th width="120">CSS-Style</th>
+							<th width="80">Platzhalter</th>
+							<th width="80">Text rechts</th>
+						</tr>
+						
+		<?
+							$iInnerColgroup = count($aLanguages)+3;
+							foreach ((array)$aQuestionData['answer_groups'] as $iAnswerGroup => $aAnswerGroup) {
+		?>
+						<tbody class="answer-group-item">
+						<tr>
+							<th>
+								<select name="data[answer_groups][<?=$iAnswerGroup?>][type]" class="txt" style="width: 100px;">
+							<?
+							foreach($aMatrixTemplateSelect as $key => $val) {
+									echo "<option value=\"".$key."\" ".(($key == $aAnswerGroup['type'])?"selected":"").">".$val."</option>";
+							}
+							?>
+								</select>
+							</th>
+							<? foreach ($aLanguages as $subkey => $sLanguageIso) { ?>
+							<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][name_<?=$sLanguageIso?>]" class="txt" style="width: 150px;" value="<?=\Util::getEscapedString($aAnswerGroup['name_'.$sLanguageIso])?>"></td>
+							<? } ?>
+							<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][key]" class="txt" style="width: 70px;" value="<?=\Util::getEscapedString($aAnswerGroup['key'])?>"></td>
+							<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][parameter]" class="txt" style="width: 80px;" value="<?=\Util::getEscapedString($aAnswerGroup['parameter'])?>"></td>
+							<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][css_value]" class="txt" style="width: 120px;" value="<?=\Util::getEscapedString($aAnswerGroup['css_value'])?>"></td>
+							<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][placeholder]" class="txt" style="width: 80px;" value="<?=getEscapedString($aAnswerGroup['placeholder'])?>"></td>
+							<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][text_right]" class="txt" style="width: 80px;" value="<?=getEscapedString($aAnswerGroup['text_right'])?>"></td>
+						</tr>
+						<?
+						$bAnswerGroupOptionField = \Poll\Entity\Question::checkOptionField($aAnswerGroup['type']);
+						if($bAnswerGroupOptionField === true) {
+						?>
+						<tr>
+							<th>&nbsp;</th>
+							<td colspan="<?=$iInnerColgroup?>">
+								
+								
+								
+								<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+									<tr>
+										<? foreach ($aLanguages as $key => $val) { ?>
+										<th>Option (<?=$val?>)</th>
+										<? } ?>
+										<th width="50">Wert</th>
+										<th width="80">Parameter</th>
+										<th width="120">CSS-Style</th>
+									</tr>
+									<tbody id="sortableOptions" style="position:static;">
+					<?
+					
+					
+					if(!isset($aAnswerGroup['options'])) {
+						$aAnswerGroup['options'] = array();
+					}
+					
+					array_push($aAnswerGroup['options'], array('value'=>''));
+
+										$iAnswerGroupOption = 1;
+										foreach ((array)$aAnswerGroup['options'] as $iAnswerGroupOption => $aAnswerGroupOption) {
+											$strParameter = htmlspecialchars($aContent[$_VARS['content_id']]['parameter'][$key]);
+					?>
+									<tr>
+										<? foreach ($aLanguages as $subkey => $sLanguageIso) { ?>
+										<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][options][<?=$iAnswerGroupOption?>][name_<?=$sLanguageIso?>]" class="txt" style="width: 150px;" value="<?=\Util::getEscapedString($aAnswerGroupOption['name_'.$sLanguageIso])?>"></td>
+										<? } ?>
+										<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][options][<?=$iAnswerGroupOption?>][value]" class="txt" style="width: 50px;" value="<?=\Util::getEscapedString($aAnswerGroupOption['value'])?>"></td>
+										<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][options][<?=$iAnswerGroupOption?>][parameter]" class="txt" style="width: 80px;" value="<?=\Util::getEscapedString($aAnswerGroupOption['parameter'])?>"></td>
+										<td><input type="text" name="data[answer_groups][<?=$iAnswerGroup?>][options][<?=$iAnswerGroupOption?>][css_value]" class="txt" style="width: 120px;" value="<?=\Util::getEscapedString($aAnswerGroupOption['css_value'])?>"></td>
+									</tr>
+					<?
+											$j++;
+										}
+					?>
+									</tbody>
+								</table>
+								
+								
+								
+							</td>
+						</tr>
+		<?
+						}
+								$j++;
+								?>
+						</tbody>
+									<?
+							}
+		?>
+						
+					</table>
+					
+					
+					<h3>Fragen</h3>
+
+					<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+						<tr>
+							<? foreach ($aLanguages as $key => $iLanguageIso) { ?>
+							<th>Titel (<?=$iLanguageIso?>)</th>
+							<? } ?>
+							<th width="50">Schlüssel</th>
+							<th width="80">Parameter</th>
+							<th width="120">CSS-Style</th>
+						</tr>
+						<tbody id="sortableQuestions" style="position:static;">
+		<?
+							$j = 1;
+							foreach ((array)$aQuestionData['questions'] as $iQuestion => $aQuestion) {
+
+		?>
+						<tr>
+							<? foreach ($aLanguages as $subkey => $iLanguageIso) { ?>
+							<td><input type="text" name="data[questions][<?=$iQuestion?>][name_<?=$iLanguageIso?>]" class="txt" style="width: 150px;" value="<?=\Util::getEscapedString($aQuestion['name_'.$iLanguageIso])?>"></td>
+							<? } ?>
+							<td><input type="text" name="data[questions][<?=$iQuestion?>][key]" class="txt" style="width: 50px;" value="<?=\Util::getEscapedString($aQuestion['key'])?>"></td>
+							<td><input type="text" name="data[questions][<?=$iQuestion?>][parameter]" class="txt" style="width: 80px;" value="<?=\Util::getEscapedString($aQuestion['parameter'])?>"></td>
+							<td><input type="text" name="data[questions][<?=$iQuestion?>][css_value]" class="txt" style="width: 120px;" value="<?=\Util::getEscapedString($aQuestion['css_value'])?>"></td>
+						</tr>
+		<?
+								$j++;
+							}
+		?>
+						</tbody>
+					</table>
+					
+					
+					
+					
+					<?
+				} elseif($oQuestion->isStars()) {
+				
+					?><h3>Sterne</h3><?
+										
+					echo printTableStart();
+					echo printFormText("Stern (gefüllt)", "data[star_full]", $aContent[$_VARS['content_id']]['data']['star_full']);
+					echo printFormText("Stern (leer)", "data[star_empty]", $aContent[$_VARS['content_id']]['data']['star_empty']);
+					echo printTableEnd();
+					
+					?>
+								<h3>Optionen</h3>
+								<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+                                    <thead>
+                                        <tr>
+                                            <th width="100">&nbsp;</th>
+                                            <? foreach ($aLanguages as $key => $val) { ?>
+                                            <th>Titel (<?=$val?>)</th>
+                                            <? } ?>
+                                            <th width="50">Wert</th>
+                                            <th width="80">Parameter</th>
+                                            <th width="120">CSS-Style</th>
+                                            <th width="60">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sortableContentValues" style="position:static;">
+					<?
+
+										$j = 1;
+										foreach ((array)$aContent[$_VARS['content_id']]['data']['options'] as $key => $val) {
+											$strParameter = htmlspecialchars($aContent[$_VARS['content_id']]['parameter'][$key]);
+					?>
+                                        <tr class="sortable">
+                                            <th>Wert <?=$j?></th>
+                                            <? foreach ($aLanguages as $subkey => $subval) { ?>
+                                            <td><input type="text" id="<?=$j?>_value_<?=$subval?>" name="data[options][<?=$j?>][<?=$subval?>]" class="txt" style="width: 150px;" value="<?=Util::getEscapedString($val[$subval])?>"></td>
+                                            <? } ?>
+                                            <td><input type="text" id="<?=$j?>_value" name="data[options][<?=$j?>][value]" class="txt" style="width: 50px;" value="<?=Util::getEscapedString($val['value'])?>"></td>
+                                            <td><input type="text" id="<?=$j?>_parameter" name="parameter[<?=$j?>]" class="txt" style="width: 80px;" value="<?=Util::getEscapedString($strParameter)?>"></td>
+                                            <td>
+                                                <input type="text" id="<?=$j?>_css" name="css_value[<?=$j?>]" class="txt" style="width: 120px;" value="<?=Util::getEscapedString($aContent[$_VARS['content_id']]['css_value'][$key])?>">
+                                            </td>
+                                            <td>
+                                                <input type="hidden" id="<?=$j?>_position" name="data[options][<?=$j?>][position]" class="txt" style="width: 80px;" value="<?=($val['position'] != "") ? $val['position'] : $j?>">
+                                                <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$_VARS['paragraph_id']?>&content_id=<?=$_VARS['content_id']?>&task=content&activity=shiftValueUp&element=<?=$j?>"><img src="/admin/media/sitemap_up.png" border="0"></a>
+                                                <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$_VARS['paragraph_id']?>&content_id=<?=$_VARS['content_id']?>&task=content&activity=shiftValueDown&element=<?=($val['position'] != "") ? $val['position'] : $j?>"><img src="/admin/media/sitemap_down.png" border="0"></a>
+                                                <a href="#" onClick="<? foreach ($aLanguages as $subkey => $subval) { ?>document.getElementById('<?=$key?>_value_<?=$subval?>').value='';<? } ?>document.getElementById('<?=$key?>_value').value=''; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a>
+                                            </td>
+                                        </tr>
+                        <?
+                                                $j++;
+                                            }
+                        ?>
+                                        <tr>
+                                            <th>Neuer Wert</th>
+                                            <? foreach ($aLanguages as $subkey => $subval) { ?>
+                                            <td><input type="text" name="data[options][<?=$j?>][<?=$subval?>]" class="txt" style="width: 150px;" value=""></td>
+                                            <? } ?>
+                                            <td><input type="text" name="data[options][<?=$j?>][value]" class="txt" style="width: 50px;" value="<?=$val['value']+1?>"></td>
+                                            <td><input type="text" name="parameter[<?=$j?>]" class="txt" style="width: 80px;" value=""></td>
+                                            <td>
+                                                <input type="text" name="css_value[<?=$j?>]" class="txt" style="width: 120px;" value="">
+                                            </td>
+                                            <td><input type="hidden" name="data[options][<?=$j?>][position]" class="txt" style="width: 80px;" value="<?=$j?>">&nbsp;</td>
+                                        </tr>
+                                    </tbody>
+								</table>
+					<?
+				
+				} 
+			?>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<? if ($_VARS['create'] != 1) { ?>
+					<td width="1"><?=printSubmit("Speichern und Eintrag wieder öffnen")?></td>
+					<? } ?>
+					<? if ($aContent[$_VARS['content_id']]['template'] != "template") { ?>
+					<td width="1"><?=printSubmit("Speichern und zurück zur Liste", "onclick=\"this.form.activity.value='saveContent'\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.activity.value=''; this.form.create.value='';\"")?></td>
+					<? } else { ?>
+					<? } ?>
+				</tr>
+			</table>
+			</form>
+			
+			
+			<script type="text/javascript">
+				
+				var fixHelper = function(e, ui) {
+					ui.children().each(function() {
+						$(this).width($(this).width());
+					});
+					return ui;
+				};
+				
+				$(function() {
+					$("#sortableOptions").sortable({
+						helper: fixHelper,
+						axis: "y"
+					});
+                    $("#sortableContentValues").sortable({
+                        helper: fixHelper,
+                        axis: "y",
+                        items: "> tr.sortable",
+                        update: function( event, ui ) {
+                            $.ajax({
+                                type: "POST",
+                                dataType: 'json',
+                                url: '/admin/extensions/poll.html?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=(int)$_VARS['content_id']?>&task=content&activity=sortContentValues',
+                                data: $( "#sortableContentValues" ).sortable( "serialize"),
+                                success: function (data) {
+                                    if (data.new_sort) {
+                                        data.new_sort.forEach(function (row) {
+                                            $('#'+row.row+'_position').val(row.position);
+                                        })
+                                    }
+                                }
+                            });
+                        }
+                    });
+					$("#sortableAnswerGroups").sortable({
+						helper: fixHelper,
+						axis: "y",
+						items: "tbody.answer-group-item"
+					});
+					$("#sortableQuestions").sortable({
+						helper: fixHelper,
+						axis: "y"
+					});
+				});
+	
+			</script>
+			
+<?
+	// ROUTING: NEU & EINSTELLUNGEN
+	} elseif ($_VARS['task'] == "content" and $_VARS['content_id'] != "" and ($_VARS['activity'] == "editRouting" or $_VARS['activity'] == "saveRouting")) {
+?>
+			<h2><?=$oPoll->name?></h2>
+			<h3><?=($_VARS['create'] == 1)?$aParagraphsList[$_VARS['paragraph_id']]." &raquo; Neues Frage-Element":$aParagraphsList[$aContent[$_VARS['content_id']]['idParagraph']]." &raquo; ".$aContent[$_VARS['content_id']]['position'].". ".$aContent[$_VARS['content_id']][$page_data['language'].'_title']?></h3>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=$_VARS['poll_id']?>">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<input type="hidden" name="task" value="content">
+			<input type="hidden" name="activity" value="saveRouting">
+			<br>
+			<? $no_edit = array("select", "list", "radio", "check"); ?>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+<?
+		$j = 1;
+		foreach ((array)$aContent[$_VARS['content_id']]['data'] as $key => $val) {
+?>
+				<tr>
+					<th width="40%"><?=$val[$page_data['language']]?></th>
+					<td width="60%">
+						<select name="route[<?=$key?>]" class="txt">
+							<option value="">_linear</option>
+						<? for ($i = 1; $i <= $sPages; $i++) { ?>
+							<option value="<?=$i?>" <? if ($aContent[$_VARS['content_id']]['route'][$key] == $i) echo "selected"; ?>>Seite <?=$i?></option>
+						<? } ?>
+						</select>
+					</td>
+					
+					
+				</tr>
+<?
+			$j++;
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("speichern")?></td>
+					<td width="1"><?=printSubmit("löschen", "onclick=\"this.form.task.value='pages'; this.form.activity.value='deleteRouting';\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.task.value='pages'; this.form.activity.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// BLOCKVERWALTUNG: NEU & EINSTELLUNGEN
+	} elseif ($_VARS['task'] == "paragraphs" and (($_VARS['paragraph_id'] != "" and $_VARS['activity'] == "editParagraph") or $_VARS['create'] == 1)) {
+		if ($_VARS['create'] == 1) unset($_VARS['paragraph_id']);
+?>
+			<h2><?=$oPoll->name?></h2>
+			<h3><?=($_VARS['create'] == 1)?"Neuer Block":$aParagraphs[$_VARS['paragraph_id']][$page_data['language'].'_title']." &raquo; Einstellungen"?></h3>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=(int)$_VARS['poll_id']?>" />
+			<input type="hidden" name="paragraph_id" value="<?=$_VARS['paragraph_id']?>" />
+			<input type="hidden" name="task" value="paragraphs" />
+			<input type="hidden" name="activity" value="saveParagraph" />
+			<input type="hidden" name="create" value="<?=($_VARS['create'])?>" />
+			<?=printTableStart()?>
+				<? foreach ($aLanguages as $key => $val) { ?>
+				<?=printFormText("Titel (".$val.")", $val."_title", $aParagraphs[$_VARS['paragraph_id']][$val.'_title'])?>
+				<?=printFormHTMLarea("Beschreibung (".$val.")", $val."_description", $aParagraphs[$_VARS['paragraph_id']][$val.'_description'])?>
+				<? } ?>
+				<?=printFormTextarea("CSS-Style", "css", $aParagraphs[$_VARS['paragraph_id']]['css'])?>
+				<?=printFormText("Label Breite", "label_width", $aParagraphs[$_VARS['paragraph_id']]['label_width'])?>
+				<?=printFormSelect("Fragen-Rotation", "sorting", ['default'=>'Standard', 'rotation'=>'Rotation'], $aParagraphs[$_VARS['paragraph_id']]['sorting'])?>
+			<?=printTableEnd()?>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("speichern")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.activity.value=''; this.form.create.value=''; this.form.paragraph_id.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// TEMPLATES: NEU & EINSTELLUNGEN
+	} elseif (
+		$_VARS['task'] == "templates" and
+		(
+			(
+				$_VARS['template_id'] != "" and
+				$_VARS['activity'] == "editTemplate"
+			) or
+			$_VARS['create'] == 1 or
+			$_VARS['activity'] == "updateTemplate"
+		)
+	) {
+		if ($_VARS['create'] == 1) {
+			unset($_VARS['template_id']);
+		}
+?>
+			<h2><?=($_VARS['create'] == 1)?"Neuer Fragetyp":$aTemplate[$_VARS['template_id']]['title']." &raquo; Einstellungen"?></h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="template_id" value="<?=$_VARS['template_id']?>">
+			<input type="hidden" name="task" value="templates">
+			<input type="hidden" name="activity" value="updateTemplate">
+			<input type="hidden" name="create" value="<?=($_VARS['create'])?>">
+			<?=printTableStart()?>
+				<?=printFormText("Name", "title", $aTemplate[$_VARS['template_id']]['title'])?>
+				<?=printFormSelect("Typ", "type", $aTemplateTypes, $aTemplate[$_VARS['template_id']]['type'])?>
+			<?=printTableEnd()?>
+			<br>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th width="100">&nbsp;</th>
+					<? foreach ($aLanguages as $key => $val) { ?>
+					<th>Titel (<?=$val?>)</th>
+					<? } ?>
+					<th width="80">Wert</th>
+					<th width="20">&nbsp;</th>
+				</tr>
+<?
+		$j = 1;
+		foreach ((array)$aTemplate[$_VARS['template_id']]['data'] as $key => $val) {
+?>
+				<tr>
+					<th width="100">Wert <?=$j?></th>
+					<? foreach ($aLanguages as $subkey => $subval) { ?>
+					<td><input type="text" id="<?=$key?>_value_<?=$subval?>" name="data[<?=$key?>][<?=$subval?>]" class="txt" style="width: 150px;" value="<?=$val[$subval]?>"></td>
+					<? } ?>
+					<td width="80"><input type="text" id="<?=$key?>_value" name="data[<?=$j?>][value]" class="txt" style="width: 80px;" value="<?=$val['value']?>"></td>
+					<td width="20"><a href="#" onClick="<? foreach ($aLanguages as $subkey => $subval) { ?>document.getElementById('<?=$key?>_value_<?=$subval?>').value='';<? } ?>document.getElementById('<?=$key?>_value').value=''; submit();"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+				</tr>
+<?
+			$j++;
+		}
+?>
+				<tr>
+					<th width="100">Neuer Wert</th>
+					<? foreach ($aLanguages as $subkey => $subval) { ?>
+					<td><input type="text" name="data[<?=$j?>][<?=$subval?>]" class="txt" style="width: 150px;" value=""></td>
+					<? } ?>
+					<td width="80"><input type="text" name="data[<?=$j?>][value]" class="txt" style="width: 80px;" value="<?=$val['value']+1?>"></td>
+					<td width="20">&nbsp;</td>
+				</tr>
+			</table>
+
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Speichern und Eintrag wieder öffnen")?></td>
+					<td width="1"><?=printSubmit("Speichern und zurück zur Liste", "onclick=\"this.form.activity.value='saveTemplate';\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.activity.value=''; this.form.create.value=''; this.form.template_id.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// UMFRAGE: NEU & EINSTELLUNGEN
+	} elseif (
+		$_VARS['task'] == "poll" &&
+		(
+			(
+				$_VARS['poll_id'] != "" &&
+				$_VARS['activity'] == "editPoll"
+			) ||
+			$_VARS['create'] == 1
+		)
+	) {
+
+		if ($_VARS['create'] == 1) {
+			unset($_VARS['poll_id']);
+			unset($oPoll);
+		}
+
+		if($_VARS['poll_id'] > 0) {
+			$aPollDetails = DB::getRow(DB::executeQuery("SELECT * FROM poll_init WHERE id = ".(int)$_VARS['poll_id'].""));
+			$aPollDetails['languages'] = json_decode($aPollDetails['languages'], true);
+		}
+
+		if(empty($aPollDetails['languages'])) {
+			$aPollDetails['languages'] = array_keys($aLanguageSelect);
+		}
+
+?>
+			<h2><?=$oPoll->name?></h2>
+			<h3><?=($_VARS['create'] == 1)?"Neue Umfrage":"Einstellungen"?></h3>
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=($_VARS['create'] == 1)?"":$_VARS['poll_id']?>">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="activity" value="savePoll">
+			<input type="hidden" name="create" value="<?=($_VARS['create'])?>">
+			<?=printTableStart()?>
+				<?=printFormText("Name", "name", $aPoll[$_VARS['poll_id']])?>
+				<?=printFormMultiSelect('Sprachen', 'languages[]', $aLanguageSelect, $aPollDetails['languages'], 'size="4"')?>
+				<?=printFormSelect("Kundendatenbank", "connect_customer", (array("0"=>"Nein") + CustomerDb\Helper\Functions::getCustomerTables()), $aPollDetails['connect_customer'])?>
+				<?=printFormText("URL", "url", $aPollDetails['url'])?>
+			<?php
+			
+			$bCompleteCondition = false;
+			$sCompleteCondition = $oPoll->complete_condition;
+			if(!empty($sCompleteCondition)) {
+				$bCompleteCondition = true;
+			}
+			
+			echo '<tr '.(($bCompleteCondition)?'style="background-color: cornflowerblue;':'').'">
+					<th>Abschlussbedingung</th>
+					<td><input type="button" onclick="openRouting('.(int)$_VARS['poll_id'].', \'poll\'); return false;" value="bearbeiten" /> '.(($bCompleteCondition)?'Bedingung vorhanden':'').'</td>
+				</tr>';
+			?>
+			<?=printTableEnd()?>
+<?
+			if ($_VARS['create'] != "1") {
+			
+				foreach((array)$aPollDetails['languages'] as $key => $val) {
+?>
+					<h2>Bezeichnungen (<?=$aLanguageSelect[$val]?>)</h2>
+<?
+					echo printTableStart();
+					$aPollDetails[$val.'_data'] = Util::decodeSerializeOrJson($aPollDetails[$val.'_data']);
+					foreach ((array)$aPollConfig as $subkey => $subval) {
+						echo printFormText($subval, $val."_data[".$subkey."]", $aPollDetails[$val.'_data'][$subkey]);
+					}
+					echo printTableEnd();
+				}
+			}
+?>
+					
+			<br>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("speichern", "onclick=\"this.form.task.value='poll'\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.poll_id.value='';this.form.task.value='';this.form.activity.value='';this.form.create.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// AUSWERTUNG: �BERSICHT
+	} elseif ($_VARS['task'] == "summary" and $_VARS['activity'] == "") {
+		// Farben für grafische Übersicht
+		$aColors = array("0" => "CCFF33", "1" => "66FF00", "2" => "FFCC00", "3" => "FF9900", "4" => "FF6600", "5" => "CC3300", "6" => "CC3399");
+		// Anzahl der Teilnehmer unter Berücksichtigung der Loops
+		unset($aPeopleCount);
+		$strQuery = "SELECT `sid`, MAX(`loop`) `loop` FROM `poll_results` WHERE `idPoll` = '".$_VARS['poll_id']."' GROUP BY `sid` ORDER BY `loop` DESC";
+		$rPeople = DB::executeQuery($strQuery);
+		while ($aPeople = DB::getRow($rPeople)) {
+			if($aPeople['loop'] == 0) {
+				$aPeople['loop'] = 1;
+			}
+			$aPeopleCount += $aPeople['loop'];
+		}
+		$strQuery = "SELECT * FROM `poll_report_".(int)$_VARS['poll_id']."` WHERE `idPoll` = '".$_VARS['poll_id']."' ORDER BY `id` DESC";
+		$rResult = DB::executeQuery($strQuery);
+		while ($aResult = DB::getRow($rResult)) {
+
+			// Wenn eine Subselektion Übergeben wurde, diese berücksichtigen
+			if (is_array($_SESSION['subselect_array'][$_VARS['subselect_id']]) and !in_array($aResult['id'], $_SESSION['subselect_array'][$_VARS['subselect_id']])) { 
+				continue;
+			}	
+			foreach ($aResult as $key => $result) {
+				if (substr($key, 0, 2) == "f_") {
+					if ($result != "") {
+						if (strrpos($result, "|")) {
+							$aResultsStats[(substr($key, 2))][$aResult['id']] = explode("|", $result);
+						} else {
+							$aResultsStats[(substr($key, 2))][$aResult['id']] = array($result);
+						}
+					}
+				}
+			}
+		}
+
+		// Ungewüschte Einträge filtern
+		foreach ($aParagraphs as $id => $paragraph) {
+			if ($paragraph['isPage'] == 1) {
+				unset($aParagraphs[$id]);
+			}
+		}
+?>
+			<h2>Auswertung</h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=$_VARS['poll_id']?>">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="visual" value="0">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tr>
+					<td><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&task=summary&visual=<?=abs($_VARS['visual'] - 1)?>"><?if ($_VARS['visual'] == 0) echo "Zur grafischen Ansicht wechseln"; else echo "Zur numerischen Ansicht wechseln";?></a></td>
+					<td align="right"><? if (is_array($_SESSION['subselect_array'][$_VARS['subselect_id']])) { ?><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&task=summary&session=destroy">Filter entfernen</a><? } ?></td>
+				</tr>
+			</table>
+			<br/>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th <? if ($_VARS['visual'] == 1) { ?>width="20%"<? } ?>>Frage</th>
+					<th <? if ($_VARS['visual'] == 0) { ?>width="80"<? } ?>>Ergebnis</th>
+					<th width="80">Frage / Ges</th>
+				</tr>
+<?
+		$j = 1;
+		foreach ((array)$aParagraphs as $pkey => $pval) {
+
+?>
+				<tr>
+					<? if ($aContentCount[$pkey] == "") { ?>
+					<th colspan="3"><?=$pval[$page_data['language'].'_title']?> (0)</th>
+					<? } else { ?>
+					<th colspan="3"><?=$pval[$page_data['language'].'_title']?> (<?=$aContentCount[$pkey]?>)</th>
+					<? } ?>
+				</tr>
+				
+<?
+				foreach ((array)$aContentParagraph[$pkey] as $ckey => $cval) {
+					unset($aResult); unset($iRes); unset($iAll); unset($sText);
+					foreach ((array)$cval['data'] as $dkey => $dval) {
+						$aResult[$dval['value']] = 0;
+						$iAll++;
+					}
+
+					foreach ((array)$aResultsStats[$ckey] as $skey => $sval) {
+						if (is_array($sval)) {
+							foreach ($sval as $subval) {
+								if ($subval != "") {
+									$aResult[$subval]++;
+									$iRes++;
+								}
+							}
+						}
+					}
+
+					/*
+					 * STATISTIK
+					 */
+					unset($aProbability);
+					unset($aElements);
+					unset($mathEstimation);
+					unset($mathVariance);
+					unset($mathDeviation);
+					unset($mathElements);
+					
+					
+					// Wahrscheinlichkeit
+					foreach ((array)$aResult as $rrkey => $rrval) {
+						if ($rrkey != "") {
+							$aElements[$rrkey] = $rrval;
+							$mathElements += $rrval;	
+						}
+					}
+					foreach ((array)$aElements as $eekey => $eeval) {
+						if ($mathElements == 0) {
+							$aProbability[$eekey] = 0;
+						} else {
+							$aProbability[$eekey] = ($eeval / $mathElements);
+						}
+						
+					}
+
+					// Mittelwert
+					foreach ((array)$aProbability as $key => $result) {
+						$mathEstimation += $key * $result;
+					}
+					// Varianz
+					foreach ((array)$aProbability as $key => $result) {
+						$mathVariance += pow(($key - $mathEstimation), 2) * $result;
+					}
+					
+					// Standardabweichung
+					$mathDeviation = sqrt($mathVariance);		
+					
+					// Formatierung
+					$mathEstimation	= number_format($mathEstimation, 4);
+					$mathVariance	= number_format($mathVariance, 4);
+					$mathDeviation	= number_format($mathDeviation, 4);
+					/*
+					 * 
+					 */
+?>
+				<tr>
+					<td width="20%"><?=$cval[$page_data['language'].'_title']?>&nbsp;<?=$aImportant[$cval['important']]?></td>
+					<td>
+<?
+					if ($_VARS['visual'] == 0) {
+?>
+						<table cellspacing="0" cellpadding="0" border="0" width="100%">
+<?
+						if ($cval['template'] != "text" and $cval['template'] != "textarea") {
+?>
+							<tr>
+<?
+							foreach ((array)$aResult as $rkey => $rval) {
+								if ($iAll <= 0) $iAll = 1;
+								if ($iRes <= 0) $iRes = 1;
+								
+								if ($cval['data'][$rkey][$page_data['language']] != "") {
+?>
+								<td style="border: 0px" width="<?=floor(100 / $iAll)?>%"><?=($cval['data'][$rkey][$page_data['language']])?> &nbsp;</td>
+<?
+								}
+							}
+?>
+								<td style="border: 0px" rowspan="2" align="right"><a href="javascript:" onclick="changeImage('arrow_<?=$cval['id']?>'); displayDiv('stats_<?=$cval['id']?>'); return false;"><img id="arrow_<?=$cval['id']?>" src="../media/2downarrow.gif" border="0"></a></td>
+							</tr>
+<?
+						}
+?>
+							<tr>
+<?
+						if ($cval['template'] == "text" or $cval['template'] == "textarea") {
+?>
+								<td style="border: 0px" width="100%"><a href="javascript:void(0);" onclick="window.open('<?=$_SERVER['PHP_SELF']?>?task=summary&subselect_id=<?=$_VARS['subselect_id']?>&activity=list&poll_id=<?=$_VARS['poll_id']?>&question_id=<?=$cval['id']?>', 'poll_popup', 'status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550'); return false;">Ergebnisse anzeigen</a></td>
+<?
+						} else {
+							foreach ((array)$aResult as $rkey => $rval) {
+								if ($cval['data'][$rkey][$page_data['language']] != "") {
+?>
+								<td style="border: 0px" width="<?=floor(100 / $iAll)?>%"><?=$rval?> <span style="color: #999999; font-size: 9px;">(<?=number_format((($rval / $iRes) * 100), 2, ",", ".")?> %)</span></td>
+<?
+								}
+							}
+						}
+?>
+							</tr>
+							<tr>
+								<td colspan="100" style="border: none;"><div id="stats_<?=$cval['id']?>" style="display:none">
+									<table cellspacing="0" cellpadding="0" border="0" style="border: none; border-top: 1px solid #999999; margin-top: 5px;" width="100%">
+										<tr>
+											<td width="50%" style="border: none; padding-top: 5px; padding-bottom: 5px;">Mittelwert</td>
+											<td width="10%" style="border: none; padding-top: 5px; padding-bottom: 5px;" align="right">m&nbsp;</td>
+											<td width="40%" style="border: none; padding-top: 5px; padding-bottom: 5px;">= <?=$mathEstimation?></td>
+										</tr>
+										<tr>
+											<td style="border: none; padding-bottom: 5px;">Varianz</td>
+											<td style="border: none; padding-bottom: 5px;" align="right">V(X)&nbsp;</td>
+											<td style="border: none; padding-bottom: 5px;">= <?=$mathVariance?></td>
+										</tr>
+										<tr>
+											<td style="border: none; padding-bottom: 5px;">Standardabweichung</td>
+											<td style="border: none; padding-bottom: 5px;" align="right">&sigma;&nbsp;</td>
+											<td style="border: none; padding-bottom: 5px;">= <?=$mathDeviation?></td>
+										</tr>
+									</table>
+								</div></td>
+							</tr>
+						</table>
+<?
+					} else {
+?>
+						<table cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 0px">
+<?
+						if ($cval['template'] != "text" and $cval['template'] != "textarea") {
+?>
+							
+<?
+							$c = 0;
+							foreach ((array)$aResult as $rkey => $rval) {
+								if ($iAll <= 0) $iAll = 1;
+								if ($iRes <= 0) $iRes = 1;
+								
+								if ($cval['data'][$rkey][$page_data['language']] != "") {
+?>							<tr>
+								<td style="border: 0px; padding: 5px;" width="200" align="right"><?=($cval['data'][$rkey][$page_data['language']])?>&nbsp;</td>
+								<td style="border: 0px">
+									<table cellspacing="0" cellpadding="0" border="0" style="border: 0px; margin-top: 2px; margin-bottom: 2px;" bgcolor="#<?=$aColors[($c%(count($aColors)-1))]?>" width="<?=floor(($rval / $iRes) * 100)?>%">
+										<tr>
+											<td style="border: 0px; font-size: 9px; padding: 2px;"><?=number_format((($rval / $iRes) * 100), 0, ",", ".")?>%</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+<?
+								$c++;
+								}
+							}
+?>
+							
+							<tr>
+<?
+					
+						} elseif ($cval['template'] == "text" or $cval['template'] == "textarea") {
+?>
+							<tr>
+								<td style="border: 0px"><a href="javascript:void(0);" onclick="window.open('<?=$_SERVER['PHP_SELF']?>?task=summary&subselect_id=<?=$_VARS['subselect_id']?>&activity=list&poll_id=<?=$_VARS['poll_id']?>&question_id=<?=$cval['id']?>', 'poll_popup', 'status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');">Ergebnisse anzeigen</a></td>
+							</tr>
+<?
+						}
+?>
+						</table>
+<?
+					}
+?>
+					</td>
+					<td>
+						<?=$iRes?> / <?=$aPeopleCount?>
+					</td>
+				</tr>
+<?
+				}
+			$j++;
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Zurück")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// AUSWERTUNG: POPUP
+	} elseif ($_VARS['task'] == "summary" and $_VARS['activity'] == "list") {
+		$rResult = DB::executeQuery("SELECT r.id, r.idReport, r.ip, r.sid, r.idUser, r.idTable, r.data, UNIX_TIMESTAMP(r.created) created, q.idParagraph FROM poll_results r, poll_questions q WHERE r.idPoll = '".$_VARS['poll_id']."' AND r.idQuestion = '".$_VARS['question_id']."' AND q.id = r.idQuestion ORDER BY id DESC");
+		while ($aResult = DB::getRow($rResult)) {
+			// Wenn eine Subselektion übergeben wurde, diese berücksichtigen
+			if (is_array($_SESSION['subselect_array'][$_VARS['subselect_id']]) and !in_array($aResult['idReport'], $_SESSION['subselect_array'][$_VARS['subselect_id']])) { 
+				continue;
+			}	
+			
+			$aResults[$aResult['sid']] = $aResult;
+			$sParagraph = $aResult['idParagraph'];
+			if ($aResult['idTable'] > 0) {
+				$rNickname = DB::getRow(DB::executeQuery("SELECT nickname FROM customer_db_".$aResult['idTable']." WHERE id = ".$aResult['idUser']));
+				$aResults[$aResult['sid']]['nickname'] = $rNickname['nickname'];
+			} else {
+				$aResults[$aResult['sid']]['nickname'] = $aResult['ip'];
+			}
+		}
+?>
+			<h2>Ergebnisse für <?=$aContentParagraph[$sParagraph][$_VARS['question_id']][$page_data['language'].'_title']?></h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=($_VARS['create'] == 1)?"":$_VARS['poll_id']?>">
+			<input type="hidden" name="task" value="summary">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th>User</th>
+					<th>Zeitstempel</th>
+					<th>Ergebnisse</th>
+				</tr>
+<?
+		foreach ((array)$aResults as $rkey => $rval) {
+?>
+				<tr>
+					<td width="100"><?=$rval['nickname']?>&nbsp;</td>
+					<td width="140"><?=strftime("%x %X", $rval['created'])?></td>
+					<td><?=$rval['data']?>&nbsp;</td>
+				</tr>
+<?
+		}
+?>
+			</table>
+			</form>
+			<p align="right"><button onclick="window.close();" class="btn">Fenster schließen</button></p>
+<?
+	// INBOX: CSV EXPORT
+	} elseif ($_VARS['task'] == "inbox" and $_VARS['activity'] == "export") {
+
+		if ($_VARS['export'] == "1") {
+
+			$bUseUtf8 = false;
+			if($_VARS['csv'] == ',+UTF8') {
+				$_VARS['csv'] = ',';
+				$bUseUtf8 = true;
+			}
+
+			$bHideIps = false;
+			if($_VARS['hide_ips'] == '1') {
+				$bHideIps = true;
+			}
+
+			$sFile = $oPoll->exportResults(
+				$page_data['language'],
+				$_VARS['csv'],
+				$_VARS['paragraphs'],
+				$_VARS['empty'],
+				$_VARS['split'],
+				$bUseUtf8,
+				$bHideIps
+			);
+
+			while(ob_get_level() > 0) { ob_end_clean(); }
+			header('Content-Disposition: attachment; filename='.basename($sFile));
+			header('Content-Type: text/csv');
+			header_remove('Content-Encoding');
+			echo file_get_contents(\Util::getDocumentRoot().$sFile);
+			exit;
+
+		}
+?>
+			<h2>CSV Export</h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=($_VARS['create'] == 1)?"":$_VARS['poll_id']?>">
+			<input type="hidden" name="task" value="inbox">
+			<input type="hidden" name="activity" value="export">
+			<input type="hidden" name="export" value="1">
+				<?=printTableStart()?>
+					<?=printFormSelect("Excel-Ausgabe","csv", $aFormCsv, ";", "style=\"width: 300px;\"")?>
+					<?=printFormCheckbox("Anzeigewerte verwenden","values", 1, 1)?>
+					<?=printFormCheckbox("Paragraphen einbinden","paragraphs", 1, 0)?>
+					<?=printFormCheckbox("Multiple-Choice auftrennen","split", 1, 0)?>
+					<?=printFormCheckbox("IP-Adressen nicht exportieren","hide_ips", 1, 0)?>
+					<?=printFormText("Leere Felder auffüllen mit","empty", $_VARS['empty'])?>
+				<?=printTableEnd()?>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("exportieren")?></td>
+				</tr>
+			</table>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.activity.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<? 
+	// INBOX: �BERSICHT
+	} elseif (
+		$_VARS['task'] == "inbox" && 
+		$_VARS['report_id'] == ""
+	) {
+
+		$strSql = "
+			SELECT 
+				id, 
+				spy, 
+				ip, 
+				sid, 
+				idTable, 
+				idUser, 
+				UNIX_TIMESTAMP(`date`) created 
+			FROM 
+				poll_report_".(int)$_VARS['poll_id']." 
+			WHERE 
+				idPoll = ".(int)$_VARS['poll_id']." 
+			ORDER BY 
+				created DESC
+		";
+
+		$rResult = DB::executeQuery($strSql);
+		while ($aResult = DB::getRow($rResult)) {
+			$aResults[$aResult['id']] = $aResult;
+			if ($aResult['idTable'] > 0) {
+				$rNickname = DB::getRow(DB::executeQuery("SELECT nickname FROM customer_db_".$aResult['idTable']." WHERE id = ".$aResult['idUser']));
+				$aResults[$aResult['id']]['nickname'] = $rNickname['nickname'];
+			} else {
+				$aResults[$aResult['id']]['nickname'] = $aResult['ip'];
+			}
+		}
+
+?>
+			<h2>Eingang</h2>
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=($_VARS['create'] == 1)?"":$_VARS['poll_id']?>" />
+			<input type="hidden" name="task" value="inbox" />
+			<input type="hidden" name="activity" value="" />
+			
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th style="width:auto;">User</th>
+					<th style="width:130px;">Zeitstempel</th>
+					<th style="width:160px;">Parameter</th>
+<?
+		if($oPoll->url != '') {
+?>
+					<th style="width:60px;">Aktionen</th>
+<?
+		}
+?>
+				</tr>
+<?
+		foreach ((array)$aResults as $rkey => $rval) {
+?>
+				<tr id="tr_<?=$rkey?>" onmouseout="showRow(<?=$rkey?>,0)" onmousemove="showRow(<?=$rkey?>,1);" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=inbox&poll_id=<?=$_VARS['poll_id']?>&report_id=<?=$rkey?>');" style="cursor:pointer;">
+					<td><a href="<?=$_SERVER['PHP_SELF']?>?task=inbox&poll_id=<?=$_VARS['poll_id']?>&report_id=<?=$rkey?>"><?=$rval['nickname']?>&nbsp;</a></td>
+					<td><?=strftime("%x %X", $rval['created'])?></td>
+					<td><?=$rval['spy']?>&nbsp;</td>
+<?
+			if($oPoll->url != '') {
+?>
+					<td style="text-align: center;">
+						<a href="<?=$oPoll->url?>?report_id=<?=$rval['id']?>&task=edit&cms_session=<?=$rval['sid']?>" onclick="window.open(this.href);return false;">
+							<img src="/admin/media/edit.png" alt="" />
+						</a>
+					</td>
+<?
+			}
+?>
+				</tr>
+<?
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit(".CSV Datei exportieren", "onclick=\"this.form.activity.value='export';\"")?></td>
+				</tr>
+			</table>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.task.value=''; this.form.poll_id.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// INBOX: DETAILANSICHT
+	} elseif ($_VARS['task'] == "inbox" and $_VARS['report_id'] != "") {
+
+		$rResult = DB::executeQuery("SELECT r.*, q.idParagraph FROM poll_results r, poll_questions q WHERE r.idQuestion = q.id AND r.idPoll = '".(int)$_VARS['poll_id']."' AND `r`.`idReport` = '".(int)$_VARS['report_id']."' ORDER BY `r`.`loop`, `r`.`created`");
+
+		$j = 1;
+		$aResults = array();
+		while ($aResult = DB::getRow($rResult)) {
+			$aTemp = Util::decodeSerializeOrJson($aResult['data']);
+			if(is_array($aTemp)) {
+				$aResult['data'] = $aTemp;
+			}
+			$aResults[$aResult['loop']][$aResult['idParagraph']][$aResult['idQuestion']] = $aResult;
+			if ($aResult['idTable'] > 0 and $j == 1) {
+				$aUser = DB::getRow(DB::executeQuery("SELECT nickname FROM customer_db_".$aResult['idTable']." WHERE id = ".$aResult['idUser']));
+			} elseif ($j == 1) {
+				$aUser['nickname'] = $aResult['ip'];
+			}
+			$j++;
+		}
+
+		// Ungewünschte Einträge filtern
+		foreach ((array)$aParagraphs as $id => $paragraph) {
+			if ($paragraph['isPage'] == 1) {
+				unset($aParagraphs[$id]);
+			}
+		}
+?>
+			<h2>Fragebogen von <?=$aUser['nickname']?></h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="poll_id" value="<?=$_VARS['poll_id']?>">
+			<input type="hidden" name="task" value="inbox">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th width="50%">Frage</th>
+					<th width="50%">Ergebnis</th>
+				</tr>
+<?
+		foreach ((array)$aResults as $loop => $paragraph) {
+			foreach ((array)$paragraph as $pkey => $pval) {
+?>
+				<tr>
+					<? if ($aContentCount[$pkey] == "") { ?>
+					<th colspan="2"><?=$aParagraphs[$pkey][$page_data['language'].'_title']?> (0)</th>
+					<? } else { ?>
+					<th colspan="2"><?=$aParagraphs[$pkey][$page_data['language'].'_title']?> (<?=$aContentCount[$pkey]?>)</th>
+					<? } ?>
+				</tr>
+				
+<?
+				foreach ((array)$aContentParagraph[$pkey] as $ckey => $cval) {
+?>
+				<tr>
+					<td><?=$cval[$page_data['language'].'_title']?>&nbsp;<?=$aImportant[$cval['important']]?></td>
+					<td>
+<?
+					if (
+						$cval['template'] != "text" && 
+						$cval['template'] != "textarea"
+					) {
+						$k = 1;
+						foreach ((array)$cval['data'] as $dkey => $dval) {
+							if (in_array($dval['value'], (array)$aResults[$loop][$pkey][$ckey]['data'])) {
+?>
+						<?=$dval[$page_data['language']]?>&nbsp;<br/>
+<?
+								$k++;
+							}
+							if ($dval['value'] == $aResults[$loop][$pkey][$ckey]['data'] and $k == 1) {
+?>
+						<?=$dval[$page_data['language']]?>&nbsp;
+<?
+								$k++;
+							}
+						}
+						if ($k == 1) {
+?>
+						&nbsp;
+<?
+						}
+					} else {
+?>
+						<?=$aResults[$loop][$pkey][$ckey]['data']?>&nbsp;
+<?
+					}
+?>
+					</td>
+				</tr>
+<?
+				}
+			}
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Zurück")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// INHALTSELEMENTE: �BERSICHT
+	} elseif ($_VARS['task'] == "content") {
+?>
+			<h2><?=$aParagraphs[$_VARS['paragraph_id']][$page_data['language'].'_title']?></h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="content">
+			<input type="hidden" name="activity" value="">
+			<input type="hidden" name="create" value="">
+			<input type="hidden" name="poll_id" value="<?=$_VARS['poll_id']?>">
+			<input type="hidden" name="paragraph_id" value="<?=$_VARS['paragraph_id']?>">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th style="width: 20px;">&nbsp;</th>
+					<th style="width: 60px;">ID</th>
+					<th style="width: auto;">Name</th>
+					<th style="width: 120px;">Typ</th>
+					<th style="width: 80px;">Pflichtfeld</th>
+					<th style="width: 80px;">Parameter</th>
+					<th style="width: 100px;">Aktion</th>
+				</tr>
+<?
+		$j = 1;
+		foreach ((array)$aContent as $key => $val) {
+			if ($val['idParagraph'] == $_VARS['paragraph_id']) {
+				if ($val[$page_data['language'].'_title'] == "") $val[$page_data['language'].'_title'] = "(kein Titel)";
+				if ($val['hidden'] != 0) { $val[$page_data['language'].'_title'] .= " (".$aDisplayOptions[$val['hidden']].")"; }
+?>
+				<tr>
+					<td width="20"><input type="radio" name="content_id" value="<?=$key?>" <?=(($j == 1)?"checked":"")?>></td>
+					<td style="text-align: right;"><?=$val['id']?></td>
+					<td><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=$key?>&task=content&activity=editContent"><?=$val['position'].". ".$val[$page_data['language'].'_title']?></a></td>
+					<td><?=$aTemplateSelect[$val['template']]?></td>
+					<td><?=(($val['important'])?'Ja':'')?></td>
+					<td><input type="text" class="txt" name="rotation_parameter[<?=$val['id']?>]" value="<?=convertHtmlEntities($val['rotation_parameter'])?>" style="width: 74px;"></td>
+					<td width="80" align="center" nowrap>
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=$key?>&task=content&activity=shiftContentUp"><img src="/admin/media/sitemap_up.png" border="0"></a>
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=$key?>&task=content&activity=shiftContentDown"><img src="/admin/media/sitemap_down.png" border="0"></a>
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=$key?>&task=content&activity=editContent"><img src="/admin/media/edit.png" border="0"></a>
+						<a href="#" onClick="if (confirm('Element löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=$key?>&task=content&activity=deleteContent';"><img src="/admin/media/edit_delete.gif" border="0"></a>
+						<a href="#" onClick="if (confirm('Element kopieren?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=(int)$_VARS['poll_id']?>&paragraph_id=<?=(int)$_VARS['paragraph_id']?>&content_id=<?=$key?>&task=content&activity=copyContent';"><img src="/admin/media/page_copy.png" border="0"></a>
+					</td>
+				</tr>
+<?
+			$j++;
+			}
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Speichern", "onclick=\"this.form.create.value=''; this.form.activity.value='saveQuestions';\"")?></td>
+		<? if ($aContent != "") { ?>
+					<td width="1"><?=printSubmit("Editieren", "onclick=\"this.form.create.value=''; this.form.activity.value='editContent';\"")?></td>
+		<? } ?>
+					<td width="1"><?=printSubmit("Neues Frage-Element", "onclick=\"this.form.create.value='1'; this.form.content_id.value='';\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.task.value='paragraphs'; this.form.paragraph_id.value=''; this.form.activity.value=''; this.form.create.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// SEITEN: �BERSICHT
+	} elseif ($_VARS['task'] == "pages") {
+?>
+			<h2>Seite <?=$_VARS['page_id']?> &raquo; Routing</h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="content">
+			<input type="hidden" name="activity" value="">
+			<input type="hidden" name="create" value="">
+			<input type="hidden" name="poll_id" value="<?=$_VARS['poll_id']?>">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th width="20">&nbsp;</th>
+					<th>Name</th>
+					<th width="1%" nowrap>Fragetyp</th>
+					<th width="1%">Routing</th>
+				</tr>
+<?
+		$j = 1;
+		foreach((array)$aParagraphs as $key => $val) {
+			if ($val['isPage'] != "1" and $val['idPage'] == $_VARS['page_id']) {
+?>
+				<tr>
+					<td style="border-right: 0px;" width="20" height="27">&nbsp;</td>
+					<td colspan="3"><b><?=$val[$page_data['language'].'_title']?></b></td>
+				</tr>
+<?				foreach((array)$aContent as $subkey => $subval) {
+					if ($subval['route'] != "" and $subval['idParagraph'] == $key) { $r = TRUE; break; }
+				}
+				foreach((array)$aContent as $subkey => $subval) {
+					if ($subval['idParagraph'] == $key) {
+?>
+				<tr>
+					<? if ($subval['route'] != "") { ?>
+					<td width="20" height="27"><? if (array_key_exists($subval['template'], $aTemplateTypes)) { ?><input type="radio" name="content_id" value="<?=$subkey?>" checked><? } else { ?>&nbsp;<? } ?></td>
+					<td><?=$subval['position'].". ".$subval[$page_data['language'].'_title']?></td>
+					<td width="1%" nowrap><?=$aTemplateSelect[$subval['template']]?></td>
+					<td width="1%" nowrap><? if (array_key_exists($subval['template'], $aTemplateTypes)) { ?><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&page_id=<?=$_VARS['page_id']?>&content_id=<?=$subkey?>&task=content&activity=editRouting">Bearbeiten</a><? } else { ?>&nbsp;<? } ?></td>
+					<? } elseif ($r != TRUE) { ?>
+					<td width="20" height="27"><? if (array_key_exists($subval['template'], $aTemplateTypes)) { ?><input type="radio" name="content_id" value="<?=$subkey?>" <?=(($j == 1)?"checked":"")?>><? } else { ?>&nbsp;<? } ?></td>
+					<td><?=$subval['position'].". ".$subval[$page_data['language'].'_title']?></td>
+					<td width="1%" nowrap><?=$aTemplateSelect[$subval['template']]?></td>
+					<td width="1%" nowrap><? if (array_key_exists($subval['template'], $aTemplateTypes)) { ?><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&page_id=<?=$_VARS['page_id']?>&content_id=<?=$subkey?>&task=content&activity=editRouting">Erstellen</a><? } else { ?>&nbsp;<? } ?></td>
+					<? } else { ?>
+					<td width="20" height="27">&nbsp;</td>
+					<td><?=$subval['position'].". ".$subval[$page_data['language'].'_title']?></td>
+					<td width="1%" nowrap><?=$aTemplateSelect[$subval['template']]?></td>
+					<td width="1%" nowrap>&nbsp;</td>
+					<? } ?>
+				</tr>
+<?
+					$j++;
+					}
+				}
+				if ($r == TRUE) { $m = "Routing bearbeiten"; } else { $m = "Routing erstellen"; }
+			}
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+		<? if ($j > 1) { ?>
+					<td width="1"><?=printSubmit($m, "this.form.task.value='content'; onclick=\"this.form.create.value=''; this.form.activity.value='editRouting';\"")?></td>
+		<? } ?>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.task.value='paragraphs'; this.form.activity.value=''; this.form.create.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+
+			
+			
+			
+			
+<?
+
+$oPage = new Ext_Poll_Page($_VARS['poll_id'], $_VARS['page_id']);
+
+if($_VARS['routing'] == 'save') {
+
+	$oRouting = new Ext_Poll_Routing((int)$_VARS['routing_id']);
+
+	$oRouting->name = $_VARS['name'];
+	$oRouting->active = 1;
+	$oRouting->poll_id = (int)$_VARS['poll_id'];
+	$oRouting->page_id = (int)$_VARS['page_id'];
+
+	$oRouting->target = (int)$_VARS['target'];
+	
+	$oRouting->save();
+
+} elseif($_VARS['routing'] == 'edit') {
+
+	$oRouting = new Ext_Poll_Routing((int)$_VARS['routing_id']);
+
+} elseif($_VARS['routing'] == 'delete') {
+
+	$oRouting = new Ext_Poll_Routing((int)$_VARS['routing_id']);
+	$oRouting->delete();
+	unset($oRouting);
+
+}
+
+$aRoutings = $oPage->getRoutings();
+
+$aQuestions = $oPoll->getQuestions($page_data['language']);
+
+?>
+
+	<h2>Bedingungen</h2>
+
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+		<tr>
+			<th style="width: auto;">Bedingung</th>
+			<th style="width: 80px;">Aktionen</th>
+		</tr>
+<?
+		foreach($aRoutings as $aRouting) {
+?>
+		<tr>
+			<td><?=$aRouting['name']?></td>
+			<td style="text-align: center;">
+				<img src="/admin/extensions/poll/script_edit.png" alt="" onclick="openRouting(<?=(int)$_VARS['poll_id']?>, 'page', <?=(int)$aRouting['id']?>); return false;" />
+				<img src="/admin/media/edit.png" alt="" onclick="$('#routing').val('edit'); $('#routing_id').val(<?=(int)$aRouting['id']?>); $('#f2').submit();return false;" />
+				<img src="/admin/media/delete.png" alt="" onclick="if(confirm('Möchten Sie diese Bedingung löschen?')) { $('#routing').val('delete'); $('#routing_id').val(<?=(int)$aRouting['id']?>); $('#f2').submit(); } " />
+			</td>
+		</tr>
+<?
+		}
+?>
+	</table>
+
+	<br/>
+
+<?
+	$oRouting = Ext_Poll_Routing::getInstance((int)$_VARS['routing_id']);
+	
+	if($oRouting->target == 0) {
+		$oRouting->target = $_VARS['page_id'] + 1;
+	}
+	
+?>
+
+	<form method="POST" name="f2" id="f2" action="<?=$_SERVER['PHP_SELF']?>">
+
+		<input type="hidden" name="task" value="pages" />
+		<input type="hidden" name="activity" value="editPage" />
+		<input type="hidden" name="routing" id="routing" value="save" />
+		<input type="hidden" name="poll_id" value="<?=(int)$_VARS['poll_id']?>" />
+		<input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>" />
+		<input type="hidden" name="routing_id" id="routing_id" value="<?=(int)$_VARS['routing_id']?>" />
+
+		<?=printTableStart()?>
+			<?=printFormText('Bezeichnung', 'name', $oRouting->name)?>
+			<?=printFormSelect('Zielseite', 'target', $aPages, $oRouting->target)?>
+		<?=printTableEnd()?>
+
+		<?=printSubmit("Speichern")?>
+
+	</form>
+
+
+	
+	
+	
+	
+	
+	
+	
+			
+<?php
+
+$oPage = new Ext_Poll_Page($_VARS['poll_id'], $_VARS['page_id']);
+
+if($_VARS['plausicheck'] == 'save') {
+
+	$oPlausicheck = Plausicheck::getInstance((int)$_VARS['plausicheck_id']);
+
+	$oPlausicheck->name = (string)$_VARS['name'];
+	$oPlausicheck->active = 1;
+	$oPlausicheck->poll_id = (int)$_VARS['poll_id'];
+	$oPlausicheck->page_id = (int)$_VARS['page_id'];
+
+	$oPlausicheck->condition = (string)$_VARS['condition'];
+	$oPlausicheck->messages = $_VARS['messages'];
+	$oPlausicheck->hard = (int)$_VARS['hard'];
+	
+	$oPlausicheck->save();
+
+} elseif($_VARS['plausicheck'] == 'edit') {
+
+	$oPlausicheck = Plausicheck::getInstance((int)$_VARS['plausicheck_id']);
+
+} elseif($_VARS['plausicheck'] == 'delete') {
+
+	$oPlausicheck = Plausicheck::getInstance((int)$_VARS['plausicheck_id']);
+	$oPlausicheck->delete();
+	unset($oPlausicheck);
+
+} else {
+	$oPlausicheck = new Plausicheck();
+}
+
+$aPlausichecks = $oPage->getPlausichecks();
+
+$aPageQuestions = $oPage->getQuestions();
+
+?>
+
+	<h2>Plausibilitätsprüfungen</h2>
+
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+		<tr>
+			<th style="width: auto;">Name</th>
+			<th style="width: 80px;">Aktionen</th>
+		</tr>
+<?
+		foreach($aPlausichecks as $aPlausicheck) {
+?>
+		<tr>
+			<td><?=$aPlausicheck['name']?></td>
+			<td style="text-align: center;">
+				<img src="/admin/media/edit.png" alt="" onclick="$('#plausicheck').val('edit'); $('#plausicheck_id').val(<?=(int)$aPlausicheck['id']?>); $('#f3').submit();return false;" />
+				<img src="/admin/media/delete.png" alt="" onclick="if(confirm('Möchten Sie diese Plausibilitätsprüfung löschen?')) { $('#plausicheck').val('delete'); $('#plausicheck_id').val(<?=(int)$aPlausicheck['id']?>); $('#f3').submit(); } " />
+			</td>
+		</tr>
+<?
+		}
+?>
+	</table>
+
+	<br/>
+
+	<form method="POST" name="f3" id="f3" action="<?=$_SERVER['PHP_SELF']?>">
+
+		<input type="hidden" name="task" value="pages" />
+		<input type="hidden" name="activity" value="editPage" />
+		<input type="hidden" name="plausicheck" id="plausicheck" value="save" />
+		<input type="hidden" name="poll_id" value="<?=(int)$_VARS['poll_id']?>" />
+		<input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>" />
+		<input type="hidden" name="plausicheck_id" id="plausicheck_id" value="<?=(int)$_VARS['plausicheck_id']?>" />
+
+		<?=printTableStart()?>
+			<?=printFormText('Bezeichnung', 'name', $oPlausicheck->name)?>
+			<?=printFormCheckbox('Harter Check', 'hard', 1, $oPlausicheck->hard)?>
+			<?=printFormTextarea('Bedingung', 'condition', $oPlausicheck->condition, 5, 'style="width: 600px;"')?>
+		<?php
+		foreach($oPoll->getLanguages() as $sLanguage) {
+		?>
+			<?=printFormText('Fehlermeldung ('.$aLanguageSelect[$sLanguage].')', 'messages['.$sLanguage.']', $oPlausicheck->getMessage($sLanguage), 'style="width: 600px;"')?>
+		<?php
+		}
+		?>
+		<?=printTableEnd()?>
+
+		<?=printSubmit("Speichern")?>
+
+	</form>
+
+	<h3>Verfügbare Fragen-Platzhalter</h3>
+	<ul>
+<?php
+
+foreach($aPageQuestions as $aPageQuestion) {
+	
+	echo '<li>{q_'.$aPageQuestion['id'].'} - '.strip_tags($aPageQuestion[$page_data['language'].'_title']).'</li>';
+	
+}
+
+?>
+	</ul>
+	
+	<h3>Beispiele</h3>
+	<dl>
+		<dt>({q_EINGABE1} + {q_EINGABE2} + {q_EINGABE3}) = 100</dt>
+		<dd>Die Summe der drei Eingaben muss 100 betragen.</dd>
+		<dt>({q_CHECKBOX1} = 1 AND ({q_2} + {q_3}) = 100) OR ({q_CHECKBOX1} = 0 AND ({q_2} + {q_3}) = 50)</dt>
+		<dd>Wenn die Checkbox gewählt ist, dann muss die Summe der beiden Eingabefelder 100 betragen, andernfalls 50.</dd>
+		<dt>format('[0-9]{2}\.[0-9]{2}.\[0-9]{4}', {q_EINGABE1})</dt>
+		<dd>In dem Eingabefeld muss ein Datum eingegeben werden (z.B. 25.01.2014).</dd>
+		<dt>format('[a-zA-Z]{10}', {q_EINGABE1})</dt>
+		<dd>In dem Eingabefeld muss ein Wort mit zehn kleinen oder großen Buchstaben eingegeben werden.</dd>
+		<dt>kundendatenbank(33, 'user', {q_EINGABE1})</dt>
+		<dd>Es wird überprüft, ob der Wert der Frage in der entsprechenden Kundendatenbank in dem angegebenen Feld vorkommt. Der zweite Parameter bestimmt die Spalte in der nach dem Wert gesucht wird. Mögliche Werte sind "id", "email" und "user".</dd>
+	</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+<?
+	} elseif ($_VARS['task'] == "clean_poll") {
+
+		$oPoll->clearResults();
+
+?>
+			<h2>Umfragedaten leeren</h2>
+			<p>Die Umfragedaten wurden geleert!</p>
+<?
+
+		echo '<p style="text-align:right;"><input type="button" class="btn" value="Zurück" onclick="go(\''.$_SERVER['PHP_SELF'].'\');" /></p>';
+
+	} elseif ($_VARS['task'] == "backups") {
+
+		if(isset($_VARS['restore'])) {
+			Ext_Poll_Poll::restoreBackup($_VARS['restore']);
+		}
+
+		if(
+			isset($_FILES['file']) &&
+			is_file($_FILES['file']['tmp_name'])
+		) {
+			$bSaveBackup = true;
+			$bSuccess = Ext_Poll_Poll::saveBackupFile($_FILES['file']);
+		}
+
+		$aBackups = Ext_Poll_Poll::listBackups($_VARS['search']);
+
+?>
+			<h2>Sicherungen</h2>
+<?
+		if(
+			$bSaveBackup &&
+			!$bSuccess
+		) {
+			echo '<p class="error">Die Datei konnte nicht gespeichert werden.</p>';
+		}
+?>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table hightlightRows">
+				<tr>
+					<th style="width: 130px;">Zeitpunkt</th>
+					<th>Datei</th>
+					<th style="width: 80px;">Größe</th>
+					<th style="width: 70px;">Aktionen</th>
+				</tr>
+<?
+
+		foreach((array)$aBackups as $aBackup) {
+			$sPath = str_replace(\Util::getDocumentRoot(), '', $aBackup['path']);
+			preg_match("/([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{2})([0-9]{2})([0-9]{2})_([0-9]+)_/", $aBackup['file'], $aMatch);
+			$iTime = mktime($aMatch[4], $aMatch[5], $aMatch[6], $aMatch[2], $aMatch[3], $aMatch[1]);
+			echo '<tr>';
+			echo '<td>'.strftime("%x %X", $iTime).'</td>';
+			echo '<td><a href="'.$sPath.'" onclick="window.open(this.href);return false;">'.$aBackup['file'].'</a></td>';
+			echo '<td style="text-align: right;">'.getFilesize($aBackup['size']).'</td>';
+			echo '<td style="text-align: center;"><a href="'.$_SERVER['PHP_SELF'].'?task=backups&restore='.$aBackup['file'].'"><img src="/admin/extensions/poll/database_save.png" alt="Sicherung wiederherstellen" title="Sicherung wiederherstellen" border="0" /></a></td>';
+			echo '</tr>';
+		}
+?>
+			</table>
+<?
+		echo '<h3>Sicherungsdatei hochladen</h3>';
+		echo '<form method="post" action="'.$_SERVER['PHP_SELF'].'" enctype="multipart/form-data">';
+		printFormHidden('task', 'backups');
+		printTableStart();
+		printFormFile('ZIP-Datei', 'file');
+		printTableEnd();
+		printSubmit('Datei hochladen');
+		echo '</form>';
+
+		echo '<p style="text-align:right;"><input type="button" class="btn" value="Zurück" onclick="go(\''.$_SERVER['PHP_SELF'].'\');" /></p>';
+
+	} elseif ($_VARS['task'] == "backup_poll") {
+?>
+			<h3>Sicherung erstellen</h3>
+
+<?
+
+		if($_VARS['backup']) {
+			$bSuccess = $oPoll->createBackup();
+			if($bSuccess) {
+				echo '<p>Das Backup wurde erfolgreich erstellt.</p>';
+			} else {
+				echo '<p class="error">Das Backup konnte nicht erstellt werden!</p>';
+			}
+			echo '<p style="text-align:right;"><input type="button" class="btn" value="Zurück" onclick="go(\''.$_SERVER['PHP_SELF'].'\');" /></p>';
+		} else {
+?>
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+				<?=printFormHidden('poll_id', $_VARS['poll_id'])?>
+				<input type="hidden" name="task" value="backup_poll" />
+				<input type="hidden" name="backup" value="1" />
+				<?=printSubmit('Backup ausführen')?>
+			</form>
+<?
+		}
+?>
+
+<?
+	// BLOCKVERWALTUNG: �BERICHT
+	} elseif ($_VARS['task'] == "paragraphs") {
+?>
+			<h2><?=$oPoll->name?></h2>
+			<h3>Fragebogenverwaltung</h3>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="paragraphs">
+			<input type="hidden" name="activity" value="">
+			<input type="hidden" name="create" value="">
+			<input type="hidden" name="poll_id" value="<?=(int)$_VARS['poll_id']?>">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th width="20">&nbsp;</th>
+					<th width="80">Block-ID</th>
+					<th>Name (Anzahl der Fragen)</th>
+					<th width="80">Aktion</th>
+				</tr>
+				<tbody id="sortableContent" style="position:static;">
+<?
+		$j = 1;
+		$page = 1;
+		$bContainerCreated = false;
+		foreach((array)$aParagraphs as $key => $val) {
+			if ($val['isPage'] == "1") {
+?>
+				<tr id="tr_<?=$val['id']?>" <? if($val['position'] != 1) { ?>class="move" <? } ?>>
+					<td style="border-right: 0px;" width="20">&nbsp;</td>
+					<td style="border-right: 0px;">&nbsp;</td>
+					<td><b>Seite <?=$page?></b><? if ($val['isNonlinear'] == 1) echo "<font style=\"color: red\"> &raquo; bedingter Verlauf</font>"; ?></td>
+					<? if ($val['position'] == 1) { ?>
+					<td width="80" align="center">
+                        <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&task=pages&activity=editPage"><img src="/admin/media/edit.png" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block kopieren?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&paragraph_id=<?=$key?>&task=paragraphs&activity=copyPage';"><img src="/admin/media/page_copy.png" border="0"></a>
+                    </td>
+					<? } elseif ($val['position'] == 2) { ?>
+					<td width="80" align="center"><?/*?><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$_VARS['paragraph_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=shiftParagraphDown"><img src="/admin/media/sitemap_down.png" border="0"></a><?*/?>
+                        <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&task=pages&activity=editPage"><img src="/admin/media/edit.png" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=deleteParagraph';"><img src="/admin/media/edit_delete.gif" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block kopieren?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&paragraph_id=<?=$key?>&task=paragraphs&activity=copyPage';"><img src="/admin/media/page_copy.png" border="0"></a>
+                    </td>
+					<? } elseif ($val['position'] == count($aParagraphs)) { ?>
+					<td width="80" align="center">
+                        <?/*?><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=shiftParagraphUp"><img src="/admin/media/sitemap_up.png" border="0"></a><?*/?>
+                        <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&task=pages&activity=editPage"><img src="/admin/media/edit.png" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=deleteParagraph';"><img src="/admin/media/edit_delete.gif" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block kopieren?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&paragraph_id=<?=$key?>&task=paragraphs&activity=copyPage';"><img src="/admin/media/page_copy.png" border="0"></a>
+                    </td>
+					<? } else { ?>
+					<td width="80" align="center">
+                        <?/*?><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=shiftParagraphUp"><img src="/admin/media/sitemap_up.png" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$_VARS['paragraph_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=shiftParagraphDown"><img src="/admin/media/sitemap_down.png" border="0"></a><?*/?>
+                        <a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&task=pages&activity=editPage"><img src="/admin/media/edit.png" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=deleteParagraph';"><img src="/admin/media/edit_delete.gif" border="0"></a>
+                        <a href="#" onClick="if (confirm('Block kopieren?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&page_id=<?=$page?>&paragraph_id=<?=$key?>&task=paragraphs&activity=copyPage';"><img src="/admin/media/page_copy.png" border="0"></a>
+                    </td>
+                    <? } ?>
+				</tr>
+<?
+				$page++;
+			} else {
+				if ($val[$page_data['language'].'_title'] == "") {
+					$val[$page_data['language'].'_title'] = "(kein Titel)";
+				}
+?>
+				<tr id="tr_<?=$val['id']?>"<? if($val['position'] != 1) { ?>class="move" <? } ?>>
+					<td width="20"><input type="radio" name="paragraph_id" value="<?=$key?>" <?=(($j == 1)?"checked":"")?>></td>
+					<td style="text-align: right;"><?=$val['id']?></td>
+<?
+					if ($aContentCount[$key] == "") {
+						$aContentCount[$key] = "0";
+					}
+?>
+					<td><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=content"><?=$val[$page_data['language'].'_title']?> (<?=$aContentCount[$key]?>)</a></td>
+					
+					<td width="80" align="center">
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=editParagraph"><img src="/admin/media/edit.png" border="0"></a>
+						<a href="#" onClick="if (confirm('Block löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=deleteParagraph';"><img src="/admin/media/edit_delete.gif" border="0"></a>
+						<a href="#" onClick="if (confirm('Block kopieren?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$_VARS['poll_id']?>&paragraph_id=<?=$key?>&task=paragraphs&activity=copyParagraph';"><img src="/admin/media/page_copy.png" border="0"></a>
+					</td>
+				</tr>
+<?
+			$j++;
+			}
+			
+		}
+?>
+					</tbody>
+				</table>
+			<style type="text/css">
+				.move {
+					cursor:move;
+				}
+			</style>
+			<script type="text/javascript">
+				
+				var fixHelper = function(e, ui) {
+					ui.children().each(function() {
+						$(this).width($(this).width());
+					});
+					return ui;
+				};
+
+				
+				$(function() {
+					$( "#sortableContent" ).sortable({
+						helper: fixHelper,
+						axis: "y",
+						items: '.move',
+						update: function( event, ui ) {
+							$.ajax({
+								type: "POST",
+								url: '/admin/extensions/poll.html?task=sort_questions',
+								data: $( "#sortableContent" ).sortable( "serialize")
+							});
+						}
+					}).disableSelection();
+				});
+	
+			</script>
+			<br>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+		<? if ($aParagraphs != "") { ?>
+					<td width="1"><?=printSubmit("Fragen anzeigen", "onclick=\"this.form.task.value='content'; this.form.create.value='';\"")?></td>
+					<td width="1"><?=printSubmit("Editieren", "onclick=\"this.form.create.value=''; this.form.activity.value='editParagraph';\"")?></td>
+					<td width="1"><?=printSubmit("Seitenwechsel einfügen", "onclick=\"this.form.activity.value='makePagebreak'; this.form.paragraph_id.value='';\"")?></td>
+		<? } ?>
+					<td width="1"><?=printSubmit("Neuer Frageblock", "onclick=\"this.form.create.value='1'; this.form.paragraph_id.value='';\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.poll_id.value='';this.form.task.value='';this.form.activity.value='';this.form.create.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// TEMPLATES: �BERSICHT
+	} elseif ($_VARS['task'] == "templates") {
+?>
+			<h2>Fragetypen</h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="templates">
+			<input type="hidden" name="activity" value="">
+			<input type="hidden" name="create" value="">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+
+
+
+				<tr>
+					<th width="20">&nbsp;</th>
+					<th>Name</th>
+					<th width="40">Aktion</th>
+				</tr>
+<?
+		$j = 1;
+		foreach((array)$aTemplate as $key => $val) {
+?>
+				<tr>
+					<td width="20"><input type="radio" name="template_id" value="<?=$key?>" <?=(($j == 1)?"checked":"")?>></td>
+					<td><a href="<?=$_SERVER['PHP_SELF']?>?template_id=<?=$key?>&task=templates&activity=editTemplate"><?=$val['title']?></a></td>
+					<td width="40" align="center"><a href="<?=$_SERVER['PHP_SELF']?>?template_id=<?=$key?>&task=templates&activity=editTemplate"><img src="/admin/media/edit.png" border="0"></a> <a href="#" onClick="if (confirm('Fragetyp löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?template_id=<?=$key?>&task=templates&activity=deleteTemplate';"><img src="/admin/media/edit_delete.gif" border="0"></a></td>
+				</tr>
+<?
+			$j++;
+		}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Editieren", "onclick=\"this.form.create.value=''; this.form.activity.value='editTemplate';\"")?></td>
+					<td width="1"><?=printSubmit("Neuer Fragetyp", "onclick=\"this.form.create.value='1'; this.form.template_id.value='';\"")?></td>
+					<td width="1"><?=printSubmit("Zurück", "onclick=\"this.form.task.value='';this.form.activity.value='';this.form.create.value='';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+	// UMFRAGE: �BERSICHT
+	} else {
+?>
+
+			<h2>Übersicht</h2>
+			
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="activity" value="">
+			<input type="hidden" name="create" value="">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<tr>
+					<th width="20">&nbsp;</th>
+					<th>Name</th>
+					<th style="width: 80px;">Besuche</th>
+					<th style="width: 140px;">Erstellt</th>
+					<th style="width: 140px;">Änderung</th>
+					<th width="40">Aktion</th>
+				</tr>
+<?
+
+
+		$sSql = "
+			SELECT 
+				`pi`.`id`, 
+				`pi`.`name`, 
+				COUNT(`pv`.`poll_id`) `visits`,
+				UNIX_TIMESTAMP(`pi`.`changed`) `changed`, 
+				UNIX_TIMESTAMP(`pi`.`created`) `created`				
+			FROM 
+				`poll_init` `pi` LEFT OUTER JOIN
+				`poll_visits` `pv` ON
+					`pi`.`id` = `pv`.`poll_id`
+			GROUP BY
+				pi.id
+			ORDER BY 
+				pi.name
+			";
+
+		$resPoll = DB::getQueryRows($sSql);
+        foreach ($resPoll as $aresPoll) {
+            $aPoll[$aresPoll['id']] = $aresPoll;
+        }
+
+		$j = 1;
+		foreach((array)$aPoll as $key => $aValue) {
+?>
+				<tr>
+					<td width="20"><input type="radio" name="poll_id" value="<?=$key?>" <?=(($j == 1)?"checked":"")?>></td>
+					<td><a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$key?>&task=paragraphs"><?=$aValue['name']?></a></td>
+					<td style="text-align: right;"><?=(int)$aValue['visits']?></td>
+					<td><?=strftime("%x %X", $aValue['created'])?></td>
+					<td><?=strftime("%x %X", $aValue['changed'])?></td>
+					<td width="40" align="center">
+						<a href="<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$key?>&task=poll&amp;activity=editPoll"><img src="/admin/media/edit.png" border="0"></a>
+						<a href="#" onClick="if (confirm('Umfrage löschen?')) document.location.href = '<?=$_SERVER['PHP_SELF']?>?poll_id=<?=$key?>&amp;activity=deletePoll';"><img src="/admin/media/edit_delete.gif" border="0"></a>
+					</td>
+				</tr>
+<?
+			$j++;
+		}
+?>
+			</table>
+			<br>
+			
+			
+			<p align="right">
+<? 
+			$aPlaceholder = array();
+			\System::wd()->executeHook('poll_admin_buttons', $aPlaceholder);
+
+			if ($aPoll != "") { 
+?>
+				<input type="submit" onclick="this.form.task.value='paragraphs';" class="btn" value="Fragebogenverwaltung" />
+				<input type="submit" onclick="this.form.task.value='poll'; this.form.activity.value='editPoll';" class="btn" value="Editieren" />
+				<input type="submit" onclick="this.form.task.value='backup_poll';" class="btn" value="Sicherung erstellen" />
+				<input type="submit" onclick="if(confirm('Möchten Sie wirklich alle Umfragedaten leeren?')) { this.form.task.value='clean_poll'; } else { return false; }" class="btn" value="Umfragedaten leeren" />
+
+				<input type="submit" onclick="this.form.task.value='summary';" class="btn" value="Auswertung" />
+				<input type="submit" onclick="this.form.task.value='inbox';" class="btn" value="Ergebnisse" />
+
+<? 
+			}
+?>
+				
+			</p>
+			<p align="right">
+				<input type="submit" onclick="this.form.task.value='templates';" class="btn" value="Fragetypen" />
+				<input type="submit" onclick="this.form.task.value='backups';" class="btn" value="Sicherungen" />
+				<input type="submit" onclick="this.form.task.value='poll'; this.form.create.value='1'; this.form.poll_id.value='';" class="btn" value="Neue Umfrage" />
+			</p>
+			</form>
+<?
+	}
+}
+?>
+		</td>
+	</tr>
+</table>
+</div>
+<?=Admin_Html::loadAdminFooter()?>

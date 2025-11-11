@@ -1,0 +1,552 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$sAccess = "thebing_admin_template_types";
+Ext_Thebing_Access::accesschecker($sAccess);
+$sGuiDescription = 'Thebing » Admin » Vorlagen Typen';
+
+
+
+$aPaperSize = array(
+	0 =>			L10N::t('Benutzerdefiniert', $sGuiDescription),
+	'a4' =>			L10N::t('DIN A4 - Hochformat', $sGuiDescription),
+	'a4_q' =>		L10N::t('DIN A4 - Querformat', $sGuiDescription),
+	'letter' =>		L10N::t('Letter - Hochformat', $sGuiDescription),
+	'letter_q' =>	L10N::t('Letter - Querformat', $sGuiDescription)
+);
+
+$aPositionsSelect = array(
+	0 => L10N::t('Nein', $sGuiDescription),
+	1 => L10N::t('Ja, mit Einzelbeträgen', $sGuiDescription),
+	2 => L10N::t('Ja, ohne Einzelbeträge', $sGuiDescription)
+);
+
+$oClient = Ext_Thebing_Client::getInstance();
+
+$aFonts = $oClient->getFonts();
+$aSubFonts = Ext_Thebing_Util::addEmptyItem($aFonts, L10N::t('Standard', $sGuiDescription));
+$aFonts = Ext_Thebing_Util::addEmptyItem($aFonts, Ext_Thebing_L10N::getEmptySelectLabel('please_choose'));
+
+$aFontStyles = array(
+	'' => L10N::t('Normal',$sGuiDescription),
+	'B' => L10N::t('Fett',$sGuiDescription),
+	'I' => L10N::t('Kursiv',$sGuiDescription),
+	'U' => L10N::t('Unterstrichen',$sGuiDescription)
+);
+
+$aFiles	= $oClient->getUploads(1);
+$aFiles = Ext_Thebing_Util::convertArrayForSelect($aFiles, 'description');
+$aFiles = Ext_Thebing_Util::addEmptyItem($aFiles);
+
+// OBERE LISTE
+
+
+$oGuiTemplateTypes = new Ext_Thebing_Gui2(md5($sGuiDescription.'oben'));
+
+$oGuiTemplateTypes->setWDBasic('Ext_Thebing_Pdf_Template_Type');
+$oGuiTemplateTypes->setTableData('orderby', array('name'=>'ASC'));
+
+// Listen Optionen
+$oGuiTemplateTypes->column_sortable				= 1; // es geht nur eine sortierart!
+$oGuiTemplateTypes->row_sortable				= 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiTemplateTypes->multiple_selection			= 0;
+$oGuiTemplateTypes->query_id_column				= 'id';
+$oGuiTemplateTypes->query_id_alias				= 'kptt';
+
+$oGuiTemplateTypes->calendar_format				= new Ext_Thebing_Gui2_Format_Date();
+$oGuiTemplateTypes->class_js					= 'AdminTemplateTypesGui';
+
+## ENDE DIALOG TAB ##
+
+$oDialog	= $oGuiTemplateTypes->createDialog($oGuiTemplateTypes->t('Layout "{name}" editieren'), $oGuiTemplateTypes->t('Neues Layout'));
+
+$oTab1		= $oDialog->createTab(L10N::t('Layout', $sGuiDescription));
+$oTab2		= $oDialog->createTab(L10N::t('Feste Elemente', $sGuiDescription));
+
+$oDiv		= $oDialog->createRow( L10N::t('Name', $sGuiDescription), 'input',	array('db_column' => 'name', 'db_alias' => '', 'required' => 1));
+$oTab1->setElement($oDiv);
+
+$oTab1->setElement($oDialog->createRow(L10N::t('HTML-Felder als Textfelder anzeigen', $sGuiDescription), 'checkbox', ['db_column' => 'html_as_textarea']));
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Format', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Papiergröße', $sGuiDescription), 'select',	array('db_column' => 'page_format', 'db_alias' => '', 'select_options' => $aPaperSize));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Breite (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_format_width', 'db_alias' => '', 'required' => 1, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Höhe (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_format_height', 'db_alias' => '', 'required' => 1, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Platzierung', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Startpunkt links (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_margin_left', 'db_alias' => '', 'required' => 0, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Startpunkt oben (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_margin_right', 'db_alias' => '', 'required' => 0, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Abstand horizontal (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_spacing_x', 'db_alias' => '', 'required' => 0, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Abstand vertikal (in mm)', $sGuiDescription), 'input',	array('db_column' => 'page_spacing_y', 'db_alias' => '', 'required' => 0, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Hintergrund', $sGuiDescription), 'select',	array('db_column' => 'page_background', 'db_alias' => '', 'required' => 0, 'select_options'=>$aFiles));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Schrift', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Standard-Schriftart', $sGuiDescription), 'select',	array('db_column' => 'font_type', 'db_alias' => '', 'required' => 1, 'select_options'=>$aFonts));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Minimierung der Dateigröße durch Reduzierung der Schrift auf die verwendeten Zeichen (Generierung dauert länger)', $sGuiDescription), 'checkbox',	array('db_column' => 'font_subsetting', 'db_alias' => '',  'default_value' => '1'));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Standard-Schriftgröße', $sGuiDescription), 'input',	array('db_column' => 'font_size', 'db_alias' => '', 'required' => 1, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDiv	= $oDialog->createRow( L10N::t('Standard-Laufweite', $sGuiDescription), 'input',	array('db_column' => 'font_spacing', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float(4)));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Seitenränder: Erste Seite (in mm)', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Oben', $sGuiDescription), 'input',	array('db_column' => 'first_page_border_top', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Rechts', $sGuiDescription), 'input',array('db_column' => 'first_page_border_right', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Unten', $sGuiDescription), 'input',	array('db_column' => 'first_page_border_bottom', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Links', $sGuiDescription), 'input',	array('db_column' => 'first_page_border_left', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Seitenränder: Folgeseite (in mm)', $sGuiDescription));
+$oTab1->setElement($oH3);
+
+$oDiv	= $oDialog->createRow( L10N::t('Oben', $sGuiDescription), 'input',	array('db_column' => 'additional_page_border_top', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Rechts', $sGuiDescription), 'input',array('db_column' => 'additional_page_border_right', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Unten', $sGuiDescription), 'input',	array('db_column' => 'additional_page_border_bottom', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Links', $sGuiDescription), 'input',	array('db_column' => 'additional_page_border_left', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab1->setElement($oDiv);
+
+$oDialog->setElement($oTab1);
+
+$aElements = array(
+	'date'=>'Datum',
+	'address'=>'Adresse',
+	'subject'=>'Betreff'
+);
+
+foreach((array)$aElements as $sKey=>$sElement) {
+
+	$oH3= new Ext_Gui2_Html_H4();
+	$oH3->setElement(L10N::t($sElement, $sGuiDescription));
+	$oTab2->setElement($oH3);
+	$oDiv	= $oDialog->createRow( L10N::t('Aktiv', $sGuiDescription), 'checkbox',	array('db_column' => 'element_'.$sKey, 'db_alias' => '', 'class' => 'TemplateTypeToggleElement'));
+	$oTab2->setElement($oDiv);
+	$oDiv	= $oDialog->createRow( L10N::t('X-Achse', $sGuiDescription), 'input',	array('db_column' => 'element_'.$sKey.'_x', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+	$oTab2->setElement($oDiv);
+	$oDiv	= $oDialog->createRow( L10N::t('Y-Achse', $sGuiDescription), 'input',	array('db_column' => 'element_'.$sKey.'_y', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+	$oTab2->setElement($oDiv);
+
+	$oDiv	= $oDialog->createRow( L10N::t('Schriftart', $sGuiDescription), 'select',	array('db_column' => 'element_'.$sKey.'_font_type', 'db_alias' => '', 'select_options'=>$aSubFonts));
+	$oTab2->setElement($oDiv);
+
+	$oDiv	= $oDialog->createRow( L10N::t('Schriftstil', $sGuiDescription), 'select',	array('db_column' => 'element_'.$sKey.'_font_style', 'db_alias' => '', 'select_options'=>$aFontStyles));
+	$oTab2->setElement($oDiv);
+
+	$oDiv	= $oDialog->createRow( L10N::t('Schriftgröße', $sGuiDescription), 'input',	array('db_column' => 'element_'.$sKey.'_font_size', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+	$oTab2->setElement($oDiv);
+
+	$oDiv	= $oDialog->createRow( L10N::t('Laufweite', $sGuiDescription), 'input',	array('db_column' => 'element_'.$sKey.'_font_spacing', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float(4)));
+	$oTab2->setElement($oDiv);
+
+}
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Text oben', $sGuiDescription));
+$oTab2->setElement($oH3);
+$oDiv	= $oDialog->createRow( L10N::t('Aktiv', $sGuiDescription), 'checkbox',	array('db_column' => 'element_text1', 'db_alias' => '', 'class' => 'TemplateTypeToggleElement'));
+$oTab2->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('X-Achse', $sGuiDescription), 'input',	array('db_column' => 'element_text1_x', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab2->setElement($oDiv);
+$oDiv	= $oDialog->createRow( L10N::t('Y-Achse', $sGuiDescription), 'input',	array('db_column' => 'element_text1_y', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oTab2->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Rechnungspositionen', $sGuiDescription));
+$oTab2->setElement($oH3);
+$oDiv	= $oDialog->createRow( L10N::t('Aktiv', $sGuiDescription), 'select',	array('db_column' => 'element_inquirypositions', 'db_alias' => '', 'select_options'=>$aPositionsSelect));
+$oTab2->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Text unten', $sGuiDescription));
+$oTab2->setElement($oH3);
+$oDiv	= $oDialog->createRow( L10N::t('Aktiv', $sGuiDescription), 'checkbox',	array('db_column' => 'element_text2', 'db_alias' => ''));
+$oTab2->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Signaturbild', $sGuiDescription));
+$oTab2->setElement($oH3);
+$oDiv	= $oDialog->createRow( L10N::t('Aktiv', $sGuiDescription), 'checkbox',	array('db_column' => 'element_signature_img', 'db_alias' => ''));
+$oTab2->setElement($oDiv);
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Signaturtext', $sGuiDescription));
+$oTab2->setElement($oH3);
+$oDiv	= $oDialog->createRow( L10N::t('Aktiv', $sGuiDescription), 'checkbox',	array('db_column' => 'element_signature_text', 'db_alias' => ''));
+$oTab2->setElement($oDiv);
+
+if (TcExternalApps\Service\AppService::hasApp(Ts\Handler\SwissQrBill\ExternalApp::APP_NAME)) {
+	$oH3 = new Ext_Gui2_Html_H4();
+	$oH3->setElement(L10N::t('Swiss QR-bill Code automatisch einbetten bei Rechnungen', $sGuiDescription));
+	$oTab2->setElement($oH3);
+	$oDiv = $oDialog->createRow(L10N::t('Aktiv', $sGuiDescription), 'checkbox', array('db_column' => 'element_swiss_qr_bill_code', 'db_alias' => ''));
+	$oTab2->setElement($oDiv);
+}
+
+$oDialog->setElement($oTab2);
+
+$oDialog->width = 950;
+$oDialog->height = 700;
+
+
+
+
+# START - Leiste 1 #
+$oBar = $oGuiTemplateTypes->createBar();
+$oBar->width = '100%';
+
+	$oFilter = $oBar->createFilter();
+	$oFilter->db_column = array('name');
+	$oFilter->db_alias = array('kptt');
+	$oFilter->id = 'search';
+	$oFilter->placeholder = $oGuiTemplateTypes->t('Suche').'…';
+	$oBar ->setElement($oFilter);
+
+$oGuiTemplateTypes->setBar($oBar);
+# Leiste 2 #
+$oBar = $oGuiTemplateTypes->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGuiTemplateTypes->gui_description),
+			$oDialog,
+			L10N::t('Neuer Eintrag', $oGuiTemplateTypes->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oGuiTemplateTypes->gui_description),
+				$oDialog,
+				L10N::t('Editieren', $oGuiTemplateTypes->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiTemplateTypes->gui_description), L10N::t('Löschen', $oGuiTemplateTypes->gui_description));
+	$oBar ->setElement($oIcon);
+
+	$oIcon			= $oBar->createCopyIcon(L10N::t('Duplizieren', $oGuiTemplateTypes->gui_description), L10N::t('Duplizieren', $oGuiTemplateTypes->gui_description));
+	$oBar->setElement($oIcon);
+	
+$oGuiTemplateTypes->setBar($oBar);
+
+# Leiste 3 #
+$oBar = $oGuiTemplateTypes->createBar();
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelGroup = $oBar->createLabelGroup($oGuiTemplateTypes->t('Export'));
+	$oBar->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGuiTemplateTypes->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGuiTemplateTypes->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createExcelExport();
+	$oBar->setElement($oIcon);
+	
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGuiTemplateTypes->setBar($oBar);
+
+
+# ENDE - Leiste 3 #
+
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'name';
+$oColName->db_alias						= '';
+$oColName->select_column				= 'name';
+$oColName->title						= L10N::t('Name', $sGuiDescription);
+$oColName->width						= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColName->width_resize					= true;
+$oColName->format						= 'Text';
+
+$oGuiTemplateTypes->setColumn($oColName);
+
+$oGuiTemplateTypes->addDefaultColumns();
+
+
+// UNTERE LISTE
+
+$aTypes = array(
+					'text'	=> L10N::t('Text', $sGuiDescription),
+					'html'	=> L10N::t('HTML', $sGuiDescription),
+					'date'	=> L10N::t('Datum', $sGuiDescription),
+					'img'	=> L10N::t('Bild', $sGuiDescription)
+				);
+$aPages = array(
+					'first'			=> L10N::t('Erste Seite', $sGuiDescription),
+					'additional'	=> L10N::t('Folgeseiten', $sGuiDescription),
+					'all'			=> L10N::t('Alle Seiten', $sGuiDescription),
+					'individual'	=> L10N::t('Individuell', $sGuiDescription)
+				);
+
+
+$oGuiTemplateTypeElements = new Ext_Thebing_Gui2(md5($sGuiDescription.'unten'));
+
+$oGuiTemplateTypeElements->setWDBasic('Ext_Thebing_Pdf_Template_Type_Element');
+
+// Listen Optionen
+$oGuiTemplateTypeElements->gui_description				= $sGuiDescription;
+$oGuiTemplateTypeElements->gui_title					= L10N::t('Zusätzliche Elemente', $oGuiTemplateTypeElements->gui_description).' '.$sTitleAddon;
+$oGuiTemplateTypeElements->column_sortable				= 0; // es geht nur eine sortierart!
+$oGuiTemplateTypeElements->row_sortable					= 1; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiTemplateTypeElements->multiple_selection			= 0;
+$oGuiTemplateTypeElements->query_id_column				= 'id';
+$oGuiTemplateTypeElements->query_id_alias				= '';
+
+$oGuiTemplateTypeElements->calendar_format				= new Ext_Thebing_Gui2_Format_Date();
+$oGuiTemplateTypeElements->class_js						= 'AdminTemplateTypesGui';
+
+## ENDE DIALOG TAB ##
+
+$oDialog2 = $oGuiTemplateTypeElements->createDialog($oGuiTemplateTypes->t('Layout-Element "{name}"'), $oGuiTemplateTypes->t('Neues Layout-Element'));
+
+$oDiv	= $oDialog2->createRow( L10N::t('Name', $sGuiDescription), 'input',	array('db_column' => 'name', 'db_alias' => '', 'required' => 1));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Position X-Achse', $sGuiDescription), 'input',	array('db_column' => 'x', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Position Y-Achse', $sGuiDescription), 'input',	array('db_column' => 'y', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Breite (in mm)', $sGuiDescription), 'input',	array('db_column' => 'element_width', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Art', $sGuiDescription), 'select',	array('db_column' => 'element_type', 'db_alias' => '', 'select_options' => $aTypes));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Bildbreite (in mm)', $sGuiDescription), 'input',	array('db_column' => 'img_width', 'db_alias' => '', 'format' => new Ext_Thebing_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Bildhöhe (in mm)', $sGuiDescription), 'input',	array('db_column' => 'img_height', 'db_alias' => '', 'format' => new Ext_Thebing_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Seiten', $sGuiDescription), 'select',	array('db_column' => 'page', 'db_alias' => '', 'select_options' => $aPages));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Seitenzahlen (kommagetrennt; z.B. 3,4)', $sGuiDescription), 'input',	
+		array(
+			'db_column' => 'page_numbers', 
+			'db_alias' => '',
+			'dependency_visibility' => array(
+				'db_column' => 'page',
+				'on_values' => array('individual')
+			)
+		)
+	);
+$oDialog2->setElement($oDiv);
+
+
+$oDiv	= $oDialog2->createRow( L10N::t('Editierbar', $sGuiDescription), 'checkbox',	array('db_column' => 'editable', 'db_alias' => ''));
+$oDialog2->setElement($oDiv);
+
+
+$oH3= new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Schrift', $sGuiDescription));
+$oDialog2->setElement($oH3);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Schriftart', $sGuiDescription), 'select',	array('db_column' => 'font_type', 'db_alias' => '', 'select_options'=>$aSubFonts));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Schriftstil', $sGuiDescription), 'select',	array('db_column' => 'font_style', 'db_alias' => '', 'select_options'=>$aFontStyles));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Schriftgröße', $sGuiDescription), 'input',	array('db_column' => 'font_size', 'db_alias' => '', 'required' => 1, 'format'=>new Ext_Thebing_Gui2_Format_Float()));
+$oDialog2->setElement($oDiv);
+
+$oDiv	= $oDialog2->createRow( L10N::t('Laufweite', $sGuiDescription), 'input',	array('db_column' => 'font_spacing', 'db_alias' => '', 'format'=>new Ext_Thebing_Gui2_Format_Float(4)));
+$oDialog2->setElement($oDiv);
+
+$oDialog2->width = 950;
+$oDialog2->height = 500;
+
+
+# START - Leiste 1 #
+$oBar = $oGuiTemplateTypeElements->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGuiTemplateTypeElements->gui_description),
+			$oDialog2,
+			L10N::t('Neuer Eintrag', $oGuiTemplateTypes->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oGuiTemplateTypeElements->gui_description),
+				$oDialog2,
+				L10N::t('Editieren', $oGuiTemplateTypes->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiTemplateTypeElements->gui_description), L10N::t('Löschen', $oGuiTemplateTypes->gui_description));
+	$oBar ->setElement($oIcon);
+
+$oGuiTemplateTypeElements->setBar($oBar);
+
+$oBar = $oGuiTemplateTypeElements->createBar();
+
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelGroup = $oBar->createLabelGroup($oGuiTemplateTypes->t('Export'));
+	$oBar->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGuiTemplateTypes->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGuiTemplateTypes->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createExcelExport();
+	$oBar->setElement($oIcon);
+	
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGuiTemplateTypeElements->setBar($oBar);
+
+# ENDE - Leiste 3 #
+
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'name';
+$oColName->db_alias						= '';
+$oColName->select_column				= 'name';
+$oColName->title						= L10N::t('Name', $sGuiDescription);
+$oColName->width						= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColName->width_resize					= true;
+$oColName->format						= 'Text';
+$oGuiTemplateTypeElements->setColumn($oColName);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'element_type';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'element_type';
+$oColTyp->title							= L10N::t('Typ', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Gui2_View_Format_Selection($aTypes);
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'x';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'x';
+$oColTyp->title							= L10N::t('Position X-Achse', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Thebing_Gui2_Format_Float();
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'y';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'y';
+$oColTyp->title							= L10N::t('Position Y-Achse', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Thebing_Gui2_Format_Float();
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'element_width';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'element_width';
+$oColTyp->title							= L10N::t('Breite (in mm)', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Thebing_Gui2_Format_Float();
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'page';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'page';
+$oColTyp->title							= L10N::t('Seiten', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Gui2_View_Format_Selection($aPages);
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'font_type';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'font_type';
+$oColTyp->title							= L10N::t('Schriftart', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Gui2_View_Format_Selection($aSubFonts);
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'font_size';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'font_size';
+$oColTyp->title							= L10N::t('Schriftgröße', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Thebing_Gui2_Format_Float();
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oColTyp								= new Ext_Gui2_Head();
+$oColTyp->db_column						= 'font_style';
+$oColTyp->db_alias						= '';
+$oColTyp->select_column					= 'font_style';
+$oColTyp->title							= L10N::t('Schriftstil', $sGuiDescription);
+$oColTyp->width							= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColTyp->width_resize					= false;
+$oColTyp->format						= new Ext_Gui2_View_Format_Selection($aFontStyles);
+$oGuiTemplateTypeElements->setColumn($oColTyp);
+
+$oGuiTemplateTypeElements->addDefaultColumns();
+
+$aOptionalHeaderData			= array();
+$aOptionalHeaderData['js']		= array();
+$aOptionalHeaderData['css']		= array();
+
+$aOptionalHeaderData['js'][]	= '/admin/extensions/thebing/gui2/util.js';
+$aOptionalHeaderData['js'][]	= '/admin/extensions/thebing/gui2/admin/templates/templatetypes.js';
+$aOptionalHeaderData['css'][]	= '/assets/ts/css/gui2.css';
+
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGuiTemplateTypes);
+$oPage->setGui($oGuiTemplateTypeElements, array('hash' => $oGuiTemplateTypes->hash, 'foreign_key' => 'type_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display($aOptionalHeaderData);

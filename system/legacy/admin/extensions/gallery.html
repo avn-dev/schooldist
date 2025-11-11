@@ -1,0 +1,376 @@
+<?php
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+Util::checkDir(\Util::getDocumentRoot()."storage/public/gallery/");
+
+echo Admin_Html::loadAdminHeader(array('jslib' => 'jquery_1_10'));
+
+?>
+
+<script>
+<!--
+
+function umklappen(aus, ein){	// (c) by plan-i GmbH, all rights reserved!!!
+   	var i = 0;				<?	// Diese Funktion blendet benannte Bereiche ein oder aus ?>
+   	var rows=document.getElementsByName(aus);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='inline';
+  	}
+   	var rows=document.getElementsByName(ein);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='none';
+  	}
+	document.getElementById('active').value=aus;
+}
+
+function go_detail(act) {
+	if(act == "new") {
+		document.gallery_form_1.gallery_id.value = ''; 
+		document.gallery_form_1.task.value='edit'; 
+		document.gallery_form_1.submit();
+	} else if(document.gallery_form_1.gallery_id.value > 0) {
+		document.gallery_form_1.task.value=act; 
+		document.gallery_form_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+-->
+</script>
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Galerie Administration</h1>
+	
+<?
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+
+	if($_POST['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$config->gallery_id = $_VARS['gallery_id'];;
+		$config->widthThumb = $_VARS['widthThumb'];
+		$config->heightThumb = $_VARS['heightThumb'];
+		$config->widthImage = $_VARS['widthImage'];
+		$config->heightImage = $_VARS['heightImage'];
+		$config->numberpp = $_VARS['numberpp'];
+		$config->colspanpp = $_VARS['colspanpp'];
+		$config->order_by = $_VARS['order_by'];
+		$config->direction = $_VARS['direction'];
+
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$aGalleries = array();
+	$res = DB::getQueryRows("SELECT * FROM gallery_init ORDER BY name");
+	foreach($res as $my) {
+		$aGalleries[$my['id']] = $my['name'];
+	}
+	$aOrderBy = array('image' => '', 'description' => 'Bildbeschreibung', 'created' => 'Erstellungsdatum', 'views' => 'Beliebteste Bilder');
+	$aOrderByDirection = array('DESC' => 'Absteigend', 'ASC' => 'Aufsteigend');
+
+?>
+			<form method="POST" action="gallery.html">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="file" value="<?=$_VARS['file']?>">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<?=printTableStart()?>
+			<?=printFormSelect("Galerie", "gallery_id", $aGalleries, $config->gallery_id)?>
+			<?=printFormText("Maximale Breite Vorschaubild", "widthThumb", $config->widthThumb)?>
+			<?=printFormText("Maximale Höhe Vorschaubild", "heightThumb", $config->heightThumb)?>
+			<?=printFormText("Maximale Breite Bild", "widthImage", $config->widthImage)?>
+			<?=printFormText("Maximale Höhe Bild", "heightImage", $config->heightImage)?>
+			<?=printFormText("Bilder pro Seite", "numberpp", $config->numberpp)?>
+			<?=printFormText("Bilder pro Zeile", "colspanpp", $config->colspanpp)?>
+			<?=printTableEnd()?>
+			<br>
+			<?=printTableStart()?>
+			<?=printFormSelect("Sortierung", "order_by", $aOrderBy, $config->order_by)?>
+			<?=printFormSelect("Richtung", "direction", $aOrderByDirection, $config->direction)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>		
+<?
+} else {
+
+	if($_VARS['task'] == "save") {
+		if($_VARS['gallery_id'] > 0) {
+			DB::executeQuery("UPDATE gallery_init SET name = '".DB::escapeQueryString($_VARS['name'])."', path = '".DB::escapeQueryString($_VARS['path'])."' WHERE id = ".(int)$_VARS['gallery_id']."");
+		} else {
+			DB::executeQuery("INSERT INTO gallery_init SET name = '".DB::escapeQueryString($_VARS['name'])."', path = '".DB::escapeQueryString($_VARS['path'])."'");
+		}
+		$_VARS['task'] = false;
+	} elseif($_VARS['task'] == "delete") {
+		if($_VARS['gallery_id'] > 0) {
+			DB::executeQuery("DELETE FROM gallery_init WHERE id = '".(int)$_VARS['gallery_id']."' LIMIT 1");
+			DB::executeQuery("DELETE FROM gallery_data WHERE gallery_id = ".(int)$_VARS['gallery_id']."");
+		}
+		$_VARS['task'] = false;
+	}
+
+// $active initialisieren:
+$active=(int)$active; // so kommt in $active eine Null, wenn da ein text, oder gar nichts drin steht.
+
+?>
+
+
+<form name="formular" method="post">
+<input type="HIDDEN" NAME="active" value="<?=$active?>">
+</form>
+
+
+
+<?
+if(!$_VARS['task']){
+?>
+	<h2>Bitte wählen Sie zunächst aus welche Galerie Sie pflegen wollen:</h2>
+	<table cellpadding="0" cellspacing="0" border="0" class="table" width="100%">
+		<tr>
+			<td><IFRAME src="gallery_detail2.html" style="width:100%;height:400px;" name="detail2" frameborder="0" scrolling="yes"></IFRAME></td>
+		</tr>
+	</table>
+	<P align="right">
+	<?make_button("Eigenschaften", "#", "onclick=\"go_detail('edit');\"");?>&nbsp;
+	<?make_button("Einträge bearbeiten", "#", "onclick=\"go_detail('entries');\"");?>&nbsp;
+	<?make_button("Galerie löschen", "#", "onclick=\"if(confirm('Möchten Sie diese Galerie wirklich löschen?')) go_detail('delete');\"");?>&nbsp;
+	<?make_button("Galerie anlegen", "#", "onclick=\"go_detail('new');\"");?>
+	</P>
+<form name="gallery_form_1">
+<input type="hidden" name="task" value="">
+<input type="hidden" name="gallery_id" value="">
+<input type="hidden" NAME="active" value="0">
+</form>
+
+<?
+} elseif($_VARS['task'] == "edit") {
+	if($_VARS['gallery_id'] > 0) {
+		$aGallery = DB::getQueryRow("SELECT * FROM gallery_init WHERE id = ".(int)$_VARS['gallery_id']."");
+	}
+?>
+	<form method="POST" action="gallery.html">
+	<input type="hidden" name="gallery_id" value="<?=$_VARS['gallery_id']?>">
+	<input type="hidden" name="task" value="save">
+	<?=printTableStart()?>
+		<?=printFormText("Name der Galerie","name",$aGallery['name'])?>
+		<?=printFormText("Dateipfad", "path", $aGallery['path'])?>
+	<?=printTableEnd()?>
+	<?=printSubmit("Galerie speichern")?>
+	</form>
+<?
+} elseif($_VARS['task'] == "entries") {
+
+	//sichern einer übergebenen Auswahl von Dateien aus der Medienverwaltung
+	if($_VARS['down_auswahl']){
+
+		@mkdir(\Util::getDocumentRoot()."system/extensions/gallery",$system_data['chmod_mode_dir']);
+		@chmod(\Util::getDocumentRoot()."system/extensions/gallery",$system_data['chmod_mode_dir']);
+
+		//id's extrahieren
+		$_VARS['down_auswahl'] = explode("|",$_VARS['down_auswahl']);
+		for($i=0;$i<=count($_VARS['down_auswahl']);$i++) {
+			if($_VARS['down_auswahl'][$i] > 0) {
+			//Datensatz anlegen
+
+				$my = DB::getQueryRow("SELECT * FROM system_media WHERE id = ".(int)$_VARS['down_auswahl'][$i]."");
+
+				if($my['file'] == "folder") {
+					$_VARS['down_auswahl'][$i] = 0;
+					$res_dir = DB::getQueryRows("SELECT * FROM system_media WHERE folder = '".DB::escapeQueryString($my['folder'])."' AND file != 'folder'");
+					foreach($res_dir as $my_dir) {
+						$_VARS['down_auswahl'][] = $my_dir['id'];
+					}
+					continue;
+				}
+
+				$upload_size_resize = 1;
+				$upload_size_height = 130;
+				$upload_size_width = 140;
+
+				$ending_array = explode(".",$my['file']);
+				$upload_size_format = $ending_array[count($ending_array)-1];
+
+				//save(\Util::getDocumentRoot().$system_data['upload_dir'].$my['folder'].$my['file'],\Util::getDocumentRoot()."system/extensions/gallery/","thumb_".$_VARS['page_id']."_".$my['file']);
+
+				$down_query = "INSERT INTO gallery_data (gallery_id, created, image, active) VALUES ('".(int)$_VARS['gallery_id']."', '".time()."', '".DB::escapeQueryString($_VARS['down_auswahl'][$i])."', '1')";
+				$down_aufgabe = DB::executeQuery($down_query);
+
+			}//if
+		}//for
+	}//if
+
+	//sichern von geänderten dateieigenschaften
+	if($down_chg_id > 0){
+		//Datensatz updaten   
+		$down_aufgabe = DB::executeQuery("UPDATE gallery_data SET keywords = '".DB::escapeQueryString($_VARS['down_neu_titel'])."', description = '".DB::escapeQueryString($_VARS['down_neu_beschr'])."' WHERE id = ".(int)$_VARS['down_chg_id']."");
+	}
+
+$form_name = "down_form_data";
+$input_name = "down_auswahl";
+$submit_button_value = "Auswahl übernehmen";
+$form_submit = 1;
+?>
+
+<script>
+function open_media() {
+	window.open('../frame.html?file=media&mode=multiple&form_name=<?echo $form_name;?>&input_name=<?echo $input_name;?>&submit_button_value=<?echo $submit_button_value;?>&form_submit=<?echo $form_submit;?>', 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+</script>
+
+
+
+      <IFRAME src="gallery_detail.html?gallery_id=<?=$_VARS['gallery_id']?>" style="width:100%;height:400px;" id="detail_iframe" name="detail" frameborder="1" scrolling="yes"></IFRAME>
+<style>
+		  
+ #dropZone 
+{
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    background-color: #eee;
+    width: 250px;
+    padding: 50px 0;
+    text-align: center;
+    font-size: 18px;
+    color: #555;
+    margin: 50px auto;
+}
+#dropZone.hover 
+{
+    border-color: #aaa;
+    background-color: #ddd;
+}
+ 
+#dropZone.error
+{
+    border-color: #f00;
+    background-color: #faa;
+}
+</style>
+
+<form name="down_form_data2" action="">
+	<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<TR height="1">
+	  		<Th>Beschreibung:</th>
+			<td><input type="text" name="down_neu_beschr" size="60" value=""></td>
+		</tr>
+     	<TR height="1">
+	 		<Th>Stichwörter:</th>
+			<td><input type="text" name="down_neu_titel" size="60" value=""></td>
+		</tr>
+	</table>
+	<p align="right">
+	<?make_button("Dateien aus Medienverwaltung hinzufügen", "#", "onclick=\"open_media();\"");?>
+	&nbsp;
+	<?make_button("Dateien entfernen", "#", "onclick=\"detail.deleteitem();return false;\"");?>
+	&nbsp;
+	<?make_button("Dateieigenschaften sichern", "#", "onclick=\"document.down_form_data2.down_neu_sich.value=1; document.down_form_data2.submit();\"");?>
+	</p>
+	
+	<div id="dropZone">
+        Neue Bilder bitte hier reinziehen
+    </div>
+	
+<script>
+
+function uploadProgress(event) {
+    var percent = parseInt(event.loaded / event.total * 100);
+    $('#dropZone').text('Uploading: ' + percent + '%');
+}
+
+var dropZone;
+$(document).ready(function () {
+    dropZone = $('#dropZone');
+    dropZone.removeClass('error');
+
+
+	// Check if window.FileReader exists to make 
+	// sure the browser supports file uploads
+	if (typeof(window.FileReader) == 'undefined') {
+		dropZone.text('Browser Not Supported!');
+		dropZone.addClass('error');
+		return;
+	}
+
+	// Add a nice drag effect
+	dropZone[0].ondragover = function() {
+		dropZone.addClass('hover');
+		return false;
+	};
+
+	// Remove the drag effect when stopping our drag
+	dropZone[0].ondragend = function() {
+		dropZone.removeClass('hover');
+		return false;
+	};
+
+	// The drop event handles the file sending
+	dropZone[0].ondrop = function(event) {
+		// Stop the browser from opening the file in the window
+		event.preventDefault();
+		dropZone.removeClass('hover');
+
+		var file = event.dataTransfer.files[0];
+
+		var xhr = new XMLHttpRequest();    // den AJAX Request anlegen
+		xhr.upload.addEventListener('progress', uploadProgress, false);
+		xhr.open('POST', '/admin/extensions/gallery/ajax.php?gallery_id=<?=$_VARS['gallery_id']?>');    // Angeben der URL und des Requesttyps
+
+		xhr.onreadystatechange=function(e) {
+			if(xhr.readyState==4) {
+				if (e.target.status == 200) {
+					$('#dropZone').text('Upload erfolgreich!');
+					document.getElementById('detail_iframe').contentWindow.location.reload();
+				} else {
+					dropZone.text('Upload fehlgeschlagen!');
+					dropZone.addClass('error');
+				}
+			}
+		}
+
+		var formdata = new FormData();    // Anlegen eines FormData Objekts zum Versenden unserer Datei
+		for(i in event.dataTransfer.files) {
+			if(event.dataTransfer.files.hasOwnProperty(i)) {
+				file = event.dataTransfer.files[i];
+				formdata.append('upload[]', file);  // Anhängen der Datei an das Objekt
+			}
+		}
+		xhr.send(formdata);    // Absenden des Requests
+
+	}
+});
+
+</script>
+	
+<input type="hidden" name="down_neu_sich" value="">
+<input type="hidden" name="down_chg_id" value="">
+<input type="hidden" name="gallery_id" value="<?=$_VARS['gallery_id']?>">
+<input type="hidden" name="task" value="entries">
+</form>
+
+	<p align="right">
+	<?make_button("zurück", "#", "onclick=\"document.location.href='".$_SERVER['PHP_SELF']."';return false;\"");?>
+	</p>
+
+<form name="down_form_data" action="">
+<input type="hidden" name="task" value="entries">
+<?
+echo "<input type=\"hidden\" name=\"down_auswahl\" value=\"\">";
+echo "<input type=\"hidden\" name=\"gallery_id\" value=\"".$_VARS['gallery_id']."\">";
+?>
+</form>
+
+<?
+}//else
+}
+?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

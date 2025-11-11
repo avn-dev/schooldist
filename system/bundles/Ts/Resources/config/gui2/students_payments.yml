@@ -1,0 +1,140 @@
+parent: ts_inquiry
+set: client_payments
+view: client_payment
+access: thebing_accounting_client_payments
+hash: a8b4925932cb94425f936b0519ad79d7
+leftframe: true
+multiple_selection: true
+title: ""
+description: ""
+export: true
+pagination: true
+class:
+  icon_status: Ext_Thebing_Inquiry_Payment_Gui2_Icon_Active
+  js: StudentlistGui
+where : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getAgencyPaymentWhere
+index:
+  registry: 
+    generate: false
+designer:
+  dialog: ""
+  filter: ts_students_payments
+  flex: student_record
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo
+bars:
+    -
+      position: top
+      type: ''
+      elements:
+        -
+          element: icon_edit
+          dialog: 
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - students
+        -
+          element: icon
+          label: Bezahlen
+          action: payment
+          additional: inquiry
+          task: openDialog
+          active: 0
+          access:
+            - thebing_invoice_enter_payments
+            - thebing_invoice_enter_payments_history
+            #- thebing_invoice_overpayments
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - money
+        -
+          element: icon
+          label: Zahlungsbeträge neu zuordnen
+          task: confirm
+          action: reallocateAmounts # confirmReallocateAmounts
+          access: [thebing_accounting_client_payments, reallocate]
+          confirm_message: Wollen Sie die Zahlungsbeträge wirklich neu zuordnen?
+          img:
+            - Ext_Thebing_Util
+            - getIcon
+            - refresh
+        -
+          element: seperator
+        -
+          element: icon_communication
+          label: Kommunikation
+          application: client_payment
+    -
+      position: bottom
+      type: legend
+      elements: 
+        - 
+          element: legend_label
+          label: Zahlung
+        - 
+          element: legend_info
+          label: eingegangen
+          info:
+            color: [soft_green, 30]
+            background: true
+        - 
+          element: legend_info
+          label: vollständig
+          info:
+            color: lightgreen
+            background: true
+        - 
+          element: legend_info
+          label: nicht erfolgt
+          info:
+            color: red
+            background: true   
+        - 
+          element: legend_label
+          label: PDF 
+        - 
+          element: legend_info
+          label: benötigt
+          info:
+            color: new
+            background: true
+            img: 
+              - Ext_TC_Util
+              - getIcon
+              - pdf
+        - 
+          element: legend_info
+          label: verschickt
+          info:
+            color: old
+            background: true
+            img: 
+              - Ext_TC_Util
+              - getIcon
+              - pdf
+        - 
+          element: legend_label
+          label: Buchung 
+        - 
+          element: legend_info
+          label: Storniert
+          info:
+            color: storno
+            background: true 
+        - 
+          element: legend_info
+          label: Verändert
+          info:
+            color: changed
+            background: true 
+        - 
+          element: legend_info
+          label: nicht bestätigt
+          info:
+            color: red_font
+            italic: true
+            text: true

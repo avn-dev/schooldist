@@ -1,0 +1,227 @@
+class:
+  wdbasic: \TsAccounting\Entity\Transaction
+  data: \TsAccounting\Gui2\Data\DebtorsReport
+  date_format: Ext_Thebing_Gui2_Format_Date
+id:
+  column: id
+  alias: ts_at
+orderby:
+  - \TsAccounting\Gui2\Data\Transactions
+  - getOrderby
+  - ""
+access: 
+    - ts_accounting_debtors_report
+    - ""
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          id: search_string
+          label: Debitor
+          searchtype: LIKE
+          column:
+            - firstname
+            - lastname
+            - name
+            - ext_1
+            - name
+            - number
+            - number
+            - number
+            - id
+          alias:
+            - tc_c
+            - tc_c
+            - kg
+            - ka
+            - ts_s  
+            - tc_cn
+            - kg
+            - ts_an
+            - ts_s
+        -
+          element: seperator
+        -
+          element: timefilter
+          id: search_date
+          until_id: search_date
+          format: Ext_Thebing_Gui2_Format_Date
+          until:
+            column:
+              - due_date
+            alias:
+              - ts_at
+          searchtype: between
+          label_between: Datum
+        -
+          element: seperator
+        -
+          element: selectfilter
+          id: search_type
+          label: Typ
+          label_as_item: true
+          column:
+            - account_type
+          entries:
+            - \TsAccounting\Gui2\Format\AccountType
+            - getOptions
+        -
+          element: selectfilter
+          label: Währung
+          label_as_item: true
+          column:
+            - currency_iso
+          entries:
+            - Ext_Thebing_Currency_Util
+            - getAllSchoolsCurrencyList
+            - true
+        -
+          element: selectfilter
+          label: Proforma
+          label_as_item: true
+          column:
+            - amount_proformas
+          alias:
+            - ts_at
+          entries:
+            - \TsAccounting\Gui2\Data\DebtorsReport
+            - getIncludeOptions
+          filter_query:
+            without_proforma: " `ts_at`.`type` != 'proforma' "
+            with_proforma: " `ts_at`.`type` = 'proforma' "
+    -
+      position: top
+      elements:
+        -
+          element: icon
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - list
+          task: openDialog
+          action: transactions
+          label: Transaktionen
+          dbl_click_element: true
+    -
+      position: top
+      elements:
+        - 
+          element: labelgroup
+          label: Auswertungen
+        -
+          element: selectfilter
+          id: report_interval
+          skip_query: true
+          entries:
+            - \TsAccounting\Gui2\Data\DebtorsReport
+            - getIntervalOptions
+        -
+          element: selectfilter
+          id: report_back
+          skip_query: true
+          entries:
+            - \TsAccounting\Gui2\Data\DebtorsReport
+            - getIntervalNumbersOptions
+            - back
+          value: 4
+        -
+          element: selectfilter
+          id: report_forth
+          skip_query: true
+          entries:
+            - \TsAccounting\Gui2\Data\DebtorsReport
+            - getIntervalNumbersOptions
+            - forth
+          value: 4
+        -
+          element: selectfilter
+          id: report_include
+          skip_query: true
+          entries:
+            - \TsAccounting\Gui2\Data\DebtorsReport
+            - getIncludeOptions
+        -
+          element: icon
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - excel
+          task: export_excel
+          action: report
+          label: Auswertung
+          active: 1
+columns:
+  -
+    title: Typ
+    column: account_type
+    width: short_name
+    resize: false
+    sortable: true
+    format: \TsAccounting\Gui2\Format\AccountType
+  -
+    title: Debitornummer
+    column: account_number
+    width: number
+    resize: false
+    sortable: true
+  -
+    title: Debitor
+    column: account_name
+    width: name
+    resize: true
+    sortable: true
+  -
+    title: Währung
+    column: currency_iso
+    width: short_name
+    default: false
+    format: Ext_TC_Gui2_Format_Currency
+  -
+    title: Rechnungen
+    column: amount_invoices
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: 
+      - currency_iso
+  -
+    title: Zahlungen
+    column: amount_payments
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: 
+      - currency_iso
+  -
+    title: Saldo
+    column: accounting_balance
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: 
+      - currency_iso
+  -
+    title: Proformas
+    column: amount_proformas
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: 
+      - currency_iso
+  -
+    title: Buchsaldo
+    column: ledger_balance
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: 
+      - currency_iso
+default_columns: []
+    

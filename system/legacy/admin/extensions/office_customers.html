@@ -1,0 +1,843 @@
+<? 
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess("office_customers");
+
+$aOptions = array();
+$aOptions['additional'] = '<script type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>';
+$aOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/office/js/customer.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+if(!$_VARS['task']) {
+	$aOptions['body'] = ' scroll="no"';
+}
+$aOptions['xhtml'] = false;
+Admin_Html::loadAdminHeader($aOptions);
+
+$aGroups = Ext_Office_Customer::getGroups(\Core\Handler\SessionHandler::getInstance()->get('office_client_id'));
+$aGroups = array(0=>'Alle') + (array)$aGroups;
+
+$arrConfig = array();
+$arrConfig['css'] 		= "txt";
+$arrConfig['onKeyUp']	= "prepareLoadCustomerList(this);";
+$arrConfig['name']		= "search";
+$arrConfig['id'] 		= "search";
+$arrConfig['value']		= $_SESSION['search'];
+$objSelect = new GUI_FormText($arrConfig);
+
+$arrConfig = array();
+$arrConfig['css'] 		= "txt";
+$arrConfig['onChange']	= "prepareLoadCustomerList(document.getElementById('search'));";
+$arrConfig['name']		= "client_id";
+$arrConfig['id'] 		= "client_id";
+$arrConfig['values']	= $aClients;
+$arrConfig['selected']	= \Core\Handler\SessionHandler::getInstance()->get('office_client_id');
+$objClientSelect = new GUI_FormSelect($arrConfig);
+
+$arrConfig = array();
+$arrConfig['css'] 		= "txt";
+$arrConfig['onChange']	= "prepareLoadCustomerList(document.getElementById('search'));";
+$arrConfig['name']		= "group_id";
+$arrConfig['id'] 		= "group_id";
+$arrConfig['values']	= $aGroups;
+$arrConfig['selected']	= $_SESSION['office']['group_id'];
+$objGroupSelect = new GUI_FormSelect($arrConfig);
+
+$strDocumentSearch	= $objSelect->generateHTML();
+$strClientSelect	= $objClientSelect->generateHTML();
+$strGroupSelect	= $objGroupSelect->generateHTML();
+
+?>
+
+	<script type="text/javascript">
+	
+	var selectedRow = 0;
+	var arrIcons = ['toolbar_edit', 'toolbar_delete', 'toolbar_new_protocol', 'toolbar_billing'];
+	var arrIconState = [];
+	var loadCustomerListObserver;
+	var loadCustomerListEventElement;
+	var objDialogBox;
+
+	function checkRow(e, strId) {
+		var objRow = $(strId);
+
+		if(
+			selectedRow && 
+			$(selectedRow)
+		) {
+			if(selectedRow != strId) {
+				$(selectedRow).className = "";
+			} else {
+				return false;
+			}
+		}
+		if(!objRow.hasClassName('selectedRow')) {
+			objRow.className = "selectedRow";
+			getContactPersons(strId.replace(/tr_/, ''));
+			getCustomerOverview(strId.replace(/tr_/, ''));
+			getProtocols(strId.replace(/tr_/, ''));
+			getLocations(strId.replace(/tr_/, ''));
+			getComments(strId.replace(/tr_/, ''));
+		} else {
+			objRow.className = "";
+		}
+		selectedRow = strId;
+	
+		checkCustomerToolbar();
+	
+	}	
+
+	var selectedCPRow = 0;
+	function checkCPRow(e, strId)
+	{
+		var objRow = $(strId);
+
+		if(
+			selectedCPRow && 
+			$(selectedCPRow)
+		) {
+			$(selectedCPRow).className = "";
+		}
+
+		if(!objRow.hasClassName('selectedRow')) {
+			objRow.className = "selectedRow";
+		} else {
+			objRow.className = "";
+		}
+
+		selectedCPRow = strId;
+	}
+
+	var selectedLocationRow = 0;
+	function checkLocationRow(e, strId) {
+		var objRow = $(strId);
+
+		if(
+			selectedLocationRow && 
+			$(selectedLocationRow)
+		) {
+			$(selectedLocationRow).className = "";
+		}
+
+		if(!objRow.hasClassName('selectedRow')) {
+			objRow.className = "selectedRow";
+		} else {
+			objRow.className = "";
+		}
+
+		selectedLocationRow = strId;
+	}	
+
+	var selectedCommentRow = 0;
+	function checkCommentRow(e, strId) {
+		var objRow = $(strId);
+
+		if(
+			selectedCommentRow && 
+			$(selectedCommentRow)
+		) {
+			$(selectedCommentRow).className = "";
+		}
+
+		if(!objRow.hasClassName('selectedRow')) {
+			objRow.className = "selectedRow";
+		} else {
+			objRow.className = "";
+		}
+
+		selectedCommentRow = strId;
+	}
+
+	function executeAction(strId, strAction) {
+
+		if(
+			strAction != 'new' &&
+			strAction != 'edit' &&
+			strAction != 'export' &&
+			!arrIconState['toolbar_'+strAction]
+		) {
+			alert("Diese Aktion ist nicht zulässig!");
+			return false;
+		}
+
+		var intCustomerId = 0;
+
+		if(
+			strAction != 'new' && 
+			selectedRow
+		) {
+			intCustomerId = selectedRow.replace(/tr_/, '');
+		}
+
+		switch(strAction) {
+			case "export":
+				exportCustomers(intCustomerId);
+				break;
+			case "billing":
+				openBillingDialog(intCustomerId);
+				break;
+			case "delete":
+				deleteCustomer(intCustomerId);
+				break;
+			case "edit":
+				openDialog(intCustomerId);
+				break;
+			case "new":
+				openDialog(0);
+				break;
+			case "new_protocol":
+				openProtocolDialog(intCustomerId);
+				break;
+			default:
+				alert("Diese Aktion ist nicht zulässig!");
+				break;
+		}
+
+	}
+
+	function exportCustomers(iCustomerId) {
+		window.open('/admin/extensions/office.ajax.php?task=export_customers');
+	}
+
+	function checkCustomerToolbar() {
+		
+		if(selectedRow) {
+
+			var intCustomerId = selectedRow.replace(/tr_/, '');
+
+			var strRequestUrl = '/admin/extensions/office.ajax.php';
+			var strParameters = 'task=check_customer_toolbar&customer_id='+encodeURIComponent(intCustomerId);
+
+			var objAjax = new Ajax.Request(
+									strRequestUrl,
+									{
+										method : 'post',
+										parameters : strParameters,
+										onComplete : checkCustomerToolbarCallback
+									}
+			);
+
+		} else {
+
+			arrIcons.each(function(strIcon) {
+				switchCustomerToolbarIcon(strIcon, 0);
+			}); 
+
+		}
+
+	}
+
+	function checkCustomerToolbarCallback(objResponse) {
+	
+		var objData = objResponse.responseText.evalJSON();
+	
+		var arrList = objData['data'];
+	
+		arrIcons.each(function(strIcon) {
+			var bolShow = arrList[strIcon];
+			switchCustomerToolbarIcon(strIcon, bolShow);
+		});
+	
+	}
+	
+	function switchCustomerToolbarIcon(strIcon, bolShow) {
+		var objIcon = $(strIcon);
+		
+		if(bolShow) {
+			if(
+				arrIconState[strIcon] == undefined ||
+				arrIconState[strIcon] == 0
+			) {
+				$j(objIcon).fadeIn();
+			}
+			arrIconState[strIcon] = 1;
+		} else {
+			if(
+				arrIconState[strIcon] == undefined ||
+				arrIconState[strIcon] == 1
+			) {
+				$j(objIcon).fadeTo(0.2);
+			}
+			arrIconState[strIcon] = 0;
+		}
+	}
+	
+	function prepareLoadCustomerList(objEvent) {
+	
+		if(objEvent) {
+			loadCustomerListEventElement = objEvent;
+		}
+	
+		if(loadCustomerListObserver) clearTimeout(loadCustomerListObserver);
+		loadCustomerListObserver = setTimeout(loadCustomerList.bind(), 500);
+	
+	}
+	
+	function loadCustomerList() {
+		
+		$('toolbar_loading').show();
+		
+		var strRequestUrl = '/admin/extensions/office.ajax.php';
+		var strParameters = 'task=get_customers';
+			strParameters += '&search=' + $('search').value;
+			strParameters += '&client_id=' + $('client_id').value;
+			strParameters += '&group_id=' + $('group_id').value;
+
+		var objAjax = new Ajax.Request(
+								strRequestUrl,
+								{
+								method : 'post',
+								parameters : strParameters,
+								onComplete : loadCustomerListCallback
+								}
+		); 
+	
+	}
+	
+	function loadCustomerListCallback(objResponse) {
+	
+		var objData 	= objResponse.responseText.evalJSON();
+	
+		var arrList 	= objData['data'];
+
+		var rowCnt 		= arrList.length;
+	
+		var tbody 		= document.getElementById("tbl_customers");
+		 
+		while(tbody.hasChildNodes()) {
+			tbody.removeChild(tbody.firstChild);
+		}
+		
+	    var floTotal 	= 0;
+	    
+		var c 			= 0;
+		
+		var tr    		= document.createElement("tr");
+		
+	    var objTr   	= tr.cloneNode(true);
+
+	    for(var i = 0; i < rowCnt; i++) {
+	        objTr = tr.cloneNode(false);
+	        tbody.appendChild(objTr);
+	        var strId = "tr_"+arrList[i]['id'];
+	        objTr.id = strId;
+	        Event.observe(objTr, 'click', checkRow.bindAsEventListener(c, strId));
+			Event.observe(objTr, 'dblclick', executeAction.bindAsEventListener(c, 'edit'));
+			Event.observe(objTr, 'mouseout', resetHighlightRow); 
+			Event.observe(objTr, 'mousemove', setHighlightRow);
+			addCells(objTr, i, arrList[i]);
+			floTotal += parseFloat(arrList[i]['price_net']);
+			c++;
+	    }
+	    tbody = null;
+		
+		if(loadCustomerListEventElement) {
+			loadCustomerListEventElement.focus();
+			loadCustomerListEventElement.value = loadCustomerListEventElement.value;
+		}
+		
+		//selectedRow = 0;
+		checkCustomerToolbar();
+		
+		$('toolbar_loading').hide();
+		
+	}
+	
+	function addCells(tr, cnt, arrList) {
+
+	    var td0 = document.createElement("td");
+	    tr.appendChild(td0);
+	    td0.appendChild(document.createTextNode(arrList['number'] + ' '));
+		td0.style.textAlign = 'right';
+		
+	    var td1 = document.createElement("td");
+	    tr.appendChild(td1);
+		td1.appendChild(document.createTextNode(arrList['company'] + ' '));
+
+	    var td1 = document.createElement("td");
+	    tr.appendChild(td1);
+		if(arrList['vat_id_valid'] == 1) {
+	    	td1.innerHTML = '<span style="color: green;">'+arrList['vat_id_nr'] + ' </span>';
+	    } else {
+			td1.innerHTML = arrList['vat_id_nr'] + ' ';
+		}
+
+	    var td2 = document.createElement("td");
+	    tr.appendChild(td2);
+		td2.appendChild(document.createTextNode(arrList['zip'] + ' '));
+
+	    var td3 = document.createElement("td");
+	    tr.appendChild(td3);
+		td3.appendChild(document.createTextNode(arrList['city'] + ' '));
+
+	    var td31 = document.createElement("td");
+	    tr.appendChild(td31);
+		td31.appendChild(document.createTextNode(arrList['country_name'] + ' '));
+
+	    var td4 = document.createElement("td");
+	    tr.appendChild(td4);
+	    if(arrList['phone_link'])
+	    {
+	    	td4.innerHTML = '<a href="' + arrList['phone_link'] + '" onclick="var x = window.open(this.href, \'phone\', \'height=1\'); x.close(); bolReadyState = 0; preLogPhoneClick(this); oInterval = setInterval(\'displayLoader()\', 100); return false;">' + arrList['phone'] + '&nbsp;</a>';
+	    }
+	    else
+	    {
+			td4.appendChild(document.createTextNode(arrList['phone'] + ' '));
+		}
+	    
+	    td0 = td1 = td2 = td3 = td4 = null;
+	        
+	}
+	
+	</script>
+
+	<div class="divHeader" style="height:65px;">
+
+		<div class="divToolbar">
+			<div class="divToolbarLabel">Filter:</div>
+			<div class="divToolbarFormItem">
+				Suche: <?=$strDocumentSearch?>
+			</div>
+
+			<div class="divToolbarFormItem">
+				Mandant: <?=$strClientSelect?>
+			</div>
+
+			<div class="divToolbarFormItem">
+				Kundengruppe: <?=$strGroupSelect?>
+			</div>
+
+			<div class="divToolbarIcon">
+				<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+			</div>
+			<div class="divToolbarIcon">
+				<img src="/admin/media/spacer.gif" height="16" width="1" alt="" />
+			</div>
+			
+			<div class="divCleaner"></div>
+			
+		</div>
+
+		<div class="divToolbar divTopLine">
+	
+			<div class="divToolbarLabel">Anlegen:</div>
+			<div class="divToolbarIcon" id="toolbar_new">
+				<img src="/admin/media/page_new.gif" onclick="executeAction(0, 'new');" alt="anlegen" title="anlegen" />
+			</div>
+
+			<div class="divToolbarSeparator">::</div>
+	
+			<div class="divToolbarLabel">Protokolleintrag anlegen:</div>
+			<div class="divToolbarIcon" id="toolbar_new_protocol">
+				<img src="/admin/extensions/office/images/office_protocol_add.png" onclick="executeAction(0, 'new_protocol');" alt="anlegen" title="anlegen" />
+			</div>
+	
+			<div class="divToolbarSeparator">::</div>
+	
+			<div class="divToolbarLabel">Bearbeitung:</div>
+			<div class="divToolbarIcon" id="toolbar_edit">
+				<img src="/admin/media/pencil.png" onclick="executeAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+			</div>
+	
+			<div class="divToolbarIcon" id="toolbar_delete">
+				<img src="/admin/media/cross.png" onclick="executeAction(0, 'delete');" alt="löschen" title="löschen" />
+			</div>
+
+			<div class="divToolbarSeparator">::</div>
+
+			<div class="divToolbarLabel">Abrechnen:</div>
+			<div class="divToolbarIcon" id="toolbar_billing">
+				<img src="/admin/extensions/office/images/money.png" onclick="executeAction(0, 'billing');" alt="abrechnen" title="abrechnen" />
+			</div>
+
+			<div class="divToolbarSeparator">::</div>
+
+			<div class="divToolbarLabel">Export:</div>
+			<div class="divToolbarIcon" id="toolbar_export">
+				<img src="/admin/media/export.png" onclick="executeAction(0, 'export');" alt="Export" title="Export" />
+			</div>
+
+			<div class="divCleaner"></div>
+
+		</div>
+
+		<div class="divHeaderBottomGrey"><img src="/admin/media/spacer.gif" height="7" /></div>
+		<div class="divHeaderBottomWhite"><img src="/admin/media/spacer.gif" height="5" /></div>
+		
+	</div>
+
+	<table id="tableCustomers" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+		<colgroup>
+			<col style="width: 90px;"/>
+			<col/>
+			<col style="width: 100px;"/>
+			<col style="width: 70px;"/>
+			<col style="width: 150px;"/>
+			<col style="width: 150px;"/>
+			<col style="width: 150px;"/>
+		</colgroup>
+		<thead>
+			<tr>
+				<th>Nr.</th>
+				<th>Firma</th>
+				<th>USt.-ID</th>
+				<th>PLZ</th>
+				<th>Ort</th>
+				<th>Land</th>
+				<th>Telefon</th>
+			</tr>
+		</thead>
+		<tbody id="tbl_customers"></tbody>
+	</table>
+
+	<div style="margin-top: 5px;">
+		<div id="divCustomerTabContainer" class="infoBox infoBoxTabs" style="height: 150px; margin-top: 0px;">
+			<div class="infoBoxTabsHead">
+				<ul class="infoBoxTabsNav" id="infoBoxTabDetails">
+				    <li><a href="#tab_details">Details</a></li>
+				    <li><a href="#tab_protocol">Protokoll</a></li>
+				    <?/*<li><a href="#tab_documents">Dokumente</a></li>*/?>
+				    <li><a href="#tab_contacts">Ansprechpartner</a></li>
+				    <?/*<li><a href="#tab_reports">Auswertung</a></li>*/?>
+					<li><a href="#tab_locations">Standorte</a></li>
+					<li><a href="#tab_comments">Kommentare</a></li>
+				</ul>
+				<div class="divCleaner"></div>
+			</div>
+			<div class="divCleaner"></div>
+			<div id="tab_details" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				<div id="non_customer_overview">
+					<div style="text-align:center; padding-top:25px;">
+						<b>Bitte markieren Sie einen Kunden</b>
+					</div>
+				</div>
+				<div id="customer_overview" style="display:none;">
+					<div class="divOfficeFieldsetContainer">
+						<div style="padding: 0 5px; float:left;">
+							<fieldset class="divOfficeFieldset" style="width:250px; height:90px;">
+								<legend class="divOfficeFieldsetLegend"><b>Kundendaten</b></legend>
+								<div class="divOfficeFieldsetContent">
+									<div id="co_company"></div>
+									<div id="co_address"></div>
+								</div>
+							</fieldset>
+						</div>
+						<div style="padding: 0 5px; float:left;">
+							<fieldset class="divOfficeFieldset" style="width:250px; height:90px;">
+								<legend class="divOfficeFieldsetLegend"><b>Kontaktdaten</b></legend>
+								<div class="divOfficeFieldsetContent">
+									<div id="co_phone"></div>
+									<div id="co_fax"></div>
+									<div id="co_email"></div>
+								</div>
+							</fieldset>
+						</div>
+						<div style="padding: 0 5px; float:left;">
+							<fieldset class="divOfficeFieldset" style="width:300px; height:90px;">
+								<legend class="divOfficeFieldsetLegend"><b>Fakturierungsinformationen</b></legend>
+								<div class="divOfficeFieldsetContent">
+									<div id="co_number"></div>
+									<div id="co_pay"></div>
+								</div>
+							</fieldset>
+						</div>
+						<div style="clear:left;"></div>
+					</div>
+				</div>
+			</div>
+			<div id="tab_protocol" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				<div style="padding: 5px 0;">
+					<div id="non_customer_protocol" style="display:none;">
+						<div style="text-align:center; padding-top:20px;">
+							<b>Bitte markieren Sie einen Kunden</b>
+						</div>
+					</div>
+					<div id="protocolsList">
+						<table id="tableProtocols" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout:fixed;">
+							<colgroup>
+								<col style="width: 140px;" />
+								<col style="width: 120px;" />
+								<col />
+								<col style="width: 200px;" />
+								<col style="width: 200px;" />
+							</colgroup>
+							<thead>
+								<tr>
+									<th>Zeitpunkt</th>
+									<th>Aktivität</th>
+									<th>Betreff</th>
+									<th>Kontaktperson</th>
+									<th>Bearbeiter</th>
+								</tr>
+							</thead>
+							<tbody id="tbl_protocols">
+								<tr>
+									<td colspan="5" style="padding:10px 0; text-align:center;">
+										<b>Bitte markieren Sie einen Kunden</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div id="tab_documents" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				Dokumente
+			</div>
+			<div id="tab_contacts" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				<div id="contactPersonsToolbar" style="display:none;">
+					<div style="background-color:#f7f7f7; border-bottom: 1px solid #ccc; padding:3px;">
+						<div style="position:relative; top:-2px;">
+							<b>Anlegen:</b>
+							<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/page_new.gif" onclick="openContactPersonDialog(0, Array());" alt="Anlegen" title="Anlegen" />
+							<span id="editCPToolbar">
+								:: <b>Bearbeiten:</b>
+								<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/pencil.png" onclick="preOpenContactPersonDialog('edit');" alt="Bearbeiten" title="Bearbeiten" />
+								<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/cross.png" onclick="preOpenContactPersonDialog('delete');" alt="Löschen" title="Löschen" />
+							</span>
+						</div>
+					</div>
+				</div>
+				<div style="padding: 5px 0;">
+					<div id="nonContactPersons" style="display:none;">
+						<div style="text-align:center; padding-top:20px;">
+							<b>Für diesen Kunden sind z. Z. keine Ansprechpartner eingetragen</b>
+						</div>
+					</div>
+					<div id="nonCustomerSelected" style="display:none;">
+						<div style="text-align:center; padding-top:20px;">
+							<b>Bitte markieren Sie einen Kunden</b>
+						</div>
+					</div>
+					<div id="contactPersonsList">
+						<table id="tableContactPersons" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout:fixed;">
+							<colgroup>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col />
+							</colgroup>
+							<thead>
+								<tr>
+									<th>Vorname</th>
+									<th>Nachname</th>
+									<th>E-Mail</th>
+									<th>Telefon</th>
+									<th>Mobil</th>
+									<th>Telefax</th>
+									<th>Anmerkungen</th>
+								</tr>
+							</thead>
+							<tbody id="tbl_contact_persons">
+								<tr>
+									<td colspan="7" style="padding:10px 0; text-align:center;">
+										<b>Bitte markieren Sie einen Kunden</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+				</div>
+			</div>
+			<div id="tab_reports" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				Auswertung
+			</div>
+			<div id="tab_locations" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				<div id="locationToolbar" style="display:none;">
+					<div style="background-color:#f7f7f7; border-bottom: 1px solid #ccc; padding:3px;">
+						<div style="position:relative; top:-2px;">
+							<b>Anlegen:</b>
+							<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/page_new.gif" onclick="openLocationDialog(Array());" alt="Anlegen" title="Anlegen" />
+							<span id="editLocationToolbar">
+								:: <b>Bearbeiten:</b>
+								<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/pencil.png" onclick="preOpenLocationDialog('edit');" alt="Bearbeiten" title="Bearbeiten" />
+								<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/cross.png" onclick="preOpenLocationDialog('delete');" alt="Löschen" title="Löschen" />
+							</span>
+						</div>
+					</div>
+				</div>
+				<div style="padding: 5px 0;">
+					<div id="noLocation" style="display:none;">
+						<div style="text-align:center; padding-top:20px;">
+							<b>Für diesen Kunden sind z. Z. keine Standorte eingetragen</b>
+						</div>
+					</div>
+					<div id="locationList">
+						<table id="tableLocations" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout:fixed;">
+							<colgroup>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col />
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="width:10px;">Sichtbar</th>
+									<th style="width:10px;">Anonym</th>
+									<th>Name</th>
+									<th>Adresse</th>
+									<th>Zusatz</th>
+									<th>PLZ</th>
+									<th>Stadt</th>
+									<th>Land</th>
+									<th>Kundengruppe</th>
+								</tr>
+							</thead>
+							<tbody id="tbl_loactions">
+								<tr>
+									<td colspan="9" style="padding:10px 0; text-align:center;">
+										<b>Bitte markieren Sie einen Kunden</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+				</div>
+			</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			<div id="tab_comments" style="position:absolute; top:26px; left:0; visibility:hidden; width:100%;">
+				<div id="commentToolbar" style="display:none;">
+					<div style="background-color:#f7f7f7; border-bottom: 1px solid #ccc; padding:3px;">
+						<div style="position:relative; top:-2px;">
+							<b>Anlegen:</b>
+							<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/page_new.gif" onclick="openCommentDialog(Array());" alt="Anlegen" title="Anlegen" />
+							<span id="editCommentToolbar">
+								:: <b>Bearbeiten:</b>
+								<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/pencil.png" onclick="preOpenCommentDialog('edit');" alt="Bearbeiten" title="Bearbeiten" />
+								<img style="position:relative; top:4px; cursor:pointer; margin: 0 4px;" src="/admin/media/cross.png" onclick="preOpenCommentDialog('delete');" alt="Löschen" title="Löschen" />
+							</span>
+						</div>
+					</div>
+				</div>
+				<div style="padding: 5px 0;">
+					<div id="noComment" style="display:none;">
+						<div style="text-align:center; padding-top:20px;">
+							<b>Von diesem Kunden sind z. Z. keine Kommentare eingetragen</b>
+						</div>
+					</div>
+					<div id="commentList">
+						<table id="tableComments" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout:fixed;">
+							<colgroup>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col style="width: 150px;"/>
+								<col />
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="width:10px;">Sichtbar</th>
+									<th style="width:10px;">Box</th>
+									<th>Text</th>
+									<th>Position</th>
+									<th>Kundengruppe</th>
+								</tr>
+							</thead>
+							<tbody id="tbl_comments">
+								<tr>
+									<td colspan="9" style="padding:10px 0; text-align:center;">
+										<b>Bitte markieren Sie einen Kunden</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+				</div>
+			</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		
+		function initCustomerPage() {
+
+			ScrollableTable.load();
+
+			checkCustomerListHeight();
+
+			loadCustomerList();
+
+		}
+		
+		function checkCustomerListHeight() {
+
+			var intHeight = 0;
+			intHeight = window.innerHeight;
+			if(!intHeight) {
+				intHeight = document.body.clientHeight;
+			}
+			if(!intHeight) {
+				intHeight = document.documentElement.clientHeight;
+			}
+
+			var intTabHeight = Math.round(intHeight / 3);
+			if(intTabHeight < 130) {
+				intTabHeight = 130;
+			}
+
+			intHeight = intHeight - 120 - intTabHeight;
+
+			$('divCustomerTabContainer').style.height = intTabHeight+'px';
+			if($('tableContactPersons-body')) {
+				$('tableContactPersons-body').style.height = (intTabHeight-80)+'px';
+			}
+			if($('tableLocations-body')) {
+				$('tableLocations-body').style.height = (intTabHeight-80)+'px';
+			}
+			if($('tableComments-body')) {
+				$('tableComments-body').style.height = (intTabHeight-80)+'px';
+			}
+			if($('tableProtocols-body')) {
+				$('tableProtocols-body').style.height = (intTabHeight-55)+'px';
+			}
+			if($('tableCustomers-body')) {
+				$('tableCustomers-body').style.height = intHeight+'px';
+			}
+			
+		}
+
+    	new Control.Tabs('infoBoxTabDetails',{
+				defaultTab: 'first',
+				setClassOnContainer: true,
+				activeClassName: 'infoBoxTabsHeadActive'
+			});
+
+		Event.observe(window, 'load', initCustomerPage);
+		Event.observe(window, 'resize', checkCustomerListHeight);
+		
+		document.body.style.overflow="hidden";
+	
+	</script>
+
+<?=Admin_Html::loadAdminFooter()?>

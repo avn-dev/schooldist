@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_costs_kategorie_teacher` ADD `account_as_holiday` TINYINT NOT NULL DEFAULT '0' AFTER `grouping`;

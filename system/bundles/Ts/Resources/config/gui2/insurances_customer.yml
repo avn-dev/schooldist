@@ -1,0 +1,470 @@
+hash: 4fd41fd8f1ef293b5ae9deefb2f8e601
+class:
+  wdbasic: Ext_TS_Inquiry_Journey_Insurance
+  data: Ext_Thebing_Insurances_Gui2_Customer
+  js: InsuranceCustomerGui
+  icon_status: Ext_Thebing_Gui2_Icon_NotMultiple
+  row_style: Ext_TS_Insurances_Gui2_Row_style
+access: thebing_insurance_icon
+id:
+  column: id
+  alias: ts_iji
+encode_data:
+  - inquiry_id
+  - inquiry_insurance_id
+options:
+  decode_inquiry_id_additional_documents: inquiry_id
+  selected_object_from_encoded_data: insurance
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        label: Suche
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - manipulateSearchFilter
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column:
+            - from
+            - created
+          alias:
+            - ts_iji
+            - ts_i
+          default:
+            - Ext_Thebing_Insurances_Gui2_Customer
+            - getDefaultFilterFrom
+        until:
+          column:
+            - from
+            - created
+          alias:
+            - ts_iji
+            - ts_i
+          default:
+            - Ext_Thebing_Insurances_Gui2_Customer
+            - getDefaultFilterUntil
+        searchtype: between
+        based_on:
+          insurance_date:
+            alias: ts_iji
+            column: from
+            title: Versicherungsstartdatum
+          register_date:
+            alias: ts_i
+            column: created
+            title: Registrierungsdatum
+          service_timeframe:
+            alias: ts_iji
+            from_column: from
+            until_column: until
+            title: Leistungszeitraum (Versicherung)
+      -
+        element: seperator
+      -
+        element: selectfilter
+        value: ''
+        column: insurance_id
+        alias: ts_iji
+        label: Versicherung
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getInsurancesOptions
+        label_as_item: true
+      -
+        element: selectfilter
+        id: search_customer
+        value: ''
+        label: Kundenstatus
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getSearchCustomerStatusOptions
+        filter_query:
+          not_receive: '`ts_iji`.`info_customer` = "0000-00-00"'
+          receive: '`ts_iji`.`info_customer` != "0000-00-00"'
+        label_as_item: true
+      -
+        element: selectfilter
+        id: search_provider
+        value: ''
+        label: Anbieterstatus
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getSearchProdiverStatusOptions
+        filter_query:
+          not_informed: '`ts_iji`.`info_provider` = "0000-00-00"'
+          informed:  '`ts_iji`.`info_provider` != "0000-00-00"'
+        label_as_item: true
+      -
+        element: selectfilter
+        id: filter_cenceled
+        label: Stornierung
+        value: not_canceled
+        column: canceled
+        alias: ta_i
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getCanceledOptions
+        filter_query:
+          canceled: '`ts_i`.`canceled` != "0000-00-00"'
+          not_canceled: '`ts_i`.`canceled` = "0000-00-00"'
+        label_as_item: true
+      -
+        element: selectfilter
+        alias: ''
+        column: confirm
+        id: filter_confirmed_provider
+        label: Vom Anbieter bestätigt
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getConfirmedProviderOptions
+        filter_query:
+          confirmed: '`ts_iji`.`confirm` != "0000-00-00"'
+          not_confirmed: '`ts_iji`.`confirm` = "0000-00-00"'
+        label_as_item: true
+      -
+        element: selectfilter
+        id: inbox_filter
+        label: Inbox
+        value: ''
+        column:
+          - inbox
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getInboxesOptions
+        label_as_item: true
+      -
+        element: selectfilter
+        id: group_filter
+        label: Gruppe
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getYesNoOptions
+        filter_query:
+          yes: '`ts_i`.`group_id` != 0'
+          no: '`ts_i`.`group_id` = 0'
+        label_as_item: true
+      -
+        element: selectfilter
+        id: document_type
+        entries:
+          - Ext_Thebing_Insurances_Gui2_Customer
+          - getFilterOptions
+        filter_query:
+          invoice: 'ts_i`.`has_invoice` = 1'
+          proforma: '`ts_i`.`has_proforma` = 1 AND `ts_i`.`has_invoice` = 0'
+        label_as_item: false
+      -
+        element: selectfilter
+        label: Schülerstatus
+        label_as_item: true
+        alias:
+          - kss
+        column:
+          - id
+        entries:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getCustomerStatusOptions
+  -
+    position: top
+    elements:
+      -
+        element: icon_communication
+        application: insurance_provider
+        label: Anbieter informieren
+      -
+        element: icon_communication
+        application: insurance_customer
+        label: Kunde informieren
+      -
+        element: labelgroup
+        label: Aktionen
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - accept
+        label: Vom Anbieter bestätigt
+        task: request
+        multipleId: true
+        action: provider_accepted
+        active: 0
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: labelgroup
+        label: Kommunikation
+      -
+        element: legend_label
+        label: Kommunikation
+      -
+        element: legend_info
+        label: Erledigt
+        info:
+          color: good
+      -
+        element: legend_info
+        label: Verändert
+        info:
+          color: neutral
+      -
+        element: legend_info
+        label: Offen
+        info:
+          color: bad
+      -
+        element: legend_label
+        label: Buchung
+      -
+        element: legend_info
+        label: Storniert
+        info:
+          color: storno
+columns:
+  -
+    group: Kundendaten
+    title: K.Nr.
+    column: customerNumber
+    width: customer_number
+    small: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'customerNumber'
+      - true
+      - 60
+  -
+    group: Kundendaten
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    column: short
+    alias: kg
+    data: group_short
+    width: group_short
+    small: true
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'group_name'
+  -
+    group: Kundendaten
+    title: Name
+    column: lastname
+    width: customer_name
+    format: Ext_Thebing_Gui2_Format_CustomerName
+  -
+    group: Kundendaten
+    title: Nachname
+    alias: tc_c
+    column: lastname
+    width: name
+    default: false
+  -
+    group: Kundendaten
+    title: Vorname
+    column: firstname
+    alias: tc_c
+    width: name
+    default: false
+  -
+    group: Kundendaten
+    title: Geschlecht
+    column: gender
+    alias: tc_c
+    width: gender
+    format: Ext_Thebing_Gui2_Format_Gender
+  -
+    group: Kundendaten
+    title: Alter
+    column: birthday
+    width: age
+    small: true
+    format: Ext_TS_Gui2_Format_Age
+    format_params:
+      - false
+      - 'customer_birthday'
+  -
+    group: Kundendaten
+    title: Geburtsdatum
+    column: customer_birthday
+    db_type: timestamp
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    group: Kundendaten
+    title: Schülerstatus
+    column: student_status
+    width: date
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [ Ext_TS_Inquiry_Index_Gui2_Data, getCustomerStatusOptions ]
+  -
+    group: Kundendaten
+    title: Nationalität
+    column: customer_nationality_full
+    width: nationality
+  -
+    group: Kundendaten
+    title: Land
+    column: customer_country
+    width: name
+  -
+    group: Kundendaten
+    title: E-Mail
+    column: email
+    width: email
+    alias: tc_ea
+    format: Ext_Thebing_Gui2_Format_Email
+  -
+    title: Letztes Kursende
+    group: Kundendaten
+    column: course_last_end_date
+    width: name
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+  -
+    title: Passnummer
+    group: Kundendaten
+    column: passport_number
+    width: number
+    default: false
+  -
+    title: Telefon
+    group: Kundendaten
+    column: customer_phone
+    width: number
+    default: false
+  -
+    title: Adresse
+    group: Kundendaten
+    column: address
+    width: email
+    default: false
+  -
+    title: Stadt
+    group: Kundendaten
+    column: city
+    width: number
+    default: false
+  -
+    title: PLZ
+    group: Kundendaten
+    column: zip
+    width: number
+    default: false
+#  -
+#    title: Notfallkontakt Vorname
+#    group: Kundendaten
+#    column: emergency_contact_firstname
+#    alias: tc_c_emergency
+#    width: name
+#    default: false
+#  -
+#    title: Notfallkontakt Nachname
+#    group: Kundendaten
+#    column: emergency_contact_lastname
+#    alias: tc_c_emergency
+#    width: name
+#    default: false
+#  -
+#    title: Notfallkontakt Telefon
+#    group: Kundendaten
+#    column: emergency_contact_phone
+#    width: number
+#    default: false
+#  -
+#    title: Notfallkontakt E-Mail
+#    group: Kundendaten
+#    column: emergency_contact_email
+#    width: email
+#    default: false
+  -
+    group: Versicherung
+    title: Versicherung
+    column: insurance
+    width: name
+  -
+    group: Versicherung
+    title: Von
+    column: from
+    width: date
+    format: Ext_TS_Gui2_Format_DateTime
+  -
+    group: Versicherung
+    title: Bis
+    column: until
+    width: date
+    format: Ext_TS_Gui2_Format_DateTime
+  -
+    group: Versicherung
+    title: Dauer
+    column: payment
+    width: name
+    order_settings:
+      payment: ASC
+      datediff: ASC
+    format: Ext_Thebing_Insurances_Gui2_Format_PriceWrapper
+  -
+    group: Versicherung
+    title: Preis
+    column: price
+    width: amount
+    sortable: false
+    format: Ext_Thebing_Insurances_Gui2_Format_PriceWrapper
+  -
+    group: Versicherung
+    title: Offener Betrag
+    column: amount_open
+    width: amount
+    sortable: false
+    format: Ext_Thebing_Insurances_Gui2_Format_PriceWrapper
+  -
+    group: Versicherung
+    title: Komm. Kunde
+    column: info_customer
+    style: Ext_Thebing_Insurances_Gui2_Style_Communication
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    group: Versicherung
+    title: Komm. Anbieter
+    column: info_provider
+    style: Ext_Thebing_Insurances_Gui2_Style_Communication
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    group: Versicherung
+    title: Best. Anbieter
+    column: confirm
+    style: Ext_Thebing_Insurances_Gui2_Style_Communication
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    group: Agentur
+    title: Agentur
+    column: agency_short
+    width: agency_name
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'agency'
+      - true
+  -
+    group: Kundendaten
+    title: Inbox
+    column: inbox
+    alias: ts_i
+    width: name
+    small: true
+    default: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: [Ext_Thebing_System, getInboxList, true, true]

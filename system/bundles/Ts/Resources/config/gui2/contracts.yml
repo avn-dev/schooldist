@@ -1,0 +1,234 @@
+hash: 191a73c96f93bb54a5599145d49530eb
+class:
+  wdbasic: Ext_Thebing_Contract_Version
+  data: Ext_Thebing_Contract_Gui2
+  icon_status: Ext_Thebing_Gui2_Icon_Contract
+  js: ContractsGui
+sets:
+  accommodation:
+    access: thebing_accommodation_contracts
+    designer:
+      flex: accommodation_contracts
+  teacher:
+    access: thebing_tuition_teacher_contracts
+    designer:
+      flex: teacher_contracts
+js:
+  - [gui2/contracts.js, thebing]
+access: thebing_accommodation_contracts
+id:
+  column: id
+  alias: kcontv
+designer: 
+  flex: accommodation_contracts
+orderby:
+  - Ext_Thebing_Contract_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Contract_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        set: [accommodation]
+        label: Suche
+        column: 
+          - id
+          - number
+          - ext_33
+        alias: 
+          - kcontv
+          - kcont
+          - c4
+        searchtype: LIKE
+     -
+        element: inputfilter
+        set: [teacher]
+        label: Suche
+        column: 
+          - id
+          - number
+          - firstname
+          - lastname
+        alias: 
+          - kcont
+          - kcont
+          - kt
+          - kt
+        searchtype: LIKE   
+     -
+        element: seperator
+     -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+            column:
+                - valid_from
+                - valid_until
+            alias:
+                - kcontv
+                - kcontv
+            default:
+                - Ext_Thebing_Contract_Gui2
+                - getFromDate
+        until:
+            column: ""
+            alias: ""
+            default:
+                - Ext_Thebing_Contract_Gui2
+                - getUntilDate
+        text_after: basierend auf Laufzeit
+        searchtype: between
+                
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Contract_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Contract_Gui2
+          - getEditDialog
+     -
+        element: icon_delete
+     -	
+        element: labelgroup
+        label: Verträge
+     - 
+        element: icon
+        label: Vertrag öffnen
+        task: request
+        action: contract_open
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - pdf
+     - 
+        element: icon
+        label: Vertrag bestätigen
+        task: request
+        action: contract_confirm
+        additional: ''
+        img:
+          - Ext_Thebing_Util
+          - getIcon	
+          - accept     
+     -
+        element: labelgroup
+        label: Kommunikation
+        hide_empty: true
+
+     -
+        element: icon_communication
+        set: [accommodation]
+        application: contract_accommodation
+     -
+        element: icon_communication
+        set: [teacher]
+        application: contract_teacher
+  -      
+    position: bottom
+    type: legend
+    elements:
+     -
+        element: legend_label
+        label: Kommunikation
+     -
+        element: legend_info
+        label: Vertrag wurde verschickt/bestätigt
+        info:
+          color: good
+     -
+        element: legend_info
+        label: Vertrag wurde nachträglich verändert
+        info:
+          color: neutral
+       
+columns:
+  - 
+    title: Name
+    set: [accommodation]
+    column: name
+    width: name
+    resize: true
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Contract_ItemName
+  - 
+    title: Name
+    set: [teacher]
+    column: name
+    width: name
+    resize: true
+    sortable: false
+    order_settings:
+        kt.lastname: ASC
+        kt.firstname: ASC
+    format: Ext_Thebing_Gui2_Format_Contract_ItemName
+  - 
+    title: Vertrag	
+    column: number
+    width: name
+  - 
+    title: Vorlage	
+    column: template_name
+    width: name 
+  - 
+    title: Vertragsdatum	
+    column: date
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Laufzeit	
+    column: valid_from
+    width: date_period
+    format: Ext_Thebing_Gui2_Format_Contract_Period
+  - 
+    title: Versendet	
+    column: sent
+    width: date_user
+    format: Ext_Thebing_Gui2_Format_Contract_DateUser
+    style: Ext_Thebing_Gui2_Style_Contract_DateUser
+  - 
+    title: Bestätigt	
+    column: confirmed
+    width: date_user
+    format: Ext_Thebing_Gui2_Format_Contract_DateUser
+    style: Ext_Thebing_Gui2_Style_Contract_DateUser
+
+default_columns:
+  -
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    width: user_name
+    default: false
+  -
+    title: Erstellt
+    format: Ext_Gui2_View_Format_Date_DateTime
+    column: created
+    alias: 'kcont'
+    width: date
+    default: false
+  -
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    width: user_name
+    default: false
+  -
+    title: Bearbeitet
+    format: Ext_Gui2_View_Format_Date_DateTime
+    column: changed
+    alias: 'kcont'
+    width: date
+    default: false

@@ -1,0 +1,28 @@
+body {
+	padding: 10px;
+}
+table {
+	border: 1px solid #1C6EA4;
+	background-color: #FAFAFA;
+	text-align: left;
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+table.blueTable tbody td {
+	font-size: 13px;
+	width: calc(100% / 7);
+}
+
+.form-inline > * {
+	margin:5px 3px;
+}
+
+.filter_label label {
+	font-weight:normal;
+}
+
+.button > * {
+	margin:5px 3px;
+}

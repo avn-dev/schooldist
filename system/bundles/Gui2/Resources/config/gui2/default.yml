@@ -1,0 +1,447 @@
+hook: ""
+parent: ""
+hash: ""
+set: ""
+# Einstellungen für einzelne Sets definieren (außer Columns und Bars)
+sets: []
+leftframe: true
+class:
+  wdbasic: WDBasic
+  gui: Ext_Gui2
+  data: Ext_Gui2_Data
+  date_format: Ext_Gui2_View_Format_Date
+  # Style indizieren!
+  # row_style: Ext_Gui2_View_Style_Indexrow
+  # row_style_index: die bisherige Style klasse
+  row_style: Ext_Gui2_View_Style_Row
+  row_style_index: 
+  icon_status: Ext_Gui2_View_Icon_Active
+  icon_visible: Ext_Gui2_View_Icon_Visible
+  js: ATG2
+options: [] # $aOptions
+# leer = TC_Navigation::t();
+title: ""
+# leer = TC_Navigation::tp();
+description: ""
+foreign_key: ""
+foreign_key_alias: ""
+parent_primary_key: "id"
+decode_parent_primary_key: false
+encode_data_unset_empty: true
+pagination: true
+only_pagecount: false
+limit_selection: true
+export: true
+multiple_selection: false
+multiple_selection_lock: false # GUI (Child) sperren bei Mehrfachauswahl
+sortable: false
+rows_clickable: true
+encode_data_id_field: ''
+encode_data: []
+sum_row_columns: []
+row_multiple_checkbox: false
+load_admin_header: true
+view: ""
+include_tagsinput: false
+sidebar: false
+api: true
+# Neue Filter: Werte für Filter setzen
+# Nicht mehr per default-Attribut in der Column, damit man diesen Wert in Child-YMLs überschreiben kann
+filter_values: []
+designer:
+  dialog: ""
+  filter: ""
+  flex: ""
+  flex_format: []
+  additional_flex: []
+id:
+  column: id
+  alias:
+access:
+  - ""
+  - ""
+limit: 30
+where: # Hash-Map oder Methode
+  # type: abc
+  - Ext_Gui2_Factory_Default
+  - getWhere
+orderby: # Hash-Map oder Methode
+  # name: ASC
+  - Ext_Gui2_Factory_Default
+  - getOrderby
+  - ""
+i18n_languages: []
+bars:
+  - position: top
+    set: []
+    type: ""
+    access: []
+    last: false
+    hook: ""
+    height: ""
+    id:
+    elements:
+      - element: labelgroup
+        label: Aktionen
+        hide_empty: false # Versteckt die Labelgroup, wenn kein Element folgt (Rechte z.B.)
+      - element: icon_new
+      - element: icon_edit
+      - element: icon_delete
+      - element: icon_deactivate
+    #-
+      #element: seperator
+    #-
+      #element: icon
+      #label: Dokument PDF öffnen
+      #task: request
+      #action: openDocumentPdf
+      #info_text: true
+      #request_data: "&action=openDocumentPdf"
+      #active: 0
+      #img: 
+        #- Util
+        #- getIcon
+        #- page_edit
+  - position: top
+    set: []
+    type: ""
+    elements:
+      - element: labelgroup
+        label: Filter
+        style: ""
+      - element: timefilter
+        from:
+          column: 
+            - created
+          alias:
+            -
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterFrom
+        until:
+          column: 
+            - created
+          alias:
+            -
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterUntil
+        searchtype: between
+        access:
+        text_after:
+      - element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column: 
+          - name
+        alias: 
+          - ""
+        access:
+        call:
+      - element: checkboxfilter
+        label: Suche
+        searchtype: LIKE
+        column: 
+          - name
+        alias: 
+          - ""
+        access:
+      - element: selectfilter
+        label: Selectfilter
+        label_as_item: false # Label als Element mit -- einbauen
+        label_as_null_item: false # Label als Element mit -- einbauen, aber nicht 0 als ValueKey benutzen
+        searchtype: =
+        searchempty: true
+        skip_query: false
+        select_navigation:
+          - Ext_Gui2_Factory_Default
+          - getSelectFilterNavigation
+        selection: ""
+        value:
+          - Ext_Gui2_Factory_Default
+          - getValue
+        column: 
+          - name
+        alias:
+          - ""
+        entries: 
+          - Ext_Gui2_Factory_Default
+          - getFilterSelectOptions
+        access:
+          - ""
+          - ""
+        dependency: false
+        visibility: false
+        multiple: false
+        size: null
+  - position: bottom
+    set: []
+    type: legend
+    elements: 
+      - element: legend_label
+        label: Buchungen
+        image: ""
+      - element: legend_info
+        label: Verändert
+        info:
+          color: changed
+          background: true
+          image: ""
+      - element: legend_info
+        label: Storniert
+        info:
+          color: storno
+          background: true
+          image: ""
+      - element: legend_info
+        label: nicht bestätigt
+        info:
+          color: red_font
+          background: false
+          image: ""
+          # text: true = ABC or string = individuell text
+          text: false 
+columns:
+  - visible: true
+    set: []
+    title: Benutzername
+    # <th> title attribute
+    description: ""
+    access: ""
+    check: ""
+    filterset: 
+      having: false
+      type: ""
+      #type: input / select /date
+      #options:
+      # - class
+      # - method
+      # query klappt nur bei nicht index listen
+      #query:
+      #  created: ' COUNT(`tc_eo`.`id`) > 0 '
+      #  not_created: ' COUNT(`tc_eo`.`id`) = 0 '
+    group: ""
+    # Wird standardmässig als text ausgegeben und arrays werden mit "seperator" separiert
+    # Standardwert ist bescheuert, da false wegen implode() zu "" konvertiert wird
+    # \Ext_Gui2_Index_Generator::_formatValue()
+    #format: Ext_Gui2_View_Format_Text
+    format: ""
+    # parameter vom constructor
+    format_params:
+    # format_params: true
+    # format_params: 
+    #   - class
+    #   - method
+    # spalte für das sortieren etc
+    post_format:
+    post_format_params:
+    format_empty:
+    column: username
+    # spalte für die anzeige daten, im normalfall = column
+    data: ""
+    # spalte welche zum sortieren benutzt wird, default ist = column
+    sortable_column: ""
+    order_settings: 
+    # alias
+    alias: ''
+    # Util::getTableColumnWidth()
+    width: name
+    resize: false
+    sortable: true
+    # Titel wird kleiner dargestellt
+    small: false
+    # seperator falls mehrere Einträge zurückkommen
+    # TODO separator schreibt man mit zwei A
+    # TODO Default sollte null sein, da das ärgerlich ist für alle Terms oder nicht Texte (z.B. Date)
+    #   Sollte auch kein Problem darstellen, da die GUI irgendwo eh Kommata einfügt und man ansonsten ordentlich mit Arrays und post_format arbeiten kann
+    seperator: <br>
+    # falls mehrere Ergebnisse kommen soll dann eine unique menge gebildet werden?
+    unique_values: false
+    # wenn i18n true ist wird der letzten call methode die sprache übergeben und die
+    i18n: # Auskommentiert, damit Werte nicht gesetzt werden (sonst nimmt GUI direkt an, dass das I18N ist)
+      ## falls query gui definiert das hier den jointable alias
+      #jointable: i18n
+      ## sagt aus ob der letzten methode von dem (index) callpath die sprache übergeben wird
+      #pass_language: true
+      ## sagt aus ob alle Spalten angezeigt werden oder nur die aktuelle
+      #all: false
+      ## definiert of die sprach flagge in der spalte angezeigt wird
+      #show_flag: false
+      ## Welche Sprache soll übermittelt werden: backend oder frontend
+      #interface: backend
+    style: Ext_Gui2_View_Style_Column
+    style_params: []
+    flexibility: true
+    inplace_editor: false
+    inplace_editor_start: 0
+    inplace_editor_type: default
+    inplaceEditorStart: false
+    db_type: varchar
+    index:
+      # Feld zum Mapping des Indexes hinzufügen (macht bei Filtern mit Elasticsearch-Queries) z.B. keinen Sinn)
+      # TODO Wird die Spalte trotzdem in den Index eingetragen, allerdings dann ohne Mapping?
+      add_field: true
+      # setzt ein _original feld mit den unformatierten werden
+      add_original: false
+      # Fügt _original-Feld pro Sprache hinzu (das ist notwendig für I18N-Tooltips, da dort _original missbraucht wurde)
+      add_original_i18n: false
+      # Der Call Path hier können Methoden sowie getter definiert werden
+      call:
+        # - Methode() oder [methode(), parameter]
+        # - feld
+      # Wenn der letzte Aufruf im Call-Chain ein Array zurückgibt, werden diese Werte immer gemerged.
+      # date_range benötigt aber z.B. ein assoziatives Array mit gte/lte, das darf dann nicht gemerged werden!
+      call_return: merge # merge|no_merge
+      # mapping infos
+      mapping:
+        # Angabe für Elasticsearch, ob das Feld indiziert wird für die Suche
+        index: true # true/false war vorher analyzed/not_analyzed
+        # Typ in Elasticsearch
+        type: text # text damals string, keyword, integer, boolean, date,
+        analyzer: ""
+    event:
+      #- Klasse
+    # Spalte wird standardmäßig angezeigt
+    default: true
+
+default_columns:
+  - visible: true
+    set: []
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      add_original: true
+      call:
+        - creator_id
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: true
+    set: []
+    title: Erstellt
+    format: Ext_Gui2_View_Format_Date_DateTime
+    column: created_original
+    data: created
+    alias: ""
+    width: date
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      call:
+        - created
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: false
+    set: []
+    title: Erstellt
+    column: created_original
+    alias: ""
+    filterset:
+      type: date
+    index:
+      call:
+        - getCreatedForIndex()
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: date
+        analyzer: []
+  - visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      add_original: true
+      call:
+        - editor_id
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: true
+    title: Bearbeitet
+    format: Ext_Gui2_View_Format_Date_DateTime
+    column: changed_original
+    data: changed
+    alias: ""
+    width: date
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      call:
+        - changed
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: false
+    set: []
+    title: Bearbeitet
+    column: changed_original
+    alias: ""
+    filterset:
+      type: date
+    index:
+      call:
+        - getChangedForIndex()
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: date
+        analyzer: []
+# Konfiguration der Eltern-Datei erweitern
+extend:
+  bars: []
+  columns: []
+  js: []
+  css: []
+# [] löschen und wie im beispiel definieren
+js: []
+  #- [enquiry/gui2.js, ta] 
+  #- [inquiry/gui2.js, ta] 
+# [] löschen und wie im beispiel definieren
+css: []
+  #- [inquiry/gui2.css, ta] 
+# muss nur definiert werden wenn die GUI auf einem Index basiert!
+index:
+  name: default
+  source: false # Wird nur benötigt für Update API
+  registry:
+    generate: true
+  where:
+    - Ext_Gui2_Factory_Default
+    - getWhere
+  priority: []
+    #WDBasic: 0
+    #Util: 1

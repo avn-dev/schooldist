@@ -1,0 +1,72 @@
+class:
+  wdbasic: \Core\Entity\ParallelProcessing\ErrorStack
+  data: \Core\Gui2\Data\ParallelProcessing\ErrorStack
+id:
+  column: id
+  alias: cppse
+title: Fehlgeschlagene Hintergrundaufgaben
+export: false
+multiple_selection: true
+orderby: 
+    - \Core\Gui2\Data\ParallelProcessing\ErrorStack
+    - getOrderBy
+bars:
+    -
+      position: top
+      type: ""
+      elements:
+        -
+          element: icon
+          task: openDialog
+          action: show_error
+          label: Fehlermeldung ansehen
+          dialog:
+              - \Core\Gui2\Data\ParallelProcessing\ErrorStack
+              - getDialog
+          img: 
+            - Util
+            - getIcon
+            - info
+        -
+          element: icon
+          task: confirm
+          action: execute_task
+          label: Erneut ausführen
+          img: 
+            - Util
+            - getIcon
+            - refresh
+        -
+          element: icon_delete
+columns:
+  -
+    title: Bezeichnung
+    column: label
+    alias: cppse
+    format: \Core\Gui2\Format\ParallelProcessing\Label
+    width: name
+    resize: true
+    sortable: false
+  -
+    title: Ausführungen
+    column: execution_count
+    alias: cppse
+    format: \Ext_Gui2_View_Format_Int
+    width: name
+    resize: false
+  -
+    title: Typ
+    column: type
+    alias: cppse
+    width: description
+    resize: false
+default_columns:
+  -
+    title: Datum
+    format: \Ext_Gui2_View_Format_Date_DateTime
+    column: created
+    data: created
+    alias: cppse
+    width: date
+    resize: false
+    sortable: true

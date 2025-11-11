@@ -1,0 +1,57 @@
+class:
+  data: Tc\Gui2\Data\EventManagement\TaskData
+  date_format: Ext_TC_Gui2_Format_Date
+sets:
+  listeners:
+    class:
+      wdbasic: Tc\Entity\EventManagement\Listener
+    hash: 52708f86242f0530f158987c54d9a676
+    where:
+      - Tc\Gui2\Data\EventManagement\TaskData
+      - getListenersWhere
+  conditions:
+    class:
+      wdbasic: Tc\Entity\EventManagement\Condition
+    hash: b64dd684d1a0bac04229e2577d8244df
+    where:
+      - Tc\Gui2\Data\EventManagement\TaskData
+      - getConditionsWhere
+access:
+  - core_event_manager
+  - ""
+foreign_key: "event_id"
+foreign_key_alias: "tc_emc"
+sortable: true
+pagination: false
+export: false
+id:
+  column: id
+  alias: tc_emc
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Tc\Gui2\Data\EventManagement\TaskData
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Tc\Gui2\Data\EventManagement\TaskData
+          - getDialog
+      -
+        element: icon_delete
+
+columns:
+  -
+    title: Name
+    alias: tc_em
+    column: class
+    width: name
+    resize: true
+    default: true
+    sortable: false
+    format: Tc\Gui2\Format\EventManagement\ChildName
+

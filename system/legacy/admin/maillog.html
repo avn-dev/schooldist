@@ -1,0 +1,416 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess('maillog');
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('E-Mail-Protokoll','Framework')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+<?php					//	Attribute
+
+$inti=0;
+
+if($_VARS['dateSearch'] == "dateSearch") {
+	$strDateChecked = "checked";
+} else {
+	$strDateChecked = "";
+}
+
+
+if($_VARS['fullText'] == "fullText") {
+	$strTextChecked = "checked";
+} else {
+	$strTextChecked = "";
+}
+
+?>
+	
+	
+	
+	
+<?php					//	WENN MEINTEN SIE FUNKTION GENUTZT WIRD
+if(isset($_VARS['task']) && $_VARS['task'] == "new")
+{
+	$_VARS['fullText'] = "fullText";
+	$_VARS['strSearchText'] = $_VARS['strMeaning'];
+	
+	$_VARS['strDay'] = date("j", $intDate);
+	$_VARS['strMonth'] = date("n", $intDate);
+	$_VARS['strYear'] = date("Y", $intDate);
+	
+} else{
+	//	FALSCH EINGABE DER FELDER
+
+		
+	if(isset($_VARS['task'])){
+		if(!is_numeric($_VARS['strDay']) || !is_numeric($_VARS['strMonth']) || !is_numeric($_VARS['strDay']) ){
+			echo"Falsche such eingabe... bitte achten sie darauf das nur Zahlen eingetragen sind!" . "<br>";
+			unset($_VARS['task']);
+		}
+		if($_VARS['strDay'] > 31 || $_VARS['strDay'] < 1){
+		echo"Falsche Tag eingabe, es wird das Aktuelle Datum verwendet!!!" . "<br /><br />";
+		unset($_VARS['task']);
+		}
+		if($_VARS['strMonth'] > 12 || $_VARS['strMonth'] < 1){
+		echo"Falsche Monats eingabe, es wird das Aktuelle Datum verwendet!!!" . "<br /><br />";
+		unset($_VARS['task']);
+		}
+		if($_VARS['strYear'] > 3000 || $_VARS['strYear'] < 1900){
+		echo"Falsche Jahres eingabe, es wird das Aktuelle Datum verwendet!!!" . "<br /><br />";
+		unset($_VARS['task']);
+		}
+		if($_VARS['dateSearch'] != "dateSearch" && $_VARS['fullText'] != "fullText"){
+			echo"Es wird nach nichts gesucht bitte, checkbox ausfüllen! Es wird das Aktuelle Datum verwendet!!!" . "<br /><br />";
+			unset($_VARS['task']);
+		}
+		if($_VARS['fullText'] == "fullText" && $_VARS['strSearchText'] == ""){
+			echo"Achtung Volltextzeile ist leer, es wird das Aktuelle Datum verwendet!!!" . "<br /><br />";
+			unset($_VARS['fullText']);
+			unset($_VARS['task']);
+		}
+	}
+}
+?>
+
+
+
+
+
+	
+	
+<?php // Such Funktion?>
+
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+	
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="task" value="search" />
+	
+		<th align="left">
+		<input type="checkbox" name="dateSearch" value="dateSearch" <?=$strDateChecked?>>
+		Geben sie hier das gesuchte Datum ein: <br>
+		</th>
+		
+	
+		<td align="left">
+		<?php // Wenn Datum gesetzt ist zeigt er diesen an:
+		if(isset($_VARS['task'])){ 
+		?>
+			Tag: <input type="text" class="txt" name="strDay" size="2" maxlength="2" value="<?=$_VARS['strDay']?>">
+			&nbsp;&nbsp;Monat: <input type="text" class="txt" name="strMonth" size="2" maxlength="2" value="<?=$_VARS['strMonth']?>">
+			&nbsp;&nbsp;Jahr: <input type="text" class="txt" name="strYear" size="4" maxlength="4" value="<?=$_VARS['strYear']?>">
+		<?php } else {
+			
+			$strNowDay = date("j");
+			$strNowMonth = date("n");
+			$strNowYear = date("Y");
+		?>
+			Tag: <input type="text" class="txt" name="strDay" size="2" maxlength="2" value="<?=$strNowDay?>">
+			&nbsp;&nbsp;Monat: <input type="text" class="txt" name="strMonth" size="2" maxlength="2" value="<?=$strNowMonth?>">
+			&nbsp;&nbsp;Jahr: <input type="text" class="txt" name="strYear" size="4" maxlength="4" value="<?=$strNowYear?>">
+		<?php } ?>
+		</td>
+		
+		
+		
+		<tr>
+		<th align="left">
+		<input type="checkbox" name="fullText" value="fullText" <?=$strTextChecked?>>
+		Geben sie hier die Volltextsuche ein: <br>
+		</th>
+		
+	
+		<td align="left">
+		<?php // Wenn volltextsuche gesetzt ist zeigt er diesen an:
+		if(isset($_VARS['task'])){ ?>
+			Volltext Suche: <input type="text" class="txt" name="strSearchText" size="50" maxlength="50" value="<?=$_VARS['strSearchText']?>">
+		<?php } else {
+			$_VARS['strSearchText'] = "";
+		?>
+			Volltext Suche: <input type="text" class="txt" name="strSearchText" size="50" maxlength="50" value="">
+		<?php } ?>
+		</td>
+		</tr>
+		
+		
+	</table>
+	<p align="right"><input type="submit" class="btn" value="Suche starten" /></p>
+
+</form>
+
+<?php
+
+
+					//	ENDE ANZEIGE DER MAILS MIT SUCHE	
+?>
+
+
+
+
+
+
+
+
+
+
+
+<?php					//	STARTED ANZEIGE DER MAILS MIT SUCHE?>
+
+
+<?php
+if(isset($_VARS['task'])){
+$dateWorkingWith = $_VARS['strDay']. "." .$_VARS['strMonth'] . "." . $_VARS['strYear'];
+} else {
+	$dateWorkingWith = "Aktuellen Datum";
+}
+?>
+	
+<h2>Maillog Anzeige zum <?=$dateWorkingWith?></h2>
+	<center>
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+		<tr>
+			<th width="5%">Id</th>
+			<th width="15%">Datum</th>
+			<th width="80%">Subject</th>			
+		</tr>
+
+
+
+
+
+
+
+
+
+<?php
+					//	AUSGEFÜHRT WENN KEINE SUCHE VORHANDEN
+if(!isset($_VARS['task'])){
+	$sQuery = "	SELECT
+					`id`,`subject`,UNIX_TIMESTAMP(`created`) created,`from`,`to`,`text`,`html`,
+   					`changed`,`active`,`success`,`header`,`attachments`,`replyto`,`returnpath`
+				FROM
+					`system_maillog` 
+				WHERE
+						DATE(`created`) = DATE(NOW()) 
+				ORDER BY `id` DESC;
+				";
+}
+
+
+
+
+					//	AUSGEFÜHRT WENN SUCHE VORHANDEN F�R DATUM
+if(isset($_VARS['task'])&& $_VARS['task'] == "search" && $_VARS['dateSearch'] == "dateSearch"){
+	
+	$strSucheDay = $_VARS['strDay'];
+	$strSucheMonth = $_VARS['strMonth'];
+	$strSucheYear = $_VARS['strYear'];
+	
+	$sQuery = "	SELECT 
+   					`id`,`subject`,UNIX_TIMESTAMP(`created`) created,`from`,`to`,`text`,`html`,
+   					`active`,`success`,`header`,`attachments`,`replyto`,`returnpath`
+				FROM
+				   `system_maillog` 
+				WHERE
+					YEAR(`created`) = $strSucheYear AND 
+					MONTH(`created`) = $strSucheMonth AND 
+					DAY(`created`) = $strSucheDay
+				ORDER BY `id` DESC;
+				";
+}
+
+
+
+
+
+					//	AUSGEFÜHRT WENN SUCHE VORHANDEN F�R VOLLTEXTSUCHE
+if(isset($_VARS['task'])&& $_VARS['task'] == "search" && $_VARS['fullText'] == "fullText" || $_VARS['task'] == "new"){
+	
+	
+	$sQuery = "	SELECT 
+   					`id`,`subject`,UNIX_TIMESTAMP(`created`) created,`from`,`to`,`text`,`html`,
+   					`active`,`success`,`header`,`attachments`,`replyto`,`returnpath`
+				FROM
+				   `system_maillog` 
+				WHERE
+					`subject` LIKE '%".$_VARS['strSearchText']."%' OR 
+					`from` LIKE '%".$_VARS['strSearchText']."%' OR 
+					`to` LIKE '%".$_VARS['strSearchText']."%'
+				ORDER BY `id` DESC;
+				";
+}
+
+
+
+
+
+					//	AUSGEFÜHRT WENN ALLE SUCHFUNKTIONEN VORHANDEN
+if(isset($_VARS['task'])&& $_VARS['task'] == "search" && $_VARS['dateSearch'] == "dateSearch" && $_VARS['fullText'] == "fullText"){
+	
+	$strSucheDay = $_VARS['strDay'];
+	$strSucheMonth = $_VARS['strMonth'];
+	$strSucheYear = $_VARS['strYear'];
+ 	$_VARS['strSearchText'] = $_VARS['strSearchText'];
+	
+	$sQuery = "	SELECT 
+   					`id`,`subject`,UNIX_TIMESTAMP(`created`) created,`from`,`to`,`text`,`html`,
+   					`active`,`success`,`header`,`attachments`,`replyto`,`returnpath`
+				FROM
+				   `system_maillog` 
+				WHERE
+					YEAR(`created`) = $strSucheYear
+				AND 
+					MONTH(`created`) = $strSucheMonth
+				AND 
+					DAY(`created`) = $strSucheDay
+				AND
+					(
+						`subject` LIKE '%".$_VARS['strSearchText']."%'	OR 
+						`from` LIKE '%".$_VARS['strSearchText']."%'	OR 
+						`to` LIKE '%".$_VARS['strSearchText']."%'
+					)
+				ORDER BY 
+					`id` DESC;
+				";
+}
+
+
+
+
+
+			
+	$aMail = DB::getQueryData($sQuery);
+
+
+		foreach($aMail as $aData){
+		$inti++;
+		?>
+		<tr <?=$tag?>>
+		
+			<td align="left">
+			<?php
+				if ($aData['id'] == '') {
+					echo '&nbsp;';	
+				} else {
+						echo ($aData['id']);
+				}
+			?>
+			</td>
+
+			
+			<td align="left">
+			<?php
+				if ($aData['created'] == '') {
+					echo '&nbsp;';	
+				} else {
+					echo strftime("%x %X", $aData['created']);
+				}
+			?>
+			</td>
+			
+				<td align="left">
+				<?php
+					if ($aData['subject'] == '') {
+						echo '&nbsp;';	
+					} else 	{?>
+						
+						<div class="divBoxContainer">
+						<div class="divBoxHeader" onClick="switchBox('divPlaceHolders<?=$inti;?>');">
+						 	<?=$aData['subject'];?> &raquo;</div>
+							<div class="divBoxContent" id="divPlaceHolders<?=$inti;?>">
+								<div>
+								<strong>Aktiv: </strong><?=$aData['active'];?> <br />
+								<strong>Erfolgreich: </strong><?=$aData['success'];?> <br />
+								<strong>Attachments: </strong><?=$aData['attachments'];?> <br />
+								<strong>Reply to: </strong><?=$aData['replyto'];?> <br />
+								<strong>Return path: </strong><?=$aData['returnpath'];?> <br />
+								<strong>Von: </strong><?=$aData['from'];?> <br />
+								<strong>An: </strong><?=$aData['to'];?> <br /><br />
+								<strong>Header: </strong><br /><?=nl2br($aData['header']);?> <br /><br />
+								<strong>Inhalt: </strong> <br />Text:<br/><?=nl2br($aData['text']);?> <br /><br />HTML:<br/><?=$aData['html']?>
+								</div>
+							</div>
+						</div>
+						
+							<script language="JavaScript" type="text/javascript">
+				  			Element.hide('divPlaceHolders<?=$inti;?>');
+							</script>
+							
+				<?php		}?>
+			</td>
+			
+		</tr>
+				<?php }?>
+		</table>
+	<br />
+	
+<?php // WENN ES KEINE EINTR�GE GIBT
+
+ if ($_VARS['fullText'] == "fullText" && $inti < 1 ){
+ 
+ 	echo "Keine Einträe gefunden!" . "<br><br>";
+ 	$_VARS['strSearchText'] = $_VARS['strSearchText'];
+
+	$sQuery = "	SELECT 
+   					`id`,`subject`,UNIX_TIMESTAMP(`created`) created,`from`,`to`,`text`,`html`,
+   					`active`,`success`,`header`,`attachments`,`replyto`,`returnpath`
+				FROM
+				   `system_maillog` 
+				WHERE
+					SOUNDEX(`subject`) = SOUNDEX('".$_VARS['strSearchText']."')
+				OR 
+					SOUNDEX(`from`) = SOUNDEX('".$_VARS['strSearchText']."')
+				OR 
+					SOUNDEX(`to`) = SOUNDEX('".$_VARS['strSearchText']."')
+				GROUP BY `subject`,`from`,`to`
+				LIMIT 1
+				";
+	$aMail = DB::getQueryData($sQuery);
+		
+
+	foreach($aMail as $aData){?>
+	
+	<strong>
+	Meinten sie vielleicht: 
+	<a href="<?=$_SERVER['PHP_SELF']?>?task=new&strMeaning=<?=$aData['subject']?>&intDate=<?=$aData['created']?>">
+		<?=$aData['subject']?>
+	</a>
+	</strong>
+	
+	<?php; 
+	}
+	
+	
+} ?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		</td>
+	</tr>
+</table>
+
+
+<?=Admin_Html::loadAdminFooter()?>

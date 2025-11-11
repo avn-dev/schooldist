@@ -1,0 +1,557 @@
+hash: e012597a49e0b3d0306f48e499505673
+class:
+  wdbasic: Ext_TS_Accounting_Payment
+  data: \Ts\Gui2\Data\InquiryPaymentDetails
+access: thebing_accounting_incoming_payments
+api: false
+id:
+  column: id
+  alias: kip
+orderby:
+  - \Ts\Gui2\Data\InquiryPaymentDetails
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\InquiryPaymentDetails
+  - getWhere
+designer:
+  additional_flex:
+    -
+      section: inquiries_payments
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        label: Suche
+        column:
+          - firstname
+          - lastname
+          - ext_1
+          - number
+          - name
+          - document_number
+          - document_number
+          - number
+          - number
+          - sales_person_id
+        alias:
+          - tc_c
+          - tc_c
+          - ka
+          - ts_an
+          - ts_g
+          - kid
+          - kid_kipo
+          - tc_c_n
+          - ts_ipg
+          - ts_i
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: timefilter
+        id: timefilter
+        label: Zeitfilter
+        format: Ext_Thebing_Gui2_Format_Date
+        use_coalesce: false
+        data_function: ''
+        from:
+          column:
+            - date
+            - created
+          alias:
+            - kip
+            - kip
+          default:
+            - \Ts\Gui2\Data\InquiryPaymentDetails
+            - getDefaultFilterFrom
+        until:
+          column:
+            -
+            -
+          alias:
+            - kip
+            - kip
+          default:
+            - \Ts\Gui2\Data\InquiryPaymentDetails
+            - getDefaultFilterUntil
+        search_type: between
+        based_on:
+          payment_date:
+            alias: kip
+            column: date
+            title: Zahlungseingang
+          payment_created:
+            alias: kip
+            column: created
+            title: Erstellungsdatum
+      -
+        element: seperator
+      -
+        element: selectfilter
+        column:
+          - school_id
+        alias:
+          - ts_ij
+        label: Schule
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getSchoolOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        label: Währung
+        column:
+          - currency_id
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_System
+          - getCurrencyList
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        label: Buchungstyp
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getBookingTypes
+        filter_query:
+          1: '`ts_i`.`agency_id` > 0'
+          2: '`ts_i`.`agency_id` = 0'
+        label_as_item: true
+      -
+        element: selectfilter
+        column:
+          - agency_id
+        alias:
+          - ts_i
+        label: Agentur
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getAgenciesOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - ext_39
+        alias:
+          - ka
+        label: Agenturkategorie
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getAgencyCategoriesOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - method_id
+        alias:
+          - kip
+        label: Bezahlmethode
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getPaymentMethodsOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - type_id
+        alias:
+          - kip
+        label: Typ
+        entries:
+          - Ext_Thebing_Inquiry_Payment
+          - getTypeOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - sender
+        alias:
+          - kip
+        label: Gezahlt von
+        entries:
+          - Ext_Thebing_Inquiry_Payment
+          - getSenderOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - sales_person_id
+        alias:
+          - ts_i
+        label: Vertriebsmitarbeiter
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getSalespersonSelectOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - nationality
+        alias:
+          - tc_c
+        label: Nationalität
+        entries:
+          - Ext_Thebing_Nationality
+          - getNationalities
+          - true
+          - ""
+          - 0
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        id: inbox_filter
+        column:
+          - inbox
+        alias:
+          - ts_i
+        label: Inbox
+        entries:
+          - \Ts\Gui2\Data\InquiryPaymentDetails
+          - getInboxesOptions
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        id: group_search
+        label: Gruppe
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ts_i`.`group_id` != 0'
+          no: '`ts_i`.`group_id` = 0'
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        column:
+          - status_id
+        alias:
+          - ts_i
+        label: Schülerstatus
+        entries:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getCustomerStatusOptions
+        label_as_item: true
+        searchtype: =
+columns:
+  -
+    title: Schule
+    column: school_id
+    alias: ts_ij
+    width: name
+    small: true
+    access: all_school
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getStaticSchoolListByAccess, false]
+  -
+    group: Persönliche Daten
+    title: Nachname
+    column: lastname
+    alias: tc_c
+    width: name
+    resize: true
+  -
+    group: Persönliche Daten
+    title: Vorname
+    column: firstname
+    alias: tc_c
+    width: name
+    resize: true
+  -
+    group: Persönliche Daten
+    title: Rechnungsnummern
+    column: document_numbers
+    data: document_numbers
+    width: number
+  -
+    group: Persönliche Daten
+    title: Kundennummer
+    alias: tc_c_n
+    column: number
+    data: customer_number
+    width: number
+  -
+    group: Persönliche Daten
+    title: Zahlungsmethode
+    column: payment_method
+    data: payment_method
+    alias: ''
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+     - [Ext_Thebing_Agency, getAgencyPaymentMethods]
+  -
+    group: Persönliche Daten
+    title: Vertriebsmitarbeiter
+    column: sales_person_id
+    alias: ''
+    width: customer_name
+    sortable: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params:
+      - true
+  -
+    group: Persönliche Daten
+    title: Nationalität
+    column: nationality
+    width: name
+    format: Ext_Thebing_Gui2_Format_Nationality
+    default: false
+  -
+    group: Persönliche Daten
+    title: Vertriebsmitarbeiter
+    column: sales_person_id
+    alias: ''
+    width: customer_name
+    sortable: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params:
+      - true
+  -
+    group: Persönliche Daten
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: short
+    alias: ts_g
+    data: group_short
+    width: group_short
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'group'
+      - true
+  -
+    group: Persönliche Daten
+    title: Schülerstatus
+    column: status_id
+    alias: ts_i
+    width: name
+    format: Ext_Thebing_Gui2_Format_CustomerStatus
+    sortable: false
+  -
+    title: Agentur
+    column: ext_1
+    alias: ka
+    width: short_name
+    data: agency_short
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'agency'
+      - true
+  -
+    title: Agenturkategorie
+    column: name
+    alias: ka_c
+    width: name
+    data: agency_category
+  -
+    title: Agenturnummer
+    column: number
+    alias: ts_an
+    width: name
+    data: agency_number
+  -
+    visible: true
+    title: Währung
+    default: false
+    column: currency_id
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Currency
+  -
+    group: Kurs
+    title: Kurs
+    column: course_names_short
+    data: course_names_short
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Kurs
+    title: Ende
+    column: course_dates_until
+    data: course_dates_until
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Kurs
+    title: Start
+    column: course_dates_from
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Kurs
+    title: Kurswochen absolut
+    column: total_course_weeks
+    width: name
+    format: Ext_TC_Gui2_Format_Int
+  -
+    group: Unterkunft
+    title: Unterkunft
+    column: accommodation_names_short
+    data: accommodation_names_short
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Unterkunft
+    title: Beginn
+    column: accommodation_dates_from
+    data: accommodation_dates_from
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    group: Unterkunft
+    title: Ende
+    column: accommodation_dates_until
+    data: accommodation_dates_until
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+  -
+    title: Inbox
+    column: inbox
+    alias: ts_i
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_System, getInboxList, true, true]
+    default: false
+  -
+    group: Bezahlung
+    title: Kommentar
+    column: comment
+    width: comment
+    format: Ext_Thebing_Gui2_Format_Nl2br
+  -
+    group: Bezahlung
+    title: Belegnummer
+    column: receipt_number
+    width: amount
+#  -
+#    group: Bezahlung
+#    title: Bezahlvorgang
+#    column: payment_grouping
+#    width: amount
+  -
+    group: Bezahlung
+    title: Betrag
+    column: total_amount
+    width: amount
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Kurs
+    column: course_amount
+    data: course_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Unterkunft
+    column: accommodation_amount
+    data: accommodation_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Transfer
+    column: transfer_amount
+    data: transfer_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Versicherung
+    column: insurance_amount
+    data: insurance_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Kurs Zusatzgebühren
+    column: additional_course_amount
+    data: additional_course_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Unterkunft Zusatzgebühren
+    column: additional_accommodation_amount
+    data: additional_accommodation_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Generelle Zusatzgebühren
+    column: additional_general_amount
+    data: additional_general_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Manuelle Position
+    column: extraPosition_amount
+    data: extraPosition_amount
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Überbezahlung
+    column: amount_inquiry
+    data: overpayment_amount
+    alias: kipo
+    width: name
+    format: Ext_TS_Accounting_Payment_Format_Overpayment
+    sortable: false
+  -
+    group: Bezahlung
+    title: Datum
+    column: date
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    group: Bezahlung
+    title: Methode
+    column: name
+    data: method_name
+    alias: kpm
+    width: name
+  -
+    group: Bezahlung
+    title: Gezahlt von
+    column: sender
+    width: short_name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Inquiry_Payment, getSenderOptions]
+  -
+    group: Bezahlung
+    title: Art
+    column: type_id
+    alias: kip
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Inquiry_Payment, getTypeOptions]

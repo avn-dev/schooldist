@@ -1,0 +1,1 @@
+ALTER TABLE `ts_payment_conditions_settings` ADD `combine_last_partial_instalments` TINYINT NOT NULL DEFAULT '0';

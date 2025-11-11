@@ -1,0 +1,289 @@
+<?php
+
+include_once("./includes/main.inc.php");
+
+Access_Backend::checkAccess("languages");
+
+/**
+ * Fetch data
+ */
+$aLanguages = Data_Languages::getList(System::d('systemlanguage'));
+
+$sSql = "
+	SELECT
+		*
+	FROM
+		`language_files`
+	ORDER BY
+		`file`
+";
+$aLanguageFiles = DB::getQueryData($sSql);
+$aFiles = array(
+	''	=> L10N::t('Alle'),
+	0	=> L10N::t('Global verfügbar')
+);
+foreach($aLanguageFiles as $iKey => $aValue) {
+	$aFiles[$aValue['id']] = $aValue['file'];
+}
+
+/**
+ * Start Gui2 initialisation
+ */
+$oGui = new Ext_Gui2(md5('backend_translations'), 'L10N_Translations_Gui2');
+
+$oGui->setWDBasic('L10N_BackendTranslations');
+$oGui->setTableData('where', array('ld.active' => 1));
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('ld.code' => 'ASC'));
+$oGui->setTableData('groupby', '`ld`.`id`');
+
+// Listen Optionen
+$oGui->gui_description 		= 'Framework » Übersetzungen';
+$oGui->gui_title 			= $oGui->t('Übersetzungen');
+$oGui->multiple_selection	= 1;
+$oGui->row_style			= new L10N_Translations_Gui2_Row();
+$oGui->class_js				= 'BackendTranslationGUI';
+
+/**
+ * Dialog
+ */
+$oDialog = $oGui->createDialog($oGui->t('Übersetzung bearbeiten'));
+$oDialog->setElement($oDialog->createRow($oGui->t('Bereich'), 'text', array('db_alias' => '', 'db_column'=>'file_id', 'format'=>new Ext_Gui2_View_Format_Selection($aFiles))));
+$oDialog->setElement($oDialog->createRow($oGui->t('Schlüssel'), 'text', array('db_alias' => '', 'db_column'=>'code', 'style'=>'width: 500px;', 'format'=>new L10N_Translations_Gui2_Code())));
+$oDialog->setElement($oDialog->createRow($oGui->t('Übersetzung soll angewendet werden?'), 'checkbox', array('db_alias' => '', 'db_column'=>'use')));
+
+foreach((array)System::d('allowed_languages') as $sCode=>$sLocale) {
+
+	$aItems = [
+		'db_alias' => '',
+		'items' => [
+			[
+				'input' => 'textarea',
+				'db_column' => $sCode, 
+				'style' => 'width: 500px; height: 80px;',
+				'text_after' => '<i class="fa fa-check-circle translation-verify" data-language="'.$sCode.'"></i>'
+			]
+		]
+	];
+	
+	$oDialog->setElement($oDialog->createMultiRow($aLanguages[$sCode], $aItems));
+
+}
+
+$oDialog->width = 900;
+
+/**
+ * Dialog new
+ */
+$oDialogNew = $oGui->createDialog($oGui->t('Übersetzung bearbeiten'));
+$oDialogNew->setElement($oDialogNew->createRow($oGui->t('Bereich'), 'select', array('db_alias' => '', 'db_column'=>'file_id', 'select_options'=> $aFiles)));
+$oDialogNew->setElement($oDialogNew->createRow($oGui->t('Schlüssel'), 'input', array('db_alias' => '', 'db_column'=>'code')));
+$oDialogNew->setElement($oDialogNew->createRow($oGui->t('Übersetzung soll angewendet werden?'), 'checkbox', array('db_alias' => '', 'db_column'=>'use')));
+
+$oDialogNew->width = 900;
+
+/**
+ * Leisten
+ */
+# START - Leiste 1 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$aSearchColumns = array('code');
+foreach((array)System::d('allowed_languages') as $sCode=>$sLocale) {
+	$aSearchColumns[] = $sCode;
+}
+$oFilter->db_column = $aSearchColumns;
+$oFilter->db_alias = '';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oFilter->id = 'search';
+$oFilter->db_operator = 'like_strict';
+$oBar ->setElement($oFilter);
+
+$oSeparator = $oBar->createSeperator();
+$oBar->setElement($oSeparator);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->label				= $oGui->t('Bereich');
+$oFilter->db_column			= 'file_id';
+$oFilter->db_operator		= '=';
+$oFilter->db_emptysearch	= 1;
+$oFilter->value = '0';
+$oFilter->select_options	= $aFiles;
+$oFilter->width				= '200px';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->label				= $oGui->t('Status');
+$oFilter->db_column			= 'not_translated_entries';
+
+$sFilterQuery = " ( ";
+foreach((array)System::d('allowed_languages') as $sCode=>$sLocale) {
+	$sFilterQuery .= " `".$sCode."` = '' AND ";
+}
+$sFilterQuery .= " `code` != '' ) ";
+
+$aFilterOptions = array(
+	''=>'',
+	'all'=>$oGui->t('Noch nicht übersetzt')
+);
+$aFilterQuery = array(
+	''=>'',
+	'all'=>$sFilterQuery
+);
+
+foreach((array)System::d('allowed_languages') as $sCode=>$sLocale) {
+	$aFilterQuery[$sCode] = " (`".$sCode."` = '' AND `code` != '') ";
+	$aFilterOptions[$sCode] = sprintf($oGui->t('Noch nicht auf "%s" übersetzt'), $aLanguages[$sCode]);
+}
+
+$aFilterQuery['external'] = " (`lde`.`language_data_id` IS NOT NULL) ";
+$aFilterOptions['external'] = sprintf($oGui->t('Extern übersetzt'), $aLanguages[$sCode]);
+
+foreach((array)System::d('allowed_languages') as $sCode=>$sLocale) {
+	$aFilterQuery[$sCode.'_external'] = " (`lde`.`language_data_id` IS NOT NULL AND `lde`.`language` = '".$sCode."' AND `verified` = 0) ";
+	$aFilterOptions[$sCode.'_external'] = sprintf($oGui->t('Extern auf "%s" übersetzt (ungeprüft)'), $aLanguages[$sCode]);
+}
+
+$oFilter->filter_query		= $aFilterQuery;
+$oFilter->select_options	= $aFilterOptions;
+$oFilter->value				= 'all';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->label				= $oGui->t('Service');
+$oFilter->db_alias			= 'lde';
+$oFilter->db_column			= 'service';
+$oFilter->db_operator		= '=';
+$oFilter->db_emptysearch	= 0;
+$oFilter->value = '0';
+$oFilter->select_options	= [
+	'' => L10N::t('Alle'),
+	Deepl\Api::SERVICE => 'DeepL'
+];
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('checkbox');
+$oFilter->label				= $oGui->t('Nur benötigte Einträge');
+$oFilter->db_column			= 'only_used_entries';
+$sFilterQuery = " ( `use` = 1 ) ";
+$oFilter->filter_query		= $sFilterQuery;
+$oFilter->value				= 1;
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+# ENDE - Leiste 1 #
+
+# START - Leiste 2 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGui->gui_description),
+			$oDialogNew,
+			L10N::t('Neuer Eintrag', $oGui->gui_description)
+		);
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+			L10N::t('Editieren', $oGui->gui_description),
+			$oDialog,
+			L10N::t('Editieren', $oGui->gui_description)
+		);
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createIcon('/admin/media/tick.png', 'request', L10N::t('Verwendung umschalten', $oGui->gui_description));
+$oIcon->label = L10N::t('Verwendung umschalten', $oGui->gui_description);
+$oIcon->action = 'set_use';
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createIcon('fa-globe', 'request', L10N::t('Mit DeepL übersetzen', $oGui->gui_description));
+$oIcon->label = L10N::t('Mit DeepL übersetzen', $oGui->gui_description);
+$oIcon->action = 'deeplTranslation';
+$oBar ->setElement($oIcon);
+
+// Leiste der Gui Zuweisen
+$oGui->setBar($oBar);
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oPagination = $oBar->createPagination(false, true);
+$oBar ->setElement($oPagination);
+
+$oSeperator = $oBar->createSeperator();
+$oBar ->setElement($oSeperator);
+
+$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGui->gui_description));
+$oBar ->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+# ENDE - Leiste 2 #
+
+
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'file_id';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Bereich');
+$oColumn->width = 250;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection($aFiles);
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'code';
+$oColumn->db_alias = '';
+$oColumn->title = $oGui->t('Schlüssel');
+$oColumn->width = 200;
+$oColumn->width_resize = false;
+$oGui->setColumn($oColumn);
+
+foreach((array)System::d('allowed_languages') as $sCode=>$sLocale) {
+
+	$oColumn = $oGui->createColumn();
+	$oColumn->db_column = $sCode;
+	$oColumn->title = $aLanguages[$sCode];
+	$oColumn->width = 150;
+	$oColumn->width_resize = true;
+	$oColumn->format = new L10N_Translations_Gui2_Format_Language($sCode);
+	$oGui->setColumn($oColumn);
+
+}
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'used';
+$oColumn->title = $oGui->t('Letzte Verwendung');
+$oColumn->width = 130;
+$oColumn->width_resize = false;
+$oColumn->format = 'Date_Time';
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'changed';
+$oColumn->title = $oGui->t('Verändert');
+$oColumn->width = 130;
+$oColumn->width_resize = false;
+$oColumn->format = 'Timestamp';
+$oGui->setColumn($oColumn);
+
+$aOptional = array(
+	'js' => array(
+		'/admin/js/backend_translations.js',
+	),
+	'css' => array(
+		'/admin/css/backend_translations.css',
+	)
+);
+
+$oGui->display($aOptional);

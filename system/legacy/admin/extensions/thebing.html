@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * v1
+ */
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+accesschecker('admin');
+
+if(
+	!Ext_Thebing_Util::isDevSystem() &&
+	!Ext_Thebing_Util::isTestSystem()
+) {
+	die("Zugriff nur auf DEV-/TEST-System!");
+}
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<div class="divHeader">
+	<h1>Thebing</h1>
+</div>
+
+<div style="padding: 30px;">
+
+	<h2>Verfügbare Farben</h2>
+
+	<table cellpadding="4" cellspacing="0" border="0" class="table">
+		<tr>
+			<th style="width: 100px;">Key</th>
+			<th style="width: 100px;">Hintergrund</th>
+			<th style="width: 100px;">60 % Deckung</th>
+			<th style="width: 100px;">40 % Deckung</th>
+			<th style="width: 100px;">20 % Deckung</th>
+			<th style="width: 100px;">Schrift</th>
+		</tr>
+<?
+
+	$aColors = Ext_Thebing_Util::getColor();
+
+	foreach((array)$aColors as $sKey=>$sColor) {
+		if(strpos($sKey, '_font') !== false) {
+			continue;
+		}
+		$sColor60 = Ext_Thebing_Util::getColor($sKey, 60);
+		$sColor40 = Ext_Thebing_Util::getColor($sKey, 40);
+		$sColor20 = Ext_Thebing_Util::getColor($sKey, 20);
+		$sColorFont = Ext_Thebing_Util::getColor($sKey.'_font');
+		echo '<tr><td>'.$sKey.'</td><td style="background-color: '.$sColor.';">&nbsp;</td><td style="background-color: '.$sColor60.';">&nbsp;</td><td style="background-color: '.$sColor40.';">&nbsp;</td><td style="background-color: '.$sColor20.';">&nbsp;</td>';
+		if($sColorFont) {
+			echo '<td style="background-color: '.$sColor.'; color: '.$sColorFont.';">Hello, world!</td>';
+		} else {
+			echo '<td>&nbsp;</td>';
+		}
+		echo "</tr>\n";
+	}
+
+?>
+	</table>
+
+</div>
+
+<?
+Admin_Html::loadAdminFooter();
+?>

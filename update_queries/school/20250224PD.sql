@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_agencies_manual_creditnotes` ADD `note` TEXT NOT NULL;

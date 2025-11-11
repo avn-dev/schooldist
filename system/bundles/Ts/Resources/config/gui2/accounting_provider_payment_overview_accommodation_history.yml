@@ -1,0 +1,79 @@
+class:
+  wdbasic: Ext_TS_Accounting_Provider_Grouping_Accommodation_History
+  data: Ext_Thebing_Gui2_Data
+  gui: Ext_Thebing_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+description: Thebing » Buchhaltung » Provider bezahlen » Bezahlte Unterkünfte Historie
+multiple_selection: false
+access: ""
+title: Bezahlte Unterkunftsanbieter Historie
+id:
+  column: id
+  alias: ts_apgh
+orderby :
+  - Ext_TS_Accounting_Provider_Grouping_Accommodation_History_Gui2_Data
+  - getOrderby
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            column:
+              - created
+            alias:
+              - ts_apgh
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterFrom
+              - true
+          until:
+            column:
+              - created
+            alias:
+              - ts_apgh
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterUntil
+              - true
+          searchtype: between
+          access:
+          text_after: basierend auf Erstellungsdatum
+columns:
+  -
+    title: ID
+    column: id
+    alias: ts_apgh
+    format: Ext_Thebing_Gui2_Format_Int
+    width: id
+    resize: false
+  -
+    title: File
+    column: file
+    alias: ts_apgh
+    format: Ext_TS_Accounting_Payment_Format_Name
+    width: name
+    resize: true
+  -
+    title: Export
+    column: absolute_path
+    alias: ts_apgh
+    format: Ext_TS_Accounting_Payment_Format_Export
+    width: file
+    resize: false
+  -
+    title: Ersteller
+    column: creator_id
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+  -
+    title: Erstellt
+    column: created
+    alias: ts_apgh
+    format: Ext_Thebing_Gui2_Format_Date_Time
+    width: date_time
+    resize: false
+default_columns:

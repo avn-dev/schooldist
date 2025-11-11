@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_messages` ADD INDEX(`type`);

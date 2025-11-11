@@ -1,0 +1,48 @@
+class:
+  wdbasic: Ext_TS_Payment_Condition
+  data: Ext_TS_Payment_Condition_Gui2_Data
+  js: PaymentConditionGui
+access: thebing_marketing_payment_groups
+pagination: false
+export: false
+sortable: true
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TS_Payment_Condition_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TS_Payment_Condition_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    sortable: true
+    title: Name
+    column: name
+    width: long_description
+  -
+    sortable: false
+    title: Kommentar
+    column: comment
+    width: comment
+    resize: true
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment_condition.js, thebing]

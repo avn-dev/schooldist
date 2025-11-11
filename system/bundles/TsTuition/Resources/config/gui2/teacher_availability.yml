@@ -1,0 +1,140 @@
+class:
+  wdbasic: Ext_Thebing_Teacher_Schedule
+  data: \TsTuition\Gui2\Data\TeacherAvailability
+  date_format: Ext_Thebing_Gui2_Format_Date
+id:
+  column: id
+  alias: kts
+orderby:
+  - \TsTuition\Gui2\Data\TeacherAvailability
+  - getOrderby
+  - ""
+access: 
+    - ts_tuition_teacher_availability
+    - ""
+designer:
+  flex: teachers_availability
+  additional_flex:
+    -
+      section: teachers
+      primary_key: idTeacher
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            column:
+              - valid_from
+            alias:
+              - kts
+          until:
+            column:
+              - valid_until
+            alias:
+              - kts
+          searchtype: input_between
+        -
+          element: selectfilter
+          label: Tag
+          label_as_item: true
+          column:
+            - idDay
+          alias:
+            - kts
+          entries:
+             - Ext_Thebing_Util
+             - getLocaleDays
+             - null
+             - wide
+        -
+          element: selectfilter
+          label: Lehrer
+          label_as_item: true
+          column:
+            - idTeacher
+          alias:
+            - kts
+          entries:
+             - Ext_Thebing_Teacher
+             - getSelectOptions
+             - true
+             - true
+        -
+          element: selectfilter
+          label: Priorität
+          label_as_item: true
+          column:
+            - priority
+          alias:
+            - kts
+          entries:
+             - TsTuition\Gui2\Data\TeacherAvailability
+             - getPriorityOptions
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - \TsTuition\Gui2\Data\TeacherAvailability
+            - getDialog
+        -
+          element: icon_edit
+          dialog:
+            - \TsTuition\Gui2\Data\TeacherAvailability
+            - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Lehrer
+    column: teacher
+    sortable_column: lastname
+    width: name
+    resize: true
+    format: \Ext_Thebing_Gui2_Format_Name
+  -
+    title: Tag
+    column: idDay
+    width: name
+    format: \Ext_Thebing_Gui2_Format_Day
+  -
+    title: Von
+    column: timeFrom
+    width: time
+    format: \Ext_Thebing_Gui2_Format_Time
+  -
+    title: Bis
+    column: timeTo
+    width: time
+    format: \Ext_Thebing_Gui2_Format_Time
+  -
+    title: Dauer
+    column: duration
+    width: time
+    format: \Ext_Thebing_Gui2_Format_Time
+  -
+    title: Gültig ab
+    column: valid_from
+    width: date
+    format: \Ext_Thebing_Gui2_Format_Date
+  -
+    title: Gültig bis
+    column: valid_until
+    width: date
+    format: \Ext_Thebing_Gui2_Format_Date
+  -
+    title: Priorität
+    column: priority
+    width: short_name
+    format: \Ext_Gui2_View_Format_Selection
+    format_params:
+      - [TsTuition\Gui2\Data\TeacherAvailability, getPriorityOptions]
+  -
+    title: Kommentar
+    column: comment
+    width: long_description
+    default: false

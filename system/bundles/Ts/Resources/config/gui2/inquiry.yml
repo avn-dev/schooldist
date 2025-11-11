@@ -1,0 +1,5920 @@
+hook: ts_inquiry_gui2_hook
+class:
+  wdbasic: Ext_TS_Inquiry
+  data: Ext_TS_Inquiry_Index_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+  icon_status: Ext_Thebing_Gui2_Icon_Inbox
+  icon_visible: Ext_TS_Inquiry_Gui2_Icon_Visible
+  row_style: Ext_Gui2_View_Style_Indexrow
+  row_style_index: Ext_Thebing_Gui2_Style_InboxRow
+  gui: Ext_TS_Inquiry_Gui2
+  js: StudentlistGui
+leftframe: false
+pagination: false
+export: true
+description: "Thebing » Invoice » Inbox"
+view: inbox
+sidebar: true
+where:
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getListWhere
+orderby : 
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getIndexOrderby
+access: thebing_invoice_inbox # Wird ggf. überschrieben
+hash: b56eab683e450abb7100bfa45fc238fd
+id:
+  column: id
+  alias: ki
+designer:
+  dialog: ""
+  filter: ts_inquiry
+  additional_flex:
+    -
+      section: [student_record, booking]
+    -
+      section: [student_record, enquiry_booking]
+    -
+      section: accommodation_providers_general
+      entity_call:
+        - getAccommodationProvider()
+    -
+      section: accommodation_providers_info
+      entity_call:
+        - getAccommodationProvider()
+    -
+      set: [client_payments]
+      section: agencies_bank
+      entity_call:
+        - getAgency()
+    # Diese Angabe wird zwingend benötigt für den Index, da $_aFlexibleFieldsConfig fürs Mapping ignoriert wird, aber beim Value-Getter benötigt wird
+    -
+      set: [enquiry]
+      section: [student_record, enquiry]
+    -
+      set: [enquiry]
+      section: [student_record, enquiry_booking]
+bars:
+    -
+      position: top
+      type: ''
+      set: [inquiry]
+      id: inquiry_actions
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - inbox
+          access: thebing_invoice_generate_student
+        -
+          element: icon_edit
+          dialog: 
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - inbox
+          access: thebing_invoice_edit_student
+        -
+          element: icon_delete
+          access: thebing_invoice_delete_inquiry
+        -
+          element: icon
+          label: Beschwerden
+          task: openDialog
+          action: edit_complaints # Icon-ID muss unterschiedlich zu anderen Dialogen sein (ATG2.getIconDataId)
+          dialog:
+            - \TsComplaints\Gui2\Data\Complaint
+            - getComplaintDialog
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - complaint
+          access: thebing_marketing_complaints
+        -
+          element: icon
+          label: Bezahlen
+          action: payment
+          additional: inquiry
+          task: openDialog
+          active: 0
+          access:
+            - thebing_invoice_enter_payments
+            - thebing_invoice_enter_payments_history
+            #- thebing_invoice_overpayments
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - money
+        -
+          element: icon
+          label: Bestätigen
+          action: booking
+          additional: inquiry
+          task: confirm
+          active: 0
+          access:
+            - thebing_bookings_confirm
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - confirm
+        #-
+          #element: icon_communication
+          #application: inbox
+          #access: thebing_invoice_communication
+        -
+          element: icon_communication
+          application: booking
+          label: Kommunikation
+          access: 
+              - ts_bookings
+              - communication
+        -
+          element: icon_notes
+          access: 
+              - ts_bookings
+              - notes
+        -
+          element: labelgroup
+          label: Rechnungen
+        -
+          element: icon
+          title: "Rechnungen editieren"
+          label: ""
+          action: invoice
+          task: openDialog
+          active: 0
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          title: "Rechnung PDF öffnen"
+          label: ""
+          action: openInvoicePdf
+          task: request
+          request_data: "&action=openInvoicePdf"
+          active: 0
+          info_text: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+        -
+          element: icon
+          title: "Übersicht"
+          label: ""
+          action: invoiceOverview
+          task: request
+          active: 0
+          access: 
+              - ts_bookings_invoices
+              - open_overview
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - list
+        -
+          element: labelgroup
+          label: Dokumente
+          access: 
+              - thebing_invoice_documents
+              - thebing_invoice_display_pdf
+        -
+          element: icon
+          title: "Dokumente editieren"
+          label: ""
+          action: additional_document
+          task: openDialog
+          access: thebing_invoice_documents
+          active: 0
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          title: "Dokument PDF öffnen"
+          label: ""
+          action: openDocumentPdf
+          task: request
+          access: thebing_invoice_display_pdf 
+          request_data: "&action=openDocumentPdf"
+          active: 0
+          info_text: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+        -
+          element: icon
+          title: "Übersicht"
+          label: ""
+          action: documentOverview
+          task: request
+          active: 0
+          access:
+            - ts_bookings_invoices
+            - open_overview
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - list
+#    -
+#      position: top
+#      set: [enquiry]
+#      elements:
+#        -
+#          element: icon_new
+#          dialog: Ext_TS_Enquiry_Gui2_Dialog
+#        -
+#          element: icon_edit
+#          dialog: Ext_TS_Enquiry_Gui2_Dialog
+#        -
+#          element: icon_delete
+#        -
+#          element: icon
+#          label: In Buchung umwandeln
+#          task: openDialog
+#          action: convert_enquiry_to_inquiry
+#          img:
+#            - Ext_Thebing_Util
+#            - getIcon
+#            - convert_item
+#        -
+#          element: labelgroup
+#          label: Kommunikation
+#        -
+#          element: icon_communication
+#          application: enquiry
+    -
+      position: top
+      type: ''
+      set: [students_simple]
+      elements:
+        -
+          element: icon_show
+          access: thebing_students_simple_view_edit
+          dialog: 
+            - Ext_TS_Inquiry_Index_Gui2_Data
+            - getDialog
+            - students
+        -
+          element: icon
+          label: "In andere Schule kopieren"
+          action: copy
+          task: openDialog
+          active: 0
+          access: 
+            - thebing_students_simple_view
+            - copy
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - page_copy
+          dialog:
+            - Ext_Thebing_Inquiry_Gui2
+            - getCopyDialog
+        -
+          element: icon
+          label: "In andere Inbox verschieben"
+          action: change_inbox
+          task: openDialog
+          active: 0
+          access:
+            - thebing_students_simple_view
+            - change_inbox
+          img: 'fas fa-inbox'
+          dialog:
+            - Ext_Thebing_Inquiry_Gui2
+            - getChangeInboxDialog
+        -
+          element: icon
+          label: "Verändert rückgängig machen"
+          task: request
+          request_data: "&action=revokeChangedStatus"
+          active: 0
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - out
+          access: thebing_students_simple_view_delete_updated
+        -
+          element: labelgroup
+          label: Kommunikation
+          hide_empty: true
+        #-
+          #element: icon_communication
+          #access: thebing_students_simple_view_communication
+          #label: Schüler / Agentur informieren
+          #application: simple_view
+        -
+          element: icon_communication
+          application: simple_view
+          label: Schüler / Agentur informieren
+          access:
+            - thebing_students_simple_view
+            - communication
+        -
+          element: icon_notes
+          access: 
+              - ts_bookings
+              - notes
+        -
+          element: labelgroup
+          label: Dokumente
+          hide_empty: true
+          access: thebing_invoice_display_pdf
+        -
+          element: icon
+          access: thebing_students_simple_view_documents
+          label: "Dokumente editieren" #Rechnung editieren
+          action: additional_document
+          task: openDialog
+          active: 0
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          access: 
+            - thebing_students_simple_view_display_pdf
+            - thebing_invoice_display_pdf
+          label: "PDFs anzeigen" #Dokument PDF öffnen
+          action: openDocumentPdf
+          task: request
+          active: 0
+          info_text: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+    -
+      position: top
+      type: ''
+      set: [students_arrival]
+      elements:
+        -
+          element: icon_show
+          access: thebing_students_welcome_list_edit
+          dialog: 
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - students
+        -
+          element: icon
+          label: "Einchecken"
+          action: confirm-arrival
+          task: request
+          active: 0
+          access: 
+            - thebing_students_welcome_list
+            - checkin
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - accept
+        -
+          element: icon
+          label: "Einchecken"
+          action: confirm-arrival-undo
+          task: request
+          active: 0
+          access: 
+            - thebing_students_welcome_list
+            - checkin
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - delete
+        -
+          element: icon
+          label: "Kamera"
+          action: camera
+          task: openDialog
+          access: thebing_student_cards_camera
+          img: fa-camera
+        -
+          element: labelgroup
+          label: Kommunikation
+          hide_empty: true
+        #-
+          #element: icon_communication
+          #access: thebing_students_welcome_list_communication
+          #label: Schüler / Agentur informieren
+          #application: arrival_list
+        -
+          element: icon_communication
+          application: arrival_list
+          label: Schüler / Agentur informieren
+          access: 
+            - thebing_students_welcome_list
+            - communication
+        -
+          element: icon_notes
+          access: 
+              - ts_bookings
+              - notes
+        -
+          element: labelgroup
+          label: Dokumente
+          hide_empty: true
+        -
+          element: icon
+          access: thebing_students_welcome_list_documents
+          label: "Dokumente editieren" #Rechnung editieren
+          action: additional_document
+          task: openDialog
+          active: 0
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          access: thebing_students_welcome_list_display_pdf
+          label: "PDFs anzeigen" #Dokument PDF öffnen
+          action: openDocumentPdf
+          task: request
+          active: 0
+          info_text: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+    -
+      position: top
+      type: ''
+      set: [students_checkedin, students_checkedin, students_departure]
+      elements:
+        -
+          element: icon_show
+          access: thebing_students_departure_list_edit
+          dialog: 
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - students
+        -
+          element: icon
+          label: "Auschecken"
+          action: confirm-departure
+          task: request
+          active: 0
+          access: 
+            - thebing_students_departure_list
+            - checkout
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - accept
+        -
+          element: icon
+          label: "Auschecken"
+          action: confirm-departure-undo
+          task: request
+          active: 0
+          access: 
+            - thebing_students_departure_list
+            - checkout
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - delete
+        -
+          element: labelgroup
+          label: Kommunikation
+          hide_empty: true
+        #-
+          #element: icon_communication
+          #access: thebing_students_departure_list_communication
+          #label: Schüler / Agentur informieren
+          #application: departure_list
+        -
+          element: icon_communication
+          application: departure_list
+          label: Schüler / Agentur informieren
+          access: 
+            - thebing_students_departure_list
+            - communication
+        -
+          element: icon_notes
+          access: 
+              - ts_bookings
+              - notes
+        -
+          element: labelgroup
+          label: Dokumente
+          hide_empty: true
+        -
+          element: icon
+          access: thebing_students_departure_list_documents
+          label: "Dokumente editieren" #Rechnung editieren
+          action: additional_document
+          task: openDialog
+          active: 0
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          access: thebing_students_departure_list_display_pdf
+          label: "PDFs anzeigen" #Dokument PDF öffnen
+          action: openDocumentPdf
+          task: request
+          active: 0
+          info_text: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+    -
+      position: top
+      type: ''
+      set: [students_visum]
+      elements:
+        -
+          element: icon_show
+          access: thebing_students_visa_list_edit
+          dialog: 
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - students
+        -
+          element: labelgroup
+          label: Kommunikation
+          hide_empty: true
+        #-
+          #element: icon_communication
+          #access: thebing_students_visa_list_communication
+          #application: visum_list
+        -
+          element: icon_communication
+          application: visum_list
+          label: Kommunikation
+          access: 
+            - thebing_students_visa_list
+            - communication
+        -
+          element: icon_notes
+          access: 
+              - ts_bookings
+              - notes
+        -
+          element: labelgroup
+          label: Dokumente
+          hide_empty: true
+        -
+          element: icon
+          access: thebing_students_visa_list_documents
+          label: "Dokumente editieren" #Rechnung editieren
+          action: additional_document
+          task: openDialog
+          active: 0
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - page_edit
+        -
+          element: icon
+          access: thebing_students_visa_list_display_pdf
+          label: "PDFs anzeigen" #Dokument PDF öffnen
+          action: openDocumentPdf
+          task: request
+          active: 0
+          info_text: 1
+          img: 
+            - Ext_TC_Util
+            - getIcon
+            - pdf
+    -
+      position: top
+      type: ''
+      set: [students_sponsoring]
+      elements:
+        -
+          element: icon_show
+          access:
+            - ts_students_sponsoring_list
+            - edit
+          dialog:
+            - Ext_TS_Inquiry_Index_Gui2_Data
+            - getDialog
+            - students_sponsoring
+        -
+          element: labelgroup
+          label: Kommunikation
+          hide_empty: true
+        #-
+          #element: icon_communication
+          #access:
+          #  - ts_students_sponsoring_list
+          #  - communication
+          #application: simple_view
+        -
+          element: icon_communication
+          application: simple_view
+          label: Kommunikation
+          access:
+            - ts_students_sponsoring_list
+            - communication
+        -
+          element: icon_notes
+          access:
+            - ts_bookings
+            - notes
+    -
+      position: top
+      type: ''
+      set: [agency]
+      elements:
+        -
+          element: icon_show
+          dialog:
+            - Ext_TS_Inquiry_Index_Gui2_Data
+            - getDialog
+            - students
+        -
+          element: labelgroup
+          label: Kommunikation
+          hide_empty: true
+        -
+          element: icon_communication
+          label: Kunde informieren
+          application: simple_view
+    -
+      position: top
+      set: [inquiry]
+      type: ''
+      last: true
+      id: inquiry_pagination
+      elements:
+        - 
+          element: pagination
+          only_pagecount: false
+          limit_selection: true
+        -
+          element: labelgroup
+          label: Gruppen
+          hide_empty: true
+        -
+          element: icon
+          label: "Editieren"
+          task: openDialog
+          action: edit_groups # Icon-ID muss unterschiedlich zu anderen Dialogen sein (ATG2.getIconDataId)
+          dialog:
+            - Ext_Thebing_Inquiry_Gui2
+            - createGroupDialog
+          access: thebing_invoice_groups
+          active: 1
+          img:
+            - Ext_TC_Util
+            - getIcon
+            - group
+    -
+      position: top
+      set: [students_simple, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, enquiry, agency, company]
+      type: ''
+      elements:
+        - 
+          element: pagination
+          only_pagecount: false
+          limit_selection: true
+        -
+          element: labelgroup
+          label: Export
+        -
+          element: icon
+          task: export_csv
+          active: 1
+          label: CSV
+          title: Export CSV
+          img: fa-table
+        -
+          element: excel_export
+          label: Excel
+          title: Export Excel
+        - 
+          element: loading_indicator
+    -
+      position: bottom
+      type: legend
+      set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+      elements: 
+        - 
+          element: legend_label
+          label: Zahlung
+        - 
+          element: legend_info
+          label: eingegangen
+          info:
+            color: [soft_green, 30]
+            background: true
+        - 
+          element: legend_info
+          label: vollständig
+          info:
+            color: lightgreen
+            background: true
+        - 
+          element: legend_info
+          label: nicht erfolgt
+          info:
+            color: red
+            background: true   
+        - 
+          element: legend_label
+          label: PDF 
+        - 
+          element: legend_info
+          label: benötigt
+          info:
+            color: new
+            background: true
+            img: 
+              - Ext_TC_Util
+              - getIcon
+              - pdf
+        - 
+          element: legend_info
+          label: verschickt
+          info:
+            color: old
+            background: true
+            img: 
+              - Ext_TC_Util
+              - getIcon
+              - pdf
+        - 
+          element: legend_label
+          label: Buchung 
+        - 
+          element: legend_info
+          label: Storniert
+          info:
+            color: storno
+            background: true 
+        - 
+          element: legend_info
+          label: Verändert
+          info:
+            color: changed
+            background: true 
+        - 
+          element: legend_info
+          label: nicht bestätigt
+          info:
+            color: red_font
+            italic: true
+            text: true
+        -
+          element: legend_info
+          label: Buchung nicht bestätigt
+          info:
+            color: inactive
+            italic: true
+            text: true
+columns:
+  ###
+  ### HIDDEN
+  ###
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Schule
+    column: school_id # Wird in Elasticsearch-Query benutzt
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Client
+        - getStaticSchoolListByAccess
+        - false
+    index:
+      call: 
+         - getSchool()
+         - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+        analyzer: []
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: id
+    index:
+      call:
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+        analyzer: []
+  -
+    visible: false
+    column: type
+    seperator: none
+    index:
+      call:
+        - getTypeForIndex()
+      mapping:
+        index: true
+        type: keyword
+  -
+    # TODO: Umstellen auf ID
+    visible: false
+    set: [inquiry]
+    column: inbox
+    index:
+      call:
+        - getInboxKey()
+      mapping:
+        index: true
+        type: string
+  -
+    visible: false
+    set: [students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: inbox_students
+    title: Inbox
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_System
+        - getInboxListForSelect
+        - true
+        - false
+    index:
+      call:
+        - inbox
+      mapping:
+        type: keyword
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    title: Dokumentnummern
+    column: document_number_all
+    width: name
+    seperator: none
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - [getDocuments(), all, true, true]
+         - document_number
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company ]
+    column: customer_birthday_search
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: input
+    index:
+      call:
+        - getFirstTravellerBirthday()
+      mapping:
+        index: true
+        type: text
+  -
+    visible: false
+    title: Referenz
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: filter_referrer
+    width: name
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getReferrerOptions
+    index:
+      call: 
+         - referer_id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Zahlungsbelegnummer
+    set: [inquiry, client_payments]
+    column: filter_paymentnumber
+    width: name
+    filterset: 
+      type: input
+    index:
+      call: 
+         - [getDocuments(), [receipt_customer, receipt_agency, document_payment_customer, document_payment_agency, document_payment_overview_agency, document_payment_overview_customer], true, true]
+         - document_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    set: [enquiry, inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Gruppenname
+    column: group_name
+    filterset: 
+      type: input
+    index:
+      call: 
+         - getGroupName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    title: Sonderangebot
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: filter_special
+    width: name
+    seperator: none
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getSpecialOptions
+    index:
+      call: 
+         - getUsedSpecialIds()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    column: accommodation_room_full
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    unique_values: false
+    index:
+      call: 
+        - [getAccommodationInfo(), full]
+      mapping:
+        index: not_analyzed
+        type: string
+  
+  -
+    visible: false
+    column: accommodation_full
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    i18n: 
+      pass_language: true
+    unique_values: false
+    index:
+      call:
+         - getAccommodations()
+         - [getIndexInfoString(), false]
+      mapping:
+        index: not_analyzed
+        type: text
+  -
+    visible: false
+    column: accommodation_first_start_original
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Unterkunftsbeginn (erste Unterkunft)
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      call:
+         - getFirstAccommodation()
+         - getFrom()
+      mapping:
+        index: not_analyzed
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: accommodation_last_end_original
+    title: Unterkunftsende
+    width: date
+    unique_values: false
+    seperator: none
+    filterset:
+      type: date
+      search_type: between
+    index:
+      call: 
+         - getAccommodations()
+         - getUntil()
+      mapping:
+        index: not_analyzed
+        type: date
+#  -
+#    visible: false
+#    title: Ersteller
+#    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+#    column: filter_creator
+#    width: name
+#    seperator: none
+#    filterset:
+#      type: select
+#      options:
+#        - Ext_TS_Inquiry_Index_Gui2_Data
+#        - getCreatorOptions
+#    index:
+#      call:
+#         - getCreatorIdForIndex()
+#      mapping:
+#        index: not_analyzed
+#        type: integer
+  -
+    visible: false
+    title: Rechnungsstatus
+    set: [enquiry, inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: invoice_status # Wird in Elasticsearch-Query benutzt
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getInvoiceStatusOptions
+    index:
+      call:
+         - getInvoiceStatus()
+      mapping:
+        index: true
+        type: string
+  -
+    visible: false
+    title: Gruppen
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: has_group
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Util
+        - getYesNoArray
+    index:
+      call:
+        - hasGroup()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    column: document_version_item_change
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    width: name
+    seperator: none
+    index:
+      call: 
+         - versions_items_changes
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    set: [enquiry]
+    visible: false
+    title: Anfragestatus
+    column: filter_enquiry_status
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Enquiry_Gui2
+        - getStatusOptionsList
+        - false
+      wdsearch:
+        unanswered: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, unanswered]
+        due_follow_up: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, due_follow_up]
+        entered_follow_up: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, entered_follow_up]
+        booked: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, booked]
+        not_booked: [Ext_TS_Enquiry_Gui2, getStatusOptionQuery, not_booked]
+    index:
+      add_field: false
+  -
+    visible: false
+    set: [enquiry, inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Buchungstyp
+    column: filter_booking_type
+    width: name
+    seperator: none
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getBookingTypeOptions
+    index:
+      call: 
+         - hasAgency()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Zahlungsstatus
+    column: filter_payment_status
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getPaymentTypeOptions
+      wdsearch:
+        open: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, open]
+        due: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, due]
+        prepayed: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, prepayed]
+        payed: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, payed]
+        open_and_overpayed: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, open_and_overpayed]
+    index:
+      add_field: false
+  -
+    visible: false
+    title: Dokumente
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: filter_documents
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getInvoiceProformaStatusOptions
+    index:
+      call: 
+         - getDocumentInvoiceProformaStatus()
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  -
+    visible: false
+    title: Agentur
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments]
+    column: agency_id
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Abstract
+        - getAgenciesForSelect
+    index:
+      call: 
+         - getAgency()
+         - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Agenturkategorien
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments]
+    column: agency_category_id
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Agency
+        - getCategoryList
+    index:
+      call:
+        - getAgency()
+        - getCategory()
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Agenturliste
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments]
+    column: agencylist_id
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Abstract
+        - getAgencyListForSelect
+        - true
+    index:
+      call:
+        - getAgency()
+        - [getJoinTableObjects(), lists]
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Agenturgruppen
+    set: [client_payments]
+    column: agency_groups_original
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Abstract
+        - getAgencyGroupsForSelect
+    index:
+      call:
+        - getAgency()
+        - [getJoinTableObjects(), 'groups']
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Firmen
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments]
+    column: company_id
+    seperator: none
+    index:
+      call:
+        - getCourses()
+        - getJobAllocations()
+        - getCompany()
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Land
+    column: customer_country_original
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Country_Search
+        - getLocalizedCountries
+        - false
+        - false
+    index:
+      call: 
+         - getFirstTraveller()
+         - getAddress()
+         - country_iso
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Ländergruppe
+    column: country_groups
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Countrygroup
+        - getSelectOptions
+    index:
+      call:
+        - getCountryGroupList()
+      mapping:
+        index: true
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Nationalität
+    column: customer_nationality_original
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Nationality
+        - getNationalities
+        - true
+        - ""
+        - 0
+    index:
+      call: 
+         - getFirstTraveller()
+         - nationality
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: course_name # Wird NUR verwendet für Tooltip von course_fulllist
+    width: name
+    i18n: 
+      pass_language: false
+    unique_values: false
+    seperator: <br />
+    index:
+      call: 
+         - getCourses()
+         - [getCourseName(), false, true]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Kurskategorie
+    column: course_category
+    width: name
+    unique_values: false
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCourseCategories
+    index:
+      add_original: true
+      call: 
+         - getCourses()
+         - getCourse()
+         - category_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Unterkunftskategorie
+    column: accommodation_category
+    width: name
+    unique_values: false
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getAccommodationCategories
+    index:
+      add_original: true
+      call: 
+         - getAccommodations()
+         - accommodation_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: all_start # Filter-Abhängigkeit (manuell)
+    sortable_column: all_start_original
+    title: Leistungsbeginn
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getServiceFrom()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: all_end # Filter-Abhängigkeit (manuell)
+    sortable_column: all_end_original
+    title: Leistungsende
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getServiceUntil()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: document_date_original # filter_values
+    title: Rechnungsdatum
+    width: name
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      call:
+         - [getLastDocument(), invoice]
+         - getLastVersion()
+         - [getValueForIndex(), date]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: false
+    title: Visum Start
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: visum_from_original
+    width: name
+    unique_values: false
+    index:
+      call:
+         - getVisaData()
+         - getFrom()
+      mapping:
+        index: true
+        type: date  
+  -
+    visible: false
+    title: Visum Ende
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: visum_until_original
+    width: name
+    unique_values: false
+    index:
+      call:
+         - getVisaData()
+         - getUntil()
+      mapping:
+        index: true
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: visum_contact_original
+    title: Visum
+    width: name
+    unique_values: false
+    filterset:
+      type: date
+      search_type: contact
+      from_column: visum_from_original
+      until_column: visum_until_original
+    index:
+      add_field: false
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: course_contact_original
+    title: Relativer Leistungszeitraum
+    width: name
+    unique_values: false
+    filterset:
+      type: date
+      search_type: contact
+      from_column: [course_from_original, accommodation_from_original, transfer_from_original, insurance_from_original]
+      until_column: [course_until_original, accommodation_until_original, transfer_until_original, insurance_end_original]
+    index:
+      add_field: false
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: service_period_filter
+    title: Leistungszeitraum
+    unique_values: false
+    filterset:
+      type: date
+      search_type: contact
+      from_column: [service_from]
+      until_column: [service_until]
+    index:
+      add_field: false
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: service_from
+    index:
+      call: 
+         - service_from
+      mapping:
+        index: not_analyzed
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: service_until
+    index:
+      call: 
+         - service_until
+      mapping:
+        index: not_analyzed
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: course_period
+    title: Kurszeitraum
+    unique_values: false
+    seperator: none
+    filterset:
+      type: date
+    index:
+      call:
+         - getCourses()
+         - getFromAndUntilRangeForIndex()
+      call_return: no_merge
+      mapping:
+        index: true
+        type: date_range
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    # Für alle Kurse (gibt noch eine Spalte für den nur letzten Kurs)
+    column: course_last_end_original
+    title: Kursende
+    width: date
+    unique_values: false
+    seperator: none
+    filterset:
+      type: date
+      search_type: between
+    index:
+      call: 
+         - getCourses()
+         - getUntil()
+      mapping:
+        index: not_analyzed
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: visum_status_original
+    title: Visum
+    width: name
+    unique_values: false
+    filterset:
+      type: select
+      options: 
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getVisumOptions
+    index:
+      call: 
+         - getVisaData()
+         - getStatusForIndex()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [students_visum]
+    column: has_visum_original
+    title: Visum?
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - hasVisum()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: agency_invoice_settings
+    width: name
+    index:
+      call: 
+         - getAgency()
+         - invoice
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Agency LOA
+    column: pdf_loa_agency
+    width: 40
+    index:
+      call: 
+         - getAgency()
+         - ext_29
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: kidv_loa_sent
+    width: 40
+    index:
+      call:
+        - [getLastDocument(), invoice_brutto, [document_loa]]
+        - getLastVersion()
+        - [getValueForIndex(), sent]
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: kidv_gross_sent
+    width: 40
+    index:
+      call: 
+        - [getLastDocument(), invoice_brutto]
+        - getLastVersion()
+        - [getValueForIndex(), sent]
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: kidv_net_sent
+    width: 40
+    index:
+      call: 
+        - [getLastDocument(), invoice_netto]
+        - getLastVersion()
+        - [getValueForIndex(), sent]
+      mapping:
+        index: not_analyzed
+        type: string
+        
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    title: has proforma
+    column: has_proforma_data
+    width: name
+    resize: false
+    sortable: true
+    index:
+      call: 
+         - has_proforma
+      mapping:
+        index: not_analyzed
+        type: integer   
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    title: has invoice
+    column: has_invoice_data
+    width: name
+    resize: false
+    sortable: true
+    index:
+      call: 
+         - has_invoice
+      mapping:
+        index: not_analyzed
+        type: integer 
+  -
+    # TODO Kann man das nicht gegen invoice_status ersezten?
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    title: has proforma or invoice
+    column: has_proforma_or_invoice_data
+    width: name
+    resize: false
+    sortable: true
+    index:
+      call: 
+         - hasProformaOrInvoice()
+      mapping:
+        index: not_analyzed
+        type: integer 
+  -
+    visible: false
+    column: allocated_accommodations
+    seperator: none
+    index:
+      call: 
+         - [getAccommodationProvider(), 0]
+         - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    column: amount_total_original # Wird in Zahlungstatus-Filter und Row-Style verwendet
+    index:
+      call:
+        - getTotalAmount()
+      mapping:
+        index: not_analyzed
+        type: float
+  -
+    visible: false
+    column: amount_payed_original # Wird in Zahlungstatus-Filter und Row-Style verwendet
+    index:
+      call:
+         - getTotalPayedAmount()
+      mapping:
+        index: not_analyzed
+        type: float
+  -
+    visible: false
+    column: contact_id
+    index:
+      call: 
+         - getFirstTraveller()
+         - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    column: insurance_last_end_date_original
+    index:
+      call:
+        - [getServiceFirstStartOrLastestEndDate(), insurance, end]
+      mapping:
+        index: true # Wird durchsucht
+        type: date
+  - # Für die Ereignissteuerung (getEventTypeIndexField())
+    visible: false
+    column: insurance_first_start_date
+    index:
+      call:
+        - [getServiceFirstStartOrLastestEndDate(), insurance, start]
+      mapping:
+        index: true # Wird durchsucht
+        type: date
+  -
+    visible: false
+    column: activity_first_start_date
+    index:
+      call:
+        - [getServiceFirstStartOrLastestEndDate(), activity, start]
+      mapping:
+        index: true # Wird durchsucht
+        type: date
+  -
+    visible: false
+    column: activity_last_end_date
+    index:
+      call:
+        - [getServiceFirstStartOrLastestEndDate(), activity, end]
+      mapping:
+        index: true # Wird durchsucht
+        type: date
+  -
+    visible: false
+    column: feedback_invitation_sent
+    seperator: none
+    unique_values: true
+    index:
+      call:
+        - getFeedbackInvitationSentDates()
+      mapping:
+        index: true # Wird durchsucht
+        type: date
+  #####################################################################################################################
+  #####################################################################################################################
+  #####################################################################################################################
+
+  ###
+  ### PERSÖNLICHE DATEN
+  ###
+  -
+    visible: true
+    set: [enquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: inbox_visible
+    title: Inbox
+    default: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_System, getInboxListForSelect, false, false]
+    index:
+      call:
+        - inbox
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    title: Schule
+    column: school_name
+    access: all_school
+    index:
+      call: 
+         - getSchool()
+         - getName()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    title: Buchungsnummer
+    column: booking_number
+    width: number
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - number
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    title: Rechnungsnummern
+    column: document_numbers_invoices
+    width: name
+    default: false
+    sortable: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - document_numbers_invoices
+      - true
+      - 30
+      - true
+    index:
+      add_original: true
+      call:
+         - getDocumentNumbersCommaSeparatedForIndex()
+      mapping:
+        index: false
+        type: text
+      mapping_original:
+        index: false
+        type: text
+  -
+    visible: true
+    set: [enquiry, inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: group
+    width: group_short
+    default: false
+    resize: false
+    sortable: true
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params: group_name
+    filterset:
+      title: Gruppe (Abkürzung)
+      type: input 
+    index:
+      call: 
+         - getGroupShortName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [enquiry, inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    title: Gruppennummer
+    column: group_number
+    width: number
+    default: false
+    filterset:
+      type: input 
+    index:
+      call: 
+         - getGroup()
+         - number
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure]
+    column: group_id
+    index:
+      call:
+        - group_id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure]
+    column: has_student_app
+    title: App
+    width: yes_no
+    default: false
+    post_format: Ext_TC_Gui2_Format_YesNo
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    index:
+      call: 
+         - getTraveller()
+         - hasStudentApp()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry]
+    access: thebing_invoice_sales_person
+    title: Vertriebsmitarbeiter
+    column: sales_person
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    width: name
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_User
+        - getSalesPersonsForSelect
+    index:
+      add_original: true
+      call:
+        - getSalesPerson()
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    # TODO Sollte mal mit Filter vereint werden
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry]
+    title: Referenz
+    column: referrer
+    width: name
+    default: false
+    i18n:
+      pass_language: true
+    index:
+      call: 
+         - getReferrer()
+         - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    title: Re.-Nr.
+    column: document_number
+    width: name
+    default: false
+    filterset:
+      type: input 
+    index:
+      call:
+        - getLastDocumentNumber()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+##
+## Agentur
+##
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry]
+    title: Kürzel
+    group: Agentur
+    column: agency_name
+    width: short_name
+    default: false
+    resize: false
+    sortable: true
+    format: Ext_TS_Inquiry_Index_Gui2_Format_AgencyToolTip
+    format_params:
+      - agency_full_name
+      - true
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getAgency()
+         - ext_2
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry]
+    title: Name
+    group: Agentur
+    column: agency_full_name
+    width: agency_name
+    resize: false
+    sortable: true
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+         - getAgency()
+         - ext_1
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: Nummer
+    group: Agentur
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, students_visum]
+    column: agency_number
+    width: number
+    resize: false
+    sortable: true
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getAgency()
+         - getNumber()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: Mitarbeiter
+    group: Agentur
+    column: agency_contact_name
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - getAgencyContact()
+        - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    title: E-Mail
+    group: Agentur
+    column: agency_contact_email
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - getAgencyContact()
+        - email
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Agentur
+    title: Unteragentur
+    column: subagency
+    width: yes_no
+    small: true
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    default: false
+    post_format: Ext_TC_Gui2_Format_YesNo
+    index:
+      call:
+        - hasSubAgency()
+      mapping:
+        index: not_analyzed
+        type: boolean
+##
+## Persönliche Daten
+##
+  -
+    visible: false
+    group: Persönliche Daten
+    title: K.ID.
+    column: customer_id
+    index:
+      call:
+        - getFirstTraveller()
+        - id
+      mapping:
+        index: true
+        type: integer
+  -
+    visible: true
+    group: Persönliche Daten
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, enquiry, agency, company]
+    title: K.Nr.
+    column: customer_number
+    width: name
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getCustomerNumber()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Name
+    column: customer_name
+    width: person_name
+    resize: true
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Nachname
+    column: customer_lastname
+    width: name
+    resize: true
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - lastname
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+    default: false
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Vorname
+    column: customer_firstname
+    width: name
+    resize: true
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - firstname
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+    default: false
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Geschlecht
+    column: customer_gender
+    width: gender
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Util
+        - getGenders
+    format: Ext_Thebing_Gui2_Format_Gender
+    index:
+      add_original: true
+      call: 
+         - getFirstTraveller()
+         - gender
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: E-Mail
+    column: email # Abhängigkeit in Ext_TS_System_Cronjob_Update_Emails
+    sortable_column: email_original
+    width: email
+    default: false
+    resize: false
+    sortable: true
+    format: Ext_Thebing_Gui2_Format_Communication_Email
+    filterset:
+      type: input
+    index:
+      add_original: true
+      call: 
+         - getFirstTraveller()
+         - [getEmailAddresses(), true]
+         - getEmail()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: keyword
+    event: Ext_Thebing_Gui2_Event_Customermail
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Geburtsdatum
+    column: customer_birthday
+    sortable_column: customer_birthday_original
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getFirstTravellerBirthday()
+      mapping:
+        index: false
+        type: text
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Persönliche Daten
+    title: Alter
+    column: customer_age
+    width: date
+    format: Ext_TC_Gui2_Format_Age
+    index:
+      add_original: true
+      call:
+        - getFirstTravellerBirthday()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    group: Persönliche Daten
+    title: Beruf
+    column: profession
+    width: name
+    default: false
+    index:
+      call:
+        - profession
+      mapping:
+        index: not_analyzed
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Persönliche Daten
+    title: Minderjährig
+    column: customer_minor
+    width: yes_no
+    small: true
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    default: false
+    post_format: Ext_TC_Gui2_Format_YesNo
+    index:
+      call:
+        - isTravellerMinor()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Persönliche Daten
+    title: Vegetarier
+    column: customer_vegetarian
+    width: yes_no
+    small: true
+    default: false
+    index:
+      call:
+        - isMatchingVegetarian()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Persönliche Daten
+    title: Muslimische Diät
+    column: customer_muslim_diet
+    width: yes_no
+    small: true
+    default: false
+    index:
+      call:
+        - isMatchingMuslimDiet()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Persönliche Daten
+    title: Alter bei Kursstart
+    column: customer_age_course_start
+    width: date
+    small: true
+    default: false
+    index:
+      call:
+        - getFirstTravellerAgeAtCourseStart()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Stadt
+    column: customer_city
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getAddress()
+         - city
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: PLZ
+    column: customer_zip
+    width: name
+    default: false
+    index:
+      call: 
+         - getFirstTraveller()
+         - getAddress()
+         - zip
+      mapping:
+        index: not_analyzed
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Adresse
+    column: customer_address
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getAddress()
+         - address
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Adresszusatz
+    column: customer_address_addon
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getAddress()
+         - address_addon
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    group: Persönliche Daten
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    title: Bundesland
+    column: customer_address_state
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getFirstTraveller()
+         - getAddress()
+         - state
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Land
+    column: customer_country
+    width: name
+    default: false
+    i18n: 
+      pass_language: true
+    index:
+      call: 
+         - getCountry()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Nationalität
+    column: customer_nationality
+    width: name
+    default: false
+    i18n:
+      pass_language: true
+    index:
+      call: 
+         - getNationality()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Nationalität (ISO)
+    column: customer_nationality_iso
+    width: name_short
+    small: true
+    default: false
+    index:
+      call: 
+         - getCustomer()
+         - nationality
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Muttersprache
+    column: customer_language
+    width: name
+    default: false
+    format: Ext_Thebing_Gui2_Format_Language
+    i18n:
+      pass_language: true
+    index:
+      add_original: true
+      call:
+         - getLanguageData()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Language
+        - getSelectOptions
+        - ''
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Korrespondenzsprache
+    column: corresponding_language
+    width: name
+    default: false
+    i18n:
+      pass_language: true
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Data
+        - getCorrespondenceLanguages
+    format: Ext_Thebing_Gui2_Format_CorrespondingLanguage
+    index:
+      add_original: true
+      call:
+         - getFirstTraveller()
+         - corresponding_language
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry]
+    group: Persönliche Daten
+    title: Kommentar
+    column: customer_comment
+    sortable: false
+    width: comment
+    format: Ext_Gui2_View_Format_ToolTip
+    default: false
+    format_params: 
+      - customer_comment
+      - true
+      - 80
+      - true
+    index:
+      add_original: true
+      call: 
+         - getFirstTraveller()
+         - getComment()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Schülerstatus
+    column: customer_status
+    format: Ext_Thebing_Gui2_Format_CustomerStatus
+    width: name
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCustomerStatusOptions
+    index:
+      add_original: true
+      call: 
+         - status_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original: 
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Telefon
+    column: customer_tel
+    sortable: false
+    width: name
+    default: false
+    index:
+      call:
+         - getFirstTraveller()
+         - [getDetail(), phone_private]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry, agency, company]
+    group: Persönliche Daten
+    title: Handy
+    column: customer_mobile
+    sortable: false
+    width: name
+    default: false
+    index:
+      call:
+        - getFirstTraveller()
+        - [getDetail(), phone_mobile]
+      mapping:
+        index: no
+        type: keyword
+  -
+    visible: false
+    group: Persönliche Daten
+    title: Automatische E-Mails
+    column: newsletter_original # Wird in Elasticsearch-Query benutzt
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    index:
+      call:
+         - isReceivingAutomaticEmails()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Persönliche Daten
+    title: Schülerausweis PDF
+    column: pdf_student_card
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params: ""
+    width: 40
+    default: false
+    small: true
+    index:
+      call:
+         - [getLastDocumentPdf(), additional_document, [document_student_cards]]
+      mapping:
+        index: not_analyzed
+        type: string
+#  -
+#    visible: true
+#    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+#    group: Persönliche Daten
+#    title: Zertifikat PDF
+#    column: pdf_certificate
+#    format: Ext_Thebing_Gui2_Format_Pdf
+#    format_params: ""
+#    width: 40
+#    index:
+#      call:
+#         - [getLastDocumentPdf(), additional_document, [document_certificates]]
+#      mapping:
+#        index: not_analyzed
+#        type: string
+  -
+    visible: true
+    title: Sozialversicherungsnummer
+    group: Persönliche Daten
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    column: social_security_number
+    width: name
+    default: false
+    index:
+      call:
+        - social_security_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    title: Stornierung
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    column: cancellation_date
+    sortable_column: cancellation_date_original
+    group: Persönliche Daten
+    set: [ inquiry, students_simple, students_arrival, students_checkedin, students_departure]
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - getCancellationDate()
+        - toDateString()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Rechnungsadresse
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry]
+    title: Firma
+    column: billingaddress_company
+    width: name
+    default: false
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getBooker()
+         - [getAddress(), billing]
+         - company
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    group: Rechnungsadresse
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry]
+    title: Vorname
+    column: billingaddress_firstname
+    width: name
+    default: false
+    index:
+      call:
+        - getBooker()
+        - firstname
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: true
+    group: Rechnungsadresse
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry]
+    title: Nachname
+    column: billingaddress_surname
+    width: name
+    default: false
+    index:
+      call:
+        - getBooker()
+        - lastname
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: true
+    group: Rechnungsadresse
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry]
+    title: Nummer
+    column: billingaddress_number
+    width: name
+    filterset: 
+      type: input 
+    default: false
+    index:
+      call:
+        - getBooker()
+        - getCustomerNumber()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+      visible: true
+      group: Rechnungsadresse
+      set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, enquiry ]
+      title: E-Mail
+      column: billingaddress_email
+      width: name
+      default: false
+      index:
+        call:
+          - getBooker()
+          - email
+        mapping:
+          index: true
+          type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Notfallkontakt
+    title: Ansprechpartner
+    column: emergency_name
+    width: name
+    default: false
+    filterset:
+      type: input
+    index:
+      call: 
+         - getEmergencyContact()
+         - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Notfallkontakt
+    title: Telefon
+    column: emergency_phone
+    sortable: false
+    width: name
+    default: false
+    index:
+      call: 
+         - getEmergencyContact()
+         - [getDetail(), phone_private]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Notfallkontakt
+    title: E-Mail
+    column: emergency_mail
+    width: name
+    default: false
+    filterset:
+      title: E-Mail Notfallkontakt
+      type: input
+    index:
+      call: 
+         - getEmergencyContact()
+         - getEmail()
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Weitere Kontakte
+    title: Ansprechpartner
+    column: other_contacts_name
+    width: name
+    default: false
+    filterset:
+      type: input
+    index:
+      call: 
+         - getOtherContacts()
+         - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Weitere Kontakte
+    title: Telefon
+    column: other_contacts_phone
+    sortable: false
+    width: name
+    default: false
+    index:
+      call: 
+         - getOtherContacts()
+         - [getDetail(), phone_private]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Weitere Kontakte
+    title: E-Mail
+    column: other_contacts_mail
+    width: name
+    default: false
+    filterset:
+      title: E-Mail Andere Kontakte
+      type: input
+    index:
+      call: 
+         - getOtherContacts()
+         - getEmail()
+      mapping:
+        index: true
+        type: keyword
+  ##
+  ## VISUM
+  ##
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments]
+    group: Visa
+    title: Visa Typ
+    column: visum_name
+    width: name
+    default: false
+    index:
+      call: 
+         - getVisaData()
+         - getVisa()
+         - name
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Visum wird benötigt
+    column: visa_required
+    post_format: Ext_TC_Gui2_Format_YesNo
+    width: yes_no
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Util
+        - getYesNoArray
+    index:
+      call: 
+         - getVisaData()
+         - required
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Visum-ID
+    column: visum_service_id_original
+    width: number
+    default: false
+    index:
+      call: 
+         - getVisaData()
+         - servis_id
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Mail Tracking Nummer
+    column: visum_tracking_number_original
+    width: number
+    default: false
+    index:
+      call: 
+         - getVisaData()
+         - tracking_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Passnummer
+    column: visum_passport_number_original
+    width: number
+    default: false
+    index:
+      call: 
+         - getVisaData()
+         - passport_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Pass Ausstellungsdatum
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    column: visum_date_of_issue_original
+    sortable_column: visum_date_of_issue_original
+    data: visum_date_of_issue
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    index:
+      add_original: true
+      call: 
+         - getVisaData()
+         - passport_date_of_issue
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Ablaufdatum Pass
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    column: visum_due_date_original
+    sortable_column: visum_due_date_original
+    data: visum_due_date
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    style: Ext_Thebing_Gui2_Style_Until
+    style_params: 
+      - [Ext_Thebing_Util, getColor, red]
+      - [Ext_TS_Inquiry_Index_Gui2_Data, getDiffPart]
+      - [Ext_TS_Inquiry_Index_Gui2_Data, getPassportDue]
+    index:
+      add_original: true
+      call: 
+         - getVisaData()
+         - passport_due_date
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Visum gültig von
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    column: visum_date_from_original
+    sortable_column: visum_date_from_original
+    data: visum_date_from
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    index:
+      add_original: true
+      call: 
+         - getVisaData()
+         - date_from
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum]
+    group: Visa
+    title: Visum gültig bis
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    column: visum_date_until_original
+    sortable_column: visum_date_until_original
+    data: visum_date_until
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    style: Ext_Thebing_Gui2_Style_Until
+    style_params: 
+      - [Ext_Thebing_Util, getColor, red]
+      - [Ext_TS_Inquiry_Index_Gui2_Data, getDiffPart]
+      - [Ext_TS_Inquiry_Index_Gui2_Data, getVisumDue]
+    index:
+      add_original: true
+      call: 
+         - getVisaData()
+         - date_until
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+##
+## Kursdaten
+##
+  -
+     visible: false
+     set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, agency, company]
+     group: Kurs
+     title: Kurs
+     column: course_ids
+     width: name
+     filterset:
+       type: select
+       options:
+         - Ext_TS_Inquiry_Journey_Course_Gui2_Data
+         - getCourseList
+     index:
+       add_original: true
+       call:
+         - getCourses()
+         - course_id
+       mapping:
+         index: not_analyzed
+         type: string
+       mapping_original:
+         index: not_analyzed
+         type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Kursliste
+    column: course_fulllist
+    width: name
+    format: Ext_TS_Inquiry_Index_Gui2_Format_I18NTooltip
+    format_params: course_name
+    unique_values: false
+    seperator: <br />
+    index:
+      call: 
+         - getCourses()
+         - [getCourseName(), true, true]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    group: Kurs
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    title: Kurssprache
+    width: name
+    default: false
+    column: course_language
+    sortable_column: course_language
+    i18n:
+      pass_language: true
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCourselanguageFilterOptions
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_Tuition_LevelGroup, getSelectOptions ]
+    index:
+      add_original: true
+      call:
+        - getCourses()
+        - courselanguage_id
+      mapping:
+        index: true
+        type: keyword
+      mapping_original:
+        index: true
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Lektionen
+    column: course_units
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_Thebing_Gui2_Format_Float
+    format_params: 
+      - 2
+      - false
+    index:
+      call: 
+         - getCourseUnits()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Kursstart
+    column: course_from
+    sortable_column: course_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getCourses()
+         - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Kursende
+    column: course_until
+    sortable_column: course_until_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    index:
+      add_original: true
+      call:
+         - getCourses()
+         - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Kurs
+    title: Kursniveau
+    column: course_level
+    #format: Ext_Thebing_Gui2_Format_Inquiry_Course_Level
+    width: name
+    default: false
+    i18n:
+      pass_language: true
+    unique_values: false
+    index:
+      call: 
+         - getCourses()
+         - getLevel()
+         - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Erster Kursbeginn
+    column: first_course_start # Filter-Abhängigkeit (manuell)
+    sortable_column: first_course_start_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getFirstCourse()
+         - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+     # Für den LETZTEN Kurs (gibt noch eine Spalte für alle)
+    column: course_last_end_date # Filter-Abhängigkeit (manuell)
+    sortable_column: course_last_end_date_original
+    group: Kurs
+    title: Letztes Kursende
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getLatestCourseEnd()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Erster Kursname
+    column: first_course_name
+    width: name
+    default: false
+    unique_values: false
+    index:
+      call: 
+         - getFirstCourse()
+         - getCourse()
+         - getShortName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Kurswochen absolut
+    column: course_weeks
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_TC_Gui2_Format_Int
+    index:
+      call: 
+         - getCoursesTotalWeeksForIndex()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Kurswochen relativ
+    column: course_weeks_relative
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_TC_Gui2_Format_Int
+    index:
+      call: 
+         - getCoursesTotalRelativeWeeksForIndex()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Kurs
+    title: Letztes internes Level
+    column: current_level_intern_short
+    format: Ext_TS_Inquiry_Index_Gui2_Format_Courselevel
+    width: short_name
+    unique_values: false
+    default: false
+    index:
+      call: 
+         - [getLastLevel(), short]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Kurs
+    title: Internes Level
+    column: current_level_intern_full
+    unique_values: false
+    default: false
+    index:
+      call: 
+         - [getLastLevel(), name]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    group: Kurs
+    title: Lehrer
+    column: tuition_teachers
+    unique_values: true
+    seperator: none
+    index:
+      call:
+        - [getTuitionTeachers(), false, true]
+        - id
+      mapping:
+        index: true
+        type: integer
+  -
+    visible: true
+    set: [students_departure]
+    group: Kurs
+    title: Letzter Lehrer
+    column: last_teacher_name
+    width: name
+    unique_values: false
+    default: false
+    index:
+      call: 
+        - getLastTeacher()
+        - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Kurs
+    title: Kommentar
+    column: course_comment
+    sortable: false
+    default: false
+    width: name
+    unique_values: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - course_comment
+      - true
+      - 80
+      - true
+    index:
+      add_original: false
+      call:
+        - getCourses()
+        - comment
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Kurs
+    title: Gebuchte Zusatzleistungen
+    column: course_additional_services
+    width: name
+    small: true
+    default: false
+    seperator: <br />
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getAdditionalServices, 'course', null, true, null, null, true, false]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Client
+        - getAdditionalServices
+        - 'course'
+        - null
+        - true
+        - null
+        - null
+        - true
+        - false
+    index:
+      add_original: true
+      call: 
+         - getCourses()
+         - [getJoinTableObjects(), additionalservices]
+         - id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [students_simple, students_arrival]
+    group: Einstufungstest
+    title: Internes Level
+    column: placementtest_level_internal
+    post_format: Ext_Thebing_Gui2_Format_Inquiry_Tuition_Level
+    unique_values: false
+    sortable: false
+    seperator: ,
+    default: false
+    index:
+      call:
+         - [getPlacementtestInfoForIndex(), level_id]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [students_simple, students_arrival, students_checkedin, students_departure]
+    group: Einstufungstest
+    title: Kommentar
+    column: placementtest_comment
+    width: comment
+    seperator: ", "
+    default: false
+    index:
+      call:
+         - [getPlacementtestInfoForIndex(), comment]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [ inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum ]
+    group: Einstufungstest
+    column: correct_placementtest_answers
+    sortable: false
+    title: Korrekte Antworten des Einstufungstests
+    width: name
+    default: false
+    index:
+      call:
+        - getCorrectPlacementtestAnswers()
+      mapping:
+        index: true
+        type: keyword
+##
+## Unterkunftsdaten
+##
+#  -
+#    # Die Spalte macht so keinen Sinn, wurde mal wieder anders übersetzt und darunter existiert die Info auch nochmal
+#    visible: true
+#    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+#    group: Unterkunft
+#    title: Unterkunftsart
+#    column: accommodation_category
+#    width: name
+#    unique_values: false
+#    i18n:
+#      pass_language: true
+#    index:
+#      call:
+#         - getAccommodations()
+#         - getRoomtype()
+#         - getName()
+#      mapping:
+#        index: not_analyzed
+#        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Unterkunft
+    title: Unterkunft
+    column: accommodation
+    seperator: <br />
+    width: name
+    format: Ext_TS_Inquiry_Index_Gui2_Format_I18NTooltip
+    format_params: accommodation_full
+    i18n: 
+      pass_language: true
+    unique_values: false
+    index:
+      call: 
+         - getAccommodations()
+         - getIndexInfoString()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Unterkunft
+    title: Startdatum Unterkunft
+    column: accommodation_from
+    sortable_column: accommodation_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getAccommodations()
+         - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Unterkunft
+    title: Enddatum Unterkunft
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    column: accommodation_until
+    sortable_column: accommodation_until_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - getAccommodations()
+         - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company ]
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    # Für die LETZTE UNTERKUNFT (gibt noch eine Spalte für alle)
+    column: accommodation_last_end_date # Filter-Abhängigkeit (manuell)
+    sortable_column: accommodation_last_end_date_original
+    group: Unterkunft
+    title: Letztes Unterkunftsende
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - [ getLatestAccommodationEnd(), false ]
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_arrival]
+    group: Unterkunft
+    title: Unterkunftswochen absolut
+    column: accommodation_weeks
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_TC_Gui2_Format_Int
+    index:
+      call:
+        - getAccommodationsTotalWeeksForIndex()
+      mapping:
+        index: true
+        type: integer
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company ]
+    group: Unterkunft
+    title: Unterkunft Kommentar
+    column: acc_comment
+    sortable: false
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - acc_comment
+      - true
+      - 80
+      - true
+    index:
+      call:
+        - getAccommodations()
+        - comment
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunft
+    title: Matching Kommentar
+    column: acc_matching_comment
+    sortable: false
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - acc_matching_comment
+      - true
+      - 80
+      - true
+    index:
+      add_original: true
+      call: 
+         - getMatchingData()
+         - acc_comment
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunft
+    title: Unterkunft Matching Kommentar 2
+    column: acc_matching_comment2
+    sortable: false
+    width: name
+    default: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - acc_matching_comment2
+      - true
+      - 80
+      - true
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - getMatchingData()
+         - acc_comment2
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunft
+    title: Zuweisungsdaten
+    column: acc_matching_dates
+    sortable: false
+    width: name
+    default: false
+    index:
+      call:
+        - getAccommodationMatchingDates()
+      mapping:
+        index: not_analyzed
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments, agency, company]
+    group: Unterkunft
+    title: Gebuchte Zusatzleistungen
+    column: accommodation_additional_services
+    width: name
+    small: true
+    default: false
+    seperator: <br />
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getAdditionalServices, 'accommodation', null, true, null, null, true, false]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Client
+        - getAdditionalServices
+        - 'accommodation'
+        - null
+        - true
+        - null
+        - null
+        - true
+        - false
+    index:
+      add_original: true
+      call: 
+         - getAccommodations()
+         - [getJoinTableObjects(), additionalservices]
+         - id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+        
+        
+        
+        
+        
+        
+        
+        
+        
+##
+## Transfer
+##
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Transfer
+    title: Startdatum Transfer
+    column: transfer_from
+    sortable_column: transfer_from_original
+    format: Ext_TS_Gui2_Format_DateTime
+    width: datetime
+    default: false
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getTransfers(), arrival, true]
+         - getIndexTransferDateTime()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Transfer
+    title: Enddatum Transfer
+    column: transfer_until
+    sortable_column: transfer_until_original
+    format: Ext_TS_Gui2_Format_DateTime
+    width: datetime
+    default: false
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getTransfers(), departure, true]
+         - getIndexTransferDateTime()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, agency, company]
+    group: Transfer
+    title: Fluggesellschaft (Anreise)
+    column: transfer_airline
+    data: transfer_airline
+    width: name
+    default: false
+    index:
+      call: 
+         - [getTransfers(), arrival, true]
+         - airline
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, agency, company]
+    group: Transfer
+    title: Fluggesellschaft (Abreise)
+    column: transfer_airline_departure
+    data: transfer_airline_departure
+    width: name
+    default: false
+    index:
+      call: 
+         - [getTransfers(), departure, true]
+         - airline
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, agency, company]
+    group: Transfer
+    title: Flugnummer (Anreise)
+    column: transfer_flightnumber
+    data: transfer_flightnumber
+    width: name
+    default: false
+    unique_values: false
+    index:
+      call: 
+         - [getTransfers(), arrival, true]
+         - flightnumber
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, students_arrival, students_checkedin, students_departure, students_visum, agency, company]
+    group: Transfer
+    title: Flugnummer (Abreise)
+    column: transfer_flightnumber_departure
+    data: transfer_flightnumber_departure
+    width: name
+    default: false
+    unique_values: false
+    index:
+      call: 
+         - [getTransfers(), departure, true]
+         - flightnumber
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Transfer
+    title: Transfer Kommentar
+    column: transfer_comment
+    sortable: false
+    width: name
+    default: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - transfer_comment
+      - true
+      - 80
+      - true
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - getJourney()
+         - transfer_comment
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Transfer
+    title: Anreise Kommentar
+    column: arrival_comment
+    sortable: false
+    width: name
+    default: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - arrival_comment
+      - true
+      - 80
+      - true
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getTransfers(), arrival, true]
+         - comment
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Transfer
+    title: Abreise Kommentar
+    column: departure_comment
+    sortable: false
+    width: name
+    default: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - departure_comment
+      - true
+      - 80
+      - true
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getTransfers(), departure, true]
+         - comment
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Transfer
+    title: Abreiseinformation
+    column: transfer_departure_info
+    i18n: 
+      pass_language: false
+      interface: frontend
+    width: extra_long_description
+    default: false
+    unique_values: false
+    index:
+      call: 
+         - [getTransfers(), departure, true]
+         - [getName(), null, 2]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company ]
+    group: Transfer
+    title: Abreisezeit
+    column: transfer_departure_time
+    width: time
+    small: true
+    format: Ext_Thebing_Gui2_Format_Time
+    default: false
+    index:
+      call:
+        - [ getTransfers(), departure, true ]
+        - transfer_time
+      mapping:
+        index: not_analyzed
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Transfer
+    title: Anreiseinformation
+    column: transfer_arrival_info
+    i18n: 
+      pass_language: false
+      interface: frontend
+    width: extra_long_description
+    default: false
+    unique_values: false
+    index:
+      call: 
+         - [getTransfers(), arrival, true]
+         - [getName(), null, 2]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    column: transfer_mode
+    group: Transfer
+    title: Transfer
+    post_format: \Ts\Gui2\Format\TransferMode
+    width: name
+    default: false
+    sortable: false
+    unique_values: false
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Data
+        - getTransferList
+        - ""
+        - false
+    index:
+      call:
+         - getJourney()
+         - transfer_mode
+      mapping:
+        index: true
+        type: integer
+  -
+    title: Anreisezeit
+    group: Transfer
+    set: [inquiry, students_simple, students_checkedin, students_arrival, students_departure, students_visum]
+    column: transfer_arrival_time
+    width: time
+    small: true
+    format: Ext_Thebing_Gui2_Format_Time
+    default: false
+    index:
+      call:
+        - [getTransfers(), arrival, true]
+        - transfer_time
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    group: Transfer
+    title: Transfer (Termine)
+    column: transfer_dates
+    unique_values: true
+    seperator: none
+    index:
+      call:
+        - [getTransfers(), '', false]
+        - getIndexTransferDateTime()
+      mapping:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_arrival]
+    group: Transferanbieter
+    title: Angefragt
+    column: transfer_arrival_requested
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Transfer\Confirmation
+    width: name
+    index:
+      call:
+        - getArrivalTransfer()
+        - getFirstProviderRequest()
+        - getDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_arrival]
+    group: Transferanbieter
+    title: Zugewiesen
+    column: transfer_arrival_provider_updated
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Transfer\Confirmation
+    width: name
+    index:
+      call:
+        - getArrivalTransfer()
+        - getProviderUpdatedDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_arrival]
+    group: Transferanbieter
+    title: Bestätigt
+    column: transfer_arrival_provider_confirmed
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Transfer\Confirmation
+    width: name
+    index:
+      call:
+        - getArrivalTransfer()
+        - getProviderConfirmedStatus()
+        - getDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_arrival]
+    group: Transferanbieter
+    title: "Kunde/Agentur: Bestätigt"
+    column: transfer_arrival_customer_agency_confirmed
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Transfer\Confirmation
+    width: name
+    index:
+      call:
+        - getArrivalTransfer()
+        - getCustomerAgencyConfirmedStatus()
+        - getDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_arrival]
+    group: Transferanbieter
+    title: "Unterkunft: Bestätigt"
+    column: transfer_arrival_accommodation_confirmed
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Transfer\Confirmation
+    width: name
+    index:
+      call:
+        - getArrivalTransfer()
+        - getAccommodationConfirmedStatus()
+        - getDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: false
+    set: [students_arrival]
+    title: Transfer verändert
+    column: transfer_arrival_updated
+    width: name
+    index:
+      call:
+        - getArrivalTransfer()
+        - getUpdatedDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: false
+    set: [students_arrival]
+    title: Transferanbieter/Fahrer zugewiesen
+    column: transfer_provider_driver_allocated
+    width: name
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getYesNo
+    index:
+      call:
+        - getArrivalTransfer()
+        - hasProviderAndDriver()
+      mapping:
+        index: not_analyzed
+        type: boolean
+##
+## Versicherung
+##        
+
+  -
+    visible: true
+    set: [inquiry, client_payments, students_simple, students_arrival, students_departure]
+    group: Versicherung
+    title: Versicherung
+    column: insurance_name
+    i18n: 
+      pass_language: true
+      interface: frontend
+    width: name
+    default: false
+    unique_values: false
+    index:
+      call: 
+         - [getInsurances(), true]
+         - getInsuranceName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, client_payments, students_simple, students_arrival, students_departure]
+    group: Versicherung
+    title: Startdatum
+    # TODO Umbenennen, da _original_original (funktioniert nur durch data: und Workaround korrekt)
+    # Hat vermutlich auch was mit den Filtern zu tun, da die GUI strikt nur nach column filtert
+    column: insurance_from
+    sortable_column: insurance_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getInsurances(), true]
+         - [getInsuranceStart()]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, client_payments, students_simple, students_arrival, students_departure]
+    group: Versicherung
+    title: Enddatum
+    column: insurance_end
+    sortable_column: insurance_end_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getInsurances(), true]
+         - [getInsuranceEnd()]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    title: Versicherung
+    column: insurance_ids
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Insurances_Gui2_Insurance
+        - getInsurancesListForInbox
+        - 2
+        - 0
+    index:
+      call:
+      - [getInsurances(), true]
+      - insurance_id
+      mapping:
+        index: true
+        type: integer
+##
+## Aktivitätsdaten
+##
+  -
+    visible: false
+    group: Aktivität
+    title: Aktivität
+    column: activity_ids # Wird für Filter benutzt, wird manuell aktualisiert
+    seperator: none
+    index:
+      call:
+         - getActivities()
+         - getActivity()
+         - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    group: Aktivität
+    title: Aktivität
+    column: journey_activity_ids # Wird in Result verwendet, wird manuell aktualisiert
+    seperator: none
+    index:
+      call:
+        - getActivities()
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Aktivität
+    title: Aktivität
+    column: activities # Wird manuell aktualisiert
+    seperator: <br />
+    width: name
+    default: false
+    format: Ext_TS_Inquiry_Index_Gui2_Format_I18NTooltip
+    format_params: activity_name
+    i18n:
+      pass_language: true
+    unique_values: false
+    index:
+      #add_original: true
+      call:
+         - getActivities()
+         - getActivity()
+         - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Aktivität
+    title: Startdatum
+    column: activities_startdate
+    sortable_column: activities_startdate_original
+    seperator: <br />
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    format_params: activity_startdate
+    unique_values: false
+    index:
+      add_original: true
+      call:
+        - getActivities()
+        - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Aktivität
+    title: Enddatum
+    column: activities_enddate
+    sortable_column: activities_enddate_original
+    seperator: <br />
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    format_params: activity_enddate
+    unique_values: false
+    index:
+      add_original: true
+      call:
+        - getActivities()
+        - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company]
+    group: Aktivität
+    title: Wochen
+    column: activities_weeks
+    seperator: <br />
+    width: name
+    default: false
+    format_params: activity_weeks
+    unique_values: false
+    index:
+      #add_original: true
+      call:
+        - getActivities()
+        - getWeeks()
+      mapping:
+        index: not_analyzed
+        type: string
+##
+## MATCHING
+##
+  -
+    visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Anbieter
+    column: accommodation_provider_id # Wird manuell aktualisiert
+    seperator: none
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Accommodation
+        - getListBySessionSchool
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Unterkunftszuweisung
+    title: Allergien
+    column: acc_allergies
+    sortable: false
+    default: false
+    width: name
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - acc_allergies
+      - true
+      - 80
+      - true
+    unique_values: false
+    index:
+      call: 
+         - getMatchingData()
+         - acc_allergies
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Anbieter
+    column: accommodation_name # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Unterkunftszuweisung
+    title: Raum
+    column: accommodation_room # Wird manuell aktualisiert
+    sortable: false
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+        - [getAccommodationInfo(), room]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Unterkunftszuweisung
+    title: Bett
+    column: accommodation_bed # Wird manuell aktualisiert
+    sortable: false
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+        - [getAccommodationInfo(), bed]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Raum und Bett
+    column: accommodation_room_bed
+    sortable: false
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+        - [getAccommodationInfo(), room_bed]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Details
+    column: accommodation_details # Wird manuell aktualisiert
+    sortable: false
+    default: false
+    width: comment
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - accommodation_room_full
+      - true
+    unique_values: false
+    index:
+      call: 
+        - [getAccommodationInfo(), detail]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Adresse
+    column: accommodation_street # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - street
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Adresszusatz
+    column: accommodation_address_addon # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call:
+        - getAllocations()
+        - getAccommodationProvider()
+        - address_addon
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Teilen mit
+    column: accommodation_share_with # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getRoomSharingForIndex()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: PLZ
+    column: accommodation_zip # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - zip
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Stadt
+    column: accommodation_city # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - city
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Telefon
+    column: accommodation_tel # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - phone
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Telefon 2
+    column: accommodation_tel2 # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - ext_76
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Handy
+    column: accommodation_mobile # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - mobile_phone
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: E-Mail
+    column: accommodation_email # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - email
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Kontakt
+    column: accommodation_contact # Wird manuell aktualisiert
+    default: false
+    width: name
+    unique_values: false
+    # TODO Das ist nur wegen der Anrede mehrsprachig, ist diese wirklich notwendig?
+    i18n: 
+      pass_language: false
+    index:
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - getContactInfo()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    # TODO Hier müsste mal das HTML rausgeschmissen werden oder so
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    group: Unterkunftszuweisung
+    title: Familienbeschreibung
+    column: accommodation_description # Wird manuell aktualisiert, wird in Hook verwendet
+    default: false
+    sortable: false
+    width: long_description
+    unique_values: false
+    i18n: 
+      pass_language: true
+      interface: frontend
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - accommodation_description
+      - true
+      - 80
+      - true
+    index:
+      add_original: true
+      add_original_i18n: true
+      call: 
+         - getAllocations()
+         - getAccommodationProvider()
+         - getFamilyDescription()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: false
+        type: keyword
+  -
+    visible: true
+    set: [students_arrival]
+    group: Unterkunftszuweisung
+    title: An Kunden / Agentur bestätigt
+    column: accommodation_customer_agency_confirmed
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Accommodation\Allocation\Confirmation
+    width: name
+    index:
+      call:
+        - getFirstAccommodationAllocation()
+        - getCustomerAgencyConfirmedStatus()
+        - getDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_arrival]
+    group: Unterkunftszuweisung
+    title: Kundendaten an Unterkunftsanbieter bestätigt
+    column: accommodation_provider_confirmed
+    post_format: Ext_Thebing_Gui2_Format_Date_Time
+    style: \Ts\Gui2\Style\Accommodation\Allocation\Confirmation
+    width: name
+    index:
+      call:
+        - getFirstAccommodationAllocation()
+        - getAccommodationConfirmedStatus()
+        - getDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: false
+    title: Unterkunftszuweisung verändert
+    set: [students_arrival]
+    column: accommodation_allocation_changed
+    width: name
+    index:
+      call:
+        - getFirstAccommodationAllocation()
+        - getAllocationChangedDate()
+        - [format(), "Y-m-d\\TH:i:s"]
+      mapping:
+        index: true
+        type: date
+  -
+    visible: false
+    title: Erste Unterkunftszuweisung
+    set: [students_arrival]
+    column: first_accommodation_allocation
+    width: name
+    index:
+      call:
+        - getFirstAccommodationAllocation()
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    title: Aktive Unterkunftszuweisungen
+    set: [students_arrival]
+    column: accommodation_allocations
+    seperator: none
+    width: name
+    index:
+      call:
+        - getAllocations()
+        - id
+      mapping:
+        index: true
+        type: integer
+  -
+    visible: false
+    title: Unterkunft zugewiesen
+    set: [students_arrival]
+    column: has_accommodation_allocation
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getYesNo
+    index:
+      call:
+        - hasActiveAccommodationAllocation()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    title: Unterkunft bestätigt an Agentur/Schüler
+    set: [students_arrival]
+    column: accommodation_customer_agency_is_confirmed
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getYesNo
+    index:
+      call:
+        - getFirstAccommodationAllocation()
+        - getCustomerAgencyConfirmedStatus()
+        - isConfirmed()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    title: Unterkunft bestätigt an Anbieter
+    set: [students_arrival]
+    column: accommodation_provider_is_confirmed
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getYesNo
+    index:
+      call:
+        - getFirstAccommodationAllocation()
+        - getAccommodationConfirmedStatus()
+        - isConfirmed()
+      mapping:
+        index: not_analyzed
+        type: boolean
+##
+## Beträge
+##
+  - visible: true
+    title: Währung
+    group: Bezahlung
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    column: currency_id
+    format: Ext_Thebing_Gui2_Format_Currency
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCurrencyOptions
+    index:
+      add_original: true
+      call:
+        - getCurrency()
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: [ ]
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: Zahlungserinnerung
+    column: payment_reminder
+    #sortable_column: payment_reminder_original
+    sortable: false # Nach welcher Logik sollte diese Spalte sortiert werden?
+    width: name
+    default: false
+    #format: Ext_Thebing_Gui2_Format_Payment_Reminder
+    format_params:
+      - true
+    unique_values: false
+    index:
+      #add_original: true
+      call: 
+         - getFormatedPaymentReminders()
+      mapping:
+        index: not_analyzed
+        type: string
+      #mapping_original:
+        #index: not_analyzed
+        #type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency]
+    group: Bezahlung
+    title: Betrag vor Anreise
+    column: amount # Abhängigkeit in IH Nice-Hook
+    sortable_column: amount_original
+    width: amount
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - amount
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: Betrag vorort
+    column: amount_initial
+    sortable_column: amount_initial_original
+    width: amount
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index: 
+      add_original: true
+      call: 
+         - amount_initial
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency]
+    group: Bezahlung
+    title: Offener Betrag vor Anreise
+    column: open_payment_prior_to_arrival
+    sortable_column: open_payment_prior_to_arrival_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getOpenPaymentAmount(), prior_to_arrival]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: Offener Betrag vorort
+    column: open_payment_at_school
+    sortable_column: open_payment_at_school_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - [getOpenPaymentAmount(), at_school]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: vor Anreise bezahlt
+    column: payments
+    sortable_column: payments_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - amount_payed_prior_to_arrival
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: Vorort bezahlt
+    column: payments_local
+    sortable_column: payments_local_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call: 
+         - amount_payed_at_school
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+#  -
+#    visible: true
+#    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+#    group: Bezahlung
+#    title: Schülergutschrift
+#    column: credit_amount
+#    sortable_column: credit_amount_original
+#    width: date
+#    format: Ext_Thebing_Gui2_Format_Amount
+#    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+#    unique_values: false
+#    index:
+#      add_original: true
+#      call:
+#         - amount_credit
+#      mapping:
+#        index: not_analyzed
+#        type: string
+#      mapping_original:
+#        index: not_analyzed
+#        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency]
+    group: Bezahlung
+    title: Offener Betrag gesamt
+    column: amount_open # Wird in Zahlungstatus-Filter, Row-Style und Agency CRM verwendet
+    sortable_column: amount_open_original
+    width: date
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call:
+         - getOpenPaymentAmount()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: Rückzahlung gesamt
+    column: amount_refund
+    sortable_column: amount_refund_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    unique_values: false
+    index:
+      add_original: true
+      call:
+         - amount_payed_refund
+      mapping:
+        index: no
+        type: keyword
+      mapping_original:
+        index: no
+        type: float
+  -
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    visible: true
+    group: Bezahlung
+    column: paymentterms_info
+    title: Erwartete Zahlungen
+    format: Ext_TS_Inquiry_Index_Gui2_Format_PaymentTermTooltip
+    format_params:
+      - paymentterms_info
+      - true
+      - 10
+      - true
+    sortable: false
+    default: false
+    width: date
+    index:
+      add_original: true
+      call:
+        - [getIndexPaymentTermData(), paymentterms_overview]
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: false
+        type: keyword
+  -
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    visible: true
+    group: Bezahlung
+    column: paymentterms_next_date # Wird in Zahlungstatus-Filter und Row-Style verwendet
+    sortable_column: paymentterms_next_date_original
+    title: Nächste Zahlung (Datum)
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - [getIndexPaymentTermData(), paymentterms_next_payment_date]
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    visible: true
+    group: Bezahlung
+    column: paymentterms_next_amount # Wird in Zahlungstatus-Filter verwendet
+    title: Nächste Zahlung (Betrag)
+    sortable_column: paymentterms_next_amount_original
+    default: false
+    width: date
+    format: Ext_Thebing_Gui2_Format_Amount
+    index:
+      add_original: true
+      call:
+        - [getIndexPaymentTermData(), paymentterms_next_payment_amount]
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: float
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, convert_proforma]
+    group: Bezahlung
+    title: Netto PDF
+    column: pdf_netto
+    width: 40
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params:
+      - ""
+    style: Ext_Thebing_Gui2_Style_NettoPdf
+    index:
+      call: 
+        - [getLastDocumentPdf(), invoice_netto]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, convert_proforma]
+    group: Bezahlung
+    title: Brutto PDF
+    column: pdf_brutto
+    width: 40
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params:
+      - ""
+    style: Ext_Thebing_Gui2_Style_GrossPdf
+    index:
+      call:
+         - [getLastDocumentPdf(), invoice_brutto]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    group: Bezahlung
+    title: Loa PDF
+    column: pdf_loa
+    default: false
+    width: 40
+    format: Ext_Thebing_Gui2_Format_Pdf    
+    format_params:
+      - ""
+    style: Ext_Thebing_Gui2_Style_LoaPdf
+    index:
+      call:
+        - [getLastDocumentPdf(), additional_document, [document_loa]]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+      visible: true
+      set: [ inquiry, students_simple, students_arrival, students_checkedin, students_departure ]
+      group: Bezahlung
+      column: has_draft
+      access:
+        - Ext_Thebing_School
+        - draftInvoicesActive
+      title: Entwurf
+      width: yes_no
+      default: false
+      post_format: Ext_TC_Gui2_Format_YesNo
+      filterset:
+        type: select
+        options:
+          - Ext_TC_Util
+          - getYesNoArray
+      index:
+        call:
+          - hasDraft()
+        mapping:
+          index: not_analyzed
+          type: boolean
+##
+## Sponsoring
+##
+  -
+    visible: true
+    column: sponsored
+    title: Sponsoring
+    sortable_column: sponsored_original
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments]
+    group: Sponsoring
+    default: false
+    width: yes_no
+    post_format: Ext_TC_Gui2_Format_YesNo
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    index:
+      add_original: true
+      call:
+        - isSponsored()
+      mapping:
+        index: true
+        type: boolean
+  -
+    visible: true
+    column: sponsor_name
+    title: Sponsor
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, students_sponsoring, client_payments]
+    group: Sponsoring
+    width: short_name
+    sortable: true
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - getSponsor()
+        - abbreviation
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    column: sponsor_id_number
+    title: Sponsor ID
+    set: [students_sponsoring]
+    group: Sponsoring
+    width: short_name
+    sortable: true
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - getFirstTraveller()
+        - [getDetail(), sponsor_id_number]
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    set: [students_sponsoring]
+    group: Sponsoring
+    title: FG-Startdatum
+    column: sponsoring_fg_from
+    sortable_column: sponsoring_fg_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - getSponsoringGuarantees()
+        - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_sponsoring]
+    group: Sponsoring
+    title: FG-Enddatum
+    column: sponsoring_fg_until
+    sortable_column: sponsoring_fg_until_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - getSponsoringGuarantees()
+        - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [students_sponsoring]
+    group: Sponsoring
+    title: Upload vorhanden
+    column: sponsoring_fg_has_upload
+    post_format: Ext_TC_Gui2_Format_YesNo
+    width: yes_no
+    unique_values: false
+    seperator: none # Wichtig, damit ein Array geschrieben wird
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    index:
+      call:
+        - getSponsoringGuarantees()
+        - hasUpload()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    title: Datum der letzten Nachricht
+    column: last_message_date # Abhängigkeit bei automatischen Mails
+    sortable_column: last_message_date_original
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+    width: date
+    index:
+      add_original: true
+      call:
+         - getLastMailMessageLog()
+         - created_index
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, enquiry, agency, company]
+    title: Benutzer der letzten Nachricht
+    column: last_message_user
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    default: false
+    width: name
+    resize: false
+    sortable: true
+    index:
+      call:
+         - getLastMailMessageLog()
+         - [getValueForIndex(), creator_id]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_departure, client_payments, enquiry, agency, company]
+    title: Status
+    column: status
+    format: \Gui2\Format\Status
+    format_params: ''
+    default: false
+    width: icon
+    index:
+      add_original: true
+      call:
+        - status
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: false
+        type: keyword
+  -
+    visible: true
+    set: [enquiry]
+    title: Umgewandelt
+    column: converted
+    format: Ext_Gui2_View_Format_YesNo
+    default: false
+    width: yes_no
+    small: true
+    index:
+      add_original: true
+      call:
+        - isConverted()
+      mapping:
+        index: no
+        type: keyword
+      mapping_original:
+        index: true
+        type: boolean
+  -
+    set: [enquiry]
+    visible: true
+    title: Nachhaken
+    column: follow_up
+    sortable_column: follow_up_original
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    index:
+      add_original: true
+      call:
+        - [getValueForIndex(), follow_up]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    title: Bestätigt am
+    small: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    column: confirmed_date
+    sortable_column: confirmed_date_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getBookingConfirmedForIndex()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    title: Buchung bestätigt
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    column: confirmed
+    sortable_column: confirmed_original
+    width: yes_no
+    format: Ext_TC_Gui2_Format_YesNo
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    index:
+      add_original: true
+      call:
+        - isConfirmed()
+      mapping:
+        index: no
+        type: keyword
+      mapping_original:
+        index: true
+        type: boolean
+  -
+    visible: true
+    title: Eingecheckt
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    column: checkin
+    sortable_column: checkin_original
+    format: Ext_TS_Gui2_Format_DateTime
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Checkin
+    width: datetime
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+      wdsearch:
+        yes: [Ext_TS_Inquiry_Index_Gui2_Data, getCheckinFilterOptionQuery, true, 'checkin']
+        no: [Ext_TS_Inquiry_Index_Gui2_Data, getCheckinFilterOptionQuery, false, 'checkin']
+    index:
+      add_original: true
+      call:
+        - [getTimeStampForIndex(), checkin]
+      mapping:
+        index: no
+        type: keyword
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    title: Ausgecheckt
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments, agency, company]
+    column: checkout
+    sortable_column: checkout_original
+    format: Ext_TS_Gui2_Format_DateTime
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Checkout
+    width: datetime
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+      wdsearch:
+        yes: [Ext_TS_Inquiry_Index_Gui2_Data, getCheckinFilterOptionQuery, true, checkout]
+        no: [Ext_TS_Inquiry_Index_Gui2_Data, getCheckinFilterOptionQuery, false, checkout]
+    index:
+      add_original: true
+      call:
+        - [getTimeStampForIndex(), checkout]
+      mapping:
+        index: no
+        type: keyword
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    title: Werbecode
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    column: promotion
+    width: name
+    default: false
+    index:
+      call:
+        - promotion
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    column: courses_status
+    sortable_column: courses_status
+    title: Status der Kurse
+    format: \Ts\Gui2\Format\Services
+    width: date
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getServiceOptionsForIndex
+    index:
+      add_original: true
+      call:
+        - getCoursesActiveTypes()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: keyword
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    column: accommodations_status
+    sortable_column: accommodations_status
+    title: Status der Unterkünfte
+    format: \Ts\Gui2\Format\Services
+    width: date
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getServiceOptionsForIndex
+    index:
+      add_original: true
+      call:
+        - getAccommodationsActiveTypes()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: keyword
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    column: insurances_status
+    sortable_column: insurances_status
+    title: Status der Versicherungen
+    format: \Ts\Gui2\Format\Services
+    width: date
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getServiceOptionsForIndex
+    index:
+      add_original: true
+      call:
+        - getInsurancesActiveTypes()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: keyword
+  -
+    visible: true
+    set: [ inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, students_visum, client_payments, agency, company ]
+    column: activities_status
+    sortable_column: activities_status
+    title: Status der Aktivitäten
+    format: \Ts\Gui2\Format\Services
+    width: date
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getServiceOptionsForIndex
+    index:
+      add_original: true
+      call:
+        - getActivitiesActiveTypes()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: keyword
+
+default_columns:
+  - visible: true
+    set: []
+    title: Ersteller
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_TS_Inquiry_Index_Gui2_Data, getCreatorOptions]
+    column: creator_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCreatorOptions
+    index:
+      add_original: true
+      call:
+        - getCreatorIdForIndex()
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+      mapping_original:
+        index: true
+        type: integer
+  - visible: true
+    set: [enquiry]
+    title: Erstellt
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    column: created_original
+    data: created
+    alias: ""
+    width: date
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      call:
+        - created
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: false
+    set: [enquiry]
+    title: Erstellt
+    column: created_original
+    alias: ""
+    filterset:
+      type: date
+    index:
+      call:
+        - getCreatedForIndex()
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: date
+        analyzer: []
+  - visible: true
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    title: Erstellt
+    description: Buchung
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    column: booking_created
+    data: booking_created
+    alias: ""
+    width: date
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      call:
+        - getBookingCreated()
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: false
+    set: [inquiry, students_simple, agency_payment, students_arrival, students_checkedin, students_departure, client_payments]
+    title: Erstellt
+    description: Buchung
+    column: booking_created_filter
+    alias: ""
+    filterset:
+      type: date
+      title: "Erstellt (Buchung)"
+#      default:
+#        from: -P12M
+#        until:
+    index:
+      call:
+        - getBookingCreatedForIndex()
+      mapping:
+        index: not_analyzed
+        type: date
+        analyzer: []
+  - visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      add_original: true
+      call:
+        - editor_id
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: true
+    title: Bearbeitet
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    column: changed_original
+    data: changed
+    alias: ""
+    width: date
+    resize: false
+    sortable: true
+    seperator: <br>
+    unique_values: false
+    default: false
+    index:
+      call:
+        - changed
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: string
+        analyzer: []
+  - visible: false
+    set: []
+    title: Bearbeitet
+    column: changed_original
+    alias: ""
+    filterset:
+      type: date
+    index:
+      call:
+        - getChangedForIndex()
+      # mapping infos
+      mapping:
+        index: not_analyzed
+        type: date
+        analyzer: []
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+  - [gui2/studentlists.js, thebing]
+  - [js/communication.js, thebing]
+  - /assets/ts-tuition/js/tuition.js
+css:
+  - /assets/ts/css/gui2.css
+  - /assets/ts-tuition/css/progress_report.css
+  - /assets/core/v-calendar/style.css
+filter_values:
+  booking_created_filter:
+    from: -P12M
+    until:
+index:
+  name: ts_inquiry
+  source: true
+  registry: 
+    generate: true
+  priority:
+    Ext_TS_Inquiry: 0
+    Ext_TS_Inquiry_Index: 0
+    Ext_TS_Inquiry_Journey: 0
+    Ext_TS_Inquiry_Journey_Course: 0
+    Ext_TS_Inquiry_Journey_Accommodation: 0
+    Ext_TS_Inquiry_Journey_Transfer: 0
+    Ext_TS_Inquiry_Journey_Insurance: 0
+    Ext_TS_Inquiry_Contact_Booker: 0
+    Ext_TS_Inquiry_Contact_Traveller: 0
+    Ext_TS_Inquiry_Contact_Traveller_Detail: 0
+    Ext_TS_Inquiry_Contact_Detail: 0
+    Ext_TS_Inquiry_Contact_Emergency: 0
+    Ext_TS_Inquiry_Contact_Emergency_Detail: 0
+    Ext_TS_Contact: 0
+    Ext_TC_Contact: 0
+    Ext_TC_Address: 0
+    Ext_TC_Contact_Detail: 0
+    Ext_TC_Email_Address: 0

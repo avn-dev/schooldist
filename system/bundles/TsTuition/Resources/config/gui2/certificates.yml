@@ -1,0 +1,277 @@
+hash: e9a096c6a05e73f7e06fc8a038db8a95
+class:
+  wdbasic: Ext_Thebing_Inquiry_Certificates
+  data: Ext_Thebing_Inquiry_Certificates_Gui2
+access: thebing_tuition_certificates
+id:
+  column: id
+  alias: ki
+multiple_selection: true
+orderby:
+  - Ext_Thebing_Inquiry_Certificates_Gui2
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        id: search
+        alias:
+          - kg
+          - kg
+          - kg
+          - cdb1
+          - cdb1
+          - tc_c_n
+        column:
+          - name
+          - short
+          - number
+          - lastname
+          - firstname
+          - number
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column:
+            - course_until
+          default:
+            - Ext_Thebing_Inquiry_Certificates_Gui2
+            - getFromDate
+        until:
+          column:
+            -
+          default:
+            - Ext_Thebing_Inquiry_Certificates_Gui2
+            - getUntilDate
+        text_after: basierend auf Kursende
+        search_type: between
+        filter_part: having
+      -
+        element: seperator
+      -
+        element: selectfilter
+        id: critical_filter
+        label: Anwesenheit
+        value: ''
+        filter_part: having
+        entries:
+          - Ext_Thebing_Inquiry_Certificates_Gui2
+          - getCriticalOptions
+        filter_query:
+          - Ext_Thebing_Inquiry_Certificates_Gui2
+          - getCriticalOptionsFilterQuery
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Eingecheckt
+        column: checkin
+        value: ''
+        entries:
+          - Ext_TC_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          no: '`checkin` IS NULL'
+          yes: '`checkin` IS NOT NULL'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Visa
+        alias: ts_j_t_v_d
+        column: status
+        entries:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getVisumOptions
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Kurs
+        id: course_filter
+        column: course_id
+        alias: kic
+        entries:
+          - Ext_Thebing_Inquiry_Certificates_Gui2
+          - getCourses
+        searchtype: =
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Zertifikat
+        value: ''
+        column: pdf_certificate
+        alias: ''
+        filter_part: having
+        entries:
+          - Ext_Thebing_Inquiry_Certificates_Gui2
+          - getYesNo
+        filter_query:
+          '': ''
+          1: '`pdf_certificate` IS NOT NULL'
+          2: '`pdf_certificate` IS NULL'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Kurskategorie
+        column: id
+        alias: ktcc
+        entries:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getSelectFilterEntriesCourseCategories
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Inbox
+        value: ''
+        column:
+          - inbox
+        alias:
+          - ki
+        filter_part: having
+        entries:
+          - Ext_Thebing_Inquiry_Certificates_Gui2
+          - getInboxes
+        searchtype: =
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Gruppe
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ki`.`group_id` != 0'
+          no: '`ki`.`group_id` = 0'
+        label_as_item: true
+  -
+    position: top
+    elements:
+      -
+        element: labelgroup
+        label:
+      -
+        element: icon
+        label: Massen PDF öffnen
+        task: openMultiplePdf
+        access: thebing_tuition_certificates_display_documents
+        multipleId: true
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - pdf
+columns:
+  -
+    title: Inbox
+    column: inbox
+    alias: ki
+    width: name
+    small: true
+    default: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_System, getInboxList, true, true]
+  -
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    column: short
+    data: group_short
+    alias: kg
+    width: group_short
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params: group_name
+  -
+    title: Gruppennummer
+    column: group_number
+    width: number
+    default: false
+  -
+    title: K.Nr.
+    column: customerNumber
+    data: customerNumber
+    width: customerNumber
+    alias: ''
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: [customerNumber, true]
+  -
+    title: Name
+    column: name
+    alias: cdb1
+    sortable_column: lastname
+    width: name
+    format: Ext_Thebing_Gui2_Format_CustomerName
+    resize: true
+  -
+    title: Kurse
+    column: courses
+    data: courses
+    alias: ''
+    resize: true
+    width: name
+  -
+    title: Kurskategorien
+    column: courses_categories
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Placementtests_Results_Gui2, getSelectFilterEntriesCourseCategories]
+  -
+    title: Level
+    column: course_niveau
+    alias: ''
+    width: name
+  -
+    title: Startdatum
+    column: course_from
+    alias: ''
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Enddatum
+    column: course_until
+    alias: ''
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Wochen
+    column: weeks_sum
+    alias: ''
+    width: name
+    format: Ext_Thebing_Gui2_Format_Int
+  -
+    title: Allgemeine Anwesenheit
+    column: attendance_all
+    alias: ''
+    width: name
+    format: Ext_Thebing_Gui2_Format_Tuition_Attendance_Percent
+    sortable: false
+    style: Ext_Thebing_Gui2_Style_Attendance
+  -
+    title: Visum
+    column: visum_title
+    alias: ''
+    width: name
+    sortable: false
+  -
+    title: Zertifikat PDF
+    column: pdf_certificate
+    data: pdf_certificate
+    alias: ''
+    width: icon
+    small: true
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params: [pdf_certificate]
+    style: Ext_Thebing_Gui2_Style_Pdf
+    style_params: 'pdf_certificate'
+  -
+    title: Eingecheckt
+    column: checkin
+    width: datetime
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date_Time
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Checkin

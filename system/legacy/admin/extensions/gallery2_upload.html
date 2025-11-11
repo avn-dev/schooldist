@@ -1,0 +1,267 @@
+<?php
+
+
+// Includes
+include("../includes/main.inc.php");
+
+session_start();
+
+// Rechte pruefen
+Access_Backend::checkAccess("modules_admin");
+
+
+set_time_limit(1200);
+ignore_user_abort(true);
+
+
+$iID = intval($_REQUEST["id"]);
+
+
+/*
+ * Recursively create subfolders
+ */
+function mkDirE($sDir, $iDirmode=0777)
+{
+	global $system_data;
+
+	if($system_data['chmod_mode_dir'] != $iDirmode)
+	{
+		$iDirmode = $system_data['chmod_mode_dir'];
+	}
+
+	preg_match_all('/([^\/]*)\/?/i', $sDir, $aTmp);
+	$sBase = $_SERVER["DOCUMENT_ROOT"];
+	foreach($aTmp[0] as $sVal)
+	{
+		$sBase .= $sVal;
+		if(!file_exists($sBase))
+		{
+			if(!mkdir($sBase, $iDirmode))
+			{
+				echo "Error: Cannot create " . $sBase;
+				return;
+			}
+		}
+	}
+}
+
+
+function convertImage($sWidth, $sHeight, $sOrig, $sNew, $sSystemPath, $aBranding)
+{
+	global $system_data;
+
+	$sNew2 = substr($sNew, 0, strrpos($sNew, ".")) . "_=_" . substr($sNew, strrpos($sNew, "."));
+	if($sWidth > 0 && $sHeight > 0) {
+		$sCmd = $sSystemPath . "convert -geometry " . $sWidth . "x" . $sHeight . " '" . $sOrig . "' '" . $sNew2 . "'";
+		$aReturnVal = '';
+		exec($sCmd, $aReturnVal);
+	} else {
+		copy($sOrig, $sNew2);
+	}
+	@chmod($sNew2, $system_data['chmod_mode_file']);
+	if(file_exists($sNew2))
+	{
+		$sBrandFile = $_SERVER["DOCUMENT_ROOT"] . "/media/" . $aBranding["path"] . $aBranding["filename"];
+		if(file_exists($sBrandFile) && $aBranding["filename"])
+		{
+			$aImgSizeN2 = getImageSize($sNew2);
+			$aImgSizeBF = getImageSize($sBrandFile);
+			switch($aBranding["corner"])
+			{
+				case 'oben_rechts':
+					$sOffsetX = $aImgSizeN2[0] - $aImgSizeBF[0] - $aBranding["x"];
+					$sOffsetY = $aBranding["y"];
+					break;
+				case 'unten_links':
+					$sOffsetX = $aBranding["x"];
+					$sOffsetY = $aImgSizeN2[1] - $aImgSizeBF[1] - $aBranding["y"];
+					break;
+				case 'unten_rechts':
+					$sOffsetX = $aImgSizeN2[0] - $aImgSizeBF[0] - $aBranding["x"];
+					$sOffsetY = $aImgSizeN2[1] - $aImgSizeBF[1] - $aBranding["y"];
+					break;
+				default:
+					$sOffsetX = $aBranding["x"];
+					$sOffsetY = $aBranding["y"];
+			}
+			$sCmd = $sSystemPath . "composite -compose atop -geometry +" . intval($sOffsetX) . "+" . intval($sOffsetY) .
+				" " . $sBrandFile . " " . $sNew2 . " " . $sNew;
+			$aReturnVal = '';
+			exec($sCmd, $aReturnVal);
+			@chmod($sNew, $system_data['chmod_mode_file']);
+			unlink($sNew2);
+			return (file_exists($sNew)?true:false);
+		}
+		else
+		{
+			rename($sNew2, $sNew);
+			return (file_exists($sNew)?true:false);
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+$aSizes = array(0 => array("width" => 0, "height" => 0));
+$sSQL = "
+	SELECT *
+	FROM `gallery2_sizes`
+	WHERE `active`='1'
+";
+$rRes = db_query($sSQL);
+$aBranding = array();
+while($aMy = get_data($rRes))
+{
+	$aSizes[intval($aMy["id"])] = array("width" => intval($aMy["max_width"]), "height" => intval($aMy["max_height"]));
+	$sSQL2 = "
+		SELECT *
+		FROM `gallery2_brandings`
+		WHERE `size_id`='" . intval($aMy["id"]) . "'
+	";
+	$rRes2 = db_query($sSQL2);
+	$aBranding[intval($aMy["id"])] = get_data($rRes2);
+}
+
+
+?>
+<html>
+	<body bgcolor="white">
+<?php
+
+
+
+echo '<p>';
+foreach($_FILES as $tagname => $objekt)
+{
+	// merke Datei-Tempname
+	$tempName = $objekt['tmp_name'];
+
+	// merke alten Galerienamen
+	$sSQL = "
+		SELECT `name`
+		FROM `gallery2_list`
+		WHERE
+			`id`='" . intval($iID) . "'
+			AND `active`='1'
+	";
+	$rRes = db_query($sSQL);
+	$aMy = get_data($rRes);
+	$sGalleryName = $aMy["name"];
+	$sUploadPath = "/media/system/gallery/" . \Util::getCleanFileName($sGalleryName) . "_" . $iID . "/";
+	$sTargetFile = $sUploadPath . $_POST[$tagname . '_relativePath'];
+	$sTargetFile = str_replace('\\', '/', $sTargetFile);
+	$sTargetFile = str_replace('//', '/', $sTargetFile);
+	$sTargetFile = getCleanPath($sTargetFile);
+
+	// erstelle wenn noetig die Pfade
+	$paths = pathinfo($sTargetFile);
+	mkDirE(getCleanPath($paths['dirname']));
+
+	$sBasename = \Util::getCleanFileName(basename($sTargetFile));
+	$sPath = substr($sTargetFile, 0, strlen($sTargetFile) - strlen($sBasename));
+	$iPos = strrpos($sBasename, '.');
+	$sFilename1 = (false === $iPos?$sBasename:substr($sBasename, 0, $iPos)) . "_";
+	$sFilename2 = (false === $iPos?".":substr($sBasename, $iPos));
+
+	// ueberpruefe, ob ein Bild unter dem Namen bereits gespeichert wurde
+	$sSQL = "
+		SELECT g2f.`item_id`
+		FROM
+			`gallery2_files` AS g2f,
+			`gallery2_items` AS g2i
+		WHERE
+			g2f.`path` LIKE '" . addslashes($sPath) . "'
+			AND g2f.`filename` LIKE '" . addslashes($sFilename1 . "0" . $sFilename2) . "'
+			AND g2f.`item_id`=g2i.`id`
+			AND g2i.`list_id`='" . intval($iID) . "'
+			AND (g2i.`active`='1' OR g2i.`active`='2')
+	";
+	$rRes = db_query($sSQL);
+	$aMy = get_data($rRes);
+	$iItemID = intval($aMy["item_id"]);
+	$bInsert = false;
+
+	if($_SESSION['gallery2']['default_name'] != "") {
+		$sBasename = $_SESSION['gallery2']['default_name'];
+	}
+
+	if($iItemID)
+	{
+		// altes Bild in der Item-Tabelle ueberschreiben
+		$sSQL = "
+			UPDATE `gallery2_items`
+			SET
+				`name`='" . \DB::escapeQueryString($sBasename) . "',
+				`changed_by`='" . intval($user_data["id"]) . "'
+			WHERE `id`='" . intval($iItemID) . "'
+		";
+		db_query($sSQL);
+	}
+	else
+	{
+		// ermitelle hoechste Position der Galerie
+		$sSQL = "
+			SELECT MAX(`position`) AS max_pos
+			FROM `gallery2_items`
+			WHERE `list_id`='" . intval($iID) . "'
+		";
+		$rRes = db_query($sSQL);
+		$aMy = get_data($rRes);
+
+		// neues Bild in die Item-Tabelle einfuegen
+		$sSQL = "
+			INSERT INTO `gallery2_items`
+			SET
+				`list_id`='" . intval($iID) . "',
+				`name`='" . \DB::escapeQueryString($sBasename) . "',
+				`position`='" . (intval($aMy["max_pos"]) + 1) . "',
+				`changed_by`='" . intval($user_data["id"]) . "',
+				`created`=NOW(),
+				`created_by`='" . intval($user_data["id"]) . "',
+				`active`='1'
+		";
+		db_query($sSQL);
+		$iItemID = get_insert_id();
+		$bInsert = true;
+	}
+
+	// konvertiere das Bild in allen Groessen ins Zielverzeichnis
+	foreach($aSizes as $iSizeID => $aSize)
+	{
+		$sFilename = $sFilename1 . $iSizeID . $sFilename2;
+		$sFile = $_SERVER["DOCUMENT_ROOT"] . $sPath . $sFilename;
+		$bSuccess = convertImage($aSize["width"], $aSize["height"], $tempName, $sFile, $system_data['im_path'], $aBranding[$iSizeID]);
+		if($bSuccess)
+		{
+			if($bInsert)
+			{
+				$sSQL = "
+					INSERT INTO `gallery2_files`
+					SET
+						`item_id`='" . intval($iItemID) . "',
+						`path`='" . addslashes($sPath) . "',
+						`filename`='" . addslashes($sFilename) . "',
+						`size_id`='" . intval($iSizeID) . "'
+				";
+				db_query($sSQL);
+			}
+			echo $sFilename . " gesichert<br>";
+		}
+		else
+		{
+			echo '<font color=red>' . $tempName . ' konnte nicht zu ' . $sFilename . ' verschoben werden!</font><br>';
+		}
+	}
+
+	echo '<br>';
+}
+echo '</p>';
+
+
+
+?>
+	</body>
+</html>

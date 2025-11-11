@@ -1,0 +1,54 @@
+hash: a815a1171c2d7d62b28686bc239837b8
+class:
+  wdbasic: Ext_Thebing_Tuition_Color
+  data: Ext_Thebing_Tuition_Gui2_Colors_Gui2
+access: thebing_tuition_resources_colors
+id:
+  column: id
+orderby:
+  - Ext_Thebing_Tuition_Gui2_Colors_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Tuition_Gui2_Colors_Gui2
+  - getWhere
+limit: 30
+limit_selection: false
+multiple_selection: false
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+          - id
+          - title
+        searchtype: LIKE       
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Tuition_Gui2_Colors_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Tuition_Gui2_Colors_Gui2
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Titel
+    column: title
+    width: name
+    resize: true
+  - 
+    title: Farbcode
+    column: code
+    width: name
+    resize: false
+    style: Ext_Gui2_View_Style_Color

@@ -1,0 +1,1 @@
+ALTER TABLE `ts_tuition_coursecategories` ADD `position` SMALLINT UNSIGNED NOT NULL DEFAULT '0';

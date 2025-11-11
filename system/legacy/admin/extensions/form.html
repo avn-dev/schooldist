@@ -1,0 +1,657 @@
+<?php
+
+include("../includes/main.inc.php");
+
+$aFormTypes = Form\Gui2\Data\Fields::getTypes();
+
+$aFormFilter = array("all" => "kein Filter", "none" => "nur Unerledigte", "done" => "nur Erledigte");
+$aFormCsv = array("," => "Windows", ";" => "Excel 2003 / Macintosh");
+
+// Damit man Header-Operationen weiter unten durchführen kann
+ob_start();
+
+Access_Backend::checkAccess("modules_admin");
+
+Admin_Html::loadAdminHeader();
+
+$sMessage = '';
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Formulare', 'Formulare')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+        
+<?php
+
+if ($_VARS['page_id'] && $_VARS['element_id'] && $_VARS['content_id']) {
+
+	if ($_POST['action'] == "config") {
+		$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$oConfig->form_id = $_VARS['form_id'];
+		$oConfig->use_smarty = $_VARS['use_smarty'];
+		$oConfig->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	}
+	$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$aForms = array();
+	$res = (array)DB::getQueryRows("SELECT * FROM `form_init` ORDER BY `subject`");
+	foreach($res as $my) {
+		$aForms[$my['id']] = $my['subject'];
+	}
+
+    ?>
+	<div class="box-body">
+		<form method="POST" action="form.html">
+			<?=printFormHidden('action', 'config')?>
+			<?=printFormHidden('page_id', $_VARS['page_id'])?>
+			<?=printFormHidden('element_id', $_VARS['element_id'])?>
+			<?=printFormHidden('content_id', $_VARS['content_id'])?>
+			<?=printFormHidden('language', $_VARS['language'])?>
+			<?=printTableStart()?>
+				<?=printFormSelect("Formular", "form_id", $aForms, $oConfig->form_id)?>
+<?php
+				if($oConfig->use_smarty === '0') {
+					echo printFormCheckbox("Smarty-Template benutzen", "use_smarty", "1", $oConfig->use_smarty);
+				} else {
+					echo printFormHidden('use_smarty', 1);
+				}
+?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+		</form>
+	</div>
+<?php
+
+} else {
+
+	if ($_VARS['form_action'] == 'saveinit') {
+
+		$strSetQuery = "
+			`subject` = '".\DB::escapeQueryString($_VARS['init_subject'])."',
+			`text` = '".\DB::escapeQueryString($_VARS['init_text'])."',
+			`html` = ".(int)$_VARS['init_html'].",
+			`email` = '".\DB::escapeQueryString($_VARS['init_email'])."',
+			`cc` = '".\DB::escapeQueryString($_VARS['init_cc'])."',
+			`bcc` = '".\DB::escapeQueryString($_VARS['init_bcc'])."',
+			`confirm` = '".\DB::escapeQueryString($_VARS['init_confirm'])."',
+			`allocate` = '".\DB::escapeQueryString($_VARS['allocate'])."',
+			`cmail_title` = '".\DB::escapeQueryString($_VARS['init_cmail_title'])."',
+			`cmail_text` = '".\DB::escapeQueryString($_VARS['init_cmail_text'])."',
+			`message_success` = '".\DB::escapeQueryString($_VARS['init_message_success'])."',
+			`message_failed` = '".\DB::escapeQueryString($_VARS['init_message_failed'])."',
+			`use_captcha` = '".\DB::escapeQueryString($_VARS['use_captcha'])."',
+			`captcha_secret` = '".\DB::escapeQueryString($_VARS['captcha_secret'])."',
+			`captcha_key` = '".\DB::escapeQueryString($_VARS['captcha_key'])."'
+		";
+		if (!DB::getQueryRow("SELECT * FROM `form_init` WHERE `id` = ".(int)$_VARS['id'])) {
+			DB::executeQuery("INSERT INTO `form_init` SET ".$strSetQuery."");
+			$_VARS['id'] = DB::fetchInsertID();
+		} else {
+			DB::executeQuery("UPDATE `form_init` SET ".$strSetQuery." WHERE `id` = ".(int)$_VARS['id']);
+		}
+		$_VARS['form_action'] = "properties";
+
+		$oInit = \Form\Entity\Init::getInstance($_VARS['id']);
+		$oInit->updateStructure();
+
+	} elseif ($_VARS['form_action'] == 'delete') {
+
+		DB::executeQuery("DELETE FROM `form_init` WHERE `id` = ".(int)$_VARS['id']);
+		DB::executeQuery("DELETE FROM `form_options` WHERE `form_id` = ".(int)$_VARS['id']);
+		DB::executeQuery("DROP TABLE `form_data_".(int)$_VARS['id']."`");
+		$_VARS['form_action'] = false;
+		$_VARS['id'] = false;
+
+		$sMessage = L10N::t('Das Formular wurde erfolgreich gelöscht!', 'Formulare');
+		
+	} elseif ($_VARS['form_action'] == 'copy') {
+
+		$oInit = Form\Entity\Init::getInstance($_VARS['id']);
+		$oInit->copy();
+
+		$sMessage = L10N::t('Das Formular wurde erfolgreich kopiert!', 'Formulare');
+		
+		unset($_VARS['form_action']);
+		unset($_VARS['id']);
+		
+	}
+
+if(!empty($sMessage)) {
+	?>
+	<div class="box-body">
+		<div class="alert alert-success alert-dismissible">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+			<h4><i class="icon fa fa-check"></i> Erfolg!</h4>
+			<?=$sMessage?>
+		</div>	
+	</div>
+	<?
+}
+	
+?>
+
+<style>
+.form_elem{
+	width:350px;
+	border:1px solid black;
+}
+</style>
+<script>
+<!--
+
+function umklappen(aus, ein){	// (c) by plan-i GmbH, all rights reserved!!!
+   	var i = 0;				<?	// Diese Funktion blendet benannte Bereiche ein oder aus ?>
+   	var rows=document.getElementsByName(aus);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='inline';
+	  	}
+   	var rows=document.getElementsByName(ein);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='none';
+	  	}
+	document.all.active.value=aus;
+	}
+
+function go_detail(act) {
+	if(act=="add") {
+		document.form_form_1.form_action.value="properties";
+		document.form_form_1.id.value=0;
+		document.form_form_1.submit();
+	} else if(document.form_form_1.id.value > 0) {
+		if(act == "delete") {
+			if(!confirm('Möchten Sie dieses Formular wirklich löschen?')) {
+				return false;
+			}
+		}
+		document.form_form_1.form_action.value=act;
+		document.form_form_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+function go_entry(act) {
+	if(act=="add") {
+		document.form_form_1.form_action.value="edit";
+		document.form_form_1.entry_id.value=0;
+		document.form_form_1.submit();
+	} else if(document.form_form_1.entry_id.value>0) {
+		document.form_form_1.form_action.value=act;
+		document.form_form_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+function open_media(form_field,s) {
+	window.open('/admin/frame.<? echo $file_ext; ?>?file=media&mode=selecticon&form_name=entry_form&input_name=&submit_button_value=Bild auswählen&form_submit=0&type=images&search='+s+'&input_name_title=&input_name_name='+form_field, 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+
+-->
+</script>
+
+<form name="formular" method="post" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="active" value="<?=(int)$_VARS['active']?>">
+</form>
+
+<?php
+if(!$_VARS['form_action']) {
+?>
+		<div class="box-body table-responsive no-padding">
+			<table class="table table-hover table-striped">
+				<thead>
+					<tr>
+						<th style="width:80px;">ID</th>
+						<th style="width:auto;">Betreff</th>
+						<th style="width:82px;">Neu</th>
+						<th style="width:82px;">Bearbeitet</th>
+						<th style="width:82px;">Total</th>
+						<th style="width:250px;">E-Mail</th>
+						<th style="width:120px;">Aktionen</th>
+					</tr>
+				</thead>
+				<tbody>
+<?php
+
+$sSql = "SELECT * FROM `form_init` WHERE 1 ORDER BY `subject`";
+
+$aForms = DB::getQueryRows($sSql);
+
+foreach($aForms as $aForm) {
+	
+	$oForm = Form\Entity\Init::getInstance($aForm['id']);
+	
+	try {
+		$iTotal = DB::getQueryOne("SELECT COUNT(*) FROM `form_data_".(int)$oForm->id."`");
+		$iNew = DB::getQueryOne("SELECT COUNT(*) FROM `form_data_".(int)$oForm->id."` WHERE `done` = 0");
+	} catch (\DB_QueryFailedException $e) {
+		$iTotal = 0;
+		$iNew = 0;
+	}
+	
+?>
+					
+					<tr>
+						<td class="text-right"><?=$oForm->id?></td>
+						<td><?=$oForm->subject?></td>
+						<td class="text-right"><?=$iNew?></td>
+						<td class="text-right"><?=$iTotal-$iNew?></td>
+						<td class="text-right"><?=$iTotal?></td>
+						<td><?=$oForm->email?></td>
+						<td class="text-center">
+							<a href="<?=$_SERVER['PHP_SELF']?>?form_action=properties&id=<?=$oForm->id?>" title="<?=L10N::t('Eigenschaften bearbeiten', 'Formulare')?>"><i class="fa fa-fw fa-cogs"></i></a>
+							<a href="<?=$_SERVER['PHP_SELF']?>?form_action=overview&id=<?=$oForm->id?>" title="<?=L10N::t('Formular-Eingang', 'Formulare')?>"><i class="fa fa-fw fa-inbox"></i></a>
+							<a href="<?=$_SERVER['PHP_SELF']?>?form_action=entries&id=<?=$oForm->id?>" title="<?=L10N::t('Optionen bearbeiten', 'Formulare')?>"><i class="fa fa-fw fa-list"></i></a>
+							<a href="<?=$_SERVER['PHP_SELF']?>?form_action=copy&id=<?=$oForm->id?>" onclick="if(!confirm('Möchten Sie dieses Formular wirklich kopieren?')) return false;" title="<?=L10N::t('Formular kopieren', 'Formulare')?>"><i class="fa fa-fw fa-copy"></i></a>
+							<a href="<?=$_SERVER['PHP_SELF']?>?form_action=delete&id=<?=$oForm->id?>" onclick="if(!confirm('Möchten Sie dieses Formular wirklich löschen?')) return false;" title="<?=L10N::t('Formular löschen', 'Formulare')?>"><i class="fa fa-fw fa-trash"></i></a>
+						</td>
+					</tr>
+<?php
+}
+
+?>
+
+				</tbody>
+			</table>
+		</div>
+		<div class="box-footer text-right">
+			<a href="<?=$_SERVER['PHP_SELF']?>?form_action=properties" class="btn btn-primary">Neues Formular</a>
+		</div>
+   
+
+<?php
+} elseif ($_VARS['form_action'] == 'overview') {
+
+	if (!$_VARS['filter']) {
+		$_VARS['filter'] = "none";
+	}
+
+	// Checken welches Feld als E-Mail gesetzt ist
+	$aEmailField = DB::getQueryRow("SELECT `id` FROM `form_options` WHERE `form_id` = ".(int)$_VARS['id']." AND `allocation` = 'email'");
+	// Allgemeine Abfrage
+	$aData = DB::getQueryRow("SELECT * FROM `form_data_".(int)$_VARS['id']."` WHERE `id` = ".(int)$_VARS['entry_id']);
+	$resFieldNames = (array)DB::getQueryRows("SELECT * FROM `form_options` WHERE `form_id` = ".(int)$_VARS['id']." AND `active` = 1 ORDER BY `position`");
+	// Setzen der Empfänger-Email
+	$sUserEmail = $aData['field_'.$aEmailField['id']];
+
+	// Senden der E-Mail
+	if ($_VARS['send_mail'] == 1) {
+		if ($sUserEmail && preg_match("/^([a-z0-9\._-]*)@([a-z0-9\.-]{2,66})\.([a-z]{2,6})$/i",$sUserEmail)) {
+			wdmail($sUserEmail, $_VARS['subject'], $_VARS['text'], $system_data['mail_from']);
+		}
+		if ($_VARS['state'] == 1) {
+			DB::executeQuery("UPDATE `form_data_".(int)$_VARS['id']."` SET `done` = 1 WHERE `id` = ".(int)$_VARS['entry_id']." LIMIT 1");
+		}
+		if ($_VARS['copy'] == 1) {
+			wdmail($user_data['email'], $_VARS['subject'], $_VARS['text'], $system_data['mail_from']);
+		}
+	}
+	// Markierung
+	if ($_VARS['task'] == "state") {
+		if ($_VARS['done'] == 1) {
+			DB::executeQuery("UPDATE `form_data_".(int)$_VARS['id']."` SET `done` = 1 WHERE `id` = ".(int)$_VARS['entry_id']);
+		} else {
+			DB::executeQuery("UPDATE `form_data_".(int)$_VARS['id']."` SET `done` = 0 WHERE `id` = ".(int)$_VARS['entry_id']);
+		}
+	}
+	// Filteroptionen
+	$aFormFilter = array("all" => "kein Filter", "none" => "nur Unerledigte", "done" => "nur Erledigte");
+	if (!isset($_VARS['filter'])) {
+		$_VARS['filter'] = "all";
+	}
+
+	// Queryzusatz wenn Filter gesetzt ist
+	if ($_VARS['filter'] != "all") {
+		if ($_VARS['filter'] == "none")	{
+            $sLimitEntries = "AND `done` = 0";
+        } else {
+            $sLimitEntries = "AND `done` = 1";
+        }
+	} else {
+		$sLimitEntries = "";
+	}
+
+	if ($_VARS['task'] == "answer") {
+?>
+<h2>Nachricht schreiben an "<?=$sUserEmail?>"</h2>
+<?php
+
+	// Zuordnung der Felder
+	$aFields['Datum'] = (new \DateTime($aData['date']))->format('Y.m.d H:i:s');
+	$aFields['IP'] = $aData['ip'];
+	foreach($resFieldNames as $aFieldNames) {
+		if ($aFieldNames['type'] != "onlytext" and $aFieldNames['type'] != "onlytitle") {
+			$aFields[$aFieldNames['name']] = $aData['field_'.$aFieldNames['id']];
+		}
+	}
+?>
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+		<colgroup>
+			<col width="40%">
+			<col width="60%">
+		</colgroup>
+<?php
+	foreach ($aFields as $title => $value) {
+?>
+	<tr>
+		<th><?=$title?>&nbsp;</th>
+		<td><?=$value?>&nbsp;</td>
+	</tr>
+<?php
+	}
+?>
+</table>
+<br/>
+<form name="form_form_1" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+<input type="hidden" name="entry_id" value="<?=$_VARS['entry_id']?>">
+<input type="hidden" name="form_action" value="overview">
+<input type="hidden" name="send_mail" value="1">
+<input type="hidden" name="filter" value="<?=$_VARS['filter']?>">
+<?=printTableStart()?>
+	<?=printFormText("Betreff", "subject", $_VARS['subject'], "style=\"width:400px\"")?>
+	<?=printFormTextarea("Nachricht", "text", $_VARS['text'], 10, "style=\"width:400px\"")?>
+	<?=printFormCheckbox("Als erledigt markieren", "state", "1", 1)?>
+	<?=printFormCheckbox("Kopie an mich senden", "copy", "1", 0)?>
+<?=printTableEnd()?>
+<br/>
+<table border="0" width="100%" cellpadding="1">
+	<tr>
+		<td align="right">
+			<table cellspacing="0" cellpadding="2" border="0">
+				<tr>
+					<td><?php printSubmit("senden"); ?></td>
+					<td><?php printSubmit("zurück", "onclick=\"this.form.send_mail.value='0';\""); ?></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+</form>
+<?php
+	} else {
+?>
+<h2>Formular-Eingang</h2>
+<?php if ($_VARS['send_mail'] == 1) echo "Ihre Nachricht wurde gesendet"; ?>
+<form name="form_form_1" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+<input type="hidden" name="form_action" value="overview">
+<?=printTableStart()?>
+	<?=printFormSelect("Filter", "filter", $aFormFilter, $_VARS['filter'], "onChange=\"submit();\"")?>
+<?=printTableEnd()?>
+<br>
+<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table" style="table-layout: fixed;">
+	<tr>
+		<th width="40">#</th>
+		<th width="140">Datum</th>
+<?php
+		$resAllocatedFields = (array)DB::getQueryRows("SELECT * FROM `form_options` WHERE `form_id` = ".(int)$_VARS['id']." AND `allocation` <> '' ORDER BY `allocation` ASC");
+		foreach($resAllocatedFields as $aAllocatedFields) {
+			$aFieldIDs['field_'.$aAllocatedFields['id']] = $aAllocatedFields['name']
+?>
+		<th><?=$aAllocatedFields['name']?></th>
+<?php
+	}
+?>
+		<th width="40">&nbsp;</th>
+	</tr>
+<?php
+		$resFormData = (array)DB::getQueryRows("SELECT * FROM `form_data_".(int)$_VARS['id']."` WHERE 1 ".$sLimitEntries." ORDER BY `date` DESC");
+		foreach($resFormData as $aFormData) {
+		
+			$oDate = new DateTime($aFormData['date']);
+		
+?>
+	<tr <? if ($aFormData['done'] == 0) echo "bgColor=\"#FFCCCC\""; ?> id="tr_<?=$aFormData['id']?>" onmouseout="showRow(<?=$aFormData['id']?>,0)" onmousemove="showRow(<?=$aFormData['id']?>,1);">
+		<td><?=$aFormData['id']?>&nbsp;</td>
+		<td><?=strftime("%x %X", $oDate->getTimestamp())?>&nbsp;</td>
+<?php
+			if(is_array($aFieldIDs))
+			{
+				foreach ($aFieldIDs as $id => $value)
+				{
+?>
+		<td><?=$aFormData[$id]?>&nbsp;</td>
+<?php
+				}
+			}
+?>
+		<td>
+<?php
+				if ($aFormData['done'] == 0) {
+?>
+			<a href="<?=$_SERVER['PHP_SELF']?>?form_action=overview&id=<?=$_VARS['id']?>&filter=<?=$_VARS['filter']?>&entry_id=<?=$aFormData['id']?>&task=state&done=1"><img src="/admin/media/sitemap_inactive.gif" border="0" title="Als erledigt markieren"></a>&nbsp;
+<?php
+				} else {
+?>
+			<a href="<?=$_SERVER['PHP_SELF']?>?form_action=overview&id=<?=$_VARS['id']?>&filter=<?=$_VARS['filter']?>&entry_id=<?=$aFormData['id']?>&task=state&done=0"><img src="/admin/media/sitemap_active.gif" border="0" title="Als unerledigt markieren"></a>&nbsp;
+<?php
+				}
+?>
+			<a href="<?=$_SERVER['PHP_SELF']?>?form_action=overview&id=<?=$_VARS['id']?>&filter=<?=$_VARS['filter']?>&entry_id=<?=$aFormData['id']?>&task=answer"><img src="/admin/media/reload.png" border="0" title="Beantworten"></a>
+		</td>
+	</tr>
+<?php
+		}
+?>
+</table>
+<br>
+<table border="0" width="100%" cellpadding="1">
+	<tr>
+		<td align="right">
+			<?make_button(".CSV Datei exportieren", "#", "onclick=\"go_detail('download'); return false;\"");?>
+			<br>
+			<?make_button("zurück", "#", "onclick=\"go_detail(''); return false;\"");?>
+		</td>
+	</tr>
+</table>
+<?php
+	}
+} elseif ($_VARS['form_action'] == 'download') {
+?>
+
+<h2>CSV Export</h2>
+<form name="form_form_1" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="entry_id" value="0">
+<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+<input type="hidden" name="form_action" value="download">
+<input type="hidden" name="active" value="0">
+
+	<?=printTableStart()?>
+		<?=printFormSelect("Filter", "filter", $aFormFilter, $_VARS['filter'])?>
+		<?=printFormSelect("Excel-Ausgabe","csv", $aFormCsv, ";")?>
+		<?=printFormCheckbox("Exportierte Einträge als erledigt markieren?","done", 1, 1)?>
+		<input type="hidden" name="export" value="1">
+	<?=printTableEnd()?>
+	<br/>
+	<table cellspacing="0" cellpadding="5" border="0" width="100%">
+		<tr>
+			<td>&nbsp;</td>
+			<td width="1"><?=printSubmit("exportieren")?></td>
+			<td width="1"><?make_button("zurück", "#", "onclick=\"document.location.href='form.html?id=".$_VARS['id']."&form_action=overview&active=0'; return false;\"");?></td>
+		</tr>
+	</table>
+</form>
+<?php
+	if ($_VARS['export'] == 1) {
+?>
+</form>
+<?php
+
+		$form_array3 = DB::getQueryRow("SELECT * FROM `form_init` WHERE `id` = ".(int)$_VARS['id']);
+
+		$form_id = $form_array3['id'];
+
+		$fh = fopen("../media/form.csv", "w");
+
+		// Filter
+		if ($_VARS['filter'] == "none")	{
+			$sLimitEntries = "AND done = 0";
+		} elseif ($_VARS['filter'] == "done") {
+			$sLimitEntries = "AND done = 1";
+		} else {
+			$sLimitEntries = "";
+		}
+
+		$aFieldData = array();
+		$resFieldNames = (array)DB::getQueryRows("SELECT * FROM `form_options` WHERE `form_id` = ".(int)$form_id." AND `active` = 1 ORDER BY `position`");
+		foreach($resFieldNames as $aFieldNames) {
+			$aFieldData[] = $aFieldNames;
+		}
+
+		$aFields = array();
+		$resField = (array)DB::getQueryRows("SELECT * FROM `form_data_".(int)$form_id."` WHERE 1 ".$sLimitEntries." ORDER BY `date`");
+		if ($_VARS['done']) {
+			DB::executeQuery("UPDATE `form_data_".(int)$form_id."` SET `done` = 1 WHERE 1 ".$sLimitEntries."");
+		}
+		foreach($resField as $aField) {
+			$aFields[$aField['id']]['Datum'] = $aField['date'];
+			$aFields[$aField['id']]['IP'] = $aField['ip'];
+			foreach($aFieldData as $aFieldNames) {
+				if ($aFieldNames['type'] != "onlytext" and $aFieldNames['type'] != "onlytitle") {
+					$aFields[$aField['id']][$aFieldNames['name']] = $aField['field_'.$aFieldNames['id']];
+				}
+			}
+		}
+
+		$csv = "";
+		// Spaltennamen
+		foreach ($aFields as $id => $fields) {
+			foreach ($fields as $fieldname => $fieldvalue) {
+				$fieldnames[$fieldname] = "\"".$fieldname."\"";
+			}
+			$csv .= implode($_VARS['csv'], $fieldnames);
+			$csv .= "\r\n";
+			break;
+		}
+		// Einträge
+		foreach ($aFields as $id => $fields) {
+			foreach ($fields as $fieldname => $fieldvalue) {
+				$fields[$fieldname] = "\"".$fieldvalue."\"";
+			}
+			$csv .= implode($_VARS['csv'], $fields);
+			$csv .= "\r\n";
+		}
+		fputs($fh,$csv);
+
+		#DB::executeQuery("UPDATE `form_data_".(int)$form_id."` SET `active` = 0");
+
+		fclose($fh);
+		Util::changeFileMode("../media/form.csv");
+
+?>
+
+		<?=printTableStart()?>
+			<tr>
+				<th>Datei</th>
+				<td><a href="../media/form.csv" target="_blank">download</a></td>
+			</tr>
+		<?=printTableEnd()?>
+
+<?php
+	}
+
+} elseif ($_VARS['form_action'] == 'entries') {
+
+	header('Location: /form/fields/'.(int)$_VARS['id']);
+	die();
+
+} elseif ($_VARS['form_action'] == 'properties') {
+
+	$form_array3 = DB::getQueryRow("SELECT * FROM `form_init` WHERE `id` = ".(int)$_VARS['id']);
+
+	if(!$form_array3['subject']) {
+		$form_array3['subject'] = "Neues Formular";
+	}
+
+?>
+	
+	<div class="box-header with-border">
+		<h3 class="box-title">Eigenschaften von "<?=$form_array3['subject']?>"</h3>
+	</div>
+	
+	<form method="post" name="init_form" action="<?=$_SERVER['PHP_SELF']?>" class="form-horizontal">
+		<input type="hidden" name="form_action" value="saveinit" />
+		<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>" />
+	
+		<div class="box-body">
+
+<?php
+	$aReply = array(0 => 'Antwort an', 1 => 'Absender');
+?>
+
+	<?=Admin_Html::printFormText("Betreff","init_subject",$form_array3['subject'])?>
+	<?=Admin_Html::printFormTextarea("Nachricht","init_text",$form_array3['text'])?>
+	<?=Admin_Html::printFormCheckbox("Nachricht als HTML-E-Mail","init_html", 1, $form_array3['html'])?>
+	<?=Admin_Html::printFormText("An", "init_email", $form_array3['email'])?>
+	<?=Admin_Html::printFormText("Cc", "init_cc", $form_array3['cc'])?>
+	<?=Admin_Html::printFormText("Bcc", "init_bcc", $form_array3['bcc'])?>
+
+	<?=Admin_Html::printFormSelect("Zuordnung der E-Mail-Adresse", "allocate", $aReply, $form_array3['allocate'])?>
+
+	<?=Admin_Html::printFormCheckbox("E-Mail zur Bestätigung: Senden?","init_confirm", 1, $form_array3['confirm'])?>
+	<?=Admin_Html::printFormText("E-Mail zur Bestätigung: Betreff","init_cmail_title",$form_array3['cmail_title'])?>
+	<?=Admin_Html::printFormTextarea("E-Mail zur Bestätigung: Nachricht","init_cmail_text",$form_array3['cmail_text'])?>
+
+	<?=Admin_Html::printFormHTMLarea("Formulartext: Erfolgreich versendet","init_message_success",$form_array3['message_success'])?>
+	<?=Admin_Html::printFormHTMLarea("Formulartext: Fehler","init_message_failed",$form_array3['message_failed'])?>
+
+	<h3>Captcha</h3>		
+		
+	<?=Admin_Html::printFormCheckbox("Captcha aktivieren", 'use_captcha', 1, $form_array3['use_captcha'])?>
+	<?=Admin_Html::printFormText("reCAPTCHA Secret","captcha_secret",$form_array3['captcha_secret'])?>
+	<?=Admin_Html::printFormText("reCAPTCHA Schlüssel","captcha_key",$form_array3['captcha_key'])?>
+	
+		
+		<p>
+			Platzhalter:
+			<ul>
+				<li><#fields#><br><#field_name#>: <#field_data#><#/fields#></li>
+				<li><#field_sex#>, <#field_firstname#>, <#field_name#>, <#field_email#></li>
+			</ul>
+			</p>
+
+		</div>
+		<div class="box-footer">
+			<a href="<?=$_SERVER['PHP_SELF']?>" class="btn btn-default"><?=L10N::t('Zurück', 'Formulare')?></a>
+			<button type="submit" class="btn btn-primary pull-right"><?=L10N::t('Speichern', 'Formulare')?></button>			
+		</div>
+	</form>
+<?php
+	}
+}
+?>
+
+	</div>
+</section>
+
+
+<script>
+	
+	function updateHeight() {
+		
+		var iHeight = document.viewport.getHeight() - 174;
+		
+		if($('iframe_autoheight')) {
+			$('iframe_autoheight').style.height = iHeight+'px';
+		}
+		
+	}
+	
+	document.observe('dom:loaded', function(){
+		
+		updateHeight();
+
+		Event.observe(window, 'resize', function() {
+			updateHeight();
+		});	
+	
+	});
+	
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

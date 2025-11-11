@@ -1,0 +1,111 @@
+class:
+  wdbasic: Ext_TC_Marketing_Feedback_Questionary_Child
+  data: Ext_TC_Marketing_Feedback_Questionary_Child_Gui2_Data
+  js: QuestionnairesGUI
+id:
+  column: id
+  alias: tc_fqnc
+title: Fragen
+sortable: true
+pagination: false
+export: false
+access: 
+  - core_marketing_questionnaires
+  - ""
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon
+        label: Frage hinzufügen
+        action: new
+        task: openDialog
+        additional: question
+        active: 1
+        dialog:
+          - Ext_TC_Marketing_Feedback_Questionary_Child_Gui2_Data
+          - getQuestionDialog
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - font_add
+        access:
+          - core_marketing_questionnaires
+          - new
+      -
+        element: icon
+        label: Überschrift hinzufügen
+        action: new
+        task: openDialog
+        additional: heading
+        active: 1
+        dialog:
+          - Ext_TC_Marketing_Feedback_Questionary_Child_Gui2_Data
+          - getHeadingDialog
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - h3
+        access:
+          - core_marketing_questionnaires
+          - new
+      - 
+        element: icon_edit
+        dialog:
+          - Ext_TC_Marketing_Feedback_Questionary_Child_Gui2_Data
+          - getDialog
+      - 
+        element: icon_delete
+      - 
+        element: icon_duplicate
+        access:
+          - core_marketing_questionnaires
+          - duplicate
+
+columns:
+  -
+    visible: true
+    title: Thema
+    column: type
+    alias: tc_fqnc
+    width: name
+    format: Ext_TC_Marketing_Feedback_Questionary_Child_Gui2_Format_Type
+    resize: true
+    
+      
+default_columns:
+   -
+     title: Ersteller
+     column: creator_id
+     width: user_name
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Erstellt
+     column: created
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true
+   -
+     title: Bearbeiter
+     column: editor_id
+     width: editor_id
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Verändert
+     column: changed
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true    
+    
+js:
+  - [marketing/js/questionnaires.js, tc]
+
+  

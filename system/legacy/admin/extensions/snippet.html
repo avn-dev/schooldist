@@ -1,0 +1,64 @@
+<?
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+
+if($_VARS['action'] == 'config'){
+	$oConfig->url				= $_VARS['url'];
+	$oConfig->template_key		= $_VARS['template_key'];
+	$oConfig->combination_key	= $_VARS['combination_key'];
+	$oConfig->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+
+
+// show updated files
+Admin_Html::loadAdminHeader();
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1><?=L10N::t('Snippet')?></h1>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+				<h2><?=L10N::t('Einstellungen:')?></h2>
+				<?=printFormHidden('action', 'config')?>
+				<?=printFormHidden('page_id', $_VARS['page_id'])?>
+				<?=printFormHidden('element_id', $_VARS['element_id'])?>
+				<?=printFormHidden('content_id', $_VARS['content_id'])?>
+				<?=printFormHidden('language', $_VARS['language'])?>
+				<?=printTableStart()?>
+					<tr>
+						<th>
+							<?=L10N::t('Ziel Url')?>:
+						</th>
+						<td>
+							<input type="text" class="txt" name="url" value="<?=$oConfig->url?>" />
+						</td>
+					</tr>
+					<tr>
+						<th>
+							<?=L10N::t('Template Schlüssel')?>:
+						</th>
+						<td>
+							<input type="text" class="txt" name="template_key" value="<?=$oConfig->template_key?>" />
+						</td>
+					</tr>
+					<tr>
+						<th>
+							<?=L10N::t('Kombinations Schlüssel')?>:
+						</th>
+						<td>
+							<input type="text" class="txt" name="combination_key" value="<?=$oConfig->combination_key?>" />
+						</td>
+					</tr>
+				<?=printTableEnd()?>
+
+				<?=printSubmit(L10N::t('Speichern')) ?>
+			</form>
+		</td>
+	</tr>
+</table>

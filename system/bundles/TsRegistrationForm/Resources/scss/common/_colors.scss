@@ -1,0 +1,121 @@
+// Overwrite several Bootstrap 4 colors with CSS vars
+
+// Avoid redundancy below
+$primary-input-light: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) + 25%));
+$primary-button-shade: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 10%));
+
+& {
+	--primary: #{$primary};
+	--primary-hue: #{$primary-hsl-hue};
+	--primary-saturation: #{$primary-hsl-saturation};
+	--primary-lightness: #{$primary-hsl-lightness};
+	--secondary: #{$secondary};
+	--secondary-hue: #{$secondary-hsl-hue};
+	--secondary-saturation: #{$secondary-hsl-saturation};
+	--secondary-lightness: #{$secondary-hsl-lightness};
+}
+
+a {
+	color: var(--primary);
+
+	&:hover {
+		color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 15%));
+	}
+}
+
+.form-control:focus,
+.custom-select:focus,
+.custom-file-input:focus ~ .custom-file-label {
+	border-color: $primary-input-light;
+	box-shadow: 0 0 0 $custom-select-focus-width hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), .25);
+}
+
+.custom-control-input {
+	&:checked ~ .custom-control-label::before {
+		border-color: var(--primary);
+		background-color: var(--primary);
+	}
+
+	&:focus ~ .custom-control-label::before {
+		box-shadow: 0 0 0 $custom-select-focus-width hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), .25);
+	}
+
+	&:focus:not(:checked) ~ .custom-control-label::before {
+		border-color: $primary-input-light;
+	}
+
+	&:not(:disabled):active ~ .custom-control-label::before {
+		$rule: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) + 35%));
+		background-color: $rule;
+		border-color: $rule;
+	}
+}
+
+// @mixin button-variant
+$buttons: ('primary': '--primary');
+@each $class, $var in $buttons {
+	// TODO Replace $var
+	.btn-#{$class} {
+		background-color: var(--primary);
+		border-color: var(--primary);
+
+		&:hover,
+		&:focus {
+			background-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 7.5%));
+			border-color: $primary-button-shade;
+		}
+
+		// Path must equal to @mixin button-variant because rule is more important with :not?
+		&:not(:disabled):not(.disabled):active,
+		&:not(:disabled):not(.disabled).active {
+			background-color: $primary-button-shade;
+			border-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 12.5%));
+		}
+
+		&:focus,
+			// Path must equal to @mixin button-variant because rule is more important with :not?
+		&:not(:disabled):not(.disabled):active:focus,
+		&:not(:disabled):not(.disabled).active:focus {
+			// Not equal to Bootstrap as there is no mix()/color-yiq()
+			box-shadow: 0 0 0 $btn-focus-width hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), .5);
+		}
+
+		&.disabled,
+		&:disabled {
+			background-color: var(--primary);
+			border-color: var(--primary);
+		}
+	}
+}
+
+// @mixin button-outline-variant
+$ouline-buttons: ('primary': '--primary', 'secondary': '--secondary');
+@each $class, $var in $ouline-buttons {
+	.btn-outline-#{$class} {
+		color: var(#{$var});
+		border-color: var(#{$var});
+
+		&:hover {
+			background-color: var(#{$var});
+			border-color: var(#{$var});
+		}
+
+		&:not(:disabled):not(.disabled):active,
+		&:not(:disabled):not(.disabled).active {
+			background-color: var(#{$var});
+			border-color: var(#{$var});
+		}
+
+		&:focus,
+		&:not(:disabled):not(.disabled):active:focus,
+		&:not(:disabled):not(.disabled).active:focus {
+			box-shadow: 0 0 0 $btn-focus-width hsla(var(#{$var}-hue), var(#{$var}-saturation), var(#{$var}-lightness), .5);
+		}
+
+		&.disabled,
+		&:disabled {
+			color: var(#{$var});
+			background-color: transparent;
+		}
+	}
+}

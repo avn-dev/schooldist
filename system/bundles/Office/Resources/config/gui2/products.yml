@@ -1,0 +1,87 @@
+class:
+  wdbasic: Office\Entity\Product
+orderby : 
+  - Office\Gui2\Dialog\ProductDialog
+  - getOrderBy
+id:
+  column: id
+  alias: op
+title: "Produkte"
+description: "Office"
+access: "office_articles"
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - product
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements: 
+        -
+          element: icon_new
+          dialog:
+            - Office\Gui2\Dialog\ProductDialog
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Office\Gui2\Dialog\ProductDialog
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: product
+    description: ""
+    resize: true
+    width: name
+default_columns:
+  -
+    visible: true
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: ""
+    width: user_name
+    resize: false
+    sortable: true
+  -
+    visible: true
+    title: Erstellt
+    format: Ext_Gui2_View_Format_Date_DateTime
+    column: created
+    width: date
+    resize: false
+    sortable: true
+  -
+    visible: true
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    width: user_name
+    resize: false
+    sortable: true
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_Gui2_View_Format_Date_DateTime
+    column: changed
+    width: date
+    resize: false
+    sortable: true

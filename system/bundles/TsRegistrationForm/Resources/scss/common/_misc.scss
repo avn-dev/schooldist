@@ -1,0 +1,37 @@
+@import "../mixins";
+
+.info-icon {
+	position: absolute;
+	//top: 1px;
+	right: 0;
+	cursor: help;
+
+	// Make icon somewhat bigger to make it better tapable
+	@include media-breakpoint-down(sm) {
+		top: 1px;
+		i {
+			font-size: 1.3rem;
+		}
+	}
+}
+.course-filter {
+	@include block-margin;
+
+	.course-filter-categories {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		margin-bottom: $spacer;
+
+		> a {
+			flex-basis: 49%;
+		}
+	}
+}
+
+//// https://github.com/lipis/flag-icon-css
+//.flag-icon {
+//	// Match FA
+//	font-size: 0.8em;
+//}

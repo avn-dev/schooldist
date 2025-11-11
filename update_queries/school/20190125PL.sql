@@ -1,0 +1,3 @@
+INSERT INTO `system_elements` (`id`, `title`, `description`, `element`, `category`, `file`, `version`, `parent`, `image`, `documentation`, `template`, `sql`, `administrable`, `include_backend`, `include_frontend`, `include_mode`, `active`) VALUES (NULL, 'TsActivities', '', 'modul', 'Fidelo', 'tsactivities', '0.010', '', '', '', '', '', '0', '0', '0', '0', '1');
+
+ALTER TABLE `kolumbus_periods` ADD `season_for_activity` TINYINT(4) NOT NULL AFTER `saison_for_insurance`;

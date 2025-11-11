@@ -1,0 +1,141 @@
+hash: 13697d24e578f594a6d5a42b48abe03c
+class:
+  wdbasic: Ext_TC_Frontend_Combination
+  data: Ext_TC_Frontend_Combination_Gui2_Data
+  js: FrontendCombinations
+  icon_status: Ext_TC_Frontend_Combination_Gui2_Icon_Active
+id:
+  column: id
+  alias: tc_fc
+js:
+  - [admin/js/frontend_combinations.js, tc]
+access: core_frontend_combinations
+orderby:
+  - Ext_TC_Frontend_Combination_Gui2_Data
+  - getOrderby
+limit: 50
+multiple_selection: true
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+          - key
+        alias:
+          - tc_fc
+          - tc_fc
+        id: filter_search
+        searchtype: LIKE
+      -
+        element: selectfilter
+        label: Verwendung
+        label_as_item: true
+        column:
+          - usage
+        entries:
+          - Ext_TC_Frontend_Template_Gui2_Data
+          - getSelectOptionsUsageFilter
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Frontend_Combination_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Frontend_Combination_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon
+        label: Aktualisieren
+        task: confirm
+        action: refreshCombinationData
+        confirm_message: Wollen Sie die Daten der Kombination wirklich aktualisieren?
+        img:
+         - Ext_TC_Util
+         - getIcon
+         - refresh
+#      -
+#        element: icon
+#        label: Sofort aktualisieren
+#        task: request
+#        action: refreshCombinationDataRightNow
+#        visible: 0
+#        img:
+#          - Ext_TC_Util
+#          - getIcon
+#          - refresh
+      -
+        element: icon
+        label: Cache löschen
+        task: confirm
+        action: deleteCacheforCombination
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - delete
+      -
+        element: icon
+        label: Verwendungen
+        task: openDialog
+        action: combination_usages
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - search
+        dialog:
+          - Ext_TC_Frontend_Combination_Gui2_Data
+          - getUsagesDialog
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_fc
+    width: name
+    resize: true
+  -
+    title: Schlüssel
+    column: key
+    alias: tc_fc
+    width: 170
+    resize: false
+  -
+    title: ''
+    column: status
+    alias: tc_fc
+    width: icon
+    resize: false
+    format: \Gui2\Format\Status
+    format_params:
+      - ''
+  -
+    title: Letzte Verwendung
+    column: last_use
+    width: date_time
+    resize: false
+    small: true
+    format: Ext_TC_Gui2_Format_Date_Time
+  -
+    title: Letzte Aktualisierung
+    column: last_cache_refresh
+    width: date_time
+    resize: false
+    small: true
+    format: Ext_TC_Gui2_Format_Date_Time
+  -
+    title: Verwendung
+    column: usage
+    width: name
+    resize: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_TC_Frontend_Template_Gui2_Data, getSelectOptionsUsageFilter]

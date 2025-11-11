@@ -1,0 +1,78 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_admin_statisticfields");
+
+/* =============================================== Header ================================================= */
+
+$aOptions = array();
+
+$aOptions['additional'] = '<link rel="stylesheet" href="/admin/extensions/gui2/gui2.css" />';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/assets/ts/css/gui2.css" />';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/assets/ts-reporting/css/reporting_legacy.css" />';
+$aOptions['additional'] .= '<style>html, body { height: 100% !important; }</style>'; // Horizontales scrollen
+
+Admin_Html::loadAdminHeader($aOptions);
+
+/* =============================================== Header ================================================= */
+
+/* =============================================== Daten ================================================= */
+
+$aDisplayTypes	= Ext_Thebing_Management_Statistic::getListTypes(false);
+$iDisplayType	= (int)$_VARS['type'];
+
+if(!array_key_exists($iDisplayType, $aDisplayTypes)){
+	$iDisplayType = 1;
+}
+
+$sDescription	= Ext_Thebing_Management_Statistic_Relation::$sModul;
+$sDisplayTitle	= Ext_TS_System_Navigation::t().' '.$aDisplayTypes[$iDisplayType];
+$oRelations		= new Ext_Thebing_Management_Statistic_Relation();
+$aRelations		= $oRelations->getRelationsByType($iDisplayType);
+
+if(2 == $iDisplayType) {
+	$aHeaderRows = Ext_Thebing_Management_Statistic::getStartWiths();
+} else {
+	//$aHeaderRows			= Ext_Thebing_Management_Statistic::getTypes();
+	$aHeaderRows = $oRelations->getAllTitles();
+
+//	$iStartPos = 1;
+//	foreach($aRelations as $aInfos) {
+//		$i = 1;
+//		foreach($aHeaderRows as $iXDimensionId=>$sXDimensionTitle) {
+//
+//			if($i > $iStartPos) {
+//				$oStatisticRelation = new Ext_Thebing_Management_Statistic_Relation();
+//
+//				$oStatisticRelation->x_id = $iXDimensionId;
+//				$oStatisticRelation->y_id = $aInfos['dimension_y'];
+//				$oStatisticRelation->type = 1;
+//				$oStatisticRelation->save();
+//			}
+//
+//			$i++;
+//		}
+//		$iStartPos++;
+//	}
+
+}
+
+$aTrBuild		 = $aHeaderRows;
+unset($aTrBuild[0]);
+
+/* =============================================== Output ================================================= */
+
+$oSmarty = new SmartyWrapper();
+
+$oSmarty->assign('aHeaderRows', $aHeaderRows);
+$oSmarty->assign('sDisplayTitle', $sDisplayTitle);
+$oSmarty->assign('aTrBuild', $aTrBuild);
+$oSmarty->assign('aRelations', $aRelations);
+$oSmarty->assign('iDisplayType', $iDisplayType);
+
+$oSmarty->display(Ext_Thebing_Management_PageBlock::getTemplatePath() . 'statistic_relation.tpl');
+
+/* =============================================== Output ================================================= */
+
+Admin_Html::loadAdminFooter();

@@ -1,0 +1,138 @@
+class:
+  wdbasic: \TcComplaints\Entity\Category
+  gui: Ext_TC_Gui2
+  data: \TcComplaints\Gui2\Data\Category
+  date_format: Ext_TC_Gui2_Format_Date
+  icon_status: \TcComplaints\Gui2\Icon\Category
+access:
+  - core_marketing_complaints_category
+  -
+id:
+  column: id
+  alias: tc_cc
+only_pagecount: true
+export: false
+sortable: true
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - tc_cc
+          - tc_cc
+        column:
+          - title
+          - short_name
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+      -
+        element: selectfilter
+        label: Bereich
+        label_as_item: true
+        column:
+          - type
+        alias:
+          - tc_cc
+        entries:
+            - \TcComplaints\Gui2\Data\Complaint
+            - getAreas
+            - ''
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TcComplaints\Gui2\Data\Category
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TcComplaints\Gui2\Data\Category
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+      -
+        element: icon_duplicate
+        access: 
+          - core_marketing_complaints_category
+          - copy
+        
+columns:
+  -
+    title: Bezeichnung
+    column: title
+    alias: tc_cc
+    width: name
+    resize: false
+  -
+    title: Abkürzung
+    column: short_name
+    alias: tc_cc
+    width: short_name
+    resize: false
+  -
+    title: Bereich
+    column: type
+    alias: tc_cc
+    format: \TcComplaints\Gui2\Format\DependencyOnFormat
+    width: name
+    resize: false
+  -
+    title: Beschreibung
+    column: description
+    alias: tc_cc
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - description
+      - true
+      - 100
+    width: comment
+    resize: true
+  -
+    title: Deaktiviert ab
+    column: valid_until
+    alias: tc_cc
+    format: \TcComplaints\Gui2\Format\ValidUntil
+    width: date
+    resize: false
+
+default_columns:
+   -
+     title: Ersteller
+     column: creator_id
+     alias: tc_cc
+     width: user_name
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+   -
+     title: Erstellt
+     column: created
+     alias: tc_cc
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+   -
+     title: Bearbeiter
+     column: editor_id
+     alias: tc_cc
+     width: editor_id
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+   -
+     title: Verändert
+     column: changed
+     alias: tc_cc
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true

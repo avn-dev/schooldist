@@ -1,0 +1,183 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+/**
+ * Daten vorbereiten
+ */
+$sSubObjectLabel = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjectLabel');
+
+/**
+ * Gui Objekt
+ */
+$oGui = new Ext_TC_Gui2(md5('core_admin_vat_allocation'), 'Ext_TC_Vat_Gui2_Data');
+
+$oGui->access = array('core_admin_vat_allocate', '');
+
+$oGui->setWDBasic('Ext_TC_Vat_Allocation');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_vra.name' => 'ASC'));
+
+// Listenoptionen
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'tc_vra';
+$oGui->class_js				= 'VatGui';
+
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+
+// Dialog
+$oDialog					= $oGui->createDialog($oGui->t('Zuweisung "{name}" editieren'), $oGui->t('Neue Zuweisung anlegen'));
+$oDialog->height			= 900;
+
+$aSubObjects = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjects', array(true));
+//$aCountries = Ext_TC_Country::getSelectOptions(Ext_TC_System::getInterfaceLanguage());
+$aVatRates = (new Ext_TC_Vat)->getArrayList(true);
+
+$oCountrySelection = \Factory::getObject(Ext_TC_Gui2_Selection_Country::class, ['vat_allocations']);
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Name'), 'input', array(
+	'db_alias' => '',
+	'db_column' => 'name',
+	'required' => 1,
+)));
+
+$oDialog->setElement($oDialog->createRow($sSubObjectLabel, 'select', array(
+	'db_alias' => 'tc_vra',
+	'db_column'=>'objects',
+	'required' => true,
+	'multiple' => 3,
+	'jquery_multiple' => 1,
+	'searchable' => true,
+	'select_options' => $aSubObjects
+)));
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Herkunftsländer'), 'select', array(
+	'db_alias' => 'tc_vra',
+	'db_column'=>'origin_countries',
+	'required' => true,
+	'multiple' => 5,
+	'jquery_multiple' => 1,
+	'searchable' => 1,
+	//'select_options'=> $aCountries
+	'selection' => $oCountrySelection
+)));
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Zielländer'), 'select', array(
+	'db_alias' => 'tc_vrg',
+	'db_column'=>'destination_countries',
+	'required'=> true,
+	'multiple' => 5,
+	'jquery_multiple' => 1,
+	'searchable' => 1,
+	//'select_options'=> $aCountries
+	'selection' => $oCountrySelection
+)));
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Adressat'), 'select', array(
+	'db_alias' => 'tc_vrg',
+	'db_column'=>'address_types',
+	'required' => true,
+	'multiple' => 5,
+	'jquery_multiple' => 1,
+	'searchable' => 1,
+	'select_options' => [
+		'private' => $oGui->t('Privatadresse'),
+		'company' => $oGui->t('Firmenadresse'),
+	]
+)));
+
+$oJoinContainer = $oDialog->createJoinedObjectContainer('groups', array('min' => 1, 'max' => 30));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Vorsteuer'), 'select', array(
+	'db_alias' => 'tc_vrag',
+	'db_column'=>'pre_vat_rate_id',
+	'required' => true,
+	'select_options' => $aVatRates
+)));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Umsatzsteuersatz'), 'select', array(
+	'db_alias' => 'tc_vrag',
+	'db_column'=>'vat_rate_id',
+	'required' => true,
+	'select_options' => $aVatRates
+)));
+
+$oSelectionClass = Ext_TC_Factory::getObject('Ext_TC_Vat_Allocation_Gui2_Selection_Positiontypes');
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Leistungsgruppen'), 'select', array(
+	'db_alias' => 'tc_vrag',
+	'db_column'=>'positiontypes',
+	'required' =>true,
+	'multiple' => 5,
+	'jquery_multiple' => 1,
+	'selection' => $oSelectionClass,
+	'searchable' => true,
+	'dependency' => array(
+		array(
+			'db_alias' => 'tc_vrag',
+			'db_column' => 'positiontypes'
+		)
+	)
+)));
+
+$oDialog->setElement($oJoinContainer);
+
+// Toggle
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+
+// Suche
+
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('id', 'name');
+$oFilter->db_alias			= array('tc_vra', 'tc_vra');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+// Buttons
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+// Paginator
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+$oBar->position				= 'top';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+//Spalten
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_vra';
+$oColumn->title			= $oGui->t('Name');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+$aOptionalInfo			= array();
+$aOptionalInfo['css'][]	= '/admin/extensions/tc/gui2/gui2.css';
+$aOptionalInfo['js'][]	= '/admin/extensions/tc/admin/js/vat.js';
+
+$oGui->display($aOptionalInfo);

@@ -1,0 +1,738 @@
+<?
+
+// Include Main Files
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+// check access rights - die if no rights
+Access_Backend::checkAccess("modules_admin");
+
+DB::addField('sync_options', 'skip_file_ext', 'VARCHAR(255) NOT NULL', 'live_db_password');
+DB::addField('sync_options', 'skip_file_dir', 'VARCHAR(255) NOT NULL', 'skip_file_ext');
+DB::addField('sync_options', 'find_path', 'VARCHAR(255) NOT NULL', 'skip_file_dir');
+DB::addField('sync_options', 'use_sftp', 'TINYINT(1) NOT NULL', 'find_path');
+DB::addField('sync_options', 'use_sftp_pubkey_auth', 'TINYINT(1) NOT NULL', 'use_sftp');
+DB::addField('sync_options', 'sftp_pubkey_path', 'VARCHAR(255) NOT NULL', 'use_sftp_pubkey_auth');
+DB::addField('sync_options', 'sftp_privkey_path', 'VARCHAR(255) NOT NULL', 'sftp_pubkey_path');
+DB::addField('sync_options', 'ssh_port', 'INT( 11 ) NOT NULL DEFAULT \'22\'', 'sftp_privkey_path');
+DB::addField('sync_options', 'ssh_hostkey', 'VARCHAR(255) NOT NULL DEFAULT \'ssh-rsa\'', 'ssh_port');
+
+// Max 1 Stunde laufzeit
+set_time_limit(3600);
+
+ // Global Variables ==================================================================================== //
+ 
+ // 4 readDir function
+$iMaxLength = 89;
+$root = $_SERVER['DOCUMENT_ROOT'];
+$files = array();
+
+ // Task Handle etc. / Backend ============================================================================================ //
+
+// get saved data
+$aSyncOptions = Ext_Sync_Util::getSyncOptions();
+$oSync = new Ext_Sync_Util();
+
+// ================== //
+// Save Options
+// ================== //
+if(isset($_VARS['task']) && $_VARS['task'] == 'sync_options_save') {
+
+	// save time into log
+
+	// save options into db
+	if($_VARS['system_usage'] == 'dev')	{
+
+		// array with options
+		$aSql = array(
+			'active'				=> 1,
+			'sync_usage'			=> 1,
+			'live_ftp_hostname'		=> (string)$_VARS['live_ftp_hostname'],
+			'live_ftp_dirtocms'		=> (string)$_VARS['live_ftp_dirtocms'],
+			'live_ftp_username'		=> (string)$_VARS['live_ftp_username'],
+			'live_ftp_password'		=> (string)$_VARS['live_ftp_password'],
+			'first_sync_date'		=> (string)$_VARS['first_sync_date'],
+			'live_db_hostname'		=> (string)$_VARS['live_db_hostname'],
+			'live_db_dbname'		=> (string)$_VARS['live_db_dbname'],
+			'live_db_username'		=> (string)$_VARS['live_db_username'],
+			'live_db_password'		=> (string)$_VARS['live_db_password'],
+			'skip_file_ext'			=> (string)$_VARS['skip_file_ext'],
+			'skip_file_dir'			=> (string)$_VARS['skip_file_dir'],
+			'find_path'				=> (string)$_VARS['find_path'],
+			'use_sftp'				=> (string)$_VARS['use_sftp'],
+			'use_sftp_pubkey_auth'	=> (string)$_VARS['use_sftp_pubkey_auth'],
+			'sftp_pubkey_path'		=> (string)$_VARS['sftp_pubkey_path'],
+			'sftp_privkey_path'		=> (string)$_VARS['sftp_privkey_path'],
+			'ssh_port'				=> (string)$_VARS['ssh_port'],
+			'ssh_hostkey'			=> (string)$_VARS['ssh_hostkey']
+		);
+
+	} else {
+
+		// array with options
+		$aSql = array(
+			'active'				=> 0,
+			'sync_usage'			=> 0,
+			'live_ftp_hostname'		=> '',
+			'live_ftp_dirtocms'		=> '',
+			'live_ftp_username'		=> '',
+			'live_ftp_password'		=> '',
+			'first_sync_date'		=> date('YmdHis'),
+			'live_db_hostname'		=> '',
+			'live_db_dbname'		=> '',
+			'live_db_username'		=> '',
+			'live_db_password'		=> '',
+			'skip_file_ext'			=> '',
+			'skip_file_dir'			=> '',
+			'find_path'				=> '',
+			'use_sftp'				=> 0,
+			'use_sftp_pubkey_auth'	=> 0,
+			'sftp_pubkey_path'		=> '',
+			'sftp_privkey_path'		=> '',
+			'ssh_port'				=> '',
+			'ssh_hostkey'			=> ''
+		);
+	}
+
+	// first start - no db entry
+	if($aSyncOptions === false) {
+		$aSql['created'] = date('YmdHis');
+		DB::insertData('sync_options', $aSql);
+	} else {
+		DB::updateData('sync_options', $aSql, '`id` = '.$aSyncOptions['id']);
+	}
+
+	$sMessageSaved = L10N::t('erfolgreich gespeichert!');
+
+}
+
+// ================== //
+// Analyse FTP
+// ================== //
+if(isset($_VARS['task']) && $_VARS['task'] == 'sync_ftp_data') {
+	
+	// get date between last sync and now
+	$iLastSyncDate = Ext_Sync_Util::getLastSyncDate();
+
+	// get connection data
+	$aSyncOptions = Ext_Sync_Util::getSyncOptions();
+
+	// get files 
+    // If Backup Modus On than search All File
+    if($_VARS['backup_modus'] == 1) {
+		$iBetweenDays = 600;
+		$iLastSyncDate = 0;
+    } else {
+
+    	if($iLastSyncDate != 0 || $iLastSyncDate != false) {
+            $iBetween = time() - $iLastSyncDate;
+            $iBetweenDays = $iBetween / 86400;
+            $iBetweenDays = ceil($iBetweenDays);
+        } else {
+            $iBetweenDays = 7;
+        }
+
+    }
+
+    $aSkipExt = preg_split("/,/", $aSyncOptions['skip_file_ext'], -1, PREG_SPLIT_NO_EMPTY );
+    $aSkipDir = preg_split("/,/", $aSyncOptions['skip_file_dir'], -1, PREG_SPLIT_NO_EMPTY );
+
+	// get modified files after last backup point 
+	Ext_Sync_Util::readDir($iBetweenDays, $iLastSyncDate, $aSkipExt, $aSkipDir, $aSyncOptions['find_path']);
+
+	// connect to ftp host
+	if($aSyncOptions['live_ftp_hostname'] != "" && $aSyncOptions['live_ftp_hostname'] != "localhost") {
+		$ftp = 1;
+		$bConnect = $oSync->connect();
+
+		if($bConnect == false)
+		{
+			echo '<span color="red;">Fehler beim Verbindungsaufbau...</span><br/>';
+		}
+	}
+	else
+	{
+		$ftp = 0;
+	}
+	
+	// upload file - overwrite
+	if($ftp == 1) {
+		
+		$aSuccessfullySend = array();
+		
+		if(isset($_VARS['output']) && $_VARS['output'] == 1) {
+			$bSyncSuccess = true;
+			$bSaveNot = false;
+			foreach($files as $mKey => $mValue) {
+
+				// Wenn Checkboxen da, aber nicht für Datei angehackt, überspringen
+				if(
+					isset($_VARS['files']) &&
+					array_search($mValue[1], $_VARS['files']) === false 
+				) {
+					$bSaveNot = true;
+					continue;
+				}
+				
+				// Backup Modus save All Files
+                if($_VARS['backup_modus'] != 1){
+                    // unset some files there will not be uploaded
+                    if($mValue[1] == '/system/includes/config.inc.php' || !is_numeric($mValue[0]))
+                    {
+                        continue;
+                    }
+                } else {
+					if(!is_numeric($mValue[0])) {
+                        continue;
+                    }
+                }
+				//prepare path
+				$sFilePath = substr($mValue[1], 1);
+				$files[$mKey] = $mValue;
+								
+				$oSync->checkDir($sFilePath);
+
+				$sLocalFile = \Util::getDocumentRoot().''.$sFilePath;
+				$sTargetFile = $aSyncOptions['live_ftp_dirtocms'].$sFilePath;
+
+				$bSend = $oSync->sendFile($sLocalFile, $sTargetFile);
+				
+				if($bSend == false) {
+					$bSyncSuccess = false;
+					wdmail($user_data['email'], 'DEBUG Sync -> Fehler beim Datei kopieren', print_r($aSyncOptions, 1).print_r($sLocalFile, 1).print_r($_SERVER, 1).print_r($_REQUEST, 1).print_r($rFTP, 1));
+					wdmail($user_data['email'], 'DEBUG Sync -> Fehler...', print_r($files, 1));
+				} else {
+					$aSuccessfullySend[] = $mValue[1];
+				}
+
+			}
+
+		}
+
+		// show updated files
+		Admin_Html::loadAdminHeader();
+		?>
+		
+			<script type="text/javascript">
+				<!--
+					var bCheckAllCheckboxes = false;
+					function toggleCheckboxes()
+					{
+						// get all checkboxes
+						var aCheckboxes = document.getElementsByClassName('checkbox_select');
+						
+						// each all checkboxes
+						$A(aCheckboxes).each(function(oCheckbox){
+							oCheckbox.checked = bCheckAllCheckboxes;
+						});
+						
+						// set checkbox checking
+						if(bCheckAllCheckboxes == true)
+						{
+							bCheckAllCheckboxes = false;
+						}
+						else
+						{
+							bCheckAllCheckboxes = true;
+						}
+					}
+				-->
+			</script>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="sync_ftp_data" />
+			<input type="hidden" name="output" value="1" />
+			<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+				<tr>
+					<td valign="top">
+						<h1><?=L10N::t('Sync')?></h1>
+							<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+								<tr>
+									<th style="width: 30px;"><input type="checkbox" onclick="toggleCheckboxes();" checked="checked" /></th>
+									<th style="width: 120px;"><?=L10N::t('Änderungsdatum')?></th>
+									<th style="width: auto;"><?=L10N::t('Pfad / Dateiname')?></th>
+								</tr>
+						<?
+						if(count($files) != 0)
+						{
+							foreach($files as $mKey => $mValue) {
+								$sTrStyle = '';
+								if(array_search($mValue[1], $aSuccessfullySend) !== false) {
+									$sTrStyle = 'color: green;';	
+								}
+?>
+								<tr style="<?=$sTrStyle?>">
+									<td>
+										<input type="checkbox" class="checkbox_select" name="files[]" value="<?=$mValue[1]?>" checked="checked" />
+									</td>
+									<td>
+										<?=strftime('%x %X',$mValue[0])?>
+									</td>
+									<td>
+										<?=$mValue[1]?>
+									</td>
+								</tr>
+								<?
+							}
+						} else { 
+							?>
+								<tr>
+									<td colspan="3">
+										<?=L10N::t('Keine Dateien zum updaten...')?>
+									</td>
+								</tr>
+							<?
+						}
+						if(isset($_VARS['output']) && $_VARS['output'] == 1) {
+						?>
+						<tr>
+							<td colspan="3">
+							<?
+								if($bSyncSuccess === true) {
+									echo '<span style="color:green;">Update auf das Live System war erfolgreich!</span>';
+								} elseif($bSyncSuccess === false) {
+									echo '<span style="color:red;">Nicht erfolgreich...</span>';
+								}
+						
+							?>
+							</td>
+						</tr>
+						<?
+						}
+						?>
+						</table>
+
+						<p style="text-align: right;">
+							<input type="submit" class="btn" value="<?=L10N::t('Synchronisieren')?>" />
+							<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=sync_ftp_data&output=0'); return false;"><?=L10N::t('Aktualisieren')?></button>
+							<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+						</p>
+
+					</td>
+				</tr>
+			</table>
+			</form>
+		<?
+		if($bSyncSuccess == true) {
+
+			// serialize array
+			$sFiles = serialize($files);
+			
+			// log sync
+			$aSql = array(
+				'created' 	=> date('YmdHis'),
+				'active'	=> 1,
+				'log'		=> 'FTP File Update',
+				'files'		=> $sFiles
+			);
+			
+			// nicht aktiv speichern wenn nicht alle Dateien übertragen wurden
+			if($bSaveNot) {
+				$aSql['active'] = 0;
+			}
+			
+			DB::insertData('sync_logs', $aSql);
+
+		}
+	}
+	
+	if($bConnect == false) {
+		echo '<span style="color:red">Konnte keine FTP-Verbindung mit dem LiveSystem aufbauen...</span>';
+	}
+
+} else if
+// ================== //
+// Analyse DB
+// ================== //
+(isset($_VARS['task']) && $_VARS['task'] == 'sync_db_data')
+{
+	// set Log array 4 output @ end
+	$aLog = array();
+	
+	// get connection data
+	$aSyncOptions = Ext_Sync_Util::getSyncOptions();
+	
+	try {
+		
+		// start plan-i db connection with Live System
+		$oLiveDB = DB::createConnection('LiveSystem', $aSyncOptions['live_db_hostname'], $aSyncOptions['live_db_username'], $aSyncOptions['live_db_password'], $aSyncOptions['live_db_dbname']);
+		
+	} catch (Exception $e) {
+		__out($e);
+		die('Konnte keine Datenbankverbindung aufbauen.');
+	}
+
+	// copy dev version number into live system
+//	$sSql = "
+//		SELECT
+//			`c_value`
+//		FROM
+//			`system_config`
+//		WHERE
+//			`c_key` = 'version'
+//	";
+//	$iVersion = DB::getQueryOne($sSql);
+//	if($iVersion > 5) {
+//
+//		$iVersionLive = $oLiveDB->queryOne($sSql);
+//
+//		if($iVersionLive != false)
+//		{
+//			$aSql = array('c_value' => $iVersion);
+//			$oLiveDB->update('system_config', $aSql, "`c_key` = 'version'");
+//		} else {
+//			$aSql = array(
+//				'c_key'		=> 'version',
+//				'c_value'	=> $iVersion
+//			);
+//			$oLiveDB->insert('system_config', $aSql);
+//		}
+//	}
+
+	// get LIVE db Descriptions
+	$aTables = $oLiveDB->tables();
+	$aTableDescriptionsLIVE = array();
+	foreach($aTables as $mKey => $mValue)
+	{
+		if(strpos($mValue, '_') === 0) {
+			continue;
+		}
+		$sSql = "DESCRIBE `".$mValue."`";
+		$aTableDescriptionsLIVE[$mValue] = $oLiveDB->queryData($sSql);
+	}
+
+	// get DEV db Description
+	$aTables = DB::listTables();
+	$aTableDescriptionsDEV = array();
+	foreach($aTables as $mKey => $mValue)
+	{
+		if(strpos($mValue, '_') === 0) {
+			continue;
+		}
+		$sSql = "DESCRIBE `".$mValue."`";
+		$aTableDescriptionsDEV[$mValue] = DB::getQueryData($sSql);
+	}
+
+	// look in LIVE DB if DEV DB Tables exists
+	foreach($aTableDescriptionsDEV as $sTableName => $aTableCols)
+	{
+		// if table does not exist on LIVE System
+		if(!array_key_exists($sTableName, $aTableDescriptionsLIVE))
+		{
+			// get new table create query
+			$sSql = "SHOW CREATE TABLE `".$sTableName."`";
+			$sTableCreateQuery = DB::getQueryData($sSql);
+			
+			unset($aTableDescriptionsDEV[$sTableName]);
+			
+			// log new created tables
+			$aLog['new_tables_to_live'][$sTableName] = $sTableCreateQuery[0];
+		}
+		else
+		{
+
+			// get LIVE Table create query
+			$sSql = "SHOW CREATE TABLE `".$sTableName."`";
+			$aLIVETableCreateQuery = $oLiveDB->queryData($sSql);
+			$aLIVEExplode = Ext_Sync_Util::prepareString($aLIVETableCreateQuery[0]['Create Table']);
+
+			// get DEV Table create query
+			$aDEVTableCreateQuery = DB::getQueryData($sSql);
+			$aDEVExplode = Ext_Sync_Util::prepareString($aDEVTableCreateQuery[0]['Create Table']);
+			
+			// get difference that is not in live
+			foreach($aDEVExplode as $iRows => $sQueryValues)
+			{
+				if(!in_array($sQueryValues, $aLIVEExplode))
+				{
+					$aLog['difference'][$sTableName]['update_live'][] = $sQueryValues;
+				}
+			}
+			
+			// get difference that is not in dev
+			foreach($aLIVEExplode as $iRows => $sQueryValues)
+			{
+				if(!in_array($sQueryValues, $aDEVExplode))
+				{
+					$aLog['difference'][$sTableName]['update_dev'][] = $sQueryValues;
+				}
+			}
+		}
+	}
+
+?>
+	<?=Admin_Html::loadAdminHeader()?>
+	<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+		<tr>
+			<td valign="top">
+				<h1><?=L10N::t('Sync')?></h1>
+				<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+					<colgroup>
+						<col style="width:50%;">
+						<col style="width:50%;">
+					</colgroup>
+					<tr>
+						<th colspan="2"><?=L10N::t('Log:')?></th>
+					</tr>
+					<tr>
+						<td style="text-align:center;"><?=L10N::t('Test-System')?></td>
+						<td style="text-align:center;"><?=L10N::t('Live-System')?></td>
+					</tr>
+					<?
+						if(isset($aLog['new_tables_to_live']))
+						{
+						?>
+							<tr>
+								<th colspan="2" style="text-align:center;"><?=L10N::t('Fehlende Tabelle(n)')?></th>
+							</tr>
+						<?
+							$i = 0;
+							foreach($aLog['new_tables_to_live'] as $sTableName => $mTableQuery)
+							{
+							?>
+								<tr>
+									<td><div onclick="$('query_<?=$i?>').toggle();" style="background-color:#EEEEEE; cursor:pointer;"><b><?=$sTableName?></b></div><div id="query_<?=$i?>" style="display:none;"><pre><?=$mTableQuery['Create Table']?></pre></div></td>
+									<td>&nbsp;</td>
+								</tr>
+							<?
+							$i++;
+							}
+						}
+						if(isset($aLog['difference']))
+						{
+						?>
+							<tr>
+								<th colspan="2" style="text-align:center;"><?=L10N::t('Verschiedene Struktur')?></th>
+							</tr>
+						<?
+							$i = 0;
+							foreach($aLog['difference'] as $sTableName => $aUpdate)
+							{
+							?>
+								<tr>
+									<td><div onclick="$('diff_test_<?=$i?>').toggle();$('diff_live_<?=$i?>').toggle();" style="background-color:#EEEEEE; cursor:pointer;"><b><?=$sTableName?></b></div><div id="diff_test_<?=$i?>" style="display:none;"><pre>
+<?
+									foreach((array)$aUpdate['update_live'] as $sItem) {
+										echo "ALTER TABLE `".$sTableName."` ADD ".$sItem.";<br/>";
+									}
+?>
+									</pre></div></td>
+									<td><div onclick="$('diff_test_<?=$i?>').toggle();$('diff_live_<?=$i?>').toggle();" style="background-color:#EEEEEE; cursor:pointer;"><b><?=$sTableName?></b></div><div id="diff_live_<?=$i?>" style="display:none;"><pre>
+<?
+									foreach((array)$aUpdate['update_dev'] as $sItem) {
+										echo "ALTER TABLE `".$sTableName."` ADD ".$sItem.";<br/>";
+									}
+?>
+									</pre></div></td>
+								</tr>
+							<?
+							$i++;
+							}
+						}
+					?>
+				</table>
+			</td>
+		</tr>
+	</table>
+<?
+}
+// ================== //
+// Normal Display of Sync - no Task
+// ================== //
+else
+{	
+	
+	// get db entrys / options of sync
+	$aSyncOptions = Ext_Sync_Util::getSyncOptions();
+	
+	// set preselected options
+	if($aSyncOptions['sync_usage'] == 1)
+	{
+		$sPreselect = 'block';
+	} else {
+		$sPreselect = 'none';
+	}
+	
+	// Frontend ============================================================================================ //
+	
+	?>
+	<?=Admin_Html::loadAdminHeader()?>
+	<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+		<tr>
+			<td valign="top">
+				<h1><?=L10N::t('Sync')?></h1>
+				
+				<div id="sync_usage" style="display:<?=$sPreselect?>;margin-bottom:20px;">
+					<table cellpadding="4" cellspacing="0" border="0" width="500px" class="table">
+						<tr>
+							<th colspan="2">
+								<?=L10N::t('Sync:')?>
+							</th>
+						</tr>
+						<tr>
+							<td>
+								<?=L10N::t('FTP: Neue Dateien Synchronisieren')?>
+							</td>
+							<td style="text-align:center;">
+								<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+									<input type="checkbox" name="backup_modus" value="1" /> Backup Modus <br/>
+                                    <input type="checkbox" name="output" value="1" />
+									<input type="hidden" name="task" value="sync_ftp_data" />
+									<input type="submit" class="btn" name="analye_ftp" value="<?=L10N::t('Synchronisieren')?>" />
+								</form>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<?=L10N::t('Datenbank: Struktur Analysieren')?>
+							</td>
+							<td  style="text-align:center;">
+								<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+									<input type="hidden" name="task" value="sync_db_data" />
+									<input type="submit" class="btn" name="analyse_db" value="<?=L10N::t('Analysieren')?>" />
+								</form>
+							</td>
+						</tr>
+					</table>
+				</div>
+	
+				<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+					<input type="hidden" name="task" value="sync_options_save" />
+					
+					<h2><?=L10N::t('Einstellungen:')?></h2>
+					
+					<?=printTableStart()?>
+						<tr>
+							<th>
+								<?=L10N::t('Lokales System:')?>
+							</th>
+							<td>
+								<select class="txt" id="system_usage" name="system_usage" onchange="checkUsage()">
+									<option <?if($aSyncOptions['sync_usage'] == 0){?> selected="selected" <?}?> value="live"><?=L10N::t('Live-System')?></option>
+									<option <?if($aSyncOptions['sync_usage'] == 1){?> selected="selected" <?}?>value="dev"><?=L10N::t('Test-System')?></option>
+								</select>
+							</td>
+						</tr>
+					<?=printTableEnd()?>
+
+					<div id="live" style="display:<?=$sPreselect?>;">
+						<h3><?=L10N::t('FTP Zugangsdaten zum Live-System:')?></h3>
+						<?=printTableStart()?>
+							<?=printFormText(L10N::t('Adresse'), 'live_ftp_hostname', $aSyncOptions['live_ftp_hostname'])?>	
+							<?=printFormCheckbox(L10N::t('SFTP verwenden'), 'use_sftp', 1, (int)$aSyncOptions['use_sftp'], 1, 0, 30, 'onclick="this.form.submit();"')?>
+							<?
+							if($aSyncOptions['use_sftp']) {
+								printFormCheckbox(L10N::t('SSH2 Key Authentifizierung benutzen'), 'use_sftp_pubkey_auth', 1, (int)$aSyncOptions['use_sftp_pubkey_auth'], 1, 0, 30, 'onclick="this.form.submit();"');
+								if($aSyncOptions['use_sftp_pubkey_auth'])
+								{
+									printFormText(L10N::t('SSH Public Key Pfad'), 'sftp_pubkey_path', $aSyncOptions['sftp_pubkey_path']);
+									printFormText(L10N::t('SSH Private Key Pfad'), 'sftp_privkey_path', $aSyncOptions['sftp_privkey_path']);
+								}
+								printFormText(L10N::t('SSH Username'), 'live_ftp_username', $aSyncOptions['live_ftp_username']);
+								printFormText(L10N::t('SSH Password'), 'live_ftp_password', $aSyncOptions['live_ftp_password']);
+								printFormText(L10N::t('SSH Port'), 'ssh_port', $aSyncOptions['ssh_port']);
+								printFormText(L10N::t('SSH Key Type'), 'ssh_hostkey', $aSyncOptions['ssh_hostkey']);
+							}
+							else
+							{
+								printFormText(L10N::t('Username'), 'live_ftp_username', $aSyncOptions['live_ftp_username']);
+								printFormText(L10N::t('Password'), 'live_ftp_password', $aSyncOptions['live_ftp_password']);
+							}
+							?>
+							
+							<tr>
+								<th>
+									<?=L10N::t('Pfad zum CMS: (z.B: /httpdocs/)')?>
+								</th>
+								<td>
+									<input type="text" class="txt" name="live_ftp_dirtocms" value="<?=$aSyncOptions['live_ftp_dirtocms']?>" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									<?=L10N::t('Pfad zum Befehl "find": (optional)')?>
+								</th>
+								<td>
+									<input type="text" class="txt" name="find_path" value="<?=$aSyncOptions['find_path']?>" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									<?=L10N::t('Synchronisationsdatum:')?>
+								</th>
+								<td>
+									<input type="text" class="txt" name="first_sync_date" value="<?=date('Y-m-d H:i:s', Ext_Sync_Util::getLastSyncDate())?>" />
+								</td>
+							</tr>
+						<?=printTableEnd()?>
+
+						<h3><?=L10N::t('Datenbank Zugangsdaten zum Live-System:')?></h3>
+						<?=printTableStart()?>
+							<tr>
+								<th>
+									<?=L10N::t('Adresse:')?>
+								</th>
+								<td>
+									<input type="text" class="txt" name="live_db_hostname" value="<?=$aSyncOptions['live_db_hostname']?>" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									<?=L10N::t('Datenbank Name:')?>
+								</th>
+								<td>
+									<input type="text" class="txt" name="live_db_dbname" value="<?=$aSyncOptions['live_db_dbname']?>" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									<?=L10N::t('Benutzername:')?>
+								</th>
+								<td>
+									<input type="text" class="txt" name="live_db_username" value="<?=$aSyncOptions['live_db_username']?>" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									<?=L10N::t('Passwort:')?>
+								</th>
+								<td>
+									<input type="password" class="txt" name="live_db_password" value="<?=$aSyncOptions['live_db_password']?>" />
+								</td>
+							</tr>
+							<?=printFormText(L10N::t('Dateiendungen die ausgeschlossen werden sollen (kommagetrennt)'), 'skip_file_ext', $aSyncOptions['skip_file_ext'])?>
+							<?=printFormText(L10N::t('Verzeichnisse die ausgeschlossen werden sollen (kommagetrennt)'), 'skip_file_dir', $aSyncOptions['skip_file_dir'])?>
+						<?=printTableEnd()?>
+					</div>
+					<?=printSubmit(L10N::t('Speichern')) ?>
+					
+					<div style="float:right; margin-right:2px; margin-bottom:2px; color:green;">
+						<?
+							if(isset($sMessageSaved))
+							{
+								echo $sMessageSaved;
+							}
+						?>
+					</div>
+					
+				</form>
+			</td>
+		</tr>
+	</table>
+	
+<?	// Javascript ============================================================================================ // ?>
+	
+	<script type="text/javascript">
+		function checkUsage()
+		{
+			$sUsage = $F('system_usage');
+			if($sUsage == 'dev')
+			{
+				$('live').show()
+			} else {
+				$('live').hide()
+			}
+		}
+	</script>
+	
+	<?
+}

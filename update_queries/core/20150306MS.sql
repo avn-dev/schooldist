@@ -1,0 +1,1 @@
+ALTER TABLE  `tc_complaints_histories` CHANGE  `comment_type`  `comment_type` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT  'student_commentary';

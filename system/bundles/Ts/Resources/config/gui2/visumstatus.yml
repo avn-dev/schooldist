@@ -1,0 +1,51 @@
+hash: a5ceec92c7b264fe8c0d2258924bfbce
+class:
+  wdbasic: Ext_Thebing_Visum
+  data: \Ts\Gui2\Data\VisumStatus
+access: thebing_admin_visumstatus
+orderby:
+  - \Ts\Gui2\Data\VisumStatus
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\VisumStatus
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        id: search
+        alias:
+          - kvs
+          - kvs
+          - kvs
+        column:
+          - id
+          - name
+          - numberformat
+        searchtype: LIKE
+        filter_part: having
+  -
+    position: top
+    elements: 
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\VisumStatus
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\VisumStatus
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Name
+    column: name
+    alias: kvs
+    width: name
+    resize: true

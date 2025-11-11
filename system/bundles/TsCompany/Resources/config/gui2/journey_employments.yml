@@ -1,0 +1,283 @@
+class:
+  wdbasic: TsCompany\Entity\JourneyEmployment
+  data: \TsCompany\Gui2\Data\JourneyEmployment
+  row_style: Ext_Thebing_Gui2_Style_Accommodation_Communication_Row
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+  js: StudentlistGui
+description: "Fidelo » Co-Op » Students"
+access:
+  - ts_coop_students
+  -
+encode_data:
+  - inquiry_id
+  - inquiry_journey_course_id
+  - program_service_id
+id:
+  column: inquiry_journey_course_id # HAVING bei encoded Gui
+orderby:
+  - \TsCompany\Gui2\Data\JourneyEmployment
+  - getOrderBy
+where:
+  - \TsCompany\Gui2\Data\JourneyEmployment
+  - getWhere
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - firstname
+          - lastname
+          - number
+          - name
+          - ext_1
+        alias:
+          - tc_c
+          - tc_c
+          - tc_c_n
+          - kg
+          - ts_co
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          alias:
+            - ts_ijc
+          column:
+            - from
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterFrom
+            - true
+        until:
+          alias:
+            - ts_ijc
+          column:
+            - until
+          default:
+            - Ext_Gui2_Factory_Default
+            - getDefaultFilterUntil
+            - true
+        searchtype: contact
+        #based_on:
+        #  service_from:
+        #    alias: ts_ijc
+        #    column: from
+        #    title: Startdatum (Anstellung)
+        #  service_until:
+        #    alias: ts_ijc
+        #    column: until
+        #    title: Enddatum (Anstellung)
+        #  inquiry_created:
+        #    alias: ts_i
+        #    column: created
+        #    title: Erstellt (Buchung)
+      -
+        element: selectfilter
+        label: Anstellung
+        label_as_null_item: true
+        column:
+          - type_id
+        alias:
+          - ts_tcps
+        entries:
+          - \TsCompany\Gui2\Data\JourneyEmployment
+          - getCoursesFilterOptions
+      -
+        element: selectfilter
+        label: Zuweisung
+        label_as_null_item: true
+        column:
+          - status
+        alias:
+          - ts_cjoic
+        entries:
+          - \TsCompany\Gui2\Data\JourneyEmployment
+          - getAllocationFilterOptions
+        filter_query:
+          # TODO schöner lösen
+          requested: " `ts_cjoic_requested`.`status` IS NOT NULL "
+          not_requested: " `ts_cjoic_requested`.`status` IS NULL "
+          allocated: " `ts_cjoic_allocated`.`status` IS NOT NULL "
+          not_allocated: " `ts_cjoic_allocated`.`status` IS NULL "
+      -
+        element: selectfilter
+        label: Gruppen
+        label_as_null_item: true
+        entries:
+          - \Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: " `ts_i`.`group_id` > 0 "
+          no: " `ts_i`.`group_id` = 0 "
+      -
+        element: selectfilter
+        label: Stornierung
+        label_as_null_item: true
+        entries:
+          - \Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: " `ts_i`.`canceled` != 0 "
+          no: " `ts_i`.`canceled` = 0 "
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon
+        label: Details
+        access:
+          - ts_coop_students
+          - show
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - dialog_detail
+        task: openDialog
+        action: edit
+        dialog:
+          - \TsCompany\Gui2\Data\JourneyEmployment
+          - getInquiryDialog
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Buchung
+      -
+        element: legend_info
+        label: Storniert
+        info:
+          color: storno
+          background: true
+columns:
+  -
+    title: Inbox
+    alias: ts_i
+    column: inbox
+    data: inquiry_inbox
+    group: Kundendaten
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_System, getInboxListForSelect, true, false ]
+  -
+    title: Kundennummer
+    alias: tc_c_n
+    column: number
+    data: customer_number
+    group: Kundendaten
+    width: name
+    resize: false
+  -
+    title: Agentur
+    alias: ts_i
+    column: agency_id
+    data: inquiry_agency_id
+    group: Kundendaten
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_AgencyShort
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    alias: ts_i
+    column: group_id
+    data: inquiry_group_name
+    group: Kundendaten
+    width: group_short
+    resize: false
+  -
+    title: Name
+    alias: tc_c
+    column: lastname
+    data: customer_lastname
+    group: Kundendaten
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_CustomerName
+    format_params:
+      - customer_firstname
+      - customer_lastname
+  -
+    title: Geburtsdatum
+    alias: tc_c
+    column: birthday
+    data: customer_birthday
+    group: Kundendaten
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Alter
+    alias: tc_c
+    column: birthday
+    data: customer_age
+    group: Kundendaten
+    width: age
+    resize: false
+    format: Ext_TS_Gui2_Format_Age
+    format_params:
+      - false
+      - customer_birthday
+  -
+    title: Geschlecht
+    alias: tc_c
+    column: gender
+    data: customer_gender
+    group: Kundendaten
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Gender
+  -
+    title: Nationalität
+    alias: tc_c
+    column: nationality
+    data: customer_nationality
+    group: Kundendaten
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Nationality
+  -
+    title: Anstellung
+    alias: ktc
+    column: id
+    data: course_name
+    group: Anstellungsdaten
+    width: name
+    resize: false
+  -
+    title: Von
+    alias: ts_ijc
+    column: from
+    data: from
+    group: Anstellungsdaten
+    width: date
+    resize: false
+    sortable: false # nicht eindeutig da entweder Zeitraum vom course oder vom program_service
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Bis
+    alias: ts_ijc
+    column: until
+    data: until
+    group: Anstellungsdaten
+    width: date
+    resize: false
+    sortable: false # nicht eindeutig da entweder Zeitraum vom course oder vom program_service
+    format: Ext_Thebing_Gui2_Format_Date
+js:
+  - ['gui2/util.js', 'thebing']
+  - ['gui2/payment.js', 'thebing']
+  - ['gui2/studentlists.js', 'thebing']
+css:
+  - /assets/ts/css/gui2.css

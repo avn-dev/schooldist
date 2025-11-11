@@ -1,0 +1,42 @@
+
+		.page-tree {
+			border-right: 1px solid #f4f4f4;
+			overflow: auto;
+		}
+		
+		.cms-page-tree {
+			padding-right: 0;
+		}
+		
+		.cms-page-tree .toolbar {
+			padding: 5px;
+		}
+
+		.cms-page-tree .toolbar .form-group,
+		.cms-page-tree .toolbar select {
+			width: 100%;
+		}
+
+		.cms-page-edit.col-md-10 {
+			padding-left: 0;
+		}
+		
+		.cms-page-tree .page-tree,
+		.cms-page-tree .toolbar,
+		.cms-page-edit iframe {
+			background-color: #ffffff;
+		}
+		
+		.cms-page-edit .nav-tabs-custom {
+			margin-bottom: 0;
+		}
+		
+		.cms-page-tree .treeview .list-group-item {
+			border-radius: 0;
+		}
+		
+		.cms-page-tree .list-group-item,
+		.cms-page-tree .list-group-item a {
+			white-space: nowrap;
+			text-overflow: ellipsis;
+		}

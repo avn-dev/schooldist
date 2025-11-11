@@ -1,0 +1,49 @@
+/* Multiselect ---------------------------------- */
+
+.ui-multiselect { border: solid 1px #CCC; font-size: 0.8em; position: relative;}
+.ui-multiselect ul { -moz-user-select: none; }
+.ui-multiselect li { margin: 0; padding: 0; cursor: default; line-height: 15px; height: 15px; font-size: 10px; list-style: none; }
+.ui-multiselect li a { color: #999; text-decoration: underline; padding: 0; display: block; float: left; cursor: pointer;}
+.ui-multiselect li.ui-draggable-dragging { padding-left: 10px; }
+
+.ui-multiselect div.selected { position: relative; padding: 0; margin: 0; border: 0; float:right; width:50%; }
+.ui-multiselect ul.selected { position: relative; padding: 0; overflow: auto; overflow-x: hidden; background: #fff; margin: 0; list-style: none; border: 0; position: relative; width: 100%; }
+.ui-multiselect ul.selected li { padding-left:4px; overflow:hidden; }
+.ui-multiselect ul.selected.ui-sortable li { padding-left:15px !important; }
+
+.ui-multiselect div.available { position: relative; padding: 0; margin: 0; border: 0; float:left; width:50%; }
+.ui-multiselect ul.available { position: relative; padding: 0; overflow: auto; overflow-x: hidden; background: #fff; margin: 0; list-style: none; border: 0; width: 100%; border-right: 1px solid #CCC; }
+.ui-multiselect ul.available li { padding-left: 4px; overflow:hidden; }
+
+.ui-multiselect div.available .actions { border-right: 1px solid #CCC; width:100%; }
+
+.ui-multiselect .ui-state-default { border: none; margin-bottom: 1px; position: relative; padding-left: 20px;}
+.ui-multiselect .ui-state-hover { border: none; }
+.ui-multiselect .ui-widget-header {border: none; font-size: 11px; margin-bottom: 1px;}
+
+.ui-multiselect .available .li-text { float:left; }
+
+.ui-multiselect .add-all { float: right; padding: 2px 4px;}
+.ui-multiselect .remove-all { float: right; padding: 2px 4px;}
+.ui-multiselect .search { float: left; }
+.ui-multiselect .count { float: left; padding: 2px 4px;}
+
+.ui-multiselect li span.ui-icon-arrowthick-2-n-s { position: absolute; left: 1px; }
+.ui-multiselect li a.action { 
+	position: absolute; 
+	right: -1px;
+	top: -2px;
+}
+
+.ui-multiselect input.search { margin: 0 4px; width: 150px; float:left; font-size: 10px; }
+
+.ui-multiselect.readonly {
+	border-style: dotted !important;
+	opacity: 0.6;
+}
+
+.ui-multiselect.readonly a,
+.ui-multiselect.readonly .ui-widget-header > .search {
+	visibility: hidden;
+}
+

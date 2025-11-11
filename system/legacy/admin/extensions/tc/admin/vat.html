@@ -1,0 +1,303 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+/**
+ * Daten vorbereiten
+ */
+$sDataClass = Ext_TC_Factory::getClassName('Ext_TC_Vat_Gui2_Data');
+
+/**
+ * Gui Objekt
+ */
+$oGui = new Ext_TC_Gui2(md5('core_admin_vat'), $sDataClass);
+
+$oGui->access = array('core_admin_vat', '');
+
+$oGui->setWDBasic('Ext_TC_Vat');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_vr.name' => 'ASC'));
+
+// Listenoptionen
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'tc_vr';
+$oGui->class_js				= 'VatGui';
+$oGui->include_jquery_multiselect = 1;
+$oGui->include_jquery		= 1;
+
+$aCountries = Ext_TC_Country::getSelectOptions(Ext_TC_System::getInterfaceLanguage());
+$aCountriesFilter = Ext_Gui2_Util::addLabelItem($aCountries, $oGui->t('Land'));
+$aCountries = Ext_TC_Util::addEmptyItem($aCountries);
+
+$aTranslationLanguages = Ext_TC_Factory::executeStatic('Ext_TC_Util', 'getTranslationLanguages');
+
+// Dialog
+$oDialog					= $oGui->createDialog($oGui->t('Umsatzsteuersatz "{name}" editieren'), $oGui->t('Neuen Umsatzsteuersatz anlegen'));
+$oDialog->height			= 600;
+
+$oDialog->save_as_new_button		= true;
+$oDialog->save_bar_options			= true;
+$oDialog->save_bar_default_option	= 'new';
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Name'), 
+		'input', 
+		array(
+			'db_alias'			=> '',
+			'db_column'			=> 'name',
+			'required'			=> 1,
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Schlüssel'),
+		'input', 
+		array(
+			'db_alias'			=> '',
+			'db_column'			=> 'short',
+			'required'			=> 1,
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Land'),
+		'select',
+		array(
+			'db_alias'			=> '',
+			'db_column'			=> 'country',
+			'required'			=> 1,
+			'select_options'	=> $aCountries
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Kostenstelle'),
+		'input',
+		[
+			'db_column'	=> 'cost_center',
+			'db_alias' => '',
+		]
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createI18NRow(
+		$oGui->t('Hinweis'),
+		[
+			'type' => 'textarea',
+			'db_alias' => 'tc_vr_i18n',
+			'db_column'=> 'note',
+			'i18n_parent_column' => 'vat_rate_id',
+		],
+		$aTranslationLanguages
+	)
+);
+
+$oAllocateDialog = $oGui->createDialog($oGui->t('Umsatzsteuersätze zuweisen'), $oGui->t('Umsatzsteuersätze zuweisen'));
+$oAllocateDialog->width		= 950;
+$oAllocateDialog->height	= 800;
+
+// Toggle
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+
+// Suche
+
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('id', 'name');
+$oFilter->db_alias			= array('tc_vr', 'tc_vr');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+$oFilter					= $oBar->createFilter('select');
+$oFilter->db_column			= array('country');
+$oFilter->db_alias			= array('tc_vr');
+$oFilter->id				= 'filter_country';
+$oFilter->select_options	= $aCountriesFilter;
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+// Buttons
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+// Paginator
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+$oBar->position				= 'top';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+
+Ext_TC_Factory::executeStatic($sDataClass, 'setAdditionalBarData', array(&$oGui, &$oBar));
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+//Spalten
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_vr';
+$oColumn->title			= $oGui->t('Name');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'country';
+$oColumn->db_alias		= 'tc_vr';
+$oColumn->title			= $oGui->t('Land');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->format		= new Ext_Gui2_View_Format_Selection($aCountries);
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+/********* LISTE 2***********/
+
+$oGuiReference = new Ext_TC_Gui2(md5('core_admin_vat_values'), 'Ext_TC_Vat_Gui2_Data');
+$oGuiReference->gui_description = $oGui->gui_description;
+$oGuiReference->access = array('core_admin_vat', 'admin');
+
+$oGuiReference->setWDBasic('Ext_TC_Vat_Value');
+$oGuiReference->setTableData('limit', 30);
+$oGuiReference->setTableData('orderby', array('tc_vrv.valid_from' => 'DESC'));
+
+// Listenoptionen
+$oGuiReference->gui_title			= $oGuiReference->t('Werte');
+$oGuiReference->column_sortable		= 1;
+$oGuiReference->row_sortable		= 0;
+$oGuiReference->multiple_selection	= 0;
+$oGuiReference->query_id_column		= 'id';
+$oGuiReference->query_id_alias		= 'tc_vrv';
+$oGuiReference->row_icon_status_active = new Ext_TC_Validity_Gui2_Icon();
+
+// Dialog
+$oDialogReference			= $oGuiReference->createDialog($oGuiReference->t('Wert editieren'), $oGuiReference->t('Neuen Wert anlegen'));
+$oDialogReference->width	= 900;
+$oDialogReference->height	= 600;
+
+$oDialogReference->save_as_new_button		= true;
+$oDialogReference->save_bar_options			= true;
+$oDialogReference->save_bar_default_option	= 'new';
+
+$oDialogReference->setElement($oDialogReference->createRow($oGuiReference->t('Prozentwert'), 'input', array(
+		'db_alias'			=> 'tc_vrv',
+		'db_column'			=> 'rate',
+		'required'			=> 1,
+		'format'			=> new Ext_TC_Gui2_Format_Float(3),
+		'class'				=> 'w50',
+		'input_div_addon'	=> ' %'
+)));
+
+$oDialogReference->setElement($oDialogReference->createRow($oGuiReference->t('Gültig ab'), 'calendar', array(
+		'db_alias'			=> 'validity',
+		'db_column'			=> 'valid_from',
+		'required'			=> 0,
+		'format'			=> Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date'),
+)));
+
+$oDialogReference->setElement($oDialogReference->createRow($oGuiReference->t('Gültig bis'), 'calendar', array(
+		'db_alias'			=> 'validity',
+		'db_column'			=> 'valid_until',
+		'required'			=> 0,
+		'format'			=> Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date'),
+)));
+
+// Toggle
+$oBar						= $oGuiReference->createBar();
+$oBar->width				= '100%';
+
+// Suche
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('rate');
+$oFilter->db_alias			= array('tc_vrv');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGuiReference->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGuiReference->setBar($oBar);
+
+// Buttons
+$oBar			= $oGuiReference->createBar();
+$oBar->width	= '100%';
+$oIcon			= $oBar->createNewIcon($oGuiReference->t('Neuer Eintrag'), $oDialogReference, $oGuiReference->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGuiReference->t('Editieren'), $oDialogReference, $oGuiReference->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGuiReference->t('Löschen'), $oGuiReference->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGuiReference->setBar($oBar);
+
+// Paginator
+$oBar						= $oGuiReference->createBar();
+$oBar->width				= '100%';
+$oBar->position				= 'top';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading					= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiReference->setBar($oBar);
+
+//Spalten
+$oColumn				= $oGuiReference->createColumn();
+$oColumn->db_column		= 'rate';
+$oColumn->db_alias		= 'tc_vrv';
+$oColumn->title			= $oGuiReference->t('Steuersatz');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('short_name');
+$oColumn->width_resize	= true;
+$oColumn->format		= new Ext_TC_Gui2_Format_Percent(3);
+$oGuiReference->setColumn($oColumn);
+
+$oColumn				= $oGuiReference->createColumn();
+$oColumn->db_column		= 'valid_from';
+$oColumn->db_alias		= 'tc_vrv';
+$oColumn->title			= $oGuiReference->t('Gültig ab');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('date');
+$oColumn->width_resize	= false;
+$oColumn->format		= Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGuiReference->setColumn($oColumn);
+
+$oColumn				= $oGuiReference->createColumn();
+$oColumn->db_column		= 'valid_until';
+$oColumn->db_alias		= 'tc_vrv';
+$oColumn->title			= $oGuiReference->t('Gültig bis');
+$oColumn->width			= Ext_TC_Util::getTableColumnWidth('date');
+$oColumn->width_resize	= false;
+$oColumn->format		= Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGuiReference->setColumn($oColumn);
+
+$oGuiReference->addDefaultColumns();
+
+$aOptionalInfo			= array();
+$aOptionalInfo['css'][]	= '/admin/extensions/tc/gui2/gui2.css';
+$aOptionalInfo['js'][]	= '/admin/extensions/tc/admin/js/vat.js';
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiReference, array('hash' => $oGui->hash, 'foreign_key' => 'rate_id', 'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display($aOptionalInfo);

@@ -1,0 +1,1 @@
+INSERT INTO `kolumbus_currency` (`id`, `name`, `iso4217`, `iso4217_num`, `sign`, `changed`, `created`) VALUES ('39', 'Moroccan Dirham', 'MAD', '504', 'Dh', current_timestamp(), '0000-00-00 00:00:00.000000');

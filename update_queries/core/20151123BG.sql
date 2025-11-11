@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questionaries_processes` CHANGE `assigned_to` `assigned_to` INT(11) UNSIGNED NOT NULL DEFAULT '0';

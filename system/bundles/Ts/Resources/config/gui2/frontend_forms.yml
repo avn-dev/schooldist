@@ -1,0 +1,96 @@
+hash: c2d38142df6ad05768da45ab00876b50
+class:
+  wdbasic: Ext_Thebing_Form
+  data: Ext_Thebing_Form_Gui2
+  js: FormGui
+access: thebing_admin_registration_form
+js:
+  - [admin/js/form.js, thebing]
+css: 
+  - [admin/css/form.css ,thebing]
+id:
+  column: id
+  alias: kf
+orderby:
+  - Ext_Thebing_Form_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Form_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        id: search
+        column:
+          - title
+        alias:
+          - kf  
+        searchtype: LIKE 
+  -
+    position: top
+    elements: 
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Form_Gui2
+          - getDialog 
+     -       
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Form_Gui2
+          - getDialog 
+     -
+        element: icon_delete
+     -
+        element: icon_duplicate
+     -
+        element: labelgroup
+        label: Code
+columns:
+  - 
+    title: ID
+    column: id
+    alias: kf
+    width: id
+    resize: false
+  - 
+    title: Art	
+    column: type
+    alias: kf
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Form_Gui2, getFormTypes]
+  - 
+    title: Name	
+    column: title
+    alias: kf
+    width: name
+    resize: true
+  - 
+    title: Schulen	
+    column: schools
+    width: name
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Client, getSchoolList, true, 0, false, true]
+  - 
+    title: Sprachen
+    alias: languages
+    column: language
+    data: languages
+    width: language
+    format: Ext_TC_Gui2_Format_Language_Image
+    format_params: '{|}'
+  -
+    title: Kombinationen	
+    column: combinations
+    width: comment
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - "combinations"
+      - true
+      - 20

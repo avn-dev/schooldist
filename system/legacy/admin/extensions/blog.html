@@ -1,0 +1,137 @@
+<?php
+
+// =============== Header ===============
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+
+include_once(\Util::getDocumentRoot()."system/includes/class.pagetemplate.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+
+
+
+if(
+	isset($_VARS['page_id']) &&
+	isset($_VARS['element_id']) &&
+	isset($_VARS['content_id'])
+) {
+	
+	if($_VARS['action'] == "config") {
+		$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$oConfig->blog_id = $_VARS['blog_id'];
+		$oConfig->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$objPage = new GUI_Page();
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Blogs', 'type' => '1')));
+
+	$oBlog = new Ext_Blog_Blog(-1);
+	$aBlogsList = $oBlog->getBlogsList();
+
+	$oForm = new GUI_form(array('method' => 'post', 'action' => $_SERVER['PHP_SELF']));
+	$oButton = new GUI_FormSubmit(array('value' => 'Blog wählen'));
+	$oH_Action = new GUI_FormHidden(array('name' => 'action', 'value' => 'config'));
+	$oH_Page = new GUI_FormHidden(array('name' => 'page_id', 'value' => $_VARS['page_id']));
+	$oH_Element = new GUI_FormHidden(array('name' => 'element_id', 'value' => $_VARS['element_id']));
+	$oH_Content = new GUI_FormHidden(array('name' => 'content_id', 'value' => $_VARS['content_id']));
+	
+	$aOptions = array();
+	foreach($aBlogsList as $aBlog)
+	{
+		$aOptions[] = array('display' => $aBlog['title'], 'value' => $aBlog['id']);
+	}
+	$oSelect = new GUI_FormSelect(array('name' => 'blog_id', 'options' => $aOptions, 'selected'=>$oConfig->blog_id));
+
+	$oForm->appendElement($oSelect);
+	$oForm->appendElement(' ');
+	$oForm->appendElement($oButton);
+	$oForm->appendElement($oH_Action);
+	$oForm->appendElement($oH_Page);
+	$oForm->appendElement($oH_Element);
+	$oForm->appendElement($oH_Content);
+
+	$objPage->appendElement($oForm);
+	echo $objPage->generateHTML();
+
+} else {
+
+	if(isset($_VARS['action']) && $_VARS['action'] == 'delete')
+	{
+		$oBlog = new Ext_Blog_Blog($_VARS['blog_id']);
+		$oBlog->deleteBlog();
+	}
+	
+	
+	$objPage = new GUI_Page();
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Blog', 'type' => '1')));
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Vorhandene Blogs', 'type' => '2')));
+	
+	// Available blogs
+	$oBlog = new Ext_Blog_Blog(-1);
+	$aBlogsList = $oBlog->getBlogsList();
+	
+	$aTable = array(
+				'showth'	=> false,
+				'cols'		=> array(
+									array('text' => '', 'style' => 'width: 95%;'),
+									array('text' => '', 'style' => 'width: 5%;')
+								)
+			);
+	$oTable = new GUI_Table($aTable);
+	
+	$oTable->appendRow(array(
+						'cols' => array(
+									array(
+										'forceTh' => true,
+										'text' => 'Blogname'
+									),
+									array(
+										'forceTh' => true,
+										'text' => 'Bearbeiten'
+									)
+								)
+							)
+						);
+	
+	foreach($aBlogsList as $aBlog)
+	{
+		$oLink			= new GUI_Link(array('url'	=> 'blog/entries.html?blog_id='.$aBlog['id'], 'text' => $aBlog['title']));
+		$oImgDelete		= new GUI_Image(array('url'	=> '/admin/media/delete.png'));
+		$oImgEdit		= new GUI_Image(array('url'	=> '/admin/media/edit.png'));
+		$oLinkEdit		= new GUI_Link(array('url'	=> 'blog/edit_blog.html?blog_id='.$aBlog['id'], 'text' => $oImgEdit ));
+		$oLinkDelete	= new GUI_Link(array('url'	=> '?action=delete&blog_id='.$aBlog['id'], 'text' => $oImgDelete ));
+		$oImgList		= new GUI_ElementList();
+	
+		$oImgList->appendElement($oLinkEdit);
+		$oImgList->appendElement(' ');
+		$oImgList->appendElement($oLinkDelete);
+	
+		$oTable->appendRow(array(
+							'cols' => array(
+										array(
+											'forceTh' => false,
+											'text' => $oLink
+										),
+										array(
+											'forceTh' => false,
+											'text' => $oImgList,
+											'style' => 'text-align:center;'
+										)
+									)
+								)
+							);
+	}
+	$objPage->appendElement($oTable);
+	
+	// "Add a new blog" button
+	$oForm = new GUI_form(array('method' => 'post', 'action' => 'blog/edit_blog.html'));
+	$oButton = new GUI_FormSubmit(array('value' => 'Blog hinzufügen', 'style' => 'float:right;'));
+	$oForm->appendElement($oButton);
+	
+	$objPage->appendElement($oForm);
+	echo $objPage->generateHTML();
+}
+
+?>

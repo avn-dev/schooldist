@@ -1,0 +1,36 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+/**
+ * Switch
+ */
+if(isset($_VARS['view']) && $_VARS['view'] == 'edit') {
+	$sFile	= 'ts_attendance_edit';
+	$sSet	= 'edit';
+} else {
+	$sFile	= 'ts_attendance';
+	$sSet	= 'list';
+}
+
+$oFactory				= new Ext_Gui2_Factory($sFile);
+$oGuiAttendance			= $oFactory->createGui($sSet); /** @var Ext_Thebing_Gui2 $oGuiAttendance */
+
+// additional documents
+$oInquiryAdditionalDocuments = new Ext_Thebing_Inquiry_Document_Additional();
+$oInquiryAdditionalDocuments->add_label_group		= false;
+$oRowIconActive										= new Ext_TS_Tuition_Attendance_Gui2_Icon_Active('inquiry_id');
+$oInquiryAdditionalDocuments->icon_status_active	= $oRowIconActive;
+$oInquiryAdditionalDocuments->class_js				= 'Attendance';
+$oInquiryAdditionalDocuments->filter_label_mode		= 'inner';
+$oInquiryAdditionalDocuments->use_template_type		= 'document_attendance';
+$oInquiryAdditionalDocuments->access_document_edit	= 'thebing_tuition_attendance_documents';
+$oInquiryAdditionalDocuments->access_document_open	= 'thebing_tuition_attendance_display_documents';
+$oInquiryAdditionalDocuments->data_class = 'Ext_Thebing_Tuition_Attendance_Document_Gui2_Data';
+
+$oGuiAttendance->addAdditionalDocumentsOptions($oInquiryAdditionalDocuments);
+
+$oGuiAttendance->setOption('decode_inquiry_id_additional_documents', 'inquiry_id');
+$oGuiAttendance->setOption('selected_object_from_encoded_data', 'attendance');
+
+$oGuiAttendance->display();

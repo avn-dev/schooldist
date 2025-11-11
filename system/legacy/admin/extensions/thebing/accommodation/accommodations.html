@@ -1,0 +1,1654 @@
+<?php
+
+require_once(Util::getDocumentRoot() . "system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_accommodation_accommodations");
+
+$oGuiAccommodation = new Ext_Thebing_Gui2(md5('thebing_accommodation'), 'Ext_Thebing_Accommodation_Gui2');
+$oGuiAccommodation->sSection = 'accommodation_providers';
+$oGuiAccommodation->column_sortable = 1;
+$oGuiAccommodation->row_sortable = 0;
+$oGuiAccommodation->row_sortable_alias = 'customer_db_4';
+$oGuiAccommodation->multiple_selection = 1; // Darf bei sortierbaren Child-GUIs (Räume) nicht aktiviert werden!
+$oGuiAccommodation->query_id_column = 'id';
+$oGuiAccommodation->query_id_alias = 'customer_db_4';
+$oGuiAccommodation->class_js = 'AccommodationGui';
+$oGuiAccommodation->include_jquery = true;
+$sDefaultLang = Ext_Thebing_Util::getInterfaceLanguage();
+$oGuiAccommodation->include_jquery_multiselect = true;
+$oGuiAccommodation->row_style = new \Ts\Gui2\AccommodationProvider\RowStyle();
+$oGuiAccommodation->row_icon_status_active = new Ts\Gui2\AccommodationProvider\IconActive;//new \TsComplaints\Gui2\Icon\Complaint(false); // Hier gibt es keine Inbox!
+$oGuiAccommodation->setWDBasic('Ext_Thebing_Accommodation');
+$oGuiAccommodation->setTableData('limit', 30);
+$oGuiAccommodation->setTableData('orderby', ['customer_db_4.ext_33' => 'ASC']);
+$oGuiAccommodation->setTableData('groupby', 'customer_db_4.id');
+$aSchools = Ext_Thebing_Client::getSchoolList(true);
+$aSalutations = Ext_TC_Util::getPersonTitles();
+$aLanguages = Ext_Thebing_Data::getSystemLanguages();
+$sDefaultLang = Ext_Thebing_Util::getInterfaceLanguage();
+$aDescriptionLanguages = Ext_TC_Util::getTranslationLanguages();
+$aRoomtypes = Ext_Thebing_Accommodation_Roomtype::getList(true, $sDefaultLang);
+$aAccommodationCategories = Ext_Thebing_Accommodation_Category::getList(true, $sDefaultLang);
+
+$aFilterSchools = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Client::getStaticSchoolListByAccess(), $oGuiAccommodation->t('Schule'));
+$iSelectedSchoolId = 0;
+$aFilterCategories = [];
+$aFilterRoomtypes = [];
+$aFilterMeals = [];
+if (Ext_Thebing_System::isAllSchools()) {
+	$aFilterCategories = Ext_Thebing_Accommodation_Category::getList(true, $sDefaultLang);
+	$aFilterRoomtypes = Ext_Thebing_Accommodation_Roomtype::getList(true, $sDefaultLang);
+	$aFilterMeals = Ext_Thebing_Accommodation_Meal::getList(true, $sDefaultLang);
+} else {
+	$iSelectedSchoolId = Ext_Thebing_School::getSchoolFromSession()->getId();
+	$aFilterCategories = Ext_Thebing_Accommodation_Category::getListForSchools([$iSelectedSchoolId], true, $sDefaultLang, true);
+	$aFilterRoomtypes = Ext_Thebing_Accommodation_Roomtype::getListForSchools([$iSelectedSchoolId], true, $sDefaultLang, true);
+	$aFilterMeals = Ext_Thebing_Accommodation_Meal::getListForSchools([$iSelectedSchoolId], true, $sDefaultLang, true);
+}
+$aFilterCategories = Ext_Gui2_Util::addLabelItem($aFilterCategories, $oGuiAccommodation->t('Kategorie'));
+$aFilterRoomtypes = Ext_Gui2_Util::addLabelItem($aFilterRoomtypes, $oGuiAccommodation->t('Raumart'));
+$aFilterMeals = Ext_Gui2_Util::addLabelItem($aFilterMeals, $oGuiAccommodation->t('Verpflegung'));
+
+$oSubject = Ext_Thebing_Marketing_Subject::getInstance();
+$aSubjects = $oSubject->getList(0, true);
+
+$oActivity = Ext_Thebing_Marketing_Activity::getInstance();
+$aActivities = $oActivity->getList(0, true);
+
+// Dialog
+$oDialog = $oGuiAccommodation->createDialog(
+	$oGuiAccommodation->t('Unterkunft "{ext_33}" bearbeiten'),
+	$oGuiAccommodation->t('Neue Unterkunft')
+);
+$oDialog->bSmallLabels = true;
+
+$oTab = $oDialog->createTab(
+	$oGuiAccommodation->t('Details')
+);
+$oTab->aOptions = [
+	'access' => '',
+	'section' => 'accommodation_providers_general',
+];
+
+// Referenzen definieren damit die Spezial Rows klappen
+Ext_Thebing_Accommodation_Gui2::$oDialog = $oDialog;
+Ext_Thebing_Accommodation_Gui2::$oTab = $oTab;
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(
+	$oGuiAccommodation->t('Unterkunft')
+);
+$oTab->setElement($oH3);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGuiAccommodation->t('Schulen'),
+		'select',
+		[
+			'db_alias' => '',
+			'db_column' => 'schools',
+			'multiple' => 5,
+			'select_options' => $aSchools,
+			'jquery_multiple' => 1,
+			'searchable' => 1,
+			'required' => 1,
+		]
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGuiAccommodation->t('Kategorien'),
+		'select',
+		[
+			'db_alias' => '',
+			'db_column' => 'accommodation_categories',
+			'select_options' => [],
+			'selection' => new Ext_Thebing_Gui2_Selection_School_AccommodationCategory($sDefaultLang, true),
+			'multiple' => 3,
+			'jquery_multiple' => 1,
+			'searchable' => 1,
+			'required' => 1,
+			'dependency' => [
+				[
+					'db_alias' => '',
+					'db_column' => 'schools',
+				],
+			],
+			'events' => [
+				[
+					'function' => 'toggleMatchingInfo',
+					'event' => 'change',
+				],
+			],
+		]
+	)
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGuiAccommodation->t('Standardkategorie'),
+		'select',
+		[
+			'db_alias' => '',
+			'db_column' => 'default_category_id',
+			'select_options' => [],
+			'selection' => new Ext_Gui2_View_Selection_Dependency('accommodation_categories', $aAccommodationCategories),
+			'required' => 1,
+			'dependency' => [
+				[
+					'db_alias' => '',
+					'db_column' => 'accommodation_categories',
+				],
+			],
+		]
+	)
+);
+
+Ext_Thebing_Accommodation_Gui2::createRow(
+	$oGuiAccommodation->t('Name'),
+	'input',
+	[
+		'db_alias' => '',
+		'db_column' => 'ext_33',
+		'required' => 1,
+	]
+);
+
+$oTab->setElement(
+	$oDialog->createRow(
+		$oGuiAccommodation->t('Verpflegungen'),
+		'select',
+		[
+			'db_alias' => 'ts_aptam',
+			'db_column' => 'meals',
+			'select_options' => [],
+			'selection' => new Ext_Thebing_Gui2_Selection_School_AccommodationMeal(),
+			'multiple' => 3,
+			'jquery_multiple' => 1,
+			'searchable' => 1,
+			'required' => 1,
+			'dependency' => [
+				[
+					'db_alias' => '',
+					'db_column' => 'schools',
+				],
+			],
+		]
+	)
+);
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Adresse', $oGuiAccommodation->gui_description));
+$oTab->setElement($oH3);
+
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Adresse', $oGuiAccommodation->gui_description), 'input', [
+	'db_alias' => '',
+	'db_column' => 'ext_63'
+], 'ext_80');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Adresszusatz', $oGuiAccommodation->gui_description), 'input', [
+	'db_alias' => '',
+	'db_column' => 'address_addon'
+]);
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('PLZ', $oGuiAccommodation->gui_description), 'input', [
+	'db_alias' => '',
+	'db_column' => 'ext_64'
+], 'ext_81');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Stadt', $oGuiAccommodation->gui_description), 'input', [
+	'db_alias' => '',
+	'db_column' => 'ext_65'
+], 'ext_82');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Bundesland', $oGuiAccommodation->gui_description), 'input', [
+	'db_alias' => '',
+	'db_column' => 'ext_99'
+], 'ext_100');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Land', $oGuiAccommodation->gui_description), 'input', [
+	'db_alias' => '',
+	'db_column' => 'ext_66',
+], 'ext_83', new Ext_Thebing_Gui2_Format_Country());
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Kontaktdaten', $oGuiAccommodation->gui_description));
+$oTab->setElement($oH3);
+
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Anrede', $oGuiAccommodation->gui_description), 'select', array('db_alias' => '', 'select_options' => $aSalutations, 'db_column' => 'ext_105'));
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Vorname', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_103'), 'ext_106');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Nachname', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_104'), 'ext_107');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Telefon', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_67'), 'ext_84');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Telefon 2', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_76'), 'ext_85');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Fax', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_101'), 'ext_102');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Handy', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_77'), 'ext_86');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Skype', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_78'), 'ext_88');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('E-Mail', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'email'), 'ext_87');
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Sonstiges', $oGuiAccommodation->gui_description));
+$oTab->setElement($oH3);
+
+$oTab->setElement($oDialog->createRow($oGuiAccommodation->t('Sozialversicherungsnummer'), 'input', array('db_alias' => '', 'db_column'=>'socialsecuritynumber')));
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Kommentar', $oGuiAccommodation->gui_description), 'textarea', array('db_alias' => '', 'db_column' => 'ext_34'));
+$oTab->setElement($oDialog->createRow(L10N::t('Biete Anreise an', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'transfer_arrival')));
+$oTab->setElement($oDialog->createRow(L10N::t('Biete Abreise an', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'transfer_departure')));
+
+$oDialog->setElement($oTab);
+
+// Beschreibungs Tab
+$oTab = $oDialog->createTab(L10N::t('Beschreibung', $oGuiAccommodation->gui_description));
+$oTab->aOptions = array(
+	'access' => '',
+	'section' => 'accommodation_providers_info'
+);
+Ext_Thebing_Accommodation_Gui2::$oTab = $oTab;
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Familienbeschreibung', $oGuiAccommodation->gui_description));
+$oTab->setElement($oH3);
+
+foreach ((array)$aLanguages as $sLang => $sLanguage) {
+	Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Text', $oGuiAccommodation->gui_description) . ' (' . $sLanguage . ')', 'html', array('db_alias' => '', 'db_column' => 'family_description_' . $sLang), 'portal_family_description_' . $sLang);
+}
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Wegbeschreibung', $oGuiAccommodation->gui_description));
+$oTab->setElement($oH3);
+
+foreach ((array)$aLanguages as $sLang => $sLanguage) {
+	Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Text', $oGuiAccommodation->gui_description) . ' (' . $sLanguage . ')', 'html', array('db_alias' => '', 'db_column' => 'way_description_' . $sLang), 'portal_way_description_' . $sLang);
+}
+
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Google Maps', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_109'), 'ext_110');
+
+$oDialog->setElement($oTab);
+
+// Bank Tab
+$oTab = $oDialog->createTab(L10N::t('Bankinformationen', $oGuiAccommodation->gui_description));
+$oTab->aOptions = array(
+	'access' => '',
+	'section' => 'accommodation_providers_bank'
+);
+Ext_Thebing_Accommodation_Gui2::$oTab = $oTab;
+
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Kontoinhaber', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_68'), 'ext_92');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Kontonummer', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_70'), 'ext_94');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Bankleitzahl', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_71'), 'ext_95');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Bank', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_69'), 'ext_93');
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('Adresse der Bank', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_72'), 'ext_96');
+
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('IBAN', $oGuiAccommodation->gui_description), 'input', array('db_alias' => 'customer_db_4', 'db_column' => 'bank_account_iban'));
+Ext_Thebing_Accommodation_Gui2::createRow(L10N::t('BIC', $oGuiAccommodation->gui_description), 'input', array('db_alias' => 'customer_db_4', 'db_column' => 'bank_account_bic'));
+
+$oDialog->setElement($oTab);
+
+// Matching Tab
+$oTab = $oDialog->createTab(L10N::t('Matching', $oGuiAccommodation->gui_description));
+Ext_Thebing_Accommodation_Gui2::$oTab = $oTab;
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Harte Kriterien', $oGuiAccommodation->gui_description));
+$oTab->setElement($oH3);
+
+$oTab->setElement($oDialog->createRow(L10N::t('Erwachsene', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_35')));
+$oTab->setElement($oDialog->createRow(L10N::t('Jugendliche', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_36')));
+
+$oDiv = new Ext_Gui2_Html_Div();
+$oDiv->id = "family_matching_div";
+
+$oDiv->setElement($oDialog->createRow(L10N::t('Männlich', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_37')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Weiblich', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_38')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Divers', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'diverse')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Raucher (Schüler)', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_39')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Vegetarier', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_40')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Muslim Diät', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_41')));
+
+$oH3 = new Ext_Gui2_Html_H4();
+$oH3->setElement(L10N::t('Weiche Kriterien', $oGuiAccommodation->gui_description));
+$oDiv->setElement($oH3);
+
+$oDiv->setElement($oDialog->createRow(L10N::t('Katzen', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_42')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Hunde', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_43')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Haustiere', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_44')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Klimaanlage', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_47')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Internet', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_53')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Seperates Badezimmer', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_48')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Kinder (Familie)', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_51')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Raucher (Familie)', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_45')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Alter (Familie)', $oGuiAccommodation->gui_description), 'select', array('db_alias' => '', 'db_column' => 'ext_49', 'select_options' => Ext_Thebing_Data::getFamilyAge())));
+$oDiv->setElement($oDialog->createRow(L10N::t('Sprachkentnisse', $oGuiAccommodation->gui_description), 'select', array('db_alias' => '', 'db_column' => 'ext_52', 'select_options' => Ext_Thebing_Data::getLanguageSkills(), 'multiple' => 3, 'jquery_multiple' => 1, 'searchable' => 1)));
+$oDiv->setElement($oDialog->createRow(L10N::t('Entfernung zur Schule', $oGuiAccommodation->gui_description), 'select', array('db_alias' => '', 'db_column' => 'ext_46', 'select_options' => Ext_Thebing_Data::getDistance())));
+$oDiv->setElement($oDialog->createRow(L10N::t('Wohnumgebung', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'ext_50')));
+$oTab->setElement($oDiv);
+
+$oDiv = new Ext_Gui2_Html_Div();
+$oDiv->id = "other_matching_div";
+
+$oDiv->setElement($oDialog->createRow(L10N::t('Trennung nach Geschlecht', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_54')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Trennung nach Alter', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_55')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Jede Nationalität nur einmal pro Zimmer', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_56')));
+$oDiv->setElement($oDialog->createRow(L10N::t('Jede Muttersprache nur einmal pro Zimmer', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'ext_57')));
+
+$oTab->setElement($oDiv);
+
+$oDialog->setElement($oTab);
+
+/**
+ * Abrechnungskategorie
+ */
+$oGuiPaymentCategories = new \Ts\Gui2\AccommodationProvider\Payment\Category\Validity();
+$oGuiPaymentCategories->access = ['thebing_accommodation_billing_terms', ''];
+$oGuiPaymentCategories->gui_description = $oGuiAccommodation->gui_description;
+$oGuiPaymentCategories->parent_hash = $oGuiAccommodation->hash;
+$oGuiPaymentCategories->foreign_key = 'provider_id';
+$oGuiPaymentCategories->parent_primary_key = 'id';
+$oGuiPaymentCategories->calendar_format = new Ext_Thebing_Gui2_Format_Date();
+
+$oTab = $oDialog->createTab($oGuiAccommodation->t('Abrechnungskategorie'));
+$oTab->access = ['thebing_accommodation_billing_terms', ''];
+$oTab->setElement($oGuiPaymentCategories);
+$oDialog->setElement($oTab);
+
+// Kostenkategorien Tab
+$oTab = $oDialog->createTab(L10N::t('Kostenkategorie', $oGuiAccommodation->gui_description));
+$oTab->access = ['thebing_marketing_accommodationcategories', ''];
+$oTab->setElement(Ext_Thebing_Accommodation_Gui2::getCostcategoryGui($oGuiAccommodation));
+$oDialog->setElement($oTab);
+
+// ############### //
+
+// Query Daten //
+// ############### //
+
+// Listen Optionen
+
+# START - Leiste 1 #
+
+$oBar = $oGuiAccommodation->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+// Name, Nummer, Straße, Adresszusatz, Ort
+$oFilter->db_column = ['ext_33', 'ext_103', 'ext_104', 'number', 'ext_63', 'address_addon', 'ext_65', 'email'];
+$oFilter->db_alias = ['', '', '', 'numbers', '', '', '', ''];
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGuiAccommodation->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+// In _setFilterElementDataByRef() werden nochmal alle Schulen mit Recht gesetzt
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'filter_school';
+$oFilter->value = $iSelectedSchoolId;
+$oFilter->db_alias = 'filter_schools';
+$oFilter->db_column = 'school_id';
+$oFilter->select_options = $aFilterSchools;
+$oFilter->db_operator = '=';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'accommodation_categories';
+$oFilter->value = '';
+$oFilter->db_alias = 'filter_accommodation_categories';
+$oFilter->db_column = 'accommodation_category_id';
+$oFilter->select_options = $aFilterCategories;
+$oFilter->db_operator = '=';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->value = '';
+$oFilter->db_alias = 'rooms';
+$oFilter->db_column = 'type_id';
+$oFilter->select_options = $aFilterRoomtypes;
+$oFilter->db_operator = '=';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_alias = 'ts_aptam';
+$oFilter->db_column = 'meal_id';
+$oFilter->select_options = $aFilterMeals;
+$oFilter->db_operator = '=';
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createValidFilter($oGuiAccommodation->t('Gültigkeit'));
+$oBar->setElement($oFilter);
+
+$aPaymentCategoryOptions = array(
+	'allocated' => $oGuiAccommodation->t('zugewiesen'),
+	'not_allocated' => $oGuiAccommodation->t('nicht zugewiesen')
+);
+$aPaymentCategoryOptions = Ext_Gui2_Util::addLabelItem($aPaymentCategoryOptions, $oGuiAccommodation->t('Abrechnungskategorie'));
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'payment_category_filter';
+$oFilter->value = '';
+$oFilter->select_options = $aPaymentCategoryOptions;
+$oFilter->filter_query = array(
+	'allocated' => "
+			`ts_appc`.`id` IS NOT NULL
+		",
+	'not_allocated' => "
+			`ts_appc`.`id` IS NULL
+		"
+);
+$oBar->setElement($oFilter);
+
+$aCostCategoryOptions = array(
+	'allocated' => $oGuiAccommodation->t('zugewiesen'),
+	'not_allocated' => $oGuiAccommodation->t('nicht zugewiesen')
+);
+$aCostCategoryOptions = Ext_Gui2_Util::addLabelItem($aCostCategoryOptions, $oGuiAccommodation->t('Kostenkategorie'));
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'cost_category_filter';
+$oFilter->value = '';
+$oFilter->select_options = $aCostCategoryOptions;
+$oFilter->filter_query = array(
+	'allocated' => "
+			`kas`.`id` IS NOT NULL AND
+			-- Diese Abfrage wird mit benötigt, da Festgehalt die Id -1 besitzt
+			`kas`.`costcategory_id` != 0
+		",
+	'not_allocated' => "
+			`kas`.`id` IS NULL
+		"
+);
+$oBar->setElement($oFilter);
+
+
+
+
+
+
+
+
+$aFilterDocumentTypes = \TsAccommodation\Gui2\Data\RequirementData::getDocumentStatuses($oGuiAccommodation);
+$aFilterDocumentTypes = Ext_Gui2_Util::addLabelItem($aFilterDocumentTypes, $oGuiAccommodation->t('Dokument Gültigkeit'));
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->value = '';
+$oFilter->db_alias = 'customer_db_4';
+$oFilter->select_options = $aFilterDocumentTypes;
+$oFilter->filter_query = array(
+	'document_missing' => "
+			`customer_db_4`.`requirement_missing` = 1
+		",
+	'document_expired' => "
+			`customer_db_4`.`requirement_expired` = 1
+		"
+);
+$oBar->setElement($oFilter);
+
+
+
+
+$oGuiAccommodation->setBar($oBar);
+# ENDE - Leiste 1 #
+
+# START - Leiste 2 #
+$oBar = $oGuiAccommodation->createBar();
+$oBar->width = '100%';
+$oBar->id = 'accommodation_provider_actions';
+
+$oIcon = $oBar->createNewIcon(
+	L10N::t('Neuer Eintrag', $oGuiAccommodation->gui_description),
+	$oDialog,
+	L10N::t('Neuer Eintrag', $oGuiAccommodation->gui_description)
+);
+$oIcon->access = 'thebing_accommodation_accommodations_new_provider';
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+	L10N::t('Editieren', $oGuiAccommodation->gui_description),
+	$oDialog,
+	L10N::t('Editieren', $oGuiAccommodation->gui_description)
+);
+$oIcon->access = 'thebing_accommodation_accommodations_edit_provider';
+$oBar->setElement($oIcon);
+
+
+$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiAccommodation->gui_description), L10N::t('Löschen', $oGuiAccommodation->gui_description));
+$oIcon->access = 'thebing_accommodation_accommodations_delete_provider';
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeactivateIcon($oGuiAccommodation->t('Deaktivieren'), $oGuiAccommodation->t('Deaktivieren'));
+$oIcon->access = 'thebing_accommodation_accommodations_deactivate';
+$oBar->setElement($oIcon);
+
+//$oIcon = $oBar->createIcon(Ext_Thebing_Util::getIcon('feedback'), 'openDialog', L10N::t('Bewertungen einsehen', $oGuiAccommodation->gui_description));
+//$oIcon->label = L10N::t('Bewertungen einsehen', $oGuiAccommodation->gui_description);
+//$oIcon->action = 'feedback_old';
+//$oIcon->dialog_data = Ext_Thebing_Accommodation_Gui2::getFeedbackDialog($oGuiAccommodation);
+//$oIcon->access = 'thebing_accommodation_accommodations_display_feedback';
+//$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createIcon(Ext_Thebing_Util::getIcon('feedback'), 'openDialog', $oGuiAccommodation->t('Feedback'));
+$oIcon->label = $oGuiAccommodation->t('Feedback');
+$oIcon->action = 'feedback';
+$oIcon->dialog_data = Ext_TS_Marketing_Feedback_Provider_Gui2_Data::createProviderDialog($oGuiAccommodation, 'accommodation');
+$oIcon->access = 'thebing_accommodation_accommodations_display_feedback';
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createIcon(
+	Ext_Thebing_Util::getIcon('complaint'),
+	'openDialog',
+	L10N::t('Beschwerden ansehen')
+);
+$oIcon->label = L10N::t('Beschwerden ansehen');
+$oIcon->action = 'accommodation_complaint';
+$oIcon->access = 'thebing_marketing_complaints';
+$oIcon->dialog_data = \TsComplaints\Gui2\Data\Complaint::getComplaintDialog($oGuiAccommodation, false);
+$oBar->setElement($oIcon);
+
+$oLabelGroup = $oBar->createLabelGroup($oGuiAccommodation->t('Kommunikation'));
+$oLabelGroup->access = 'thebing_accommodation_accommodations_communication';
+$oBar->setElement($oLabelGroup);
+
+// Kommunikation
+$oIcon = $oBar->createCommunicationIcon($oGuiAccommodation->t('Nachricht senden'), 'accommodation_resources_provider');
+$oIcon->access = 'thebing_accommodation_accommodations_communication';
+$oBar->setElement($oIcon);
+
+$oGuiAccommodation->setBar($oBar);
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGuiAccommodation->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+
+$oLabelgroup = $oBar->createLabelGroup(L10N::t('Import/Export', $oGuiAccommodation->gui_description));
+$oBar->setElement($oLabelgroup);
+
+$oIcon = $oBar->createCSVExport();
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createExcelExport();
+$oBar->setElement($oIcon);
+
+// Import
+$oIcon = new Ext_Gui2_Bar_Icon('fa-upload', 'request', $oGuiAccommodation->t('Import'));
+$oIcon->action = 'import';
+$oIcon->label = $oGuiAccommodation->t('Import');
+$oIcon->multipleId 	= 1;
+$oIcon->active = 1;
+$oIcon->visible = 1;
+$oIcon->info_text = 0;
+$oBar->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGuiAccommodation->setBar($oBar);
+# ENDE - Leiste 2 #
+
+$oColumnGroupAccommodation = $oGuiAccommodation->createColumnGroup();
+$oColumnGroupAccommodation->title = $oGuiAccommodation->t('Unterkunft');
+$oColumnGroupMatching = $oGuiAccommodation->createColumnGroup();
+$oColumnGroupMatching->title = $oGuiAccommodation->t('Zuweisung');
+$oColumnGroupAccounting = $oGuiAccommodation->createColumnGroup();
+$oColumnGroupAccounting->title = $oGuiAccommodation->t('Buchhaltung');
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'number';
+$oColumn->db_alias = 'numbers';
+$oColumn->title = $oGuiAccommodation->t('Nummer');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('number');
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_33';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Name', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_alias = '';
+$oColumn->db_column = 'schools';
+$oColumn->title = $oGuiAccommodation->t('Schulen');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->format = new Ext_Thebing_Gui2_Format_Multiselect($aSchools);
+$oColumn->width_resize = false;
+$oColumn->inplaceEditor = 0;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'accommodation_categories';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Kategorien', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Multiselect($aAccommodationCategories);
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+/*
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'last_login';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Letzter Login', $oGuiAccommodation->gui_description);
+$oColumn->width = 140;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Date_Time();
+$oGuiAccommodation->setColumn($oColumn);
+*/
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_103';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Vorname', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_104';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Nachname', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_63';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Adresse', $oGuiAccommodation->gui_description);
+$oColumn->width = 200;
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'address_addon';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Adresszusatz', $oGuiAccommodation->gui_description);
+$oColumn->width = 200;
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_64';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('PLZ', $oGuiAccommodation->gui_description);
+$oColumn->width = 70;
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_65';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Stadt', $oGuiAccommodation->gui_description);
+$oColumn->width = 120;
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_67';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Telefon', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('phone');
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_76';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Telefon 2', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('phone');
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_77';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Handy', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('phone');
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'email';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('E-Mail', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('email');
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'family_description_'.$sDefaultLang;
+$oColumn->title = L10N::t('Beschreibung', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('email');
+$oColumn->default = false;
+$oColumn->format = new Ext_Gui2_View_Format_ToolTip('family_description_'.$sDefaultLang, true, 80, true);
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_109';
+$oColumn->title = L10N::t('Google Maps', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->default = false;
+$oColumn->format = new Ext_Gui2_View_Format_ToolTip('ext_109', true, 80, true);
+$oColumn->group = $oColumnGroupAccommodation;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_35';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Erwachsene', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_36';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Jugendliche', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_37';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Männlich', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_38';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Weiblich', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'diverse';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Divers', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_43';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Hunde', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_42';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Katzen', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oColumn->group = $oColumnGroupMatching;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'payment_category';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Abrechnungskategorie', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = false;
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'cost_category';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Kostenkategorie', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Accommodation_Cost_Format_Category();
+$oColumn->sortable = false;
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_68';
+$oColumn->title = $oGuiAccommodation->t('Kontoinhaber');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_70';
+$oColumn->title = $oGuiAccommodation->t('Kontonummer');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_71';
+$oColumn->title = $oGuiAccommodation->t('BLZ');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'bank_account_iban';
+$oColumn->title = $oGuiAccommodation->t('IBAN');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'bank_account_bic';
+$oColumn->title = $oGuiAccommodation->t('BIC');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_69';
+$oColumn->title = $oGuiAccommodation->t('Name der Bank');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+$oColumn = $oGuiAccommodation->createColumn();
+$oColumn->db_column = 'ext_72';
+$oColumn->title = $oGuiAccommodation->t('Adresse der Bank');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->group = $oColumnGroupAccounting;
+$oGuiAccommodation->setColumn($oColumn);
+
+
+$oGuiAccommodation->addValidUntilColumn();
+$oGuiAccommodation->addDefaultColumns();
+
+// RÄUME
+$oGuiRooms = new Ext_Thebing_Gui2(md5('thebing_accommodation_room'), 'Ext_Thebing_Accommodation_Gui2_Room');
+$oGuiRooms->sSection = 'roomdata';
+$oGuiRooms->gui_description = $oGuiAccommodation->gui_description;
+
+// DIALOG
+$oDialogRoom = $oGuiRooms->createDialog($oGuiRooms->t('Raum "{name}" bearbeiten'), L10N::t('Neuer Raum', $oGuiAccommodation->gui_description));
+$oDialogRoom->width = 950;
+$oDialogRoom->height = 500;
+
+$oDialogRoom->setElement($oDialogRoom->createRow(L10N::t('Raumname', $oGuiAccommodation->gui_description), 'input', array('db_alias' => '', 'db_column' => 'name', 'required' => 1)));
+$oDialogRoom->setElement($oDialogRoom->createRow(L10N::t('Raumart', $oGuiAccommodation->gui_description), 'select', array(
+	'db_alias' => '',
+	'db_column' => 'type_id',
+	'select_options' => [],
+	'selection' => new Ext_Thebing_Gui2_Selection_School_AccommodationRoomtype($sDefaultLang, true),
+	'required' => true,
+)));
+
+$bedTypeFields = [
+	'single_beds' => 'Einzelbetten',
+	'double_beds' => 'Doppelbetten'
+];
+
+foreach($bedTypeFields as $bedTypeField=>$bedTypeLabel) {
+	$oDialogRoom->setElement($oDialogRoom->createMultiRow($oGuiAccommodation->t($bedTypeLabel), 
+		[
+			'grid' => true,
+			'items' => [
+				[
+					'db_column' => $bedTypeField,
+					'input' => 'input',
+					'style' => 'width: 100%;',
+					'format' => new Ext_Thebing_Gui2_Format_Int(),
+					'grid_cols'=>2
+				],
+				[
+					'input_div_addon_start' => $oGuiAccommodation->t('Kommentar'),
+					'input_div_addon_style' => 'display: flex;',
+					'db_column' => $bedTypeField.'_comment',
+					'input' => 'input',
+					'style' => 'flex: 1;',
+					'grid_cols'=>10
+				]
+			]		
+		]
+	));
+}
+
+$oDialogRoom->setElement($oDialogRoom->create('h4')->setElement($oGuiAccommodation->t('Matching-Kriterien')));
+
+$oDialogRoom->setElement($oDialogRoom->createRow(L10N::t('Geeignet für Frauen', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'female')));
+$oDialogRoom->setElement($oDialogRoom->createRow(L10N::t('Geeignet für Männer', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'male')));
+$oDialogRoom->setElement($oDialogRoom->createRow(L10N::t('Geeignet für Diverse', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'diverse')));
+$oDialogRoom->setElement($oDialogRoom->createRow(L10N::t('Geeignet für Paare', $oGuiAccommodation->gui_description), 'checkbox', array('db_alias' => '', 'db_column' => 'couples')));
+
+$oDialogRoom->setElement($oDialogRoom->create('h4')->setElement($oGuiAccommodation->t('Sonstiges')));
+
+$oDialogRoom->setElement($oDialogRoom->createRow($oGuiAccommodation->t('Optional'), 'checkbox', array('db_alias' => '', 'db_column' => 'optional')));
+$oDialogRoom->setElement($oDialogRoom->createRow($oGuiAccommodation->t('In Unterkunftsverfügbarkeit berücksichtigen'), 'checkbox', array('db_alias' => '', 'db_column' => 'include_availability_report')));
+$oDialogRoom->setElement($oDialogRoom->createRow($oGuiAccommodation->t('Kommentar'), 'textarea', ['db_column' => 'comment']));
+
+// ############### //
+$oDialogRoom->aOptions['section'] = 'roomdata';
+
+// Query Daten //
+$aData = array();
+
+$oGuiRooms->setTableData($aData);
+$oGuiRooms->setWDBasic('Ext_Thebing_Accommodation_Room');
+// ############### //
+
+// Listen Optionen
+$oGuiRooms->gui_title = L10N::t('Räume', $oGuiAccommodation->gui_description);
+$oGuiRooms->column_sortable = 0; // es geht nur eine sortierart!
+$oGuiRooms->row_sortable = 1; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiRooms->multiple_selection = 0;
+$oGuiRooms->query_id_column = 'id';
+$oGuiRooms->query_id_alias = '';
+$oGuiRooms->class_js = 'UtilGui';
+
+# START - Leiste 1 #
+$oBar = $oGuiRooms->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = 'name';
+$oFilter->db_alias = '';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGuiRooms->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+$oFilter = $oBar->createValidFilter($oGuiRooms->t('Gültigkeit'));
+$oBar->setElement($oFilter);
+
+$oGuiRooms->setBar($oBar);
+# ENDE - Leiste 1 #
+
+# START - Leiste 2 #
+$oBar = $oGuiRooms->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+	L10N::t('Neuer Eintrag', $oGuiRooms->gui_description),
+	$oDialogRoom,
+	L10N::t('Neuer Eintrag', $oGuiRooms->gui_description)
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+	L10N::t('Editieren', $oGuiRooms->gui_description),
+	$oDialogRoom,
+	L10N::t('Editieren', $oGuiRooms->gui_description)
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiRooms->gui_description), L10N::t('Löschen', $oGuiRooms->gui_description));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeactivateIcon($oGuiRooms->t('Deaktivieren'), $oGuiRooms->t('Deaktivieren'));
+$oIcon->access = 'thebing_accommodation_accommodations_deactivate';
+$oBar->setElement($oIcon);
+
+$oGuiRooms->setBar($oBar);
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGuiRooms->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+
+$oLabelgroup = $oBar->createLabelGroup(L10N::t('Export', $oGuiAccommodation->gui_description));
+$oBar->setElement($oLabelgroup);
+
+$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGuiAccommodation->gui_description));
+$oIcon->label = L10N::t('CSV', $oGuiAccommodation->gui_description);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createExcelExport();
+$oBar->setElement($oIcon);
+			
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGuiRooms->setBar($oBar);
+# ENDE - Leiste 2 #
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Raumname', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'female';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('geeignet für Frauen', $oGuiAccommodation->gui_description);
+$oColumn->width = 100;
+$oColumn->width_resize = false;
+$oColumn->small = true;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'male';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('geeignet für Männer', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->small = true;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'diverse';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('geeignet für Diverse', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->small = true;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'couples';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('geeignet für Paare', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->small = true;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Gui2_View_Format_Selection();
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'type_id';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Raumart', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = false;
+$oColumn->small = true;
+$oFormat = new Ext_Gui2_View_Format_Selection($aRoomtypes);
+$oColumn->format = $oFormat;
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'single_beds';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Einzelbetten', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->small = true;
+$oGuiRooms->setColumn($oColumn);
+
+$oColumn = $oGuiRooms->createColumn();
+$oColumn->db_column = 'double_beds';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Doppelbetten', $oGuiAccommodation->gui_description);
+$oColumn->width = 80;
+$oColumn->width_resize = false;
+$oColumn->small = true;
+$oGuiRooms->setColumn($oColumn);
+
+$oGuiRooms->addValidUntilColumn();
+$oGuiRooms->addDefaultColumns();
+
+// Besuche Gui
+$oGuiVisits = new Ext_Thebing_Gui2(md5('thebing_accommodation_visits'), 'Ext_Thebing_Accommodation_Gui2_Visit');
+
+// Listen Optionen
+$oGuiVisits->gui_description = $oGuiAccommodation->gui_description;
+$oGuiVisits->gui_title = $oGuiVisits->t('Besuche');
+$oGuiVisits->column_sortable = 1; // es geht nur eine sortierart!
+$oGuiVisits->row_sortable = 0; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiVisits->multiple_selection = 0;
+$oGuiVisits->query_id_column = 'id';
+$oGuiVisits->query_id_alias = 'kav';
+$oGuiVisits->class_js = 'UtilGui';
+
+$oDialogVisit = $oGuiVisits->createDialog($oGuiVisits->t('Besuch editieren'), $oGuiVisits->t('Neuer Besuch'));
+$oDialogVisit->width = 950;
+$oDialogVisit->setElement($oDialogVisit->createRow($oGuiVisits->t('Besucher'), 'input', array('db_alias' => '', 'db_column' => 'visitor')));
+$oDialogVisit->setElement($oDialogVisit->createRow($oGuiVisits->t('Datum'), 'calendar', array('db_alias' => '', 'db_column' => 'date', 'required' => 1, 'format' => new Ext_Thebing_Gui2_Format_Date())));
+$oDialogVisit->setElement($oDialogVisit->createRow($oGuiVisits->t('Titel'), 'input', array('db_alias' => '', 'db_column' => 'title', 'required' => 1)));
+$oDialogVisit->setElement($oDialogVisit->createRow($oGuiVisits->t('Betreff'), 'select', array('db_alias' => '', 'db_column' => 'subject_id', 'select_options' => \Util::addEmptyItem($aSubjects))));
+$oDialogVisit->setElement($oDialogVisit->createRow($oGuiVisits->t('Aktivität'), 'select', array('db_alias' => '', 'db_column' => 'activity_id', 'select_options' => \Util::addEmptyItem($aActivities))));
+$oDialogVisit->setElement($oDialogVisit->createRow($oGuiVisits->t('Beschreibung'), 'textarea', array('db_alias' => '', 'db_column' => 'text', 'required' => 1)));
+
+$sDir = Ext_Thebing_Accommodation_Visit::getUploadDir();
+$oUpload = new Ext_Gui2_Dialog_Upload($oGuiVisits, L10N::t('Dokumente', $oGuiAccommodation->gui_description), $oDialogVisit, 'documents', '', $sDir);
+$oUpload->multiple = 1;
+$oUpload->bAddColumnData2Filename = 0;
+$oDialogVisit->setElement($oUpload);
+
+$oGuiVisits->setWDBasic('Ext_Thebing_Accommodation_Visit');
+$oGuiVisits->setTableData('where', array('kav.active' => 1));
+$oGuiVisits->setTableData('order', array('kav.created' => 'DESC'));
+$oGuiVisits->setTableData('limit', 30);
+
+
+// Suche
+$oBar = $oGuiVisits->createBar();
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('id', 'title', 'text', 'visitor');
+$oFilter->db_alias = array('kav', 'kav', 'kav', 'kav');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+// subject_filter
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'subject_filter';
+$oFilter->value = 'kav';
+$oFilter->db_column = 'subject_id';
+$oFilter->select_options = \Ext_Gui2_Util::addLabelItem($aSubjects, $oGuiAccommodation->t('Betreff'));
+$oBar->setElement($oFilter);
+
+// activity_filter
+$oFilter = $oBar->createFilter('select');
+$oFilter->id = 'activity_filter';
+$oFilter->value = 'kav';
+$oFilter->db_column = 'activity_id';
+$oFilter->select_options = \Ext_Gui2_Util::addLabelItem($aActivities, $oGuiAccommodation->t('Aktivität'));
+$oBar->setElement($oFilter);
+
+$oGuiVisits->setBar($oBar);
+
+# START - Leiste 2 #
+$oBar = $oGuiVisits->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+	L10N::t('Neuer Besuch', $oGuiVisits->gui_description),
+	$oDialogVisit,
+	L10N::t('Neuer Besuch', $oGuiVisits->gui_description)
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+	L10N::t('Besuch editieren', $oGuiVisits->gui_description),
+	$oDialogVisit,
+	L10N::t('Besuch editieren', $oGuiVisits->gui_description)
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon(L10N::t('Besuch Löschen', $oGuiVisits->gui_description), L10N::t('Besuch Löschen', $oGuiVisits->gui_description));
+$oBar->setElement($oIcon);
+
+$oGuiVisits->setBar($oBar);
+# ENDE - Leiste 2 #
+
+
+// Paginator
+$oBar = $oGuiVisits->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+$oPagination = $oBar->createPagination();
+$oBar->setElement($oPagination);
+
+// SEP & CSV
+$oSeperator = $oBar->createSeperator();
+$oBar->setElement($oSeperator);
+$oLabelGroup = $oBar->createLabelGroup(L10N::t('Export', $oGuiVisits->gui_description));
+$oBar->setElement($oLabelGroup);
+
+$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGuiVisits->gui_description));
+$oIcon->label = L10N::t('CSV', $oGuiVisits->gui_description);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createExcelExport();
+$oBar->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiVisits->setBar($oBar);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'accommodation_provider_name';
+$oColumn->title = L10N::t('Unterkunftsanbieter', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->sortable = false;
+$oColumn->default = false;
+$oGuiVisits->setColumn($oColumn);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'visitor';
+$oColumn->db_alias = 'kav';
+$oColumn->title = L10N::t('Besucher', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oGuiVisits->setColumn($oColumn);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'date';
+$oColumn->db_alias = 'kav';
+$oColumn->title = L10N::t('Datum', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('date');
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Date();
+$oGuiVisits->setColumn($oColumn);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'title';
+$oColumn->db_alias = 'kav';
+$oColumn->title = L10N::t('Titel', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oGuiVisits->setColumn($oColumn);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'subject';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Betreff', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oGuiVisits->setColumn($oColumn);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'activity';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Aktivität', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize = false;
+$oGuiVisits->setColumn($oColumn);
+
+$oColumn = $oGuiVisits->createColumn();
+$oColumn->db_column = 'text';
+$oColumn->db_alias = 'kav';
+$oColumn->title = L10N::t('Beschreibung', $oGuiAccommodation->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('long_description');
+$oColumn->width_resize = true;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Nl2br;
+$oGuiVisits->setColumn($oColumn);
+
+$oGuiVisits->addDefaultColumns();
+
+// PDF Upload Gui
+$oGuiPdf = new Ext_Thebing_Gui2(md5('thebing_accommodation_upload_pdf'), 'Ext_Thebing_Accommodation_Gui2_Upload');
+
+$oDialogPDf = $oGuiPdf->createDialog('{filename}', L10N::t('Neues PDF hochladen', $oGuiAccommodation->gui_description));
+$oDialogPDf->width = 950;
+
+$oDialogPDf->setElement($oDialogPDf->createRow(L10N::t('Sprache', $oGuiAccommodation->gui_description), 'select', array(
+	'db_alias' => '',
+	'db_column' => 'lang',
+	'select_options' => $aLanguages
+)));
+
+$oDialogPDf->setElement($oDialogPDf->createRow(L10N::t('Titel', $oGuiAccommodation->gui_description), 'input', array(
+	'db_alias' => '',
+	'db_column' => 'title',
+	'required' => 1
+)));
+
+$sDir = '/storage/accommodation/';
+$oUpload = new Ext_Gui2_Dialog_Upload($oGuiPdf, 'Upload', $oDialogPDf, 'filename', '', $sDir);
+$oUpload->bAddColumnData2Filename = 0;
+$oDialogPDf->setElement($oUpload);
+
+$oDialogPDf->setElement($oDialogPDf->createRow(L10N::t('Beschreibung', $oGuiAccommodation->gui_description), 'textarea', array(
+	'db_alias' => '',
+	'db_column' => 'description'
+)));
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_documents')) {
+	$oDialogPDf->setElement($oDialogPDf->createRow(L10N::t('Freigeben für Kommunikation', $oGuiAccommodation->gui_description), 'checkbox', array(
+		'db_alias' => '',
+		'db_column' => 'published'
+	)));
+}
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_documents_sl')) {
+	$oDialogPDf->setElement($oDialogPDf->createRow(L10N::t('Freigeben für Schüler-Portal', $oGuiAccommodation->gui_description), 'checkbox', array(
+		'db_alias' => '',
+		'db_column' => 'released_student_login'
+	)));
+}
+
+$aData = array();
+
+$oGuiPdf->setWDBasic('Ext_Thebing_Accommodation_Upload');
+$oGuiPdf->setTableData('where', array('type' => 'pdf'));
+
+// Listen Optionen
+$oGuiPdf->gui_description = $oGuiAccommodation->gui_description;
+$oGuiPdf->gui_title = L10N::t('Uploads', $oGuiAccommodation->gui_description);
+$oGuiPdf->column_sortable = 0; // es geht nur eine sortierart!
+$oGuiPdf->row_sortable = 1; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiPdf->multiple_selection = 0;
+$oGuiPdf->query_id_column = 'id';
+$oGuiPdf->query_id_alias = '';
+$oGuiPdf->class_js = 'UtilGui';
+
+# START - Leiste 2 #
+$oBar = $oGuiPdf->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+	L10N::t('Neues PDF', $oGuiPdf->gui_description),
+	$oDialogPDf,
+	L10N::t('Neues PDF', $oGuiPdf->gui_description)
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon(L10N::t('PDF Löschen', $oGuiPdf->gui_description), L10N::t('PDF Löschen', $oGuiPdf->gui_description));
+$oBar->setElement($oIcon);
+
+$oGuiPdf->setBar($oBar);
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGuiPdf->createBar();
+$oBar->width = '100%';
+
+$oPagination = $oBar->createPagination(true);
+$oBar->setElement($oPagination);
+
+$oGuiPdf->setBar($oBar);
+# ENDE - Leiste 3 #
+
+$oColumn = $oGuiPdf->createColumn();
+$oColumn->db_column = 'accommodation_upload_pdf';
+$oColumn->select_column = 'filename';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Upload', $oGuiAccommodation->gui_description);
+$oColumn->width = 50;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Pdf();
+$oColumn->sortable = 0;
+$oGuiPdf->setColumn($oColumn);
+
+$oColumn = $oGuiPdf->createColumn();
+$oColumn->db_column = 'title';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Titel', $oGuiAccommodation->gui_description);
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oGuiPdf->setColumn($oColumn);
+
+$oColumn = $oGuiPdf->createColumn();
+$oColumn->db_column = 'lang';
+$oColumn->db_alias = '';
+$oColumn->title = L10N::t('Sprache', $oGuiAccommodation->gui_description);
+$oColumn->width = 50;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_Thebing_Gui2_Format_Language_Image();
+$oGuiPdf->setColumn($oColumn);
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_documents')) {
+	$oColumn = $oGuiPdf->createColumn();
+	$oColumn->db_column = 'published';
+	$oColumn->db_alias = '';
+	$oColumn->title = L10N::t('Freigeben für Kommunikation', $oGuiAccommodation->gui_description);
+	$oColumn->width = 80;
+	$oColumn->width_resize = false;
+	$oColumn->format = new Ext_Gui2_View_Format_Selection();
+	$oGuiPdf->setColumn($oColumn);
+}
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_documents_sl')) {
+	$oColumn = $oGuiPdf->createColumn();
+	$oColumn->db_column = 'released_student_login';
+	$oColumn->db_alias = '';
+	$oColumn->title = L10N::t('Freigeben für Schüler-Portal', $oGuiAccommodation->gui_description);
+	$oColumn->width = 80;
+	$oColumn->width_resize = false;
+	$oColumn->format = new Ext_Gui2_View_Format_Selection();
+	$oGuiPdf->setColumn($oColumn);
+}
+
+$oGuiPdf->addDefaultColumns();
+
+$oGuiPicture = new Ext_Thebing_Gui2(md5('thebing_accommodation_upload_picture'), 'Ext_Thebing_Accommodation_Gui2_Upload');
+
+$oDialogPicture = $oGuiPicture->createDialog('{filename}', L10N::t('Neues Bild hochladen', $oGuiAccommodation->gui_description));
+
+$oDialogPicture->setElement($oDialogPicture->createRow(L10N::t('Titel', $oGuiAccommodation->gui_description), 'input', array(
+	'db_alias' => '',
+	'db_column' => 'title',
+	'required' => 1
+)));
+
+$sDir = '/storage/accommodation/';
+$oUpload = new Ext_Gui2_Dialog_Upload($oGuiPicture, 'Upload', $oDialogPicture, 'filename', '', $sDir);
+$oDialogPicture->setElement($oUpload);
+
+$oDialogPicture->setElement($oDialogPicture->createI18NRow(L10N::t('Beschreibung', $oGuiAccommodation->gui_description), array(
+	'type' => 'html',
+	'db_alias' => 'accommodations_uploads_i18n',
+	'db_column' => 'description',
+	'i18n_parent_column' => 'upload_id'
+), $aDescriptionLanguages));
+
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_pictures')) {
+	$oDialogPicture->setElement($oDialogPicture->createRow(L10N::t('Freigeben für Kommunikation', $oGuiAccommodation->gui_description), 'checkbox', array(
+		'db_alias' => '',
+		'db_column' => 'published'
+	)));
+}
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_pictures_sl')) {
+	$oDialogPicture->setElement($oDialogPicture->createRow(L10N::t('Freigeben für Schüler-Portal', $oGuiAccommodation->gui_description), 'checkbox', array(
+		'db_alias' => '',
+		'db_column' => 'released_student_login'
+	)));
+}
+
+$oGuiPicture->setWDBasic('Ext_Thebing_Accommodation_Upload');
+$oGuiPicture->setTableData('where', array('type' => 'picture'));
+
+// Listen Optionen
+$oGuiPicture->gui_description = $oGuiAccommodation->gui_description;
+$oGuiPicture->gui_title = $oGuiPicture->t('Upload Bild');
+$oGuiPicture->column_sortable = 0; // es geht nur eine sortierart!
+$oGuiPicture->row_sortable = 1; // es geht nur eine sortierart! ( hat prioritär )
+$oGuiPicture->multiple_selection = 0;
+$oGuiPicture->query_id_column = 'id';
+$oGuiPicture->query_id_alias = '';
+$oGuiPicture->class_js = 'UtilGui';
+
+# START - Leiste 2 #
+$oBar = $oGuiPicture->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon(
+	$oGuiPicture->t('Neues Bild'),
+	$oDialogPicture,
+	$oGuiPicture->t('Neues Bild')
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+	$oGuiPicture->t('Bild editieren'),
+	$oDialogPicture,
+	$oGuiPicture->t('Neues editieren')
+);
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGuiPicture->t('Bild Löschen'), $oGuiPicture->t('Bild Löschen'));
+$oBar->setElement($oIcon);
+
+$oGuiPicture->setBar($oBar);
+# ENDE - Leiste 2 #
+
+# START - Leiste 3 #
+$oBar = $oGuiPicture->createBar();
+$oBar->width = '100%';
+
+$oPagination = $oBar->createPagination(true);
+$oBar->setElement($oPagination);
+
+$oGuiPicture->setBar($oBar);
+# ENDE - Leiste 3 #
+
+$oColumn = $oGuiPicture->createColumn();
+$oColumn->db_column = 'accommodation_upload_picture';
+$oColumn->select_column = 'filename';
+$oColumn->db_alias = '';
+$oColumn->title = $oGuiAccommodation->t('Upload');
+$oColumn->width = 138;
+$oColumn->width_resize = false;
+$oColumn->format = new Ext_TC_Gui2_Format_Image('accommodation', $oColumn->title);
+$oColumn->sortable = 0;
+$oGuiPicture->setColumn($oColumn);
+
+$oColumn = $oGuiPicture->createColumn();
+$oColumn->db_column = 'title';
+$oColumn->db_alias = '';
+$oColumn->title = $oGuiAccommodation->t('Titel');
+$oColumn->width = 150;
+$oColumn->width_resize = true;
+$oGuiPicture->setColumn($oColumn);
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_pictures')) {
+	$oColumn = $oGuiPicture->createColumn();
+	$oColumn->db_column = 'published';
+	$oColumn->db_alias = '';
+	$oColumn->title = $oGuiAccommodation->t('Freigeben für Kommunikation');
+	$oColumn->width = 80;
+	$oColumn->width_resize = false;
+	$oColumn->format = new Ext_Gui2_View_Format_Selection();
+	$oGuiPicture->setColumn($oColumn);
+}
+
+if (Ext_Thebing_Access::hasRight('thebing_accommodation_release_pictures_sl')) {
+	$oColumn = $oGuiPicture->createColumn();
+	$oColumn->db_column = 'released_student_login';
+	$oColumn->db_alias = '';
+	$oColumn->title = $oGuiAccommodation->t('Freigeben für Schüler-Portal');
+	$oColumn->width = 80;
+	$oColumn->width_resize = false;
+	$oColumn->format = new Ext_Gui2_View_Format_Selection();
+	$oGuiPicture->setColumn($oColumn);
+}
+
+$oGuiPicture->addDefaultColumns();
+
+$oLegend = new Ext_Gui2_Bar_Legend($oGuiAccommodation);
+$oLegend->addTitle($oGuiAccommodation->t('Gültigkeit'));
+$oLegend->addInfo($oGuiAccommodation->t('Fehlende Dokumente'), \Ext_Thebing_Util::getColor('red'));
+$oLegend->addInfo($oGuiAccommodation->t('Abgelaufene Dokumente'), \Ext_Thebing_Util::getColor('orange'));
+$oGuiAccommodation->setBar($oLegend);
+
+/******************************* Schülerliste ************************************/
+
+$sCommunicationApplication = 'simple_view';
+$sView = 'simple_view';
+
+$oFactory = new Ext_Gui2_Factory('ts_students_simple');
+$oGui = $oFactory->createGui('students_simple');
+$oGui->setOption('query_accommodation_communication', 1);
+$oGui->setOption('query_accommodation_customers', 1);
+$oGui->gui_title = $oGui->t('Einfache Schülerliste');
+
+/******************************* Voraussetzungen ************************************/
+
+$oRequirementFactory = new Ext_Gui2_Factory('TsAccommodation_accommodationrequirement_list');
+$oRequirementGui = $oRequirementFactory->createGui('Voraussetzung');
+$oRequirementGui->gui_title = $oRequirementGui->t('Voraussetzungen');
+
+$oLegend = new Ext_Gui2_Bar_Legend($oRequirementGui);
+$oLegend->addTitle($oRequirementGui->t('Gültigkeit'));
+$oLegend->addInfo($oRequirementGui->t('Fehlende Dokumente'), \Ext_Thebing_Util::getColor('red'));
+$oLegend->addInfo($oRequirementGui->t('Abgelaufene Dokumente'), \Ext_Thebing_Util::getColor('orange'));
+$oRequirementGui->setBar($oLegend);
+
+
+/**
+ * Familienmitglieder
+ */
+$oGuiMembersFactory = new Ext_Gui2_Factory('ts_accommodation_provider_members');
+$oGuiMembers = $oGuiMembersFactory->createGui('', $oGui);
+
+
+// Anzeige
+$aOptionalInfo = array();
+
+$aOptionalInfo['css'][] = '/admin/extensions/thebing/css/ac.css';
+$aOptionalInfo['css'][] = '/assets/ts/css/gui2.css';
+$aOptionalInfo['css'][] = '/admin/extensions/thebing/css/absence.css';
+$aOptionalInfo['css'][] = '/assets/ts-tuition/css/progress_report.css';
+
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/gui2/util.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/gui2/accommodation/accommodation.js';
+//$aOptionalInfo['js'][] = '/admin/extensions/thebing/gui2/accommodation/accommodation_salary.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/js/absence.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/js/absence.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/absence/js/gui2.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/gui2/payment.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/gui2/studentlists.js';
+$aOptionalInfo['js'][] = '/admin/extensions/thebing/js/communication.js';
+
+$oPage = new Ext_TS_Gui2_Page();
+
+$oPage->setElement($oGuiAccommodation);
+$oPage->setElement($oGuiRooms, array('hash' => $oGuiAccommodation->hash, 'foreign_key' => 'accommodation_id', 'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->setElement(
+	$oGuiMembers,
+	[
+		'hash' => $oGuiAccommodation->hash,
+		'foreign_key' => 'accommodation_provider_id',
+		'foreign_key_alias' => 'accommodation_providers',
+		'foreign_jointable' => 'accommodation_providers',
+		'reload' => true
+	]
+);
+
+$oPage->setElement($oGuiVisits, array('hash' => $oGuiAccommodation->hash, 'foreign_key' => 'acc_id', 'parent_primary_key' => 'id', 'reload' => true));
+
+
+// HTML Buffern
+$_VARS['item'] = 'accommodation';
+$_VARS['parent_hash'] = $oGuiAccommodation->hash;
+ob_start();
+$sDescription = $oGuiAccommodation->gui_description; // wird im include verwendet!
+require Util::getDocumentRoot() . 'system/legacy/admin/extensions/thebing/absence.html';
+$sBlockHtml = ob_get_contents();
+ob_end_clean();
+
+$aBlockData = [
+	'title' => $oGuiAccommodation->t('Blockierung'),
+	'html' => $sBlockHtml,
+	'hash' => $sGuiHash
+];
+$oPage->setElement($aBlockData);
+$oPage->setElement($oGuiPdf, array('hash' => $oGuiAccommodation->hash, 'foreign_key' => 'accommodation_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->setElement($oGuiPicture, array('hash' => $oGuiAccommodation->hash, 'foreign_key' => 'accommodation_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->setElement($oGui, array('hash' => $oGuiAccommodation->hash, 'foreign_key' => 'allocated_accommodations', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->setElement($oRequirementGui, array('hash' => $oGuiAccommodation->hash, 'foreign_key' => 'accommodation_provider_id', 'foreign_key_alias' => 'accommodation_categories', 'foreign_jointable' => 'accommodation_categories', 'reload' => true));
+
+$oPage->setTemplate('system/bundles/Ts/Resources/views/accommodation/accommodations.tpl');
+
+$oPage->display($aOptionalInfo);

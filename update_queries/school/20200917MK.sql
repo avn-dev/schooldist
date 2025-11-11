@@ -1,0 +1,1 @@
+ALTER TABLE `ts_payment_conditions_settings` CHANGE `installment_type` `installment_type` ENUM('weekly','monthly','fixed_number') NOT NULL;

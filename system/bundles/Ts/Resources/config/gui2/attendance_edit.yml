@@ -1,0 +1,8 @@
+parent: ts_attendance
+access: 
+  - thebing_tuition_edit_attendance
+  - ""
+hash: b659024616b2c8c2ea4eddfb1c83744f
+view: edit
+designer:
+  flex: tuition_attendance_register

@@ -1,0 +1,268 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess('rights');
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Benutzerverwaltung')?> &raquo; <?=L10N::t('Rechte')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<div class="box-body">
+<?php					//	STARTED UPDATESKRIPT für Bearbeitung
+
+if(
+	isset($_VARS['task']) && 
+	$_VARS['task'] == "save"
+) { 
+	
+	if(isset($_VARS['id'])) {
+
+		$intRightId = $_VARS['id'];
+		$strRights = $_VARS['tmpright'];
+		$strElement = $_VARS['tmpelement'];
+		$strDescription = $_VARS['tmpdescription'];
+		
+	  	$sQuery = " UPDATE 
+	  					`system_rights` 
+	  				SET 
+	  					`right` = :right, 
+	  					`element` = :element, 
+	  					`description` = :description 
+					WHERE 
+						id = :intID;
+	  			  ";
+	
+	  			  
+		$aQueryValues = array(
+			'intID' => $intRightId,
+			'right' => $strRights,
+			'element' => $strElement,
+			'description' => $strDescription
+		);
+	
+		echo "Erfolgreich bearbeitet";
+
+	} else {
+	
+		$strRights = 		$_VARS['tmpright'];
+		$strElement = 		$_VARS['tmpelement'];
+		$strDescription = 	$_VARS['tmpdescription'];
+		
+	  	$sQuery = " INSERT INTO 
+	  					system_rights 
+	  						(`right`,
+	  						 `element`,
+	  						 `description`)
+	  				VALUES (:rights,
+	  						:element,
+	  						:description);
+	  			  ";
+	  			  
+		$aQueryValues = array(
+			'rights' => $strRights,
+			'element' => $strElement,
+			'description' => $strDescription
+		);
+	
+		echo "Erfolgreich hinzugefügt";
+		
+	}
+
+	DB::executePreparedQuery($sQuery, $aQueryValues);
+
+	unset($_VARS['task']);
+
+}
+
+if(isset($_VARS['idLoesch'])) { 
+		
+  	$sQuery = " DELETE FROM
+  					`system_rights`
+  				WHERE
+					id = :intID
+				LIMIT 1;
+  			  ";
+  			  
+	$aQueryValues = array(
+		'intID' => $_VARS['idLoesch'],
+	);
+	DB::executePreparedQuery($sQuery, $aQueryValues);
+	
+	echo "Erfolgreich gelöscht";
+}
+
+if(!isset($_VARS['task'])) { 
+?>
+
+	<table class="table table-hover table-striped">
+		<tr>
+			<th width="5%">Id</th>
+			<th width="15%">Rechte</th>			
+			<th width="10%">Element</th>
+			<th width="60%">Erkl&auml;rung</th>
+			<th width="10%">Aktion</th>
+		</tr>
+
+<?php
+	$sQuery = "	SELECT 
+					* 
+				FROM 
+					system_rights 
+				ORDER BY description;";
+							
+	$aRight = DB::getQueryData($sQuery);
+
+		foreach($aRight as $aData){
+?>
+		<tr <?=$tag?>>
+				<td align="left">
+				<?php
+				if ($aData['id'] == '') {
+					echo '&nbsp;';	
+				} else {
+					echo ($aData['id']);
+				}
+				?>
+				</td>
+
+				<td align="left">
+				<?php
+				if ($aData['right'] == '') {
+					echo '&nbsp;';	
+				} else {
+					echo ($aData['right']);
+				}
+				?>
+				</td>
+				
+				<td align="left">
+				<?php
+				if ($aData['element'] == '') {
+					echo '&nbsp;';	
+				} else {
+					echo ($aData['element']);
+				}
+				?>
+				</td>
+				
+				<td align="left">
+				<?php
+				if ($aData['description'] == '') {
+					echo '&nbsp;';	
+				} else {
+					echo ($aData['description']);
+				}
+				?>
+				</td>
+				 
+				
+				<td align="center" nowrap>
+				<a href="rights.html?task=add&id=<?=$aData['id']?>">
+				<img src="media/edit.png" border="0"></a>
+				
+ 				<a href="javascript:if(confirm('Möchten Sie diesen Eintrag wirklich löschen?')) 
+ 				document.location.href='rights.html?action=edit&idLoesch=<?=$aData['id']?>'">
+ 				<img src="media/delete.png" border="0"></a>
+
+				</td>
+				
+				
+				</tr>
+	<?}?>
+	</table>
+
+	<p align="right">
+		<button class="btn btn-primary" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>?task=add';">Hinzufügen</button>
+	</p>
+<?php
+}
+
+if(isset($_VARS['task']) && $_VARS['task'] == "add"){ 
+		
+	if(isset($_VARS['id'])) {
+
+		$sQuery = "	
+					SELECT 
+						* 
+					FROM
+						system_rights
+					WHERE 
+						id = :intId ";
+		$aTransfer = array();
+		$aTransfer['intId'] = $_VARS['id']; 
+		$arrRightData = DB::getPreparedQueryData($sQuery, $aTransfer);
+		$arrRightData = $arrRightData[0];
+
+?>
+<h2>Recht "<?=$arrRightData['right']?>" bearbeiten</h2>
+<?
+	} else {
+?>
+<h2>Recht hinzufügen</h2>
+<?
+	}
+?>
+
+	<table class="table table-hover table-striped">
+		<tr>
+			<th width="20%">Rechte</th>
+			<th width="20%">Element</th>
+			<th width="60%">Erkl&auml;rung</th>
+		</tr>
+
+		<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<input type="hidden" name="task" value="save" />
+<?
+	if(isset($_VARS['id'])) {
+?>
+		<input type="hidden" name="id" value="<?=$_VARS['id']?>" />
+<?
+	}
+?>
+		<tr>
+		<td align="left">
+		<input type="text" class="txt" name="tmpright" size="30" maxlength="255" value="<?=\Util::convertHtmlEntities($arrRightData['right'])?>">
+		</td>
+		
+		
+		<td align="left">
+		<input type="text" class="txt" name="tmpelement" size="30" maxlength="255" value="<?=\Util::convertHtmlEntities($arrRightData['element'])?>">
+		</td>
+		
+		
+		<td align="left">
+		<input type="text" class="txt" name="tmpdescription" size="80" maxlength="255" value="<?=\Util::convertHtmlEntities($arrRightData['description'])?>">
+		</td>	
+		
+		</tr>
+	</table>
+		
+<p align="right">
+
+	<a href="<?=$_SERVER['PHP_SELF']?>" class="btn btn-default">Zurück</a>
+	<input type="reset" class="btn btn-default"  value="Zurücksetzen" />
+	<input type="submit" class="btn btn-primary" value="Speichern" />
+	
+</p>
+
+</form>
+
+<?php
+}
+
+
+					//	ENDE FORMULAR-HINZUFÜGEN		
+?>
+		</div>
+	</div>
+</section>
+
+
+<?=Admin_Html::loadAdminFooter()?>

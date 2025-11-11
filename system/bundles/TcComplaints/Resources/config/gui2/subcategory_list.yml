@@ -1,0 +1,112 @@
+class:
+  wdbasic: \TcComplaints\Entity\SubCategory
+  gui: Ext_TC_Gui2
+  data: \TcComplaints\Gui2\Data\SubCategory
+  date_format: Ext_TC_Gui2_Format_Date
+  icon_status: \TcComplaints\Gui2\Icon\SubCategory
+
+id:
+  column: id
+  alias: tc_ccsc
+title: Unterkategorie
+export: false
+sortable: true
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - tc_ccsc
+          - tc_ccsc
+        column:
+          - title
+          - short_name
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TcComplaints\Gui2\Data\SubCategory
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TcComplaints\Gui2\Data\SubCategory
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+
+columns:
+  -
+    title: Bezeichnung
+    column: title
+    alias: tc_ccsc
+    width: name
+    resize: false
+  -
+    title: Abkürzung
+    column: short_name
+    alias: tc_ccsc
+    width: short_name
+    resize: false
+  -
+    title: Beschreibung
+    column: description
+    alias: tc_ccsc
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - description
+      - true
+      - 100
+    width: comment
+    resize: true
+  -
+    title: Deaktiviert ab
+    column: valid_until
+    alias: tc_ccsc
+    format: \TcComplaints\Gui2\Format\ValidUntil
+    width: date
+    resize: false
+
+default_columns:
+  -
+    title: Ersteller
+    column: creator_id
+    alias: tc_ccsc
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+  -
+    title: Erstellt
+    column: created
+    alias: tc_ccsc
+    width: date
+    resize: false
+    format: Ext_TC_Gui2_Format_Date
+  -
+    title: Bearbeiter
+    column: editor_id
+    alias: tc_ccsc
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+  -
+    title: Verändert
+    column: changed
+    alias: tc_ccsc
+    width: date
+    resize: false
+    format: Ext_TC_Gui2_Format_Date

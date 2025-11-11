@@ -1,0 +1,495 @@
+parent: tc_feedback_results
+class:
+  wdbasic: Ext_TS_Marketing_Feedback_Questionary_Process
+  gui: Ext_TS_Marketing_Feedback_Questionary_Gui2_FeedbackResults
+  data: Ext_TS_Marketing_Feedback_Questionary_Process_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+access: thebing_students_feedback_list
+# Muss für die Färbung der Rows mit geladen werden.
+css:
+  - /assets/ts/css/gui2.css
+
+id:
+  column: id
+  alias: tc_fqp
+
+bars:
+   -
+     position: top
+     type: ""
+     elements:
+       -
+         element: inputfilter
+         label: Suche
+         searchtype: LIKE
+         alias:
+           - tc_cn
+           - tc_c
+           - tc_c
+           - kg
+           - kg
+           - tc_fqp
+           - ts_an
+           - ka
+         column:
+           - number
+           - firstname
+           - lastname
+           - name
+           - short
+           - email
+           - number
+           - ext_1
+       -
+         element: seperator
+       -
+         element: timefilter
+         format: Ext_TC_Gui2_Format_Date
+         from:
+           alias:
+             - tc_fqp
+           column:
+             - invited
+           default:
+             - Ext_Gui2_Factory_Default
+             - getDefaultFilterFrom
+             - true
+         until:
+           alias:
+             - tc_fqp
+           column:
+             - invited
+           default:
+             - Ext_Gui2_Factory_Default
+             - getDefaultFilterUntil
+             - true
+         searchtype: contact
+         based_on:
+           invited:
+             alias: tc_fqp
+             column: invited
+           started:
+             alias: tc_fqp
+             column: started
+           answered:
+             alias: tc_fqp
+             column: answered
+           follow_up:
+             alias: tc_fqp
+             column: follow_up
+           service_from:
+             alias: ts_i
+             column: service_from
+           service_until:
+             alias: ts_i
+             column: service_until
+       -
+         element: seperator
+       -
+         element: selectfilter
+         label: Agentur
+         label_as_item: true
+         value:
+           - Ext_Gui2_Factory_Default
+           - getValue
+         alias:
+           - ka
+         column:
+           - id
+         entries:
+           - Ext_TS_Inquiry_Abstract
+           - getAgenciesForSelect
+       -
+         element: selectfilter
+         label: Gestartet
+         label_as_null_item: true
+         alias:
+           - tc_fqp
+         column:
+           - started
+         entries:
+           - Ext_TC_Util
+           - getYesNoArray
+           - false
+         filter_query:
+           no: DATE(`started`) = '0000-00-00'
+           yes: DATE(`started`) != '0000-00-00'
+       -
+         element: selectfilter
+         label: Beantwortet
+         label_as_null_item: true
+         alias:
+           - tc_fqp
+         column:
+           - answered
+         entries:
+           - Ext_TC_Util
+           - getYesNoArray
+           - false
+         filter_query:
+           no: DATE(`answered`) = '0000-00-00'
+           yes: DATE(`answered`) != '0000-00-00'
+       -
+         element: selectfilter
+         label: Gruppen
+         label_as_null_item: true
+         alias:
+           - ts_i
+         column:
+           - group_id
+         entries:
+           - Ext_TC_Util
+           - getYesNoArray
+           - false
+         filter_query:
+           no: "`group_id` = 0"
+           yes: "`group_id` != 0"
+       -
+         id: accommodation_filter
+         element: selectfilter
+         label: Unterkunftsanbieter
+         label_as_null_item: true
+         alias:
+           - tc_fqtds
+         column:
+           - subobject_id
+         entries:
+           - Ext_Thebing_Accommodation
+           - getSelectOptions
+           - false
+         filter_query: "`tc_f_q`.`dependency_on` = 'accommodation_provider' AND `tc_fqpr`.`dependency_id` = {value}"
+       -
+         element: selectfilter
+         label: Zugeordnet an
+         label_as_null_item: true
+         alias:
+           - tc_fqp
+         column:
+           - assigned_to
+         entries:
+           - Ext_TS_Marketing_Feedback_Questionary_Process_Gui2_Data
+           - getUserSelectOptions
+       -
+         element: selectfilter
+         label: Fragebögen
+         label_as_null_item: true
+         alias:
+           - tc_fqp
+         column:
+           - questionary_id
+         entries:
+           - Ext_TC_Marketing_Feedback_Questionary
+           - getSelectOptions
+       -
+         element: selectfilter
+         label: Nachhaken
+         label_as_null_item: true
+         alias:
+           - tc_fqp
+         column:
+           - follow_up
+         entries:
+           - Ext_TC_Marketing_Feedback_Questionary_Process_Gui2_Data
+           - getFilterOptions
+         filter_query:
+           no: "`tc_fqp`.`follow_up` IS NULL OR `tc_fqp`.`follow_up` = '0000-00-00'"
+           yes: "`tc_fqp`.`follow_up` IS NOT NULL AND `tc_fqp`.`follow_up` != '0000-00-00'"
+           due_followups: "`tc_fqp`.`follow_up` IS NOT NULL AND `tc_fqp`.`follow_up` != '0000-00-00' AND `tc_fqp`.`follow_up` < NOW()"
+       -
+         element: selectfilter
+         label: Feedback gelesen
+         label_as_null_item: true
+         alias:
+           - tc_fqp
+         column:
+           - read_feedback
+         entries:
+           - Ext_TC_Util
+           - getYesNoArray
+           - false
+         filter_query:
+           no: "`read_feedback` = 0"
+           yes: "`read_feedback` = 1"
+       -
+         element: selectfilter
+         label: Kurse
+         label_as_null_item: true
+         alias:
+           - ts_ijc
+         column:
+           - course_id
+         entries:
+           - Ext_TS_Marketing_Feedback_Questionary_Process_Gui2_Data
+           - getCourseList
+       -
+         visibility: false
+         id: school_filter
+         element: selectfilter
+         label: Schule
+         label_as_item: true
+         alias:
+           - ts_ij
+         column:
+           - school_id
+         entries:
+           - Ext_Thebing_Client
+           - getSchoolList
+           - true
+           - 0
+           - false
+           - false
+   -
+     position: top
+     type: ""
+     elements:
+       -
+         element: icon
+         label: Auswertung ansehen
+         task: openDialog
+         action: edit
+         img:
+           - Ext_TC_Util
+           - getIcon
+           - refresh
+         dialog:
+           - Ext_TS_Marketing_Feedback_Questionary_Process_Gui2_Data
+           - getDialog
+       -
+         element: labelgroup
+         label: Kommunikation
+         hide_empty: true
+       -
+         element: icon_communication
+         access: thebing_students_feedback_list_communication
+         label: Kommunikation
+         application: feedback_list
+   -
+      position: top
+      last: true
+      elements:
+        -
+          element: icon
+          label: Erweiterter Export
+          task: requestAsUrl
+          action: extended_export
+          active: 1
+          img:
+           - Ext_TC_Util
+           - getIcon
+           - csv
+   -
+      position: bottom
+      type: legend
+      elements:
+        -
+          element: legend_label
+          label: Feedback Ergebnisse
+        -
+          element: legend_info
+          label: Nachhaken
+          info:
+            color: red
+columns:
+  -
+    title: Kundennummer
+    group: Persönliche Daten
+    column: number
+    alias: tc_cn
+    data: customer_number
+    sortable: true
+    width: number
+    resize: false
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    group: Persönliche Daten
+    column: short
+    alias: kg
+    data: group_short
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+        - group_name
+        - true
+  -
+    title: Name
+    group: Persönliche Daten
+    column: customer_name
+    width: name
+    sortable: true
+    resize: true
+  -
+    title: Nationalität
+    group: Persönliche Daten
+    column: nationality
+    width: name
+    sortable: true
+    resize: false
+  -
+    title: E-Mail
+    group: Persönliche Daten
+    column: email
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - email
+       - true
+    width: email
+    resize: false
+  -
+    title: Alter
+    group: Persönliche Daten
+    column: age
+    format: Ext_TS_Gui2_Format_AgeAtCourseBeginn
+    sortable: true
+    width: age
+    resize: false
+  -
+    title: Agenturnummer
+    group: Agentur
+    column: number
+    alias: ts_an
+    data: agency_number
+    sortable: true
+    width: number
+    resize: false
+  -
+    title: Agentur
+    group: Agentur
+    column: ext_2
+    data: agency_short
+    alias: ka
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - agency_full_name
+      - true
+    width: short_name
+    resize: false
+  -
+    visible: true
+    title: Schule
+    column: school
+    sortable_column: ext_1
+    alias: cdb2
+    group: Persönliche Daten
+    sortable: true
+    width: name
+    resize: true
+  -
+    title: Kurs
+    data: course_name
+    format: Ext_Gui2_View_Format_StringParts
+    sortable: false
+    width: name
+    resize: false
+  -
+    title: Lehrer
+    data: dependency
+    column: teacher
+    group: Anbieter
+    format: Ext_TS_Marketing_Feedback_Questionary_Gui2_Format_NameOfDependency
+    sortable: false
+    width: name
+    resize: true
+  -
+    title: Unterkunftsanbieter
+    data: dependency
+    column: accommodation_provider
+    group: Anbieter
+    format: Ext_TS_Marketing_Feedback_Questionary_Gui2_Format_NameOfDependency
+    sortable: false
+    width: name
+    resize: true
+  -
+    title: Globales Startdatum
+    group: Persönliche Daten
+    alias: ts_i
+    column: service_from
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    title: Globales Enddatum
+    group: Persönliche Daten
+    alias: ts_i
+    column: service_until
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    title: Nachhaken
+    group: Fragebogen
+    column: follow_up
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    resize: false
+  -
+    title: Fragebogen
+    group: Fragebogen
+    column: questionary_name
+    width: name
+    sortable: true
+  -
+    title: Zugeordnet an
+    group: Fragebogen
+    column: assigned_to
+    format: Ext_Thebing_Gui2_Format_ClientUsername
+    width: name
+    sortable: false
+  -
+    title: GZ
+    group: Fragebogen
+    description: Gesamtzufriedenheit
+    column: overall_satisfaction
+    width: short_name
+    sortable: true
+  -
+    title: Gelesen
+    group: Fragebogen
+    alias: tc_fqp
+    column: read_feedback
+    width: yes_no
+    format: Ext_Gui2_View_Format_YesNo
+    sortable: true
+  -
+    title: Eingeladen
+    group: Fragebogen
+    column: invited
+    width: datetime
+    format: Ext_TC_Gui2_Format_Date_Time
+    sortable: false
+  -
+    title: Gestartet
+    group: Fragebogen
+    column: started
+    width: datetime
+    format: Ext_TC_Gui2_Format_Date_Time
+    sortable: false
+  -
+    title: Beantwortet
+    group: Fragebogen
+    column: answered
+    width: datetime
+    format: Ext_TC_Gui2_Format_Date_Time
+    sortable: false
+
+default_columns:
+  -
+    title: Bearbeiter
+    alias: tc_fqpn
+    column: editor_id
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    sortable: true
+  -
+    title: Bearbeitet
+    alias: tc_fqpn
+    column: changed
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true

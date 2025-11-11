@@ -1,0 +1,36 @@
+<?
+
+// copyright by plan-i GmbH
+// 06.2001 by Mark Koopmann (mk@plan-i.de)
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("edit");
+
+?>
+<html>
+<head>
+<title><?=$page_data['htmltitle']?></title>
+
+<!-- frames -->
+
+</head>
+
+<?
+
+if($_VARS['url']) {
+	$url = $_VARS['url'];
+} else {
+	$url = "/admin/edit_index.html";
+}
+
+?>
+
+<frameset id="editframe" rows="31,*,10,15" frameborder="0" framespacing="0">
+	<frame name="edittop" src="edit_top.html?url=<?=$url?>" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" noresize>
+	<frame name="page" src="about:blank" marginwidth="0" marginheight="0" scrolling="auto" frameborder="0" noresize>
+	<frame name="scroller_3" src="scroller_3.html" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" noresize>
+	<frame name="editbottom" src="edit_bottom.html" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" noresize>
+</frameset>
+
+</html>

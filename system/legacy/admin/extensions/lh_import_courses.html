@@ -1,0 +1,891 @@
+<?php
+
+
+// Includes
+include_once $_SERVER["DOCUMENT_ROOT"] . "/admin/includes/main.inc.php";
+include_once $_SERVER["DOCUMENT_ROOT"] . "/system/extensions/luisenhospital/functions_lh.inc.php";
+
+
+
+// ...
+set_time_limit(600);
+
+
+// Konstanten
+$sXMLPath = "/media/lh/xml/";
+$sXMLPathLong = $_SERVER["DOCUMENT_ROOT"] . $sXMLPath;
+$sImportFile = "importFile";
+$sTemplateFile = "templateFile";
+$sXMLFilename = "import.xml";
+$sXMLFile = $sXMLPathLong . $sXMLFilename;
+$aBasys2Db = array(
+	"KNR"			=> "course",
+	"SEMESTER"		=> "semester",
+	"TITELKURZ"		=> "title_short",
+	"INHALT"		=> "description",
+	"BEGINNDAT"		=> "effective_from",
+	"ENDEDAT"		=> "effective_till",
+	"DAUER"			=> "duration",
+	"DAUERDETAILS"	=> "duration_details",
+	"GEBNORM"		=> "fees",
+	"ORT"			=> "location_description",
+	"ORTSTR"		=> "location_street",
+	"ORTPLZ"		=> "location_code",
+	"ORTNAME"		=> "location_city",
+	"ORTPROGH"		=> "location",
+	"MATERIAL"		=> "material",
+	"WARNTEXT"		=> "advice",
+	"VORSPANN"		=> "lead_text",
+	"NACHSPANN"		=> "internet_text",
+	"IND_TERM"		=> "additional_costs"
+);
+$aWeek = array("So", "Mo", "Di", "Mi", "Do", "Fr", "Sa");
+$iEineWoche = 60 * 60 * 24 * 7;
+
+
+// TODO: Rechte checken
+#Access_Backend::checkAccess("???");
+
+
+// Uebergabewerte auslesen
+$sTodo = trim($_VARS["form_action"]);
+$bTruncate = intval($_VARS["truncate"]);
+$bEncoded = intval($_VARS["encoded"]);
+
+
+
+
+
+// Funktionen
+function decreaseSpaces($sText)
+{
+	$sText = trim($sText);
+	$i = 0;
+	while((($iPos = strpos($sText, "  ")) !== false) && (30 > $i))
+	{
+		$sText = str_replace("  ", " ", $sText);
+		$i++;
+	}
+	if(30 <= $i)
+	{
+		echo "!<br>";
+	}
+	
+	return $sText;
+}
+
+
+function doEncode($sText)
+{
+	$sText = utf8_encode($sText);
+	$sReturn = "<![CDATA[" . $sText . "]]>";
+	return $sReturn;
+}
+
+
+
+
+
+
+
+
+
+
+// Standard Admin Anfang
+Admin_Html::loadAdminHeader();
+?>
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Kursprogramm</h1><br /><br />
+<?php
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Wenn die Kategorien sortiert werden sollen
+if(("sort" == $sTodo) || ("savePos" == $sTodo))
+{
+	if("savePos" == $sTodo)
+	{
+		// ermittele alle uebergebenen Positionen
+		$aCategories = array();
+		foreach($_VARS as $sKey => $sValue)
+		{
+			if("iCatPos_" == substr($sKey, 0, 8))
+			{
+				$iId = intval(substr($sKey, 8));
+				if($iId)
+				{
+					$sSQL = "SELECT `category` FROM `lh_courses` WHERE `id`='" . $iId . "'";
+					$rRes = db_query($sSQL);
+					$aMy = get_data($rRes);
+					$aCategories[$iId]["name"] = $aMy["category"];
+					$aCategories[$iId]["pos"] = intval($sValue);
+				}
+			}
+		}
+		$aCourses = array();
+		foreach($aCategories as $iCatId => $aCatValues)
+		{
+			$sSQL = "SELECT `id`, `title_short`, `category` FROM `lh_courses` WHERE `category`='" . $aCatValues["name"] . "'";
+			$rRes = db_query($sSQL);
+			while($aMy = get_data($rRes))
+			{
+				$iCoursesId = intval($aMy["id"]);
+				$iPos = intval($_VARS["iTitlePos_" . $iCoursesId]);
+				if($iPos)
+				{
+					$aCourses[$iCoursesId]["category"] = $aMy["category"];
+					$aCourses[$iCoursesId]["name"] = $aMy["title_short"];
+					$aCourses[$iCoursesId]["pos"] = $iPos;
+				}
+			}
+		}
+		
+		// loesche die Positionen-Tabelle
+		$sSQL = "TRUNCATE TABLE `lh_positions`";
+		db_query($sSQL);
+		
+		// speichere alle Positionen
+		$sSQL2 = "INSERT INTO `lh_positions` (`category`, `course`, `position`) VALUES ";
+		$bFirst = true;
+		foreach($aCategories as $iId => $aValues)
+		{
+			if($bFirst)
+			{
+				$bFirst = false;
+			}
+			else
+			{
+				$sSQL2 .= ",";
+			}
+			$sSQL2 .= "('" . addslashes($aValues["name"]) . "', '', '" . intval($aValues["pos"]) . "')";
+		}
+		db_query($sSQL2);
+		
+		$sSQL2 = "INSERT INTO `lh_positions` (`category`, `course`, `position`) VALUES ";
+		$bFirst = true;
+		foreach($aCourses as $iId => $aValues)
+		{
+			if($bFirst)
+			{
+				$bFirst = false;
+			}
+			else
+			{
+				$sSQL2 .= ",";
+			}
+			$sSQL2 .= "('" . addslashes($aValues["category"]) . "', '" . addslashes($aValues["name"]) . "', '" . intval($aValues["pos"]) . "')";
+		}
+		db_query($sSQL2);
+	}
+	
+
+
+	
+	// lies Kategorien aus 
+	$aCategories = array();
+	$sSQL = "SELECT c.`id` AS course_id, c.`category`, p.`position` FROM `lh_courses` AS c" .
+		" LEFT JOIN `lh_positions` AS p ON p.`category`=c.`category` AND p.`course` LIKE ''" .
+		" GROUP BY c.`category` ORDER BY p.`position`";
+	$rRes = db_query($sSQL);
+	while($aMy = get_data($rRes))
+	{
+		$aCategories[intval($aMy["course_id"])]["name"] = $aMy["category"];
+		$aCategories[intval($aMy["course_id"])]["pos"] = intval($aMy["position"]);
+	}
+	
+	// lies Titel aus
+	$aTitles = array();
+	if(count($aCategories))
+	{
+		foreach($aCategories as $iIndex => $aCategory)
+		{
+			$sSQL = "SELECT c.`id` AS course_id, c.`title_short` , p.`position` FROM `lh_courses` AS c" .
+				" LEFT JOIN `lh_positions` AS p ON p.`category`=c.`category` AND p.`course`=c.`title_short`" .
+				" WHERE c.`category` LIKE '" . $aCategory["name"] . "'" .
+				" GROUP BY c.`title_short`" .
+				" ORDER BY p.`position`";
+			$rRes = db_query($sSQL);
+			while($aMy = get_data($rRes))
+			{
+				$aTitles[$iIndex][] = $aMy;
+			}
+		}
+	}
+?>
+			<form id="sort_formular" name="sort_formular" action="<?=$_SYSTEM["PHP_SELF"];?>" method="post" enctype="multipart/form-data">
+				<h2>Kategorien sortieren</h2>
+				<input type="hidden" id="form_action" name="form_action" value="savePos" />
+<?php
+	foreach($aCategories as $iIndex => $aCategory)
+	{
+		echo "<h3>";
+		echo ($aCategory["name"]?$aCategory["name"]:">keiner Kategorie zugeordnet!<");
+		echo " <input type='text' name='iCatPos_" . $iIndex . "' value='" . intval($aCategory["pos"]) . "' />";
+		echo "</h3>";
+		printTableStart();
+		foreach($aTitles[$iIndex] as $aValues)
+		{
+			printFormText($aValues["title_short"], "iTitlePos_" . intval($aValues["course_id"]), intval($aValues["position"]));
+		}
+		printTableEnd();
+	}
+	printButton("Kurs-Positionen speichern", "document.getElementById('sort_formular').submit();");
+?>
+				<button type="button" class="btn" onClick="window.location.href='<?=$_SERVER["PHP_SELF"];?>';">zur&uuml;ck</button>
+			</form>
+<?php
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+else
+{
+	// Wenn die Daten importiert werden sollen
+	if("import" == $sTodo)
+	{
+		$bError = true;
+		echo "Import wurde gestartet:<br />";
+		flush();
+		if(file_exists($_FILES[$sImportFile]["tmp_name"]))
+		{
+			echo "- verschiebe Datei<br />";
+			flush();
+			if(!file_exists($sXMLPathLong))
+			{
+				// falls nicht vorhanden, Zielverzeichnis erstellen
+				mkdir($sXMLPathLong, 0777);
+			}
+			$sImportDatei = $sXMLPathLong . $_FILES[$sImportFile]["name"];
+			if(file_exists($sImportDatei))
+			{
+				// falls Zieldatei bereits vorhanden, diese alte Datei loeschen
+				unlink($sImportDatei);
+			}
+			// verschiebe die hochgeladene Datei
+			move_uploaded_file($_FILES[$sImportFile]["tmp_name"], $sImportDatei);
+			if(file_exists($sImportDatei))
+			{
+				// Zugriffsrechte anpassen
+				chmod($sImportDatei, 0777);
+				
+				echo "- konvertiere Datei<br />";
+				flush();
+				// spezielle Zeichen in Importdatei konvertieren und in Xml-Datei speichern
+				$fHandleIn = fopen($sImportDatei, "r");
+				$fHandleOut = fopen($sXMLFile, "w");
+				while(!feof($fHandleIn)) 
+				{
+					$sXmlCode = fgets($fHandleIn, 4096);
+					if($bEncoded)
+					{
+						$sXmlCode = str_replace("�", "?���&euro;", $sXmlCode);
+					}
+					$sXmlCode = str_replace("&", "&amp;", $sXmlCode);
+					$sXmlCode = str_replace("[", "<", $sXmlCode);
+					$sXmlCode = str_replace("]", ">", $sXmlCode);
+					$sXmlCode = str_replace("\\", "/", $sXmlCode);
+					$sXmlCode = str_replace("<br>", " ", $sXmlCode);
+					fwrite($fHandleOut, $sXmlCode);
+				}
+				fclose($fHandleIn);
+				fclose($fHandleOut);
+				
+				// original Importdatei loeschen
+				unlink($sImportDatei);
+				
+				if(file_exists($sXMLFile))
+				{
+					echo "- lies Datei<br />";
+					flush();
+					// neuen Xml-Parser erstellen
+					$cXml2Array = &new lh_parseXML;
+					// schreibe Importdaten in ein Array<br />";
+					$aData = $cXml2Array->xml2Array($sXMLFile);
+					
+					if(count($aData))
+					{
+						// Erstelle neues angepasstes und bedienungsfreundlicheres Daten-Array
+						$i = 0;
+						foreach($aData["KURSE"][0]["KURS"] as $aCourse)
+						{
+							foreach($aBasys2Db as $sBASysTag => $sDbTag)
+							{
+								$aDbData[$i][$sDbTag] = decreaseSpaces($aCourse[$sBASysTag][0]["VALUE"]);
+								if("effective_from" == $sDbTag || "effective_till" == $sDbTag)
+								{
+									$iEffectiveFrom = strtotimestamp($aDbData[$i][$sDbTag]);
+									$aDbData[$i][$sDbTag . "2"] = date("Y-m-d", $iEffectiveFrom);
+								}
+							}
+							$aDbData[$i]["dozenten"] = $aCourse["DOZENTEN"][0]["DOZENT"];
+							
+							// Kategorie und langen Kurstitel trennen
+							$sTitleLong = $aCourse["TITELLANG"][0]["VALUE"];
+							$iPos = strpos($sTitleLong, ":");
+							$aDbData[$i]["category"] = substr($sTitleLong, 0, $iPos);
+							$aDbData[$i]["title_long"] = substr($sTitleLong, ($iPos !== false?$iPos+1:$iPos));
+							
+							// Jetzt noch alle Termindaten merken
+							$aDates = $aCourse["TERMINE"][0]["TERMIN"];
+							if(is_array($aDates) && count($aDates))
+							{
+								$j = 0;
+								foreach($aDates as $aDate)
+								{
+									$aDbData[$i]["dates"][$j]["day"]				= decreaseSpaces($aDate["TAG"][0]["VALUE"]);
+									$iDay2 = strtotimestamp($aDbData[$i]["dates"][$j]["day"]);
+									$aDbData[$i]["dates"][$j]["day2"]				= date("Y-m-d", $iDay2);
+									$aDbData[$i]["dates"][$j]["time_from"]			= decreaseSpaces($aDate["ZEITVON"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["time_till"]			= decreaseSpaces($aDate["ZEITBIS"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["location"]			= decreaseSpaces($aDate["TERMIN_ORT"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["location_street"]	= decreaseSpaces($aDate["TERMIN_ORTSTR"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["location_code"]		= decreaseSpaces($aDate["ORTPLZ"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["location_city"]		= decreaseSpaces($aDate["ORTNAME"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["status"]				= decreaseSpaces($aDate["TERMIN_STATUS"][0]["VALUE"]);
+
+									$aDbData[$i]["dates"][$j]["lecturer"]["title"]	= decreaseSpaces($aDate["TERMIN_DOZ"][0]["TERMIN_TITEL"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["lecturer"]["forename"] = decreaseSpaces($aDate["TERMIN_DOZ"][0]["TERMIN_VORNAME"][0]["VALUE"]);
+									$aDbData[$i]["dates"][$j]["lecturer"]["name"]	= decreaseSpaces($aDate["TERMIN_DOZ"][0]["TERMIN_NAME"][0]["VALUE"]);
+	
+									$j++;
+								}
+							}
+							
+							$i++;
+						}
+						
+						// wenn gewuenscht, erst die alten Daten aus den Tabellen l&ouml;schen
+						if($bTruncate)
+						{
+							echo "- l&ouml;sche alte Daten<br />";
+							flush();
+							$sSQL = "TRUNCATE TABLE `lh_lecturers`";
+							db_query($sSQL);
+							$sSQL = "TRUNCATE TABLE `lh_dates`";
+							db_query($sSQL);
+							$sSQL = "TRUNCATE TABLE `lh_courses`";
+							db_query($sSQL);
+						}
+						
+						
+						// speichere Kurs-Daten in der Datenbank
+						if(count($aDbData))
+						{
+							echo "- speichere die Daten in der Datenbank<br />";
+							flush();
+							foreach($aDbData as $aDbCourse)
+							{
+								$sSQL = "INSERT INTO `lh_courses` SET ";
+								$bFirst = true;
+								if(is_array($aDbCourse) && count($aDbCourse))
+								{
+									foreach($aDbCourse as $sDbRow => $sDbValue)
+									{
+										if("dates" != $sDbRow && "dozenten" != $sDbRow)
+										{
+											if($bFirst)
+											{
+												$bFirst = false;
+											}
+											else
+											{
+												$sSQL .= ", ";
+											}
+											$sSQL .= "`" . $sDbRow . "`='" . addslashes($sDbValue) . "'";
+										}
+									}
+									db_query($sSQL);
+								}
+								$iCourseId = get_insert_id();
+								
+								if($iCourseId && is_array($aDbCourse["dates"]) && count($aDbCourse["dates"]))
+								{
+									foreach($aDbCourse["dates"] as $aDates)
+									{
+										if(is_array($aDates) && count($aDates))
+										{
+											$aLecturer = $aDates["lecturer"];
+											$sSQL = "SELECT `id` FROM `lh_lecturers`" .
+												" WHERE `title` LIKE '" . addslashes($aLecturer["title"]) . "'" .
+												" AND `forename` LIKE '" . addslashes($aLecturer["forename"]) . "'" .
+												" AND `name` LIKE '" . addslashes($aLecturer["name"]) . "'";
+											$rRes = db_query($sSQL);
+											$aMy = get_data($rRes);
+											$iLecturerId = intval($aMy["id"]);
+											if(!$iLecturerId)
+											{
+												$sSQL = "INSERT INTO `lh_lecturers`" .
+													" SET `title`='" . addslashes($aLecturer["title"]) . "'" .
+													", `forename`='" . addslashes($aLecturer["forename"]) . "'" .
+													", `name`='" . addslashes($aLecturer["name"]) . "'";
+												db_query($sSQL);
+												$iLecturerId = intval(get_insert_id());
+											}
+											$sSQL = "INSERT INTO `lh_dates`" .
+												" SET `course_id`='" . intval($iCourseId) . "'" .
+												", `lecturer_id`='" . intval($iLecturerId) . "'";
+											foreach($aDates as $sDbRow => $sDbValue)
+											{
+												if("lecturer" != $sDbRow)
+												{
+													$sSQL .= ", `" . $sDbRow . "`='" . addslashes($sDbValue) . "'";
+												}
+											}
+											db_query($sSQL);
+										}
+									}
+								}
+								if(is_array($aDbCourse["dozenten"]) && count($aDbCourse["dozenten"]))
+								{
+									$sDoz = "";
+									$aDozIds = array();
+									$bFirst = true;
+									foreach($aDbCourse["dozenten"] as $aDoz)
+									{
+										$sTitle = "";
+										$sVorname = $aDoz["VORNAME"][0]["VALUE"];
+										$sName = $aDoz["NAME"][0]["VALUE"];
+										
+										$sSQL = "SELECT `id` FROM `lh_lecturers`" .
+											" WHERE `title` LIKE '" . addslashes($sTitle) . "'" .
+											" AND `forename` LIKE '" . addslashes($sVorname) . "'" .
+											" AND `name` LIKE '" . addslashes($sName) . "'";
+										$rRes = db_query($sSQL);
+										$aMy = get_data($rRes);
+										$iLecturerId = intval($aMy["id"]);
+										if(!$iLecturerId)
+										{
+											$sSQL = "INSERT INTO `lh_lecturers`" .
+												" SET `title`='" . addslashes($sTitle) . "'" .
+												", `forename`='" . addslashes($sVorname) . "'" .
+												", `name`='" . addslashes($sName) . "'";
+											db_query($sSQL);
+											$iLecturerId = intval(get_insert_id());
+										}
+										if(!in_array($iLecturerId, $aDozIds))
+										{
+											$aDozIds[] = $iLecturerId;
+											if($bFirst)
+											{
+												$bFirst = false;
+											}
+											else
+											{
+												$sDoz .= "|";
+											}
+											$sDoz .= $iLecturerId;
+										}
+									}
+									if(0 < strlen($sDoz))
+									{
+										$sSQL = "UPDATE `lh_courses`" .
+											" SET `lecturer`='" . addslashes($sDoz) . "'" .
+											" WHERE `id`='" . $iCourseId . "'";
+										db_query($sSQL);
+									}
+								}
+								
+							}
+						}
+						echo "Import beendet.<br />";
+						flush();
+						$bError = false;
+					}
+				}
+				else
+				{
+					$sError = "Die Importdatei konnte nicht gefunden werden!";
+				}
+			}
+			else
+			{
+				$sError = "Die Importdatei konnte nicht gefunden werden!";
+			}
+		}
+		else
+		{
+			$sError = "Die Importdatei konnte nicht gefunden werden!";
+		}
+		
+		if($sError)
+		{
+			echo $sError . "<br />";
+			flush();
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// Wenn das Programm erstellt werden soll
+	else if("create" == $sTodo)
+	{
+		$bError = true;
+		$sTemplateDatei = "";
+		echo "Programmerstellung wurde gestartet:<br />";
+		flush();
+		if(file_exists($_FILES[$sTemplateFile]["tmp_name"]))
+		{
+			echo "- verschiebe Template Datei<br />";
+			flush();
+			if(!file_exists($sXMLPathLong))
+			{
+				// falls nicht vorhanden, Zielverzeichnis erstellen
+				mkdir($sXMLPathLong, 0777);
+			}
+			$sTemplateDatei = $sXMLPathLong . $_FILES[$sTemplateFile]["name"];
+			if(file_exists($sTemplateDatei))
+			{
+				// falls Zieldatei bereits vorhanden, diese alte Datei loeschen
+				unlink($sTemplateDatei);
+			}
+			// verschiebe die hochgeladene Datei
+			move_uploaded_file($_FILES[$sTemplateFile]["tmp_name"], $sTemplateDatei);
+		}
+		if(!$sTemplateDatei)
+		{
+			$sTemplateDatei = $sXMLPathLong . "template04.xml";
+		}
+		if(is_file($sTemplateDatei))
+		{
+			// Zugriffsrechte anpassen
+			chmod($sTemplateDatei, 0777);
+			
+			echo "- lies Template aus<br />";
+			flush();
+			// Template auslesen
+			$sXmlCode = "";
+			$fHandleIn = fopen($sTemplateDatei, "r");
+			while(!feof($fHandleIn)) 
+			{
+				$sXmlCode .= fgets($fHandleIn, 4096);
+			}
+			fclose($fHandleIn);
+			
+			if(1 < strlen(trim($sXmlCode)))
+			{
+				
+				echo "- lies Kurse aus<br />";
+				flush();
+				$aCategories = array();
+				$sSQL = "SELECT c.`category` FROM `lh_courses` AS c" .
+					" LEFT JOIN `lh_positions` AS p ON p.`category`=c.`category` AND p.`course` LIKE ''" .
+					" GROUP BY c.`category` ORDER BY p.`position`";
+
+				$rRes = db_query($sSQL);
+				while($aMy = get_data($rRes))
+				{
+					$aCategories[] = $aMy["category"];
+				}
+
+				$aShortTitles = array();			
+				foreach($aCategories as $iIndex1 => $sCategory)
+				{
+					$sSQL = "SELECT c.`title_short` FROM `lh_courses` AS c" .
+						" LEFT JOIN `lh_positions` AS p ON p.`category`=c.`category` AND p.`course`=c.`title_short`" .
+						" WHERE c.`category` LIKE '" . addslashes($sCategory) . "'" .
+						" GROUP BY c.`title_short` ORDER BY p.`position`";
+					$rRes = db_query($sSQL);
+					while($aMy = get_data($rRes))
+					{
+						$aShortTitles[$iIndex1][] = $aMy["title_short"];
+					}
+					
+					foreach($aShortTitles[$iIndex1] as $iIndex2 => $sShortTitle)
+					{
+						$sSQL = "SELECT * FROM `lh_courses`" .
+							" WHERE `category` LIKE '" . addslashes($sCategory) . "'" .
+							"  AND `title_short` LIKE '" . addslashes($sShortTitle) . "'" .
+							" ORDER BY `effective_from2`, `effective_till2`, `course`";
+						$rRes = db_query($sSQL);
+						$j = 0;
+						while($aMy = get_data($rRes))
+						{
+							$aCourses[$iIndex1][$iIndex2][$j] = $aMy;
+							$aDoz = explode("|", $aCourses[$iIndex1][$iIndex2][$j]["lecturer"]);
+							foreach($aDoz as $iDozIds)
+							{
+								$sSQL2 = "SELECT * FROM `lh_lecturers` WHERE `id`='" . $iDozIds . "'";
+								$rRes2 = db_query($sSQL2);
+								$aMy2 = get_data($rRes2);
+								$aLecturer_Complete[$iIndex1][$iIndex2][$aMy2["name"]] = $aMy2["forename"];
+								$aLecturer_Surnames[$iIndex1][$iIndex2][$j][$aMy2["name"]] = true;
+							}
+							$j++;
+						}
+					}
+				}
+
+#				$aLecturer_Complete = array();
+				$aData_Time = array();
+				$aFees = array();
+				$aLocations = array();
+				foreach($aCourses as $iIndex1 => $aCategory)
+				{
+					foreach($aCategory as $iIndex2 => $aCourseTitle)
+					{
+						foreach($aCourseTitle as $iIndex3 => $aCourse)
+						{
+							$aDates = array();
+							$sSQL = "SELECT * FROM `lh_dates` AS d" .
+								" LEFT JOIN `lh_lecturers` AS l ON l.`id`=d.`lecturer_id`" .
+								" WHERE d.`course_id`='" . intval($aCourse["id"]) . "'" .
+								" ORDER BY d.`day2`, d.`time_from`, d.`time_till`" .
+								" LIMIT 0,2";
+							$rRes = db_query($sSQL);
+							while($aMy = get_data($rRes))
+							{
+								$aDates[] = $aMy;
+							}
+							
+							$iFrom = strtotimestamp($aCourse["effective_from"] . " 00:00:01");
+							$iTill = strtotimestamp($aCourse["effective_till"] . " 00:00:01");
+							$aCourses[$iIndex1][$iIndex2][$iIndex3]["effective_from_till"] = date("d.m.", $iFrom);
+							if($iTill - $iFrom > 0)
+							{
+								$aCourses[$iIndex1][$iIndex2][$iIndex3]["effective_from_till"] .= "-" . date("d.m.y", $iTill);
+							}
+							else
+							{
+								$aCourses[$iIndex1][$iIndex2][$iIndex3]["effective_from_till"] .= date("y", $iFrom);
+							}
+							$aCourses[$iIndex1][$iIndex2][$iIndex3]["date_time_from_till"] = $aWeek[intval(date("w", $iFrom))] . ". ";
+							$aCourses[$iIndex1][$iIndex2][$iIndex3]["date_time_from_till"] .= $aDates[0]["time_from"] . "-" . $aDates[0]["time_till"] . " Uhr";
+							$iFirst = strtotimestamp($aDates[0]["day"] . " 00:00:01");
+							$iSecond = strtotimestamp($aDates[1]["day"] . " 00:00:01");
+							$bWeekend = false;
+							if(0 < $iSecond - $iFirst && $iSecond - $iFirst < $iEineWoche - 3600) // 3600, falls Zeitumstellung
+							{
+								$bWeekend = true;
+								$aCourses[$iIndex1][$iIndex2][$iIndex3]["date_time_from_till2"] = $aWeek[intval(date("w", $iSecond))] . ". ";
+								$aCourses[$iIndex1][$iIndex2][$iIndex3]["date_time_from_till2"] .= $aDates[1]["time_from"] . "-" . $aDates[1]["time_till"] . " Uhr";
+							}
+#							$aCourses[$iIndex1][$iIndex2][$iIndex3]["lecturer_surnames"] = $aDates[0]["name"];
+#							$aLecturer_Complete[$iIndex1][$iIndex2][$aDates[0]["name"]] = $aDates[0]["forename"];
+							$sFee = $aCourse["fees"] . " EUR f�r " . $aCourse["duration"] . ($bWeekend?"":", einmal w�chentlich ");
+							$aFees[$iIndex1][$iIndex2][$sFee] = intval($aCourse["duration"]);
+							$aLocations[$iIndex1][$iIndex2][trim($aDates[0]["location"])] = true;
+						}
+					}
+				}
+				
+				foreach($aCategories as $iIndex1 => $sCategory)
+				{
+					echo "- ersetze Tags (UTF8)<br />";
+					$sXmlOutput = "";
+					foreach($aShortTitles[$iIndex1] as $iIndex2 => $sShortTitle)
+					{
+						$sXmlOutput .= $sXmlCode;
+						$aTestCourses = $aCourses[$iIndex1][$iIndex2][0];
+						$bFirst = true;
+						$sDozenten = "";
+						ksort($aLecturer_Complete[$iIndex1][$iIndex2]);
+						foreach($aLecturer_Complete[$iIndex1][$iIndex2] as $sName => $sForename)
+						{
+							if($bFirst)
+							{
+								$bFirst = false;
+							}
+							else
+							{
+								$sDozenten .= ", ";
+							}
+							$sDozenten .= $sForename . " " . $sName;
+						}
+						$bFirst = true;
+						$sLocations = "";
+						ksort($aLocations[$iIndex1][$iIndex2]);
+						foreach($aLocations[$iIndex1][$iIndex2] as $sLocation => $bBoolean)
+						{
+							if($bFirst)
+							{
+								$bFirst = false;
+							}
+							else
+							{
+								$sLocations .= ";\r";
+							}
+							$sLocations .= $sLocation;
+						}
+						$bLoc = (count($aLocations[$iIndex1][$iIndex2])>1?true:false);
+						if(count)
+						$bFirst = true;
+						$sFees = "";
+						asort($aFees[$iIndex1][$iIndex2]);
+						foreach($aFees[$iIndex1][$iIndex2] as $sFee => $iWeeks)
+						{
+							if($bFirst)
+							{
+								$bFirst = false;
+							}
+							else
+							{
+								$sFees .= "\r";
+							}
+							$sFees .= $sFee;
+						}
+						$sXmlOutput = str_replace("<#category#>", doEncode($aTestCourses["category"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#title_short#>", doEncode($aTestCourses["title_short"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#lead_text#>", doEncode($aTestCourses["lead_text"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#title_long#>", doEncode($aTestCourses["title_long"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#description#>", doEncode($aTestCourses["description"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#material#>", doEncode($aTestCourses["material"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#lecturer_complete#>", doEncode($sDozenten), $sXmlOutput);
+						$sXmlOutput = str_replace("<#location#>", doEncode($sLocations), $sXmlOutput);
+						$sXmlOutput = str_replace("<#fees#>", doEncode($sFees), $sXmlOutput);
+						$sXmlOutput = str_replace("<#fees_details#>", doEncode($aTestCourses["fees_details"]), $sXmlOutput);
+						$sXmlOutput = str_replace("<#additional_costs#>", doEncode($aTestCourses["additional_costs"]), $sXmlOutput);
+						$sXmlOutput3 = "";
+						foreach($aCourses[$iIndex1][$iIndex2] as $iIndex3 => $aTestCourse)
+						{
+							$bFirst = true;
+							$sDozenten_Sur = "";
+							ksort($aLecturer_Surnames[$iIndex1][$iIndex2][$iIndex3]);
+							foreach($aLecturer_Surnames[$iIndex1][$iIndex2][$iIndex3] as $sName => $bTemp)
+							{
+								if($bFirst)
+								{
+									$bFirst = false;
+								}
+								else
+								{
+									$sDozenten_Sur .= " & ";
+								}
+								$sDozenten_Sur .= $sName;
+							}
+							$sXmlOutput2 = \Cms\Service\PageParser::checkForBlock($sXmlCode, "prallel_courses");
+							$sXmlOutput2 = str_replace("<#effective_from_till#>", doEncode($aTestCourse["effective_from_till"]), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#date_time_from_till#>", doEncode($aTestCourse["date_time_from_till"]), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#course#>", doEncode($aTestCourse["course"]), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#lecturer_surnames#>", doEncode($sDozenten_Sur), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#date_time_from_till2#>", doEncode($aTestCourse["date_time_from_till2"]), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#duration#>", doEncode($aTestCourse["duration"]), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#location_alt#>", doEncode(($bLoc?$aTestCourse["location"]:"")), $sXmlOutput2);
+							$sXmlOutput2 = str_replace("<#advice#>", doEncode($aTestCourse["advice"]), $sXmlOutput2);
+							$sXmlOutput3 .= $sXmlOutput2;
+						}
+						$sXmlOutput = \Cms\Service\PageParser::replaceBlock($sXmlOutput, "prallel_courses", $sXmlOutput3);
+					}
+					
+					$aFile[$iIndex1] = "kategorie_" . $iIndex1 . ".xm";
+					echo "- erstelle Programmdatei \"" . $aFile[$iIndex1] . "\"<br />";
+					flush();
+					// schreibe Output-Datei
+					$sXMLFile = $sXMLPathLong . $aFile[$iIndex1];
+					$fHandleOut = fopen($sXMLFile, "w");
+					fwrite($fHandleOut, $sXmlOutput);
+					fclose($fHandleOut);
+				}
+				
+				echo "Programmerstellung beendet.<br />";
+				echo "Die Dateien:<br>";
+				foreach($aFile as $sFile)
+				{
+					$sXMLFileLink = $sXMLPath . $sFile;
+					echo " - <a href=\"" . $sXMLFileLink . "?" . rand(100000, 999999) . "\">" . basename($sXMLFileLink) . "</a><br />";
+					flush();
+				}
+				$bError = false;
+			}
+			else
+			{
+				$sError = "Es konnte kein Templatecode gefunden!";
+			}
+		}
+		else
+		{
+			$sError = "Die Templante-Datei konnte nicht gefunden werden!";
+		}
+		
+		if($sError)
+		{
+			echo $sError . "<br />";
+			flush();
+		}
+	}
+	
+	
+	
+	
+	
+	
+?>
+			<form id="menu_formular" name="menu_formular" action="<?=$_SYSTEM["PHP_SELF"];?>" method="post" enctype="multipart/form-data">
+				<h2>Import</h2>
+				<input type="hidden" id="form_action" name="form_action" value="import" />
+<?php
+		printTableStart();
+		printFormFile("Import-Dateiname", $sImportFile);
+		printFormCheckbox("Sollen die alten Daten vorher gel&ouml;scht werden?", "truncate", "1", ($bTruncate?true:false));
+		printFormCheckbox("Sind die Import-Daten HTML-Codiert?", "encoded", "1", ($bEncoded?true:false));
+		printTableEnd();
+		printButton("Kurse importieren", "document.getElementById('menu_formular').submit();");
+	
+?>
+			<h2>Kategorien sortieren</h2>
+<?php
+		printButton("Kategorien sortieren", "document.getElementById('form_action').value='sort';document.getElementById('menu_formular').submit();");
+	
+?>
+			<h2>Programmerstellung</h2>
+<?php
+		printTableStart();
+		printFormFile("Template-Dateiname", $sTemplateFile);
+		printTableEnd();
+		printButton("Seiten erstellen", "document.getElementById('form_action').value='create';document.getElementById('menu_formular').submit();");
+?>
+			</form>
+<?php
+}
+
+
+
+
+
+
+// Standard Admin Ende
+?>
+		</td>
+	</tr>
+</table>
+<?php
+Admin_Html::loadAdminFooter();
+
+
+?>

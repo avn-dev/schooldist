@@ -1,0 +1,1023 @@
+<?php
+
+$_GET['rs'] = 1;
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+// Alle Buffer leeren und beenden
+while(ob_get_level()) {
+	ob_end_clean();
+}
+
+function echoStatus($sStatus) {
+	
+	echo $sStatus;
+	echo "<script>var oElem = $('update_status');oElem.scrollTop = oElem.scrollHeight;</script>";
+	
+}
+
+Access_Backend::checkAccess("update");
+
+$oGlobalChecks = new GlobalChecks();
+$oGlobalChecks->generateHtml();
+
+Admin_Html::loadAdminHeader();
+
+set_time_limit(3600);
+
+ignore_user_abort(true);
+
+$aUpdate = array();
+$sLastName = false;
+$iLastVersion = false;
+
+$sL10NDescription = 'System » Update';
+
+$oUpdate = new Update();
+$oUpdate->flushUpdatesCache();
+
+$fVersion = System::d('version');
+
+$sTitle = L10N::t('Systemupdate', $sL10NDescription);
+
+$sExtension = null;
+
+if(
+	$this->_oRequest->exists('extension') && 
+	!empty($this->_oRequest->get('extension'))
+) {
+	
+	$oExtension = \Core\Entity\System\Elements::getRepository()->findOneBy(['file'=>$this->_oRequest->get('extension')]);
+
+	$sExtension = $oExtension->file;
+
+	if(
+		$oExtension === null ||
+		!$oExtension->exist()
+	) {
+		throw new Exception('Extension "'.$this->_oRequest->get('extension').'" not found!');
+	}
+	
+	$fVersion = $oExtension->version;
+
+	$oUpdate->setCurrentVersion($fVersion);
+
+	$sTitle .= ' '.sprintf(L10N::t('Erweiterung "%s"', $sL10NDescription), $oExtension->title);
+	
+}
+
+// Einstellungen
+$sConfigserver = System::d('update_server');
+
+$oSession = \Core\Handler\SessionHandler::getInstance();
+
+?>
+
+<section class="content-header">
+	<h1><?=$sTitle?><small><?=L10N::t('Version')?>: <?=$fVersion?></small></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<div class="box-body">
+			
+			<?php
+			if($_VARS['task'] == "update") {
+
+				if(
+					$_SERVER['HTTP_HOST'] == 'v5.webdynamics.de' ||
+					$_SERVER['HTTP_HOST'] == 'framework.dev.box'
+				) {
+					#__out('No updates for v5', 1);
+				}
+
+				// Sobald das Update gestartet wird, dürfen keine Checks mehr überprüft werden
+				$oSession->set('system_checks_skip_global_checks', true);
+				$oSession->set('system_checks_no_top_global_checks', true);
+				$oSession->set('system_checks_execute_checks', true);
+
+				if($_VARS['lastversion'] == 1) {
+					$fVersion -= 0.001;
+				}
+
+				// Update Informationen holen
+				$sContent = "";
+				$sParameter = "action=check&version=".$fVersion."&key=".System::d('license')."&host=".\Util::getHost();
+				if(isset($oExtension)) {
+					$sParameter .= '&extension='.$oExtension->file;
+				}
+				$fp = fsockopen("tls://".$sConfigserver, 443, $errno, $errstr, 10);
+				if (!$fp) {
+					echo L10N::t('Der Updateserver konnte nicht erreicht werden:', $sL10NDescription)." ".$errstr." (".$errno.")<br />\n";
+				} else {
+					fputs ($fp, "POST /update.php?".$sParameter." HTTP/1.0\r\nUser-Agent: Fidelo Update Service\r\nHost: ".$sConfigserver."\r\n\r\n");
+					while (!feof($fp)) {
+						$sContent .= fgets($fp, 4096);
+					}
+					fclose($fp);
+				}
+				$sContent = strstr($sContent, "<?xml");
+				
+				$oXml = new Update_Xml($fVersion);
+			
+				$aUpdate = $oXml->parse($sContent);
+
+				// Update durchführen
+				$arrQueueQueries	= array();
+				$arrQueueFiles 		= array();
+				$arrChecks 			= array();
+				$arrRequirements	= array();
+
+				$aExecuteComposerUpdateFiles = array();
+				
+				$mError = false;
+
+				$bHasNext = false;
+				if(count($aUpdate) > 1) {
+					$bHasNext = true;
+				}
+
+				\Update::beginUpdate();
+
+				// SQL updaten
+				foreach((array)$aUpdate as $key=>$elem) {
+
+					if(
+						isset($elem['LICENSE']) &&
+						$elem['LICENSE'] === 0
+					) {
+						$mError = 'NO_LICENSE';
+					}
+
+					foreach((array)$elem['QUERIES'] as $sSql) {
+						$sSql = trim($sSql);
+						if(!preg_match("/^(PROCESS|SHUTDOWN|DROP DATABASE)/i", $sSql) && preg_match("/(SELECT|INSERT|CREATE|UPDATE|ALTER|RENAME|DROP|TRUNCATE)/i", $sSql)) {
+							$arrQueueQueries[] = $sSql;
+						}
+					}
+
+					// Dateien updaten
+					foreach((array)$elem['FILES'] as $strFile) {
+						// Wenn diese Datei aktualisiert wird, muss ein Composer-Update ausgeführt werden
+						if(
+							strpos($strFile, '/composer-base.json') !== false ||
+							strpos($strFile, '/composer.json') !== false
+						) {
+							$aExecuteComposerUpdateFiles[] = $strFile;
+						}
+						$arrQueueFiles[] = $strFile;
+					}
+
+					// Checks holen
+					foreach((array)$elem['CHECKS'] as $sClass) {
+						$arrChecks[] = $sClass;
+					}
+
+					// Requirements
+					foreach((array)$elem['REQUIREMENTS'] as $sRequirement) {
+						$arrRequirements[] = $sRequirement;
+					}
+
+					echo "<h2>".sprintf(L10N::t('Update auf Version "%s" wird durchgeführt!', $sL10NDescription), $key)."</h2>";
+
+					// Immer ein Update nach dem nächsten ausführen
+					break;
+					
+				}
+
+				$oUpdate->setCurrentVersion($key);
+				
+				// SYSTEMVORAUSSETZUNGEN PRÜFEN
+				//
+				// Bevor das Update gestartet wird, müssen die Systemvoraussetzungen für dieses Update
+				// geprüft werden, falls es welche gibt
+				$aRequirementErrors = array();
+				if($mError === false) {
+
+					// Prüfen, ob Klasse(n) für Systemvoraussetzungen angegeben wurde(n)
+					if(!empty($arrRequirements)) {
+
+						// Doppelte Einträge vermeiden
+						$arrRequirements = array_unique($arrRequirements);
+						// Angegebene Klassen durchlaufen
+						foreach($arrRequirements as $sRequirementClass) {						
+							// Leerzeichen entfernen
+							$sRequirementClass = trim($sRequirementClass);							
+							// Dateiname aus dem Klassennamen erzeugen
+							$aClassData = explode('_', $sRequirementClass);
+							// Letztes Element für Dateinamen holen
+							$sRequirement = array_pop($aClassData);
+
+							// Pfad der Datei
+							$sFile = '/system/updates/requirements/class.'.strtolower($sRequirement).'.php';
+
+							// Datei vom Update-Server holen
+							$mSuccess = $oUpdate->getFile($sFile, $sExtension, $key);
+
+							// Prüfen ob Datei existiert
+							if($mSuccess !== true) {
+								$mError = 'NO_SYSTEM_REQUIREMENT_FILE';
+							}
+
+							// Prüfen, ob der Server die Systemvoraussetzungen erfüllt
+							if($mError === false) {
+								// Prüfen, ob angegebene Klasse existiert
+								if(!class_exists($sRequirementClass)) {
+									$mError = 'INVALID_SYSTEM_REQUIREMENT_CLASS';
+									// Abbrechen: Update NICHT ausführen
+									break;
+								}
+
+								if($mError === false) {
+									// Instance der Klasse aufbauen
+									$oRequirement = new $sRequirementClass();									
+									// Prüfen, ob angegebene Klasse die richtige Instanz hat
+									if(!($oRequirement instanceof Requirement)) {
+										$mError = 'INVALID_SYSTEM_REQUIREMENT_CLASS';
+										// Abbrechen: Update NICHT ausführen
+										break;
+									}
+
+									// Systemvoraussetzungen prüfen
+									if($mError === false) {
+										// Methode, die Systemvoraussetzungen überprüft
+										$bSystemRequirements = $oRequirement->checkSystemRequirements();
+										// Wenn der Server die Anforderungen nicht erfüllt, Fehlermeldung holen und Update abbrechen
+										if($bSystemRequirements === false) {
+											$aRequirementErrors[] = $oRequirement->getErrorMessage();
+											$mError = 'INVALID_SYSTEM_REQUIREMENT';
+										}
+									}									
+								}								
+							}							
+						}						
+					}
+				}
+
+                if ($mError !== false) {
+                    // Wenn bis hier hin ein Fehler aufgetreten ist dann kann das System wieder entsperrt werden damit man
+                    // sich wieder einloggen kann. Es ist noch nichts kritisches passiert wodurch das System gesperrt
+                    // bleiben sollte
+                    \Update::endUpdate();
+                }
+
+				/**
+				 * Composer Update
+				 */
+				$bComposerSuccess = false;
+				if(
+					$mError === false &&
+					!empty($aExecuteComposerUpdateFiles)
+				) {
+
+					foreach($aExecuteComposerUpdateFiles as $sExecuteComposerUpdateFile) {
+						// Datei vom Update-Server holen
+						$mSuccess = $oUpdate->getFile($sExecuteComposerUpdateFile, $sExtension, $key);
+
+						Log::logUpdateAction($fVersion, 'COMPOSER_FILE', array($sExecuteComposerUpdateFile), $mSuccess === true);
+						
+						if($mSuccess !== true) {
+							$mError = 'NO_COMPOSER_FILE';
+							break;
+						}
+					}
+
+					if($mSuccess === true) {
+
+						$mSuccess = $oUpdate->executeComposerUpdate();
+
+						if($mSuccess !== true) {
+							$mError = 'COMPOSER_UPDATE_FAILED';
+						} else {
+							$bComposerSuccess = true;
+						}
+
+						Log::logUpdateAction($fVersion, 'COMPOSER_UPDATE', null, $mSuccess === true);
+
+					}
+
+				}
+
+				// UPDATE AUSFÜHREN
+				//
+				// Wenn der Server die Systemvoraussetzungen erfüllt, kann das Update gestartet
+				// werden
+				if($mError === false) {
+
+					echo '<div id="update_status" style="width: 800px; height: 200px; overflow: auto; background-color: #f7f7f7; font-size: 11px; font-family: Monospace;">';
+
+					if($bComposerSuccess === true) {
+						echoStatus(L10N::t('Composer-Update wurde durchgeführt.', $sL10NDescription)."<br/>");
+					}
+
+					$arrQueueQueries	= array_unique($arrQueueQueries);
+					$arrQueueFiles 		= array_unique($arrQueueFiles);
+					$arrChecks 			= array_unique($arrChecks);
+
+					$oDb = DB::getDefaultConnection();
+
+					foreach((array)$arrQueueQueries as $sql) {
+
+						// Rausfinden welche Tabelle der Query betrifft, da hier der Cache gelöscht werden muss
+						// nach dem updaten
+						$sqlTemp = str_replace(array('`', "\n", "\t", "\r"), '', strtolower(trim($sql)));
+						
+						// Tabellennamen Bestimmen
+						$sPattern = '/^(alter) (table) *(\w+)/i';
+						preg_match($sPattern, $sqlTemp, $aMatches);
+						
+						// nur bei 'Alter' Table Querys Cache löschen
+						if(
+							!empty($aMatches) &&
+							$aMatches[1] == 'alter' &&
+							$aMatches[2] == 'table' &&
+							!empty($aMatches[3])
+						){
+							$sTable = $aMatches[3];
+
+							$sKey = 'db_table_description_' . $sTable;	
+							WDCache::delete($sKey);
+
+							$sKey = 'wdbasic_table_description_' . $sTable;
+							WDCache::delete($sKey);
+						}
+
+						try {
+							$e = null;
+							$oDb->query($sql);
+						} catch(DB_QueryFailedException $e) {
+							__pout($e);
+						}
+						$iError = $oDb->getLastErrorNumber();
+						if(!$iError) {
+							echoStatus(sprintf(L10N::t('SQL Query "%s" war erfolgreich.', $sL10NDescription), $sql)."<br/>");
+						} else {
+							echoStatus('<span class="red">'.sprintf(L10N::t('SQL Query "%s" ist fehlgeschlagen.', $sL10NDescription), $sql).'</span><br/>');
+						}
+
+						Log::logUpdateAction($fVersion, 'SQL', $sql, !$iError, $e);
+
+						flush();
+					}
+
+					// Dateien updaten
+					foreach((array)$arrQueueFiles as $file) {
+						
+						$mSuccess = $oUpdate->getFile($file, $sExtension, $key);
+						
+						// Zweiter Versuch nach 1sek warten, falls Updateserver nicht erreichbar war
+						if($mSuccess === 'no_server') {
+							sleep(1);
+							$mSuccess = $oUpdate->getFile($file, $sExtension, $key);
+						}
+
+						if($mSuccess === true) {
+							echoStatus(sprintf(L10N::t('Update von Datei "%s" war erfolgreich.', $sL10NDescription), $file)."<br/>");
+						} else {
+							echoStatus('<span class="red">'.sprintf(L10N::t('Update von Datei "%s" ist fehlgeschlagen (%s).', $sL10NDescription), $file, $mSuccess).'</span><br/>');
+							$mError = true;
+						}
+
+						Log::logUpdateAction($fVersion, 'FILE', $file, $mSuccess === true, $mSuccess);
+
+						flush();
+					}
+
+					$aChecks = array();
+					foreach((array)$arrChecks as $iCheck=>$sCheck) {
+						$bClassExists = class_exists($sCheck);
+						if(!$bClassExists) {
+							unset($arrChecks[$iCheck]);
+							echoStatus('<span class="red">'.sprintf(L10N::t('Update von Check "%s" ist fehlgeschlagen.', $sL10NDescription), $sCheck).'</span><br/>');
+							$mError = true;
+						} else {
+							echoStatus(sprintf(L10N::t('Update von Check "%s" war erfolgreich.', $sL10NDescription), $sCheck)."<br/>");
+							$aChecks[] = array('class_name'=>$sCheck);
+						}
+
+						Log::logUpdateAction($fVersion, 'CHECK_EXISTS', $sCheck, $bClassExists);
+
+						flush();
+					}
+
+					// Routes zurücksetzen, damit sie beim nächsten Request neu aufgebaut werden!
+					$oRoutingService = new Core\Service\RoutingService();
+					$oRoutingService->resetRoutes();
+
+					echoStatus(L10N::t('Update der Routings wurde durchgeführt.', $sL10NDescription)."<br/>");
+
+					echo '</div>';
+
+				}
+
+				if(
+					$key > 0 &&
+					$mError === false
+				) {
+
+					$bChecks = false;
+
+					if(!empty($arrChecks)) {
+
+						foreach((array)$arrChecks as $sCheck) {
+							$aData = array();
+							$aData['created'] = date('Y-m-d H:i:s');
+							$aData['active'] = 1;
+							$aData['class_name'] = $sCheck;
+							DB::insertData('system_global_checks', $aData);
+						}
+
+						echo '<h3>'.L10N::t('Das Update beinhaltet folgende System-Checks:', $sL10NDescription).'</h3>';
+						
+						// LISTE
+						$sList = GlobalChecks::listChecks($aChecks);					
+						echo $sList;
+						
+						echo '<p>'.L10N::t('Bitte führen Sie diese vor weiteren Aktionen aus. Sie werden nach 10 Sekunden automatisch weitergeleitet.', $sL10NDescription).'</p>';
+						echo '<p style="text-align: right;"><button class="btn btn-primary" onclick="go(\'' . $_SERVER['PHP_SELF'] . "?extension=".$sExtension."')\">" . L10N::t('Weiter', $sL10NDescription) . '</button></p>';
+						echo '<script>window.setTimeout("go(\''.$_SERVER['PHP_SELF'].'?extension='.$sExtension.'\');", 5000);</script>';
+
+						$bChecks = true;
+
+					}
+?>
+					<h3><?=L10N::t('Das Update wurde abgeschlossen', $sL10NDescription)?></h3>
+					<p><?=sprintf(L10N::t('Ein Backup der alten Daten finden Sie unter "%sbackup/" auf Ihrem Server.', $sL10NDescription), Util::getDocumentRoot())?></p>
+<?
+					// Danach Datenbankupdate durchführen
+					if($elem['UPDATE_TABLES'] == 1) {
+						$_VARS['task'] = "database";
+					}
+
+					\Log::enterLog(0, L10N::t('Systemupdate wurde durchgeführt.', $sL10NDescription));
+
+					if($bChecks === false) {
+						\Update::endUpdate();
+					}
+
+					\Core\Service\NotificationService::sendToOnlineUsers(L10N::t('Systemnachricht: Ein Systemupdate wurde erfolgreich durchgeführt. Bitte starten Sie das System neu!', $sL10NDescription));
+
+					try {
+						\System::wd()->executeHook('system_update', $elem);
+					} catch(Exception $e) {
+						__pout($e);
+						echo '<h3>'.L10N::t('Fehler beim Aktualisieren weiterer Daten!', $sL10NDescription).'</h3>';
+						throw $e;
+					}
+
+					if(isset($oExtension)) {
+						$oExtension->version = $key;
+						$oExtension->save();
+					} else {
+						System::s('version', $key);
+					}
+
+					// Löscht den Update-Cache, damit die Einträge neu geholt werden
+					$oUpdate->flushUpdatesCache();
+
+					/*
+					 * Beim Update immer Cache leeren
+					 * @todo Eventuelle Warmups starten (z.B. Dashboard)
+					 */
+					$cache = new Core\Helper\Cache;
+					$cache->clearAll();
+					
+				} elseif(
+					(string) $mError === 'NO_SYSTEM_REQUIREMENT_FILE' ||
+					(string) $mError === 'INVALID_SYSTEM_REQUIREMENT_CLASS'
+				) {	
+?>	
+					<h3><?=L10N::t('Die Prüfung der Systemvoraussetzungen konnte nicht durchgeführt werden!', $sL10NDescription)?></h3>
+
+<?				
+				} elseif(
+					(string) $mError === 'NO_COMPOSER_FILE' ||
+					(string) $mError === 'COMPOSER_UPDATE_FAILED'	
+				) {	
+?>	
+					<h3><?=L10N::t('Das Update der Fremdsoftware via Composer konnte nicht durchgeführt werden!', $sL10NDescription)?></h3>
+
+<?				
+				} elseif((string)$mError === 'INVALID_SYSTEM_REQUIREMENT') {	
+?>	
+					<h3><?=L10N::t('Ihr Server erfüllt nicht die Voraussetzungen für dieses Update:', $sL10NDescription)?></h3>
+
+					<ul>
+<?					
+
+					foreach($aRequirementErrors as $aRequirementError) {
+						foreach($aRequirementError as $sRequirementError) {
+?>
+						<li><?=$sRequirementError?></li>
+<?
+						}
+					}
+?>
+					</ul>
+<?
+				} elseif((string)$mError === 'NO_LICENSE') {
+?>
+					<h3><?=L10N::t('Das Systemupdate konnte nicht durchgeführt werden, da Ihre Lizenz diese Version nicht unterstützt!', $sL10NDescription)?></h3>
+<?
+				} else {
+?>
+					<h3><?=L10N::t('Das Systemupdate konnte nicht abgeschlossen werden!', $sL10NDescription)?></h3>
+<?
+				}
+
+				echo '<div class="text-right">';
+				if(
+					$mError === false &&
+					$bHasNext
+				) {
+
+					if($bChecks === false) {
+						echo '<script>window.setTimeout("go(\''.$_SERVER['PHP_SELF'].'?task=update&extension='.$sExtension.'\');", 5000);</script>';
+					}
+
+					echo '<button type="button" class="btn btn-primary" onclick="go(\'' . $_SERVER['PHP_SELF'] . "?task=update&extension=".$sExtension."')\">" . L10N::t('Weiter zum nächsten Update', $sL10NDescription) . '</button>';
+				}
+				echo ' <button type="button" class="btn btn-default" onclick="go(\'' . $_SERVER['PHP_SELF'] . "?extension=".$sExtension."')\">".L10N::t('Zurück', $sL10NDescription).'</button>';
+
+				echo '</div>';
+
+				flush();
+				
+			}
+
+			if($_VARS['task'] == "database") {
+
+				if(
+					$_SERVER['HTTP_HOST'] == 'v5.webdynamics.de' ||
+					$_SERVER['HTTP_HOST'] == 'framework.dev.box'
+				) {
+					__out('No updates for v5', 1);
+				}
+
+				ini_set('memory_limit', '1G');
+				
+				$mError = false;
+
+				// Update Informationen holen
+				$sContent = "";
+				$sParameter = "action=update&version=".$fVersion."&key=".System::d('license')."&host=".\Util::getHost();
+				$fp = fsockopen("tls://".$sConfigserver, 443, $errno, $errstr, 10);
+				if (!$fp) {
+					echo L10N::t('Der Updateserver konnte nicht erreicht werden:', $sL10NDescription)." ".$errstr." (".$errno.")<br />\n";
+				} else {
+					fputs ($fp, "POST /database.php?".$sParameter." HTTP/1.0\r\nUser-Agent: Fidelo Update Service\r\nHost: ".$sConfigserver."\r\n\r\n");
+					while (!feof($fp)) {
+						$sContent .= fgets($fp, 4096);
+					}
+					fclose($fp);
+				}
+				
+				$sXMLContent = strstr($sContent,"<?xml");
+				$bUrlEncoded = true;
+				if(!empty($sXMLContent)) {
+					$aUpdate = xml2array($sXMLContent);
+				} else {
+					$sContent = strstr($sContent,'{"updates"');
+					$aUpdate = json_decode($sContent, true);
+					$bUrlEncoded = false;
+				}
+
+				$oDB = DB::getDefaultConnection();
+
+				/**
+				 * Individuelle Tabellen
+				 */
+				if(!empty($aUpdate['updates'][0]['tables'])) {
+					$aTables = reset($aUpdate['updates'][0]['tables']);
+					foreach((array)$aTables as $sTable=>$aContent) {
+
+						if(
+							empty($sTable) ||
+							empty($aContent)
+						) {
+							continue;
+						}
+
+						try {
+
+							$aSql = array('table'=>$sTable);
+
+							DB::executePreparedQuery("TRUNCATE TABLE #table", $aSql);
+
+							$aContent = reset($aContent);
+							foreach((array)$aContent['item'] as $iKey=>$aValues) {
+								$aInsert = array();
+								foreach((array)$aValues as $sKey=>$sValue) {
+									$aInsert[$sKey] = urldecode($sValue);
+								}
+								DB::insertData($sTable, $aInsert);
+							}
+
+						} catch(Exception $e) {
+
+							__pout($e);
+
+							$mError = true;
+
+						}
+
+
+					}
+				}
+
+				$aLanguageFileCache = array(0=>0);
+				foreach((array)$aUpdate['updates'][0]['languagefiles'][1]['item'] as $aItem) {
+					
+					if($bUrlEncoded) {
+						$aItem['file'] = urldecode($aItem['file']);	
+					}
+
+					$sSql = "
+						SELECT 
+							* 
+						FROM 
+							`language_files` 
+						WHERE 
+							`file` = :file";
+					$aSql = array('file'=>$aItem['file']);
+					$aCheckFile = DB::getQueryRow($sSql, $aSql);
+
+					if(!empty($aCheckFile)) {
+
+						$aLanguageFileCache[$aItem['id']] = $aCheckFile['id'];
+
+					} else {
+
+						$sSql = "
+							SELECT 
+								* 
+							FROM 
+								`language_files` 
+							WHERE 
+								`id` = :id
+							";
+						$aSql = array('id'=>$aItem['id']);
+						$aCheck = DB::getQueryRow($sSql, $aSql);
+
+						// Wenn ID schon belegt
+						if(!empty($aCheck)) {
+
+							$sSql = "
+								INSERT INTO 
+									`language_files` 
+								SET 
+									`file` = :file
+							";
+							$oDB->preparedQuery($sSql, ['file' => $aItem['file']]);
+							$iNewId = $oDB->getInsertID();
+
+							$aLanguageFileCache[$aItem['id']] = $iNewId;
+
+						} else {
+
+							$sQuery = "
+								INSERT INTO 
+									`language_files` 
+								SET 
+									`id` = :id, 
+									`file` = :file
+								";
+							$oDB->preparedQuery($sQuery, ['id' => $aItem['id'], 'file' => $aItem['file']]);
+
+						}
+
+					}
+
+				}
+
+				foreach((array)$aUpdate['updates'][0]['languagedata'][0]['item'] as $aItem) {
+
+					if(!array_key_exists($aItem['file_id'], $aLanguageFileCache)) {
+						$iFileId = $aItem['file_id'];
+					} else {
+						$iFileId = $aLanguageFileCache[$aItem['file_id']];
+					}
+
+					$sSet = "
+						`use` = :use,
+						`file_id` = :file_id,
+						`code` = :code,
+						`de` = :de,
+						`en` = :en,
+						`fr` = :fr,
+						`nl` = :nl,
+						`es` = :es,
+						`it` = :it,
+						`ja` = :ja,
+						`zh` = :zh
+					";
+
+					// MySQL muss hier Groß-/Kleinschreibung berücksichtigen
+					$sSql = "
+						SELECT 
+							`id`
+						FROM 
+							`language_data` 
+						WHERE 
+							`file_id` = :file_id AND 
+							`code` COLLATE utf8mb4_bin = :code
+					";
+					$aSql = array(
+						'file_id'=>$iFileId,
+						'code'=>$aItem['code']
+					);
+					$iCheckId = DB::getQueryOne($sSql, $aSql);
+
+					if(empty($iCheckId)) {
+						$sSql = "INSERT INTO `language_data` SET ".$sSet."";
+					} else {
+						$sSql = "UPDATE `language_data` SET ".$sSet." WHERE `id` = ".(int)$iCheckId." LIMIT 1";
+					}
+
+					if($bUrlEncoded) {
+						$aSql = array(
+							'use' => $aItem['use'],
+							'file_id' => (int)$iFileId,
+							'code' => urldecode($aItem['code']),
+							'de' => urldecode($aItem['de']),
+							'en' => urldecode($aItem['en']),
+							'fr' => urldecode($aItem['fr']),
+							'nl' => urldecode($aItem['nl']),
+							'es' => urldecode($aItem['es']),
+							'it' => urldecode($aItem['it']),
+							'ja' => urldecode($aItem['ja']),
+							'zh' => urldecode($aItem['zh'])
+						);
+					} else {
+						$aSql = array(
+							'use' => $aItem['use'],
+							'file_id' => (int)$iFileId,
+							'code' => ($aItem['code']),
+							'de' => ($aItem['de']),
+							'en' => ($aItem['en']),
+							'fr' => ($aItem['fr']),
+							'nl' => ($aItem['nl']),
+							'es' => ($aItem['es']),
+							'it' => ($aItem['it']),
+							'ja' => ($aItem['ja']),
+							'zh' => ($aItem['zh'])
+						);
+					}
+
+					try {
+						DB::executePreparedQuery($sSql, $aSql);
+					} catch(\Throwable $e) {
+						__pout($aItem);
+						__pout($e);
+					}
+
+				}
+
+				if(!empty($aUpdate['updates'][0]['hintsdata'][2]['item'])) {
+
+					DB::executeQuery("TRUNCATE TABLE `system_hints`");
+
+					foreach((array)$aUpdate['updates'][0]['hintsdata'][2]['item'] as $aItem) {
+						$sQuery = "INSERT INTO `system_hints` VALUES (".\DB::escapeQueryString($aItem['id']).", '".\DB::escapeQueryString(urldecode($aItem['subject']))."', '".\DB::escapeQueryString(urldecode($aItem['helptext']))."')";
+						DB::executeQuery($sQuery);
+					}
+
+				}
+
+				// Cache löschen
+				WDCache::deleteGroup('L10N::getData');
+				WDCache::deleteGroup('gui2_info_texts');
+				\Core\Facade\Cache::forget('core_system_elements');
+				
+				/**
+				 * Komplette Tabellen holen
+				 */
+				$bUpdate = $oUpdate->updateTable('data_countries');
+				if(!$bUpdate) {
+					$mError = true;
+				}
+				$bUpdate = $oUpdate->updateTable('data_currencies');
+				if(!$bUpdate) {
+					$mError = true;
+				}
+				$bUpdate = $oUpdate->updateTable('data_languages');
+				if(!$bUpdate) {
+					$mError = true;
+				}
+
+				$bUpdate = $oUpdate->updateTable('gui2_dialog_infotexts');
+				if(!$bUpdate) {
+					$mError = true;
+				}
+				
+				$bUpdate = $oUpdate->updateTable('gui2_dialog_infotexts_i18n');
+				if(!$bUpdate) {
+					$mError = true;
+				}
+				
+				\System::wd()->executeHook('system_update_database', $aUpdate);
+
+				if($mError === false) {
+				?>
+				<p><?=L10N::t('Das Datenbankupdate wurde abgeschlossen.', $sL10NDescription)?></p>
+				<?
+				} else {
+				?>
+				<p><?=L10N::t('Das Datenbankupdate konnte nicht abgeschlossen werden.', $sL10NDescription)?></p>
+				<?
+				}
+
+				flush();
+				
+				echo '<p style="text-align: right;"><button class="btn btn-default" onclick="go(\'' . $_SERVER['PHP_SELF'] . "?extension=".$sExtension."')\">" . L10N::t('Zurück', $sL10NDescription) . '</button></p>';
+				
+			}
+
+			if(!$_VARS['task']) {
+
+				$bShowUpdates = true;
+				
+				/**
+				 * Unausgeführte Checks
+				 */
+				$aChecks = GlobalChecks::getChecks();
+				if(!empty($aChecks)) {
+					echo '<h2>'.L10N::t('Aktive System-Checks gefunden', $sL10NDescription).'</h2>';
+					echo '<p>'.L10N::t('Es wurden aktive System-Checks aus dem letzten Update gefunden. Bitte führen Sie diese aus, bevor Sie ein weiteres Update starten.', $sL10NDescription).'</p>';
+					
+					$sList = GlobalChecks::listChecks($aChecks);
+					
+					echo $sList;
+					
+					$oSession->set('system_checks_skip_global_checks', true);
+					$oSession->set('system_checks_no_top_global_checks', true);
+					$oSession->set('system_checks_execute_checks', true);
+					echo '<p style="text-align: right;"><button class="btn btn-primary" onclick="go(\'' . $_SERVER['PHP_SELF'] . "?extension=".$sExtension."\')\">" . L10N::t('System-Checks jetzt ausführen', $sL10NDescription) . '</button></p>';
+					
+					$bShowUpdates = false;
+					
+				}
+
+				/**
+				 * Online User mit Nachricht
+				 */
+				$aUser = \Access_Backend::getActiveUser();
+				if(count($aUser) > 1) {
+					
+					echo '<h2>'.L10N::t('Andere Benutzer online', $sL10NDescription).'</h2>';
+
+					$aBox = array();
+					$aBox['title'] = L10N::t('Angemeldete Benutzer', 'Framework');
+					$aBox['function'] = array(\Admin\Helper\Welcome::class, 'whoisonline');
+					$aBox['cache_time'] = false;
+
+					$oBox = \Admin\Helper\Welcome\Box::getInstance($aBox);
+					$oBox->printBox();
+
+					echo '<h3>'.L10N::t('Nachricht an angemeldete Benutzer schicken', $sL10NDescription).'</h3>';
+
+					if(!empty($_VARS['message'])) {
+
+						\Core\Service\NotificationService::sendToOnlineUsers($_VARS['message']);
+
+						echo L10N::t('Nachricht wurde an alle Benutzer verschickt.', $sL10NDescription);
+
+					} else {
+
+						echo '<form method="post">';
+						printTableStart();
+						printFormTextarea(L10N::t('Nachricht', $sL10NDescription), 'message', L10N::t('In Kürze wird ein Systemupdate durchgeführt. Bitte unterbrechen Sie Ihre aktuelle Sitzung für 15 Minuten.', $sL10NDescription), 3, 'style="width: 470px;"', 1);
+						printTableEnd();
+						printSubmit(L10N::t('Nachricht senden', $sL10NDescription));
+						echo '</form>';
+
+					}
+				}
+				
+				if($bShowUpdates) {
+					
+					$aExtensions = DB::getQueryPairs("SELECT file, title FROM system_elements WHERE active = 1 AND element = 'modul' ORDER BY title");
+
+					if(!empty($aExtensions)) {
+
+						echo '<select class="form-control" name="extension" onchange="location.href=\'update.html?extension=\'+this.value;"><option value="">Keine Erweiterung</option>';
+						foreach($aExtensions as $sKey=>$sTitle) {
+							echo '<option value="'.Util::convertHtmlEntities($sKey).'" '.(($_VARS['extension'] == $sKey)?'selected':'').'>'.Util::convertHtmlEntities(ucfirst($sTitle)).'</option>';
+						}
+						echo '</select><br>';
+
+					}
+
+					$aUpdate = $oUpdate->getUpdates($_VARS['extension']);
+
+					echo '<div class="alert alert-info" role="alert">'.L10N::t('Nach Start des Systemupdates werden alle anderen angemeldeten Benutzer ausgeloggt und können sich erst nach dem Update wieder einloggen!', $sL10NDescription).'</div>';
+					echo '<h3>'.L10N::t('Systemupdates (Neue Funktionen und Korrekturen)', $sL10NDescription).'</h3>';
+
+					if(empty($aUpdate)) {
+
+						echo '<p>'.L10N::t('Es wurden keine Updates gefunden.', $sL10NDescription).'</p>';
+						// Geht nicht mehr mit der neuen Struktur
+						#echo '<p style="text-align: right;">';
+						#echo '<button class="btn btn-primary" onClick="go(\'update.html?task=update&lastversion=1\'); this.disabled = 1;">'.L10N::t('Letztes Systemupdate erneut durchführen', $sL10NDescription).'</button>';
+						#echo '</p>';
+
+					} else {
+
+						echo '<p>'.L10N::t('Folgende Updates wurden gefunden', $sL10NDescription).':</p>';
+						echo '<ul>';
+
+						$oDate = new WDDate();
+						$i=0;
+						foreach($aUpdate as $key=>$elem) {
+							if($elem['MESSAGE']) {
+
+								$sDateFormt = '';
+								// Datum Formatieren
+								if(
+									isset($elem['DATE']) &&
+									!empty($elem['DATE'])
+								) {
+
+									$sDate = $elem['DATE'];
+
+									// Manuelle Updates
+									$bCheckDate = WDDate::isDate($elem['DATE'], WDDate::STRFTIME, '%d.%m.%Y');
+									if($bCheckDate === true){
+										$oDate->set($elem['DATE'], WDDate::STRFTIME, '%d.%m.%Y');
+									}
+									
+									// 
+									$bCheckDate = WDDate::isDate($elem['DATE'], WDDate::DB_TIMESTAMP);
+									if($bCheckDate === true){
+										$oDate->set($elem['DATE'], WDDate::DB_TIMESTAMP);
+									}
+
+									$sDate = $oDate->get(WDDate::STRFTIME, '%x');
+									
+									$sDateFormt = ' ('.L10N::t('Veröffentlicht am ', $sL10NDescription).' '.$sDate.')';
+
+								}
+								
+								$sAdditional = '';
+								if(
+									isset($elem['LICENSE']) &&
+									$elem['LICENSE'] === 0
+								) {
+									$sAdditional = ' style="color: red;" title="'.L10N::t('Ihre Lizenz unterstützt diese Version nicht!', $sL10NDescription).'"';
+								}
+
+								echo '<li'.$sAdditional.'>Version '.$key.' '.$sDateFormt.', '.$elem['MESSAGE'].'</li>';
+								$i++;
+							}
+						}
+
+						echo '</ul>';
+
+						echo '<p style="text-align: right;">';
+						echo '<button class="btn btn-primary" onClick="go(\'update.html?task=update&extension='.$sExtension.'\'); this.disabled = 1;">'.L10N::t('Systemupdate starten', $sL10NDescription).'</button>';
+						echo '</p>';
+
+					}
+
+					if(empty($sExtension)) {
+
+						// Status Informationen holen
+						$sContent = "";
+						$sParameter = "action=status&version=".$fVersion."&key=".System::d('license')."&host=".\Util::getHost();
+
+						$fp = fsockopen("tls://".$sConfigserver, 443, $errno, $errstr, 1);
+						if (!$fp) {
+							echo L10N::t('Der Updateserver konnte nicht erreicht werden:', $sL10NDescription)." ".$errstr." (".$errno.")<br />\n";
+						} else {
+							fputs($fp, "POST /database.php?".$sParameter." HTTP/1.0\r\nUser-Agent: Fidelo Update Service\r\nHost: ".$sConfigserver."\r\n\r\n");
+							while(!feof($fp)) {
+								$sContent .= fgets($fp, 4096);
+							}
+							fclose($fp);
+						}
+						$sContent = strstr($sContent,"<?xml");
+						$aUpdate = xml2array($sContent);
+					
+					?>
+					<h2><?=L10N::t('Datenbankupdates (Sprachdaten und Hilfe Datenbank)', $sL10NDescription)?></h2>
+					<p><?=L10N::t('Letzte Änderung der Sprachdaten auf dem Updateserver:', $sL10NDescription)?> <?=strftime("%x %X",$aUpdate['updates'][0]['status'])?></p>
+					<p style="text-align: right;">
+						<button class="btn btn-default" onClick="document.location.href='update.html?task=database';this.disabled = 1;"><?=L10N::t('Datenbankupdate starten', $sL10NDescription)?></button>
+					</p>
+					<?
+					}
+				}
+
+			}
+
+			?>
+
+		</div>
+	</div>
+</section>
+
+<?=Admin_Html::loadAdminFooter()?>
+
+<?php
+flush();
+die();

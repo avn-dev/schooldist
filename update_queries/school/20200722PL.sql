@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_rooms` ADD `optional` TINYINT NOT NULL DEFAULT '0' AFTER `comment`;

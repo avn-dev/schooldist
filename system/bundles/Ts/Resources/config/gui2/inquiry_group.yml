@@ -1,0 +1,685 @@
+class:
+  gui: Ext_Thebing_Gui2
+  data: Ext_Thebing_Inquiry_Gui2_Group
+  wdbasic: Ext_Thebing_Inquiry_Group
+  icon_status: Ext_TS_Inquiry_Group_Gui2_Icon
+  row_style: Ext_Gui2_View_Style_Indexrow
+  row_style_index: Ext_Thebing_Gui2_Style_InboxRow
+  date_format: Ext_Thebing_Gui2_Format_Date
+  js: StudentlistGui
+access: thebing_invoice_groups
+hash: bdc1cdc6c62a5d5226d22e5d349b0b75 # ts_inquiry_group
+foreign_key: null # Explizit null, damit keine Relation zur Inquiry gesetzt wird
+description: Thebing » Invoice » Inbox
+where:
+  - Ext_Thebing_Inquiry_Gui2_Group
+  - getIndexWhere
+orderby:
+  - Ext_Thebing_Inquiry_Gui2_Group
+  - getIndexOrderBy
+designer:
+  dialog: ""
+  filter: ts_inquiry_group
+  flex: inquiries_groups
+  additional_flex: 
+    - 
+      section: [groups_enquiries_bookings, null, inquiry]
+index:
+  name: ts_inquiry_group
+  registry:
+    generate: true
+  priority:
+    Ext_Thebing_Inquiry_Group: 0
+    #Ext_TS_Inquiry: 10
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Inquiry_Gui2_Group
+          - createDialog
+        access: thebing_invoice_generate_student
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Inquiry_Gui2_Group
+          - createDialog
+        access: thebing_invoice_edit_student
+      -
+        element: icon_delete
+        access: thebing_invoice_delete_inquiry
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Gruppe
+      -
+        element: legend_info
+        label: Storniert
+        info:
+          color: storno
+          background: true
+      -
+        element: legend_info
+        label: nicht bestätigt
+        info:
+          color: red_font
+          italic: true
+          text: true
+columns:
+  -
+    visible: false
+    title: ID
+    column: id
+    index:
+      call:
+        - id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    # Muss eigene Spalte mit Integer sein, da System damit irgendwie global arbeitet
+    visible: false
+    title: Schule
+    column: school_id # Abhängigkeit im WHERE-Filter
+    index:
+      call:
+        - school_id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    column: inbox_id # Abhängigkeit im WHERE-Filter
+    index:
+      call:
+        - inbox_id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    column: confirmed
+    seperator: none
+    index:
+      call:
+        - getExistingMainDocumentInquiry()
+        - confirmed
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    title: Rechnungsnummern
+    column: all_document_numbers
+    width: name
+    seperator: none
+    filterset:
+      type: input
+    index:
+      call:
+        - getExistingMainDocumentInquiry()
+        - [getDocuments(), all, true, true]
+        - document_number
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    title: Kundennummern
+    column: all_customer_numbers
+    width: name
+    seperator: none
+    filterset:
+      type: input
+    index:
+      call:
+        - getInquiries()
+        - getFirstTraveller()
+        - getCustomerNumber()
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    visible: false
+    title: Rechnungsstatus
+    column: invoice_status
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getInvoiceStatusOptions
+    index:
+      call:
+         - getExistingMainDocumentInquiry()
+         - getInvoiceStatus()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    column: relative_service_time
+    title: Relativer Leistungszeitraum
+    width: name
+    unique_values: false
+    filterset:
+      type: date
+      search_type: contact
+      from_column: [course_from_original, accommodation_from_original, transfer_from_original]
+      until_column: [course_until_original, accommodation_until_original, transfer_until_original]
+    index:
+      add_field: false
+  -
+    group: Gruppe
+    title: Gruppe
+    column: name
+    width: name
+    filterset:
+      type: input
+    index:
+      call:
+        - name
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    group: Gruppe
+    title: Kürzel
+    column: short
+    width: group_short
+    filterset:
+      type: input
+    index:
+      call:
+        - short
+      mapping:
+        index: analyzed
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    group: Gruppe
+    title: Nummer
+    column: number
+    width: number
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - number
+      mapping:
+        index: analyzed
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    group: Gruppe
+    title: Schule
+    column: school_name
+    access: all_school
+    width: name
+    format: Ext_TC_GUI2_Format_List
+    format_params:
+      - Ext_Thebing_School
+      - school_id
+      - ext_1
+    index:
+      call:
+        - school_id
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Gruppe
+    title: Agentur
+    column: agency
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_AgencyShort
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Abstract
+        - getAgenciesForSelect
+    index:
+      add_original: true
+      call:
+        - agency_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    group: Gruppe
+    title: Rechnungsnummer
+    column: document_number
+    width: number
+    index:
+      call:
+        - getExistingMainDocumentInquiry()
+        - getLastDocumentNumber()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Gruppe
+    title: Mitglieder (Total)
+    column: students_count_total
+    width: count
+    post_format: Ext_Thebing_Gui2_Format_Int
+    index:
+      call:
+        - countAllMembers()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    group: Gruppe
+    title: Anzahl Gruppenleiter
+    column: guides_count
+    width: count
+    default: false
+    post_format: Ext_Thebing_Gui2_Format_Int
+    index:
+      call:
+        - countGuides()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    group: Gruppe
+    title: Gruppenleiter
+    column: guides
+    width: name
+    index:
+      add_original: true
+      call:
+        - getGuideNames()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    group: Gruppe
+    title: Mitglieder
+    column: students_count
+    width: count
+    default: false
+    post_format: Ext_Thebing_Gui2_Format_Int
+    index:
+      call:
+        - countNonGuideMembers()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    group: Gruppe
+    title: Globales Startdatum
+    column: global_start_date_original
+    data: global_start_date
+    sortable_column: global_start_date_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - [getServiceFromOrUntil(), from]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Gruppe
+    title: Globales Enddatum
+    column: global_end_date_original
+    data: global_end_date
+    sortable_column: global_end_date_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - [getServiceFromOrUntil(), until]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Kurs
+    title: Kurse
+    column: courses
+    width: name
+    index:
+      call:
+        - [getCourses(), '', true]
+        - getCourse()
+        - getName()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Kurs
+    title: Kurs - Startdaten
+    column: course_from_original
+    data: course_from
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - [getCourses(), '', true]
+         - from
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Kurs
+    title: Kurs - Enddaten
+    column: course_until_original
+    data: course_until
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - [getCourses(), '', true]
+         - until
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Kurs
+    title: Kurs - Starttag
+    column: first_course_start_original
+    data: first_course_start
+    sortable_column: first_course_start_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getFirstCourseStartDate()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Kurs
+    title: Kurs - Endtag
+    column: last_course_end_original
+    data: last_course_end
+    sortable_column: last_course_end_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getLastCourseEndDate()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Unterkunft
+    title: Unterkünfte
+    column: accommodations
+    width: name
+    i18n:
+      pass_language: true
+    index:
+      call:
+        - [getAccommodations(), '', true]
+        - getInfoString()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Unterkunft
+    title: Unterkunft - Startdaten
+    column: accommodation_from_original
+    data: accommodation_from
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - [getAccommodations(), '', true]
+         - from
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Unterkunft
+    title: Unterkunft - Enddaten
+    column: accommodation_until_original
+    data: accommodation_until
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - [getAccommodations(), '', true]
+         - until
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Unterkunft
+    title: Unterkunft - Starttag
+    column: first_accommodation_start_original
+    data: first_accommodation_start
+    sortable_column: first_accommodation_start_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getFirstAccommodationStartDate()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Unterkunft
+    title: Unterkunft - Endtag
+    column: last_accommodation_end_original
+    data: last_accommodation_end
+    sortable_column: last_accommodation_end_original
+    width: date
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getLastAccommodationEndDate()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Unterkunft
+    title: Anzahl der Nächte
+    column: accommodation_nights
+    width: count
+    default: false
+    index:
+      call:
+        - getAccommodationNightsCount()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    group: Transfer
+    title: Transfer
+    column: transfer_mode
+    width: transfer
+    format: \Ts\Gui2\Format\TransferMode
+    i18n:
+      pass_language: false
+    index:
+      call:
+        - transfer_mode
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Transfer
+    title: Startdatum Transfer
+    column: transfer_from_original
+    data: transfer_from
+    format: Ext_TS_Gui2_Format_DateTime
+    width: datetime
+    default: false
+    unique_values: false
+    index:
+      add_original: true
+      call:
+         - [getTransfers(), arrival]
+         - getIndexTransferDateTime()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Transfer
+    title: Enddatum Transfer
+    column: transfer_until_original
+    data: transfer_until
+    format: Ext_TS_Gui2_Format_DateTime
+    width: datetime
+    default: false
+    unique_values: false
+    index:
+      add_original: true
+      call:
+         - [getTransfers(), departure]
+         - getIndexTransferDateTime()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    group: Gruppe
+    title: Kurseinstellung
+    column: course_setting
+    width: 130
+    default: false
+    format: Ext_Thebing_Gui2_Format_Group_Settings
+    i18n:
+      pass_language: false
+    index:
+      call:
+        - course_data
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Gruppe
+    title: Unterkunftseinstellung
+    column: accommodation_setting
+    width: 130
+    default: false
+    format: Ext_Thebing_Gui2_Format_Group_Settings
+    i18n:
+      pass_language: false
+    index:
+      call:
+        - accommodation_data
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    group: Gruppe
+    title: Transfereinstellung
+    column: transfer_setting
+    width: 130
+    default: false
+    format: Ext_Thebing_Gui2_Format_Group_Settings
+    i18n:
+      pass_language: false
+    index:
+      call:
+        - transfer_data
+      mapping:
+        index: not_analyzed
+        type: string

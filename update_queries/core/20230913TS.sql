@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_templates` CHANGE `shipping_method` `shipping_method` ENUM('text','html') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'html';

@@ -1,0 +1,6 @@
+[2025-10-20T09:38:59.466735+02:00] Transactions.INFO: Delete transactions {"type":"payment","type_id":2235,"reason":"UPDATE_TRANSACTION"} []
+[2025-10-20T09:41:27.184900+02:00] Transactions.INFO: Delete transactions {"type":"payment","type_id":2236,"reason":"UPDATE_TRANSACTION"} []
+[2025-10-20T09:43:08.836914+02:00] Transactions.INFO: Delete transactions {"type":"payment","type_id":2237,"reason":"UPDATE_TRANSACTION"} []
+[2025-10-20T09:45:18.621523+02:00] Transactions.INFO: Delete transactions {"type":"payment","type_id":2238,"reason":"UPDATE_TRANSACTION"} []
+[2025-10-20T09:46:19.817443+02:00] Transactions.INFO: Delete transactions {"type":"payment","type_id":2239,"reason":"UPDATE_TRANSACTION"} []
+[2025-10-20T09:46:49.312231+02:00] Transactions.INFO: Delete transactions {"type":"payment","type_id":2240,"reason":"UPDATE_TRANSACTION"} []

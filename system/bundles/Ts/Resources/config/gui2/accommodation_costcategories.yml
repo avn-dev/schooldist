@@ -1,0 +1,82 @@
+hash: a07809e85edfa310259ff13d7675a1a4
+class:
+  wdbasic: Ext_Thebing_Accommodation_Cost_Category
+  data: Ext_Thebing_Accommodation_Gui2_Costcategory
+  js: AccommodationWeekGui
+access: thebing_marketing_accommodationcategories
+id:
+  column: id
+  alias: kacc
+orderby:
+  - Ext_Thebing_Accommodation_Gui2_Costcategory
+  - getOrderby
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/accommodation/cost/week.js, thebing]
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - name
+        alias:
+          - kacc
+          - kacc
+     -
+        element: seperator
+     -
+        element: validfilter
+        label: Gültigkeit
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Schule
+        label_as_item: true
+        alias:
+          - filter_schools
+        column:
+          - school_id
+        entries:
+          - Ext_Thebing_Client
+          - getSchoolList
+          - true
+        value:
+          - Ext_Thebing_School
+          - getSchoolIdFromSession       
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Accommodation_Gui2_Costcategory
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Accommodation_Gui2_Costcategory
+          - getDialog
+     -
+        element: icon_delete
+     -
+        element: icon_deactivate
+        
+columns:
+  - 
+    title: Name
+    column: name
+    width: name
+    resize: true
+  - 
+    title: Schulen	
+    column: schools
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params: 
+      - [Ext_Thebing_Client, getSchoolList, true]

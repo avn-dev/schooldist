@@ -1,0 +1,1 @@
+ALTER TABLE `ts_screens_schedule` ADD `description` TEXT NOT NULL AFTER `type`;

@@ -1,0 +1,90 @@
+hash: e3e5ea99267a53418b31e686bc67daac
+class:
+  wdbasic: Ext_Thebing_School_Additionalcost
+  data: Ext_Thebing_School_Cost_Gui2_Data
+  js: AdditionalCost
+access: thebing_marketing_additional_costs
+js:
+  - [marketing/js/additionalcost.js, thebing]
+limit_selection: false
+orderby:
+  - Ext_Thebing_School_Cost_Gui2_Data
+  - getOrderby
+where:
+  - Ext_Thebing_School_Cost_Gui2_Data
+  - getWhere  
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+            - id
+            - name
+        alias: 
+            - kcos
+            - kcos
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_School_Cost_Gui2_Data
+          - manipulateSearchFilter
+     -
+        element: seperator
+     -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog: 
+          - Ext_Thebing_School_Cost_Gui2_Data  
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_School_Cost_Gui2_Data
+          - getDialog
+     -
+        element: icon_delete
+     -
+        element: icon_deactivate
+columns:
+  -
+    title: ID
+    alias: kcos
+    column: id
+    width: id
+  - 
+    title: Bezeichnung
+    alias: kcos
+    column: name
+    width: name
+    resize: true
+    i18n: 
+      pass_language: true
+      interface: frontend
+  - 
+    title: Typ	
+    column: type
+    alias: kcos
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+        - [Ext_Thebing_Price, getCostTypes]
+  - 
+    title: Berechnung	
+    column: charge
+    width: name
+    format: Ext_Thebing_Gui2_Selection_Marketing_Additionalcost_Charge
+  - 
+    title: Preisberechnung	
+    column: calculate
+    width: name
+    format: Ext_Thebing_Gui2_Selection_Marketing_Additionalcost_Calculate
+
+
+    

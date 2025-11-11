@@ -1,0 +1,2 @@
+INSERT INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES ('54', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '1', 'Unterricht - Kurssprachen', 'tuition_course_languages', 'tuition_course_languages');
+INSERT INTO `filemanager_tags` (`active`, `editor_id`, `creator_id`, `entity`, `tag`) VALUES (1, 0, 0, 'Ext_Thebing_Tuition_LevelGroup', 'Communication');

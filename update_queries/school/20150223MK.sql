@@ -1,0 +1,2 @@
+ALTER TABLE `kolumbus_email_templates_languages` CHANGE `language` `language` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
+ALTER TABLE `kolumbus_email_templates_languages_attachments` CHANGE `language` `language` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

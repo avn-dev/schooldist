@@ -1,0 +1,1 @@
+ALTER TABLE `tc_frontend_templates_fields` ADD `used` TINYINT(1) NOT NULL DEFAULT '0' AFTER `template_id`;

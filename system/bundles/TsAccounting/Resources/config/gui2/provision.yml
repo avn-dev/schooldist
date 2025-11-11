@@ -1,0 +1,405 @@
+hash: 656b93f46a74b22e917d825cd07604ca
+class:
+  wdbasic: Ext_Thebing_Inquiry_Document
+  data: Ext_Thebing_Accounting_Gui2_Agency_Provision
+  js: StudentlistGui
+  icon_status: Ext_Thebing_Accounting_Gui2_Agency_Format_IconActive
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/payment.js, thebing]
+  - [gui2/studentlists.js, thebing]
+access:
+  - thebing_accounting_account_provision
+limit: 30
+#multiple_selection: 1
+encode_data:
+  - entity_id
+  - document_id
+options:
+  decode_inquiry_id_additional_documents: entity_id
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - lastname
+          - firstname
+          - document_number
+          - document_number
+          - number
+        alias:
+          - cdb1
+          - cdb1
+          - kid
+          - kid_cn
+          - tc_c_n
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          alias:
+            - kid
+            - kid_cn
+          column:
+            - created
+            - created
+          default:
+            - Ext_Thebing_Accounting_Gui2_Agency_Provision
+            - getDefaultFilterFrom
+        until:
+          alias:
+            -
+          column:
+            -
+          default:
+            - Ext_Thebing_Accounting_Gui2_Agency_Provision
+            - getDefaultFilterUntil
+        searchtype: between
+        query_value_key: filter_student_period
+        skip_query: true
+      -
+        element: selectfilter
+        id: time_interval_filter
+        label: basierend auf
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Agency_Provision
+          - getSelectOptionsBasedOnFilter
+        filter_query:
+          course_start: " `kic`.`from` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          accommodation_start: " `kia`.`from` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          all_start: " ( `kic`.`from` BETWEEN :filter_student_period_from AND :filter_student_period_until ) OR ( `kia`.`from` BETWEEN :filter_student_period_from AND :filter_student_period_until ) OR ( `kit_arr`.`transfer_date` BETWEEN :filter_student_period_from AND :filter_student_period_until) "
+          booking: " `ki`.`created` BETWEEN UNIX_TIMESTAMP(:filter_student_period_from) AND UNIX_TIMESTAMP(:filter_student_period_until) "
+          course_end: " `kic`.`until` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          accommodation_end: " `kia`.`until` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          all_end: " ( `kic`.`until` BETWEEN :filter_student_period_from AND :filter_student_period_until ) OR ( `kia`.`until` BETWEEN :filter_student_period_from AND :filter_student_period_until ) OR ( `kit_dep`.`transfer_date` BETWEEN :filter_student_period_from AND :filter_student_period_until) "
+          course_contact: " `kic`.`until` > UNIX_TIMESTAMP(:filter_student_period_from) AND `kic`.`from` < UNIX_TIMESTAMP(:filter_student_period_until) "
+          document_created: " `kid`.`created` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          document_date: " `kidv`.`date` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          creditnote_created: " `kid_cn`.`created` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          creditnote_date: " `kidv_cn`.`date` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+          creditnote_due_date: " `ts_dvp`.`date` BETWEEN :filter_student_period_from AND :filter_student_period_until "
+        value: document_created
+      -
+        element: seperator
+      -
+        element: selectfilter
+        id: students_with_due_payments
+        label: Gutschrift
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Agency_Provision
+          - getSelectOptionsCreditFilter
+        filter_query:
+          - Ext_Thebing_Accounting_Gui2_Agency_Provision
+          - getFilterQueryCreditFilter
+      -
+        element: selectfilter
+        id: gross_document_payment_status
+        label: Bruttorechnung
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Agency_Provision
+          - getSelectOptionsGrossPaymentFilter
+        filter_query:
+          payed: " `invoice_amount` <= `invoice_payed` "
+          not_payed: " `invoice_amount` > 0 AND `invoice_payed` IS NULL OR `invoice_amount` > `invoice_payed`"
+        filter_part: having
+      -
+        element: selectfilter
+        id: agencies
+        column: agency_id
+        alias: ki
+        label: Agenturen
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Agency_Provision
+          - getSelectOptionsAgenciesFilter
+      -
+        element: selectfilter
+        id: group_filter
+        column: agency_id
+        alias: ki
+        label: Gruppe
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: " `ki`.`group_id` != 0 "
+          no: " `ki`.`group_id` = 0 "
+      -
+        element: selectfilter
+        column: has_commissionable_items
+        alias: kidv
+        label: Provisionspflichtig
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: " (`kidv`.`has_commissionable_items` = 1 OR `kidv_cn`.`has_commissionable_items` = 1) "
+          no:  " (`kidv`.`has_commissionable_items` = 0 AND (`kidv_cn`.`has_commissionable_items` = 0 OR `kidv_cn`.`has_commissionable_items` IS NULL)) "
+  -
+    position: top
+    elements:
+      -
+        element: icon
+        img: fa-edit
+        task: openDialog
+        action: invoice_only_cn
+        active: 0
+        label: Creditnotes editieren
+      -
+        element: icon
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - payment
+        task: openDialog
+        action: payment
+        additional: commission_payout
+        access:
+          - [thebing_accounting_provision_enter_payments, '']
+          - [thebing_accounting_provision_payment_history, '']
+        active: 0
+        label: Provision auszahlen
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Gutschrift
+      -
+        element: legend_info
+        label: teilweise ausgezahlt
+        info:
+          color: [soft_green, 30]
+      -
+        element: legend_info
+        label: vollständig ausgezahlt
+        info:
+          color: lightgreen
+      -
+        element: legend_info
+        label: noch nicht erstellt
+        info:
+          color: changed
+      -
+        element: legend_label
+        label: Rechnung
+      -
+        element: legend_info
+        label: teilweise bezahlt
+        info:
+          color:
+            - soft_green
+            - 30
+      -
+        element: legend_info
+        label: vollständig bezahlt
+        info:
+          color: lightgreen
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_CustomerName
+    group: Persönliche Daten
+  -
+    title: Vorname
+    column: firstname
+    width: name
+    resize: true
+    group: Persönliche Daten
+  -
+    title: Nachname
+    column: lastname
+    width: name
+    resize: true
+    group: Persönliche Daten
+  -
+    title: Kundennummer
+    column: customer_number
+    width: customer_number
+    resize: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - customer_number
+      - true
+    group: Persönliche Daten
+  -
+    title: Agentur
+    column: agency_short
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - agency
+      - true
+    group: Buchungsdaten
+  -
+    title: Agenturnummer
+    column: agency_number
+    width: number
+    resize: false
+    group: Buchungsdaten
+  -
+    title: Buchungsnummer
+    column: inquiry_number
+    width: number
+    group: Buchungsdaten
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: group_short
+    width: group_short
+    resize: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - group
+      - true
+    group: Buchungsdaten
+  -
+    title: Gu.Nr.
+    column: document_number_cn
+    width: name
+    resize: false
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_CreditNote
+    group: Gutschrift
+  -
+    title: Erwarteter Betrag
+    column: creditnote_amount
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_CreditNote
+    group: Gutschrift
+  -
+    title: Offener Betrag
+    column: creditnote_open_amount
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Accounting_Gui2_Agency_Format_CreditNoteOpenAmount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_CreditNote
+    group: Gutschrift
+  -
+    title: Bezahlter Betrag
+    column: creditnote_payed
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_CreditNote
+    group: Gutschrift
+  -
+    title: Brutto-Betrag (nur provisionspflichtigen Leistungen)
+    column: creditnote_gross_amount
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_CreditNote
+    group: Gutschrift
+  -
+    title: Restzahlung
+    column: document_finalpay_amount_cn
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    group: Gutschrift
+  -
+    title: Restzahlung - Datum
+    column: document_finalpay_due_date_cn
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    group: Gutschrift
+  -
+    title: PDF
+    column: path_cn
+    width: icon
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params:
+      - 'path_cn'
+    sortable: false
+    group: Gutschrift
+  -
+    title: Kursstart
+    column: course_start
+    width: date
+    resize: false
+    format: Ext_Thebing_Accounting_Gui2_Agency_Format_CreditnoteCourseDates
+    format_params:
+      - 'from'
+    sortable: false
+    group: Gutschrift
+  -
+    title: Kursende
+    column: course_end
+    width: date
+    format: Ext_Thebing_Accounting_Gui2_Agency_Format_CreditnoteCourseDates
+    format_params:
+      - 'until'
+    sortable: false
+    group: Gutschrift
+  -
+    title: Provisionspflichtig
+    column: has_commissionable_items_cn
+    width: yes_no
+    resize: false
+    format: Ext_Gui2_View_Format_YesNo
+    format_params:
+      - true
+    group: Gutschrift
+  -
+    title: Re.Nr.
+    column: document_number
+    alias: kid
+    width: name
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_Invoice
+    resize: false
+    group: Rechnung
+  -
+    title: Erwarteter Betrag - Brutto
+    column: invoice_amount
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_Invoice
+    group: Rechnung
+  -
+    title: Offener Betrag - Brutto
+    column: invoice_open_amount
+    width: amount
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Accounting_Gui2_Agency_Format_InvoiceOpenAmount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_Invoice
+    group: Rechnung
+  -
+    title: Bezahlter Betrag - Brutto
+    column: invoice_payed
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Accounting_Gui2_Agency_Style_Invoice
+    group: Rechnung
+  -
+    title: Provisionspflichtig
+    column: has_commissionable_items
+    width: yes_no
+    resize: false
+    group: Rechnung
+    format: Ext_Gui2_View_Format_YesNo
+    format_params:
+      - true

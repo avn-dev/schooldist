@@ -1,0 +1,2 @@
+ALTER TABLE `ts_accounts_transactions` CHANGE `amount_type` `type` ENUM('invoice','creditnote','payment') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
+ALTER TABLE `ts_accounts_transactions` ADD `type_id` INT(11) NOT NULL AFTER `type`;

@@ -1,0 +1,1 @@
+<label style="" class="divToolbarLabelGroup">{$oElement->getName()}</label>

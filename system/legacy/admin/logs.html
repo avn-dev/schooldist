@@ -1,0 +1,111 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess('view_logs');
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+$aConfigData = $mOptions = array();
+
+/* ================================================== */
+
+$aConfigData['layout_data']['filter']['show']			= 1;
+$aConfigData['layout_data']['filter']['search']['show']	= 1;
+$aConfigData['layout_data']['filter']['from']['show']	= 0;
+$aConfigData['layout_data']['filter']['to']['show']		= 0;
+$aConfigData['layout_data']['sortable']					= 0;
+$aConfigData['layout_data']['view']						= 0;
+$aConfigData['layout_data']['table_height']				= '';
+$aConfigData['layout_data']['manual_height']			= 0;
+$aConfigData['layout_data']['pagination']['show']		= 1;
+$aConfigData['layout_data']['icons']['show']			= 0;
+
+/* ================================================== */
+
+$aConfigData['query_data'][0] = "SELECT sl.*, UNIX_TIMESTAMP(sl.created) created, su.username FROM #table AS `sl` INNER JOIN #table2 AS `su` ON su.id = sl.user ORDER BY sl.created DESC LIMIT 30";
+$aConfigData['query_data'][1] = array('table'	=> 'system_logs', 'table2'	=> 'system_user');
+$aConfigData['query_data']['filter']['search']['column'] = "username, action";
+$aConfigData['query_data']['filter']['search']['alias'] = "su, sl";
+
+$aConfigData['query_data']['filter']['id']['column']		= "id";
+$aConfigData['query_data']['filter']['id']['alias']			= "sl";
+
+/* ================================================== */
+
+$i = 0;
+
+$aConfigData['header_data'][$i]['column']	= 'page_id';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Seite');
+$aConfigData['header_data'][$i]['style']	= 'width:300px;';
+$aConfigData['header_data'][$i]['type']		= 'function';
+$aConfigData['header_data'][$i]['function']	= 'getPageTrack';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'username';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Benutzer');
+$aConfigData['header_data'][$i]['style']	= 'width:200px;';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'created';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Zeit');
+$aConfigData['header_data'][$i]['style']	= 'width:140px;';
+$aConfigData['header_data'][$i]['type']		= 'date_time';
+$i++;
+
+$aConfigData['header_data'][$i]['column']	= 'action';
+$aConfigData['header_data'][$i]['dbalias']	= '';
+$aConfigData['header_data'][$i]['value']	= L10N::t('Aktion');
+$aConfigData['header_data'][$i]['style']	= '';
+$i++;
+
+/* ================================================== */
+
+$oLogs	= new Logs($aConfigData);
+$sLogsRS	= $oLogs->sRandString;
+
+$mOptions['left_frame'] = 1;
+$mOptions['additional'] = '<script language="JavaScript" type="text/javascript" src="/admin/logs/js.logs.php?hash='.$oLogs->getHash().'"></script>';
+
+$oLogs->getAdminHeader($mOptions);
+
+/* ================================================== */
+
+// Select field
+$aUsers = User::getList();
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+?>
+
+<script type="text/javascript">
+/* <![CDATA[ */
+
+	function <?=$sLogsRS?>_createDD() {
+		$('<?=$sLogsRS?>_filter_search').insert({after: ' <b><?=L10N::t('Anzeige')?>:</b> ' + <?=$sLogsRS?>_sCode});
+	}
+
+	var <?=$sLogsRS?>_sCode = '';
+	<?=$sLogsRS?>_sCode += '<select class="txt" id="filter_sort" onchange="<?=$sLogsRS?>_loadTableList();return false;">';
+	<?=$sLogsRS?>_sCode += '<option value="all"><?=L10N::t('Alle')?></option>';
+	<? foreach($aUsers as $aUser) { ?>
+ 		<?=$sLogsRS?>_sCode += '<option value="<?=$aUser['id']?>"><?=$aUser['username']?></option>';
+ 	<? } ?>
+	<?=$sLogsRS?>_sCode += '</select>';
+
+	Event.observe(window, 'load', <?=$sLogsRS?>_createDD);
+	
+ /* ]]> */
+</script>
+ <?php
+ $oLogs->generateHTML(L10N::t('Protokoll','Framework'));
+
+ Admin_Html::loadAdminFooter()
+ ?>

@@ -1,0 +1,54 @@
+
+.GUIDialogNotification {
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	padding: 5px 6px;
+	margin: 5px 0 0;
+}
+
+.GUIDialogNotification div {
+	clear: both;
+}
+
+.GUIDialogNotification p {
+	margin: 5px 0;
+}
+
+.GUIDialogNotification.GUIHint{
+	border: 1px solid #FED22F;
+	color: #363636;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #ffe45c;
+}
+
+.GUIDialogNotification.GUIInfo {
+	border: 1px solid #82C1EC;
+	color: #363636;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #B9CDE5;
+}
+
+.GUIDialogNotification.GUIError {
+	border: 1px solid #CD0A0A;
+	color: #FFFFFF;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #b81900;
+}
+
+.GUIDialogNotification.GUISuccess {
+	border: 1px solid green;
+	color: #FFFFFF;
+	background: url(/admin/extensions/gui2/bg_hatching.png) green;
+}
+
+.GUIDialogNotification.GUISuccess .GUITitle span a:link {
+	color: #ffffff;
+	text-decoration: underline;
+}
+
+.GUIDialogNotification .GUITitle span {
+	font-weight: bold;
+}
+
+.GUIDialogNotification .GUITitle img {
+	float: left;
+	display: block;
+	margin-right: 4px;
+}

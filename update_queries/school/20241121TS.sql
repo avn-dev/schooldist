@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_inquiries_documents_versions` ADD `status` BIT(3) NULL DEFAULT NULL AFTER `company_id`;

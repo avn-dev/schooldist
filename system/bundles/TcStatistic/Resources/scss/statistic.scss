@@ -1,0 +1,60 @@
+html, body {
+  /* GUI CSS setzt das auf hidden, was ziemlich unbrauchbar ist bei einer Statistik */
+  overflow: auto;
+}
+
+.statistic_margin {
+  margin: 10px 20px;
+}
+
+.statistic_result {
+  border: 1px solid #CCC;
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-bottom: 20px;
+  /*table-layout: fixed;*/
+}
+
+.statistic_result table {
+  /*border-collapse: collapse;*/
+}
+
+.statistic_result caption {
+  text-align: left;
+  font-weight: bold;
+  font-size: 1.2em;
+  padding-bottom: 5px;
+}
+
+.statistic_result th, .statistic_result td {
+  font-size: 10px;
+  border: 1px solid #CCC;
+}
+
+.statistic_result th {
+  padding: 5px;
+  background-color: #EEE;
+  text-align: left;
+}
+
+.statistic_result td {
+  padding: 5px;
+  text-align: right;
+}
+
+.statistic_result tbody tr:nth-child(even) td {
+  background-color: #F7F7F7;
+}
+
+.statistic_result .border_right {
+  border-right: 3px solid #CCC;
+}
+
+.statistic_result .border_bottom {
+  border-bottom: 3px solid #CCC;
+}
+
+.divToolbar {
+  border-bottom: 1px solid #CCC !important;
+}

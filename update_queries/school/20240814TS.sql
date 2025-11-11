@@ -1,0 +1,1 @@
+ALTER TABLE `ts_activities_blocks` ADD `frontend_release` ENUM('visible','bookable') NULL DEFAULT NULL AFTER `released_for_app`;

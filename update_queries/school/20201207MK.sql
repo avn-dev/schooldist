@@ -1,0 +1,2 @@
+UPDATE `kolumbus_teacher_schedule` SET changed = changed, valid_from = NULL WHERE valid_from = '0000-00-00';
+UPDATE `kolumbus_teacher_schedule` SET changed = changed, valid_until = NULL WHERE valid_until = '0000-00-00';

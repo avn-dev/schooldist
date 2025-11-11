@@ -1,0 +1,1 @@
+ALTER TABLE `tc_wdmvc_tokens_applications` CHANGE `application` `application` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

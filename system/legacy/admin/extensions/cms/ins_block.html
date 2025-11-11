@@ -1,0 +1,76 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("edit");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Block hinzufügen', 'Framework')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+			
+<?
+if($_VARS['block']) {
+
+	$aData = [
+		'page_id' => (int)$_VARS['page_id'],
+		'element' => 'block', 
+		'file' => $_POST['block'], 
+		'author' => (int)$user_data['id'], 
+		'active' => 1, 
+		'number' => (int)$_POST['content_id'], 
+		'level' => ($_POST['level']+1)
+	];
+	
+	if(!empty($_VARS['parent_id'])) {
+		$aData['parent_id'] = (int)$_VARS['parent_id'];
+	}
+
+	$content_id = DB::insertData('cms_content', $aData);
+
+?>
+<script>
+	var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+	if(oCmsFrame) {
+		oCmsFrame.contentDocument.location.reload();
+	}
+	parent.jQuery('#cms-modal').modal('hide');
+</script>
+<?
+} else {
+?>
+			<p><?=L10N::t('Bitte wählen Sie einen Block aus, den Sie der Seite hinzufügen möchten:', 'Framework')?></p>
+			<form method="POST" action="ins_block.html">
+			<input type="hidden" name="page_id" value="<?=(int)$_GET['page_id']?>">
+			<input type="hidden" name="content_id" value="<?=(int)$_GET['content_id']?>">
+			<input type="hidden" name="level" value="<?=(int)$_GET['level']?>">
+			<input type="hidden" name="parent_id" value="<?=(int)$_GET['parent_id']?>">
+			<select name="block" class="txt form-control">
+				<option><?=L10N::t('Bitte wählen', 'CMS')?></option>
+			<?
+			$aBlocks = (array)DB::getQueryRows("SELECT * FROM cms_blocks WHERE active = 1 ORDER BY title");
+			foreach($aBlocks as $aBlock) {
+				echo "<option value=\"".$aBlock['block']."\">".$aBlock['title']."\n";
+			}
+			?>
+			</select>
+			</div>
+		<div class="box-footer">
+			<input type="submit" class="btn btn-primary pull-right" name="action" value="<?=L10N::t('Block hinzufügen', 'CMS')?>">
+			</div>
+			</form>
+<?
+}
+?>
+
+		
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

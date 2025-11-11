@@ -1,0 +1,1 @@
+CREATE TABLE `kolumbus_tuition_courses_accommodation_combinations` (  `course_id` int(11) NOT NULL,  `accommodation_category_id` int(11) NOT NULL,  `roomtype_id` int(11) NOT NULL,  `meal_id` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8;

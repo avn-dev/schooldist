@@ -1,0 +1,81 @@
+class:
+  wdbasic: \Ts\Entity\AccommodationProvider\Payment\Category
+  gui: \Ts\Gui2\AccommodationProvider\Payment\Category
+  data: \Ts\Gui2\AccommodationProvider\Payment\CategoryData
+  date_format: Ext_Thebing_Gui2_Format_Date
+description: Thebing » Accounting » Accommodation
+access: thebing_accommodation_billing_terms
+title:
+  - Ext_TS_System_Navigation
+  - t
+id:
+  column: id
+  alias: ts_appc
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          filter_part: HAVING
+          column: 
+            - name
+        -
+          element: seperator
+        -
+          element: selectfilter
+          label: Schule
+          label_as_item: true
+          alias:
+            - filter_schools
+          column:
+            - school_id
+          entries:
+            - Ext_Thebing_Client
+            - getSchoolList
+            - true
+          value:
+            - Ext_Thebing_School
+            - getSchoolIdFromSession
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \Ts\Gui2\AccommodationProvider\Payment\CategoryData
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \Ts\Gui2\AccommodationProvider\Payment\CategoryData
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_appc
+    width: name
+    resize: true
+  -
+    title: Schule
+    column: schools
+    width: name
+    resize: true
+    sortable: false
+    format: \Ts\Gui2\School\MultiSelectFormat
+  -
+    title: Anzeigen pro
+    column: period_displays
+    width: name
+    sortable: false
+    format: \Ts\Gui2\AccommodationProvider\PaymentPeriodDisplaysFormat
+  -
+    title: Inbox
+    column: inbox_names
+    width: name
+    sortable: false

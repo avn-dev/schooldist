@@ -1,0 +1,938 @@
+.fidelo-registration-form {
+  --primary: #007bff;
+  --primary-hue: 211;
+  --primary-saturation: 100%;
+  --primary-lightness: 50%;
+  --secondary: #6c757d;
+  --secondary-hue: 208;
+  --secondary-saturation: 7%;
+  --secondary-lightness: 46%;
+}
+.fidelo-registration-form a {
+  color: var(--primary);
+}
+.fidelo-registration-form a:hover {
+  color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 15%));
+}
+.fidelo-registration-form .form-control:focus,
+.fidelo-registration-form .custom-select:focus,
+.fidelo-registration-form .custom-file-input:focus ~ .custom-file-label {
+  border-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) + 25%));
+  box-shadow: 0 0 0 0.2rem hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), 0.25);
+}
+.fidelo-registration-form .custom-control-input:checked ~ .custom-control-label::before {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+.fidelo-registration-form .custom-control-input:focus ~ .custom-control-label::before {
+  box-shadow: 0 0 0 0.2rem hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), 0.25);
+}
+.fidelo-registration-form .custom-control-input:focus:not(:checked) ~ .custom-control-label::before {
+  border-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) + 25%));
+}
+.fidelo-registration-form .custom-control-input:not(:disabled):active ~ .custom-control-label::before {
+  background-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) + 35%));
+  border-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) + 35%));
+}
+.fidelo-registration-form .btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.fidelo-registration-form .btn-primary:hover, .fidelo-registration-form .btn-primary:focus {
+  background-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 7.5%));
+  border-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 10%));
+}
+.fidelo-registration-form .btn-primary:not(:disabled):not(.disabled):active, .fidelo-registration-form .btn-primary:not(:disabled):not(.disabled).active {
+  background-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 10%));
+  border-color: hsl(var(--primary-hue), var(--primary-saturation), calc(var(--primary-lightness) - 12.5%));
+}
+.fidelo-registration-form .btn-primary:focus, .fidelo-registration-form .btn-primary:not(:disabled):not(.disabled):active:focus, .fidelo-registration-form .btn-primary:not(:disabled):not(.disabled).active:focus {
+  box-shadow: 0 0 0 0.2rem hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), 0.5);
+}
+.fidelo-registration-form .btn-primary.disabled, .fidelo-registration-form .btn-primary:disabled {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.fidelo-registration-form .btn-outline-primary {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.fidelo-registration-form .btn-outline-primary:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.fidelo-registration-form .btn-outline-primary:not(:disabled):not(.disabled):active, .fidelo-registration-form .btn-outline-primary:not(:disabled):not(.disabled).active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.fidelo-registration-form .btn-outline-primary:focus, .fidelo-registration-form .btn-outline-primary:not(:disabled):not(.disabled):active:focus, .fidelo-registration-form .btn-outline-primary:not(:disabled):not(.disabled).active:focus {
+  box-shadow: 0 0 0 0.2rem hsla(var(--primary-hue), var(--primary-saturation), var(--primary-lightness), 0.5);
+}
+.fidelo-registration-form .btn-outline-primary.disabled, .fidelo-registration-form .btn-outline-primary:disabled {
+  color: var(--primary);
+  background-color: transparent;
+}
+.fidelo-registration-form .btn-outline-secondary {
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+.fidelo-registration-form .btn-outline-secondary:hover {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+.fidelo-registration-form .btn-outline-secondary:not(:disabled):not(.disabled):active, .fidelo-registration-form .btn-outline-secondary:not(:disabled):not(.disabled).active {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+.fidelo-registration-form .btn-outline-secondary:focus, .fidelo-registration-form .btn-outline-secondary:not(:disabled):not(.disabled):active:focus, .fidelo-registration-form .btn-outline-secondary:not(:disabled):not(.disabled).active:focus {
+  box-shadow: 0 0 0 0.2rem hsla(var(--secondary-hue), var(--secondary-saturation), var(--secondary-lightness), 0.5);
+}
+.fidelo-registration-form .btn-outline-secondary.disabled, .fidelo-registration-form .btn-outline-secondary:disabled {
+  color: var(--secondary);
+  background-color: transparent;
+}
+.fidelo-registration-form .card-block {
+  margin-bottom: 1rem;
+  height: calc(100% - 1rem);
+  transition: border-color 0.3s;
+}
+.fidelo-registration-form .card-block.active {
+  border-color: #007bff;
+  border-color: var(--primary);
+}
+.fidelo-registration-form .card-block.active > div > div > .card-title label {
+  color: #007bff;
+  color: var(--primary);
+}
+.fidelo-registration-form .card-block.disabled .card-title label {
+  cursor: not-allowed;
+}
+.fidelo-registration-form .card-block > .card-img {
+  max-height: 8rem;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.fidelo-registration-form .card-block .card-control .custom-control {
+  margin: 1.5rem 1.25rem;
+}
+.fidelo-registration-form .card-block > .row > .card-body {
+  padding: 1.25rem 1.25rem 1.25rem 0;
+}
+.fidelo-registration-form .card-block > .row > .card-body .card-title label {
+  margin-bottom: 0;
+}
+.fidelo-registration-form .card-block > .row > .card-body p.card-text {
+  margin-bottom: 0;
+}
+.fidelo-registration-form .card-block > .row > .card-body p.card-text ~ div:not(:empty) {
+  margin-top: 1rem;
+}
+.fidelo-registration-form .card-block > .row > .card-body dl {
+  margin-top: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+.fidelo-registration-form .card-block > .row > .card-footer {
+  flex-grow: 1;
+  padding: 0.75rem 2.5rem;
+}
+.fidelo-registration-form .card-block.card-block-sm {
+  margin-bottom: 0.5rem;
+}
+.fidelo-registration-form .card-block.card-block-sm .card-title {
+  margin-bottom: 0.5rem;
+}
+.fidelo-registration-form .card-block.card-block-sm > .row > .card-body {
+  padding: 0.9375rem 0.9375rem 0.9375rem 0;
+}
+.fidelo-registration-form .card-block.card-block-sm .custom-control {
+  margin-top: 1rem;
+}
+.fidelo-registration-form .card-block.card-block-xs {
+  border: none;
+  margin-bottom: 0.5rem;
+}
+.fidelo-registration-form .card-block.card-block-xs .card-title {
+  margin-bottom: 0;
+}
+.fidelo-registration-form .card-block.card-block-xs .custom-control {
+  margin: 0.1rem 0.5rem;
+}
+.fidelo-registration-form .card-block.card-block-xs > .row > .card-body {
+  padding: 0;
+}
+.fidelo-registration-form .custom-file {
+  cursor: pointer;
+}
+.fidelo-registration-form .form-control:disabled,
+.fidelo-registration-form .input-group-prepend + .form-control:disabled,
+.fidelo-registration-form .custom-select:disabled,
+.fidelo-registration-form .btn[disabled],
+.fidelo-registration-form .btn.disabled,
+.fidelo-registration-form .custom-control-input:disabled ~ .custom-control-label,
+.fidelo-registration-form .custom-control-input[disabled] ~ .custom-control-label,
+.fidelo-registration-form .custom-control-input:disabled ~ .custom-control-label::after,
+.fidelo-registration-form .custom-control-input[disabled] ~ .custom-control-label::after,
+.fidelo-registration-form .custom-file-input[disabled] {
+  cursor: not-allowed;
+}
+.fidelo-registration-form .is-invalid ~ .invalid-feedback,
+.fidelo-registration-form .is-invalid ~ .invalid-tooltip {
+  display: block;
+}
+.fidelo-registration-form .input-field.input-field-radio > .row {
+  margin-top: 0.375rem;
+}
+.fidelo-registration-form .input-field.input-field-datepicker .vc-popover-content-wrapper {
+  z-index: 900;
+}
+.fidelo-registration-form .input-field.input-field-upload .input-group-append .btn {
+  border-color: #ced4da;
+}
+.fidelo-registration-form .input-field.input-field-upload .input-group-append .btn.is-invalid {
+  border-color: #dc3545;
+}
+.fidelo-registration-form .input-field.input-field-upload .custom-file-label {
+  --label: "Browse";
+}
+.fidelo-registration-form .input-field.input-field-upload .custom-file-label::after {
+  content: var(--label);
+}
+.fidelo-registration-form .input-field.input-field-upload .progress {
+  margin-top: 0.5rem;
+}
+.fidelo-registration-form .info-icon {
+  position: absolute;
+  right: 0;
+  cursor: help;
+}
+@media (max-width: 767.98px) {
+  .fidelo-registration-form .info-icon {
+    top: 1px;
+  }
+  .fidelo-registration-form .info-icon i {
+    font-size: 1.3rem;
+  }
+}
+.fidelo-registration-form .course-filter {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .course-filter::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .course-filter .course-filter-categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .course-filter .course-filter-categories > a {
+  flex-basis: 49%;
+}
+.fidelo-registration-form .fade-enter-active {
+  transition: 0.5s ease;
+}
+.fidelo-registration-form .fade-leave-active {
+  transition: opacity 0.5s ease;
+  position: absolute;
+}
+.fidelo-registration-form .fade-leave-active .btn {
+  visibility: hidden;
+}
+.fidelo-registration-form .fade-enter,
+.fidelo-registration-form .fade-leave-to {
+  opacity: 0;
+}
+.fidelo-registration-form .fade-move {
+  transition: 0.5s ease;
+}
+.fidelo-registration-form {
+  position: relative;
+}
+.fidelo-registration-form .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+}
+.fidelo-registration-form .loading-overlay > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: 350px;
+  transform: translateX(-50%) translateY(-50%);
+  text-align: center;
+  font-weight: bold;
+}
+.fidelo-registration-form .loading-overlay > div > p {
+  margin-top: 1rem;
+}
+.fidelo-registration-form .loading-overlay > div i.fas {
+  font-size: 2rem;
+}
+.fidelo-registration-form div[component=block-notifications] {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form div[component=block-notifications]::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form div[component=block-notifications] li {
+  width: 100%;
+}
+.fidelo-registration-form div[component=block-static] h2, .fidelo-registration-form div[component=block-static] h3 {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form div[component=block-static] h2::after, .fidelo-registration-form div[component=block-static] h3::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form div[component=block-static] h2, .fidelo-registration-form div[component=block-static] h3 {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form div[component=block-static] h2::after, .fidelo-registration-form div[component=block-static] h3::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form div[component=block-download] a[download] {
+  display: none;
+}
+.fidelo-registration-form div[component=block-payment] {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form div[component=block-payment]::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form div[component=block-payment] {
+  position: relative;
+  min-height: 100px;
+}
+.fidelo-registration-form div[component=block-payment] > .payment-methods {
+  position: relative;
+}
+.fidelo-registration-form div[component=block-payment] > .payment-methods label.custom-control-label i {
+  vertical-align: 0 !important;
+}
+.fidelo-registration-form div[component=block-payment] {
+  /*
+   * THIS CSS WILL BE USED IN SCHOOL REGISTRATION FORM V3 AND PAYMENT FORM
+   */
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods {
+  margin-top: 1rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .card-title img {
+  max-height: 26px;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods label.is-invalid {
+  color: #dc3545;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .payment-method-label {
+  font-size: 1.5rem;
+  padding-left: 0.5rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .payment-method-label i,
+.fidelo-registration-form div[component=block-payment] .payment-methods .payment-method-label img {
+  vertical-align: -0.25rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .payment-method-label::before, .fidelo-registration-form div[component=block-payment] .payment-methods .payment-method-label::after {
+  top: 0.75rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .payment-method-label .subtitle {
+  display: block;
+  color: #6c757d;
+  font-size: 1rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods.row > div {
+  margin-bottom: 15px;
+}
+@media (min-width: 768px) {
+  .fidelo-registration-form div[component=block-payment] .payment-methods.row > div {
+    margin-bottom: 30px;
+  }
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods.row > div .card {
+  margin-bottom: 0;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .card {
+  margin-bottom: 1rem;
+  height: 100%;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods .card.active {
+  border: 1px solid #007bff;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods > .card .card-title {
+  margin-bottom: 0;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods > .card.active > .card-body > .card-title {
+  margin-bottom: 0.75rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-methods > .card:last-child {
+  margin-bottom: 0;
+}
+.fidelo-registration-form div[component=block-payment] .payment-paypal {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.fidelo-registration-form div[component=block-payment] .payment-paypal.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.fidelo-registration-form div[component=block-payment] .payment-stripe {
+  --input-color: #495057;
+}
+.fidelo-registration-form div[component=block-payment] .payment-stripe .form-control-stripe {
+  padding-top: 0.7em;
+}
+.fidelo-registration-form div[component=block-payment] .payment-stripe .form-control-disabled {
+  background-color: #e9ecef;
+  opacity: 1;
+}
+.fidelo-registration-form div[component=block-payment] .payment-stripe .form-control-focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: rgb(127.5, 189, 255);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-registration-form div[component=block-payment] .payment-stripe .btn-block {
+  margin-top: 0.5rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-stripe.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.fidelo-registration-form div[component=block-payment] .payment-klarna {
+  text-align: center;
+}
+.fidelo-registration-form div[component=block-payment] .payment-klarna .btn-block {
+  display: inline-block;
+  max-width: 600px;
+  margin-top: 0.5rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-transfermate .payment-methods label.custom-control-label {
+  font-size: 1.25rem;
+}
+.fidelo-registration-form div[component=block-payment] .payment-transfermate .payment-methods .card-title img {
+  max-width: 60px;
+}
+.fidelo-registration-form div[component=block-payment] .payment-moneris {
+  height: 510px;
+}
+.fidelo-registration-form div[component=block-nav-buttons] {
+  margin-bottom: 1rem;
+  text-align: right;
+}
+.fidelo-registration-form div[component=block-nav-buttons] button:not(.float-left) {
+  margin-left: 0.5rem;
+}
+.fidelo-registration-form div[component=block-nav-buttons] .btn-success,
+.fidelo-registration-form div[component=block-nav-buttons] .btn-info {
+  font-weight: bold;
+}
+.fidelo-registration-form nav[component=block-nav-steps] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link {
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: linear;
+  transition-delay: 0s;
+  position: relative;
+  padding-top: 20px;
+  color: rgba(108, 117, 125, 0.7);
+  border: none;
+  background-color: transparent;
+  outline: none !important;
+  pointer-events: none;
+  text-align: center;
+  word-wrap: break-word;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link:before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: block;
+  width: 13px;
+  height: 13px;
+  content: "";
+  transform: translateX(-50%);
+  transition: all 0.15s linear 0s, transform 0.15s cubic-bezier(0.05, 1.09, 0.16, 1.4) 0s;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background-color: #fff;
+  box-sizing: border-box;
+  z-index: 3;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link:after {
+  position: absolute;
+  top: 5px;
+  left: calc(-50% - 6px);
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: linear;
+  transition-delay: 0s;
+  display: block;
+  width: 100%;
+  height: 2px;
+  content: "";
+  background-color: currentColor;
+  z-index: 1;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link:first-child:after {
+  display: none;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.active {
+  color: #007bff;
+  color: var(--primary);
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.active:before,
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.visited:before {
+  transform: translateX(-50%) scale(1.2);
+  background-color: #007bff;
+  background-color: var(--primary);
+  border-color: #007bff;
+  border-color: var(--primary);
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.visited:after {
+  color: #007bff;
+  color: var(--primary);
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.error span {
+  color: #dc3545;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.error:before {
+  border-color: #dc3545;
+}
+.fidelo-registration-form nav[component=block-nav-steps] .nav-link.error.active:before {
+  background-color: #dc3545;
+}
+.fidelo-registration-form div[component=block-prices] {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form div[component=block-prices] .price-list .list-group-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+.fidelo-registration-form div[component=block-prices] .price-list .list-group-item:first-child {
+  padding-top: 0;
+}
+.fidelo-registration-form div[component=block-prices] .price-list .list-group-item:last-child {
+  padding-bottom: 0;
+}
+.fidelo-registration-form div[component=block-prices] .price-list-no-lines .list-group-item {
+  border: 0;
+  padding-top: 0;
+  padding-bottom: 0.25rem;
+}
+.fidelo-registration-form div[component=block-prices] .price-block {
+  margin-top: 1rem;
+}
+.fidelo-registration-form div[component=block-prices] .price-block h5 {
+  font-size: 1rem;
+  font-weight: bold;
+}
+.fidelo-registration-form div[component=block-prices] .price-block .card-body {
+  padding: 1rem;
+}
+.fidelo-registration-form div[component=block-prices] .price-list-item-total {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+.fidelo-registration-form div[component=block-prices] .price-list-item-deposit {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+.fidelo-registration-form div[component=block-prices] .price-description {
+  font-size: 0.875em;
+  color: #6c757d;
+}
+.fidelo-registration-form .service-container-course::after,
+.fidelo-registration-form .service-container-accommodation::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .service-container-course,
+.fidelo-registration-form .service-container-accommodation {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .service-container-course::after,
+.fidelo-registration-form .service-container-accommodation::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .service-container-course div[component=block-service-container],
+.fidelo-registration-form .service-container-accommodation div[component=block-service-container] {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .service-container-course div[component=block-service-container]::after,
+.fidelo-registration-form .service-container-accommodation div[component=block-service-container]::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .service-container-course .nav-tabs {
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 10;
+}
+.fidelo-registration-form .service-container-course .course-grouping-buttons div:last-child {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .service-container-course .course-grouping-buttons div:last-child::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .service-container-course .course-grouping-buttons a {
+  margin-bottom: 0.5rem;
+}
+.fidelo-registration-form .service-container-course .no-results {
+  text-align: center;
+}
+.fidelo-registration-form .service-container-course .course-card {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .service-container-course .course-card::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .service-container-course .course-options label {
+  width: 100%;
+  padding: 0 0.75rem 0.5rem;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card {
+  display: flex;
+  flex-flow: column;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card > img {
+  flex-basis: auto;
+  -o-object-fit: cover;
+     object-fit: cover;
+  -o-object-position: center center;
+     object-position: center center;
+  filter: grayscale(100%);
+  max-height: 15rem;
+  border-top-left-radius: calc(0.25rem - 1px);
+  border-top-right-radius: calc(0.25rem - 1px);
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card > .card-body {
+  flex-basis: auto;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card > .card-footer {
+  width: 100%;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card .accommodation-combinations {
+  display: flex;
+  flex-flow: column;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card .accommodation-combinations > .card-block {
+  flex: 0 0 50%;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card .accommodation-combinations > .card-block.active {
+  color: #007bff;
+  color: var(--primary);
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card .accommodation-date label {
+  font-weight: bold;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card.active {
+  border-color: #007bff;
+  border-color: var(--primary);
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card.active > img {
+  filter: none;
+  border-bottom-left-radius: 0;
+}
+.fidelo-registration-form .service-container-accommodation .accommodation-card.active > .card-body > .card-title {
+  color: #007bff;
+  color: var(--primary);
+}
+@media (min-width: 576px) {
+  .fidelo-registration-form .service-container-accommodation .accommodation-card {
+    flex-flow: row wrap;
+  }
+  .fidelo-registration-form .service-container-accommodation .accommodation-card > img {
+    width: 25%;
+    max-height: none !important;
+    border-bottom-left-radius: calc(0.25rem - 1px);
+    border-top-right-radius: 0;
+  }
+  .fidelo-registration-form .service-container-accommodation .accommodation-card > .card-body {
+    width: 75%;
+  }
+  .fidelo-registration-form .service-container-accommodation .accommodation-card .accommodation-combinations {
+    flex-flow: row wrap;
+  }
+}
+.fidelo-registration-form .service-container-transfer {
+  margin-bottom: 1rem;
+}
+.fidelo-registration-form .service-container-transfer::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.fidelo-registration-form {
+  /*!
+   * bsStepper v{version} (https://github.com/Johann-S/bs-stepper)
+   * Copyright 2018 - {year} Johann-S <johann.servoire@gmail.com>
+   * Licensed under MIT (https://github.com/Johann-S/bs-stepper/blob/master/LICENSE)
+   */
+}
+.fidelo-registration-form .bs-stepper .step-trigger {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #6c757d;
+  text-align: center;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+}
+.fidelo-registration-form .bs-stepper .step-trigger:not(:disabled):not(.disabled) {
+  cursor: pointer;
+}
+.fidelo-registration-form .bs-stepper .step-trigger:disabled,
+.fidelo-registration-form .bs-stepper .step-trigger.disabled {
+  pointer-events: none;
+  opacity: 0.65;
+}
+.fidelo-registration-form .bs-stepper .step-trigger:focus {
+  color: #007bff;
+  outline: none;
+}
+.fidelo-registration-form .bs-stepper .step-trigger:hover {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+@media (max-width: 767.98px) {
+  .fidelo-registration-form .bs-stepper-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .fidelo-registration-form .bs-stepper .step {
+    flex: 1 0 50%;
+    text-align: center;
+  }
+  .fidelo-registration-form .bs-stepper-line {
+    display: none;
+  }
+  .fidelo-registration-form .bs-stepper .step-trigger {
+    flex-direction: column;
+    padding: 10px;
+  }
+}
+@media (max-width: 575.98px) {
+  .fidelo-registration-form .bs-stepper .step-trigger {
+    padding: 5px;
+  }
+}
+.fidelo-registration-form .bs-stepper-label {
+  display: inline-block;
+  margin: 0.25rem;
+}
+.fidelo-registration-form .bs-stepper-header {
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 520px) {
+  .fidelo-registration-form .bs-stepper-header {
+    margin: 0 -10px;
+    text-align: center;
+  }
+}
+.fidelo-registration-form .bs-stepper-line,
+.fidelo-registration-form .bs-stepper .line {
+  flex: 1 0;
+  min-width: 1px;
+  min-height: 1px;
+  margin: auto;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+@media (max-width: 400px) {
+  .fidelo-registration-form .bs-stepper-line,
+  .fidelo-registration-form .bs-stepper .line {
+    flex-basis: 20px;
+  }
+}
+.fidelo-registration-form .bs-stepper-circle {
+  display: inline-flex;
+  align-content: center;
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+  padding: 0.5em 0;
+  margin: 0.25rem;
+  line-height: 1em;
+  color: #fff;
+  background-color: #6c757d;
+  border-radius: 1em;
+}
+.fidelo-registration-form .bs-stepper .step.active .bs-stepper-circle {
+  background-color: #007bff;
+}
+.fidelo-registration-form {
+  /*
+  .bs-stepper-content {
+  	padding: 0 20px 20px;
+  }
+
+  @media (max-width: 520px) {
+  	.bs-stepper-content {
+  		padding: 0;
+  	}
+  }
+
+  .bs-stepper.vertical {
+  	display: flex;
+  }
+
+  .bs-stepper.vertical .bs-stepper-header {
+  	flex-direction: column;
+  	align-items: stretch;
+  	margin: 0;
+  }
+
+  .bs-stepper.vertical .bs-stepper-pane,
+  .bs-stepper.vertical .content {
+  	display: block;
+  }
+
+  .bs-stepper.vertical .bs-stepper-pane:not(.fade),
+  .bs-stepper.vertical .content:not(.fade) {
+  	display: block;
+  	visibility: hidden;
+  }
+
+  .bs-stepper-pane:not(.fade),
+  .bs-stepper .content:not(.fade) {
+  	display: none;
+  }
+
+  .bs-stepper .content.fade,
+  .bs-stepper-pane.fade {
+  	visibility: hidden;
+  	transition-duration: .3s;
+  	transition-property: opacity;
+  }
+
+  .bs-stepper-pane.fade.active,
+  .bs-stepper .content.fade.active {
+  	visibility: visible;
+  	opacity: 1;
+  }
+
+  .bs-stepper-pane.active:not(.fade),
+  .bs-stepper .content.active:not(.fade) {
+  	display: block;
+  	visibility: visible;
+  }
+
+  .bs-stepper-pane.dstepper-block,
+  .bs-stepper .content.dstepper-block {
+  	display: block;
+  }
+
+  .bs-stepper:not(.vertical) .bs-stepper-pane.dstepper-none,
+  .bs-stepper:not(.vertical) .content.dstepper-none {
+  	display: none;
+  }
+
+  .vertical .bs-stepper-pane.fade.dstepper-none,
+  .vertical .content.fade.dstepper-none {
+  	visibility: hidden;
+  }*/
+}
+.fidelo-registration-form .v-tooltip {
+  display: block !important;
+  z-index: 10000;
+}
+.fidelo-registration-form .v-tooltip .tooltip-inner {
+  max-width: 250px;
+  padding: 0.25rem 0.5rem;
+  color: #fff;
+  text-align: center;
+  background-color: #000;
+  border-radius: 0.25rem;
+}
+.fidelo-registration-form .v-tooltip .tooltip-arrow {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  position: absolute;
+  margin: 5px;
+  border-color: black;
+  z-index: 1;
+}
+.fidelo-registration-form .v-tooltip[x-placement^=right] {
+  margin-left: 5px;
+}
+.fidelo-registration-form .v-tooltip[x-placement^=right] .tooltip-arrow {
+  border-width: 5px 5px 5px 0;
+  border-left-color: transparent !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  left: -5px;
+  top: calc(50% - 5px);
+  margin-left: 0;
+  margin-right: 0;
+}
+.fidelo-registration-form .v-tooltip.popover .popover-inner {
+  background: #f9f9f9;
+  color: black;
+  padding: 24px;
+  border-radius: 5px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.1);
+}
+.fidelo-registration-form .v-tooltip.popover .popover-arrow {
+  border-color: #f9f9f9;
+}
+.fidelo-registration-form .v-tooltip[aria-hidden=true] {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s, visibility 0.15s;
+}
+.fidelo-registration-form .v-tooltip[aria-hidden=false] {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.15s;
+}

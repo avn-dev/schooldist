@@ -1,0 +1,18 @@
+
+		/* ADMIN STYLES */
+
+		.adminlink {
+			font-size:		10px!important;
+			font-family:	Verdana!important;
+			color:			#003399!important;
+			font-weight: 	normal!important;
+		}
+
+		
+		.content-inpage-text:hover {
+			background-color: #f7f7f7;
+		}
+
+		.content-inpage-html:hover {
+			background-color: #f7f7f7;
+		}

@@ -1,0 +1,1 @@
+ALTER TABLE `tc_addresses` ADD `latitude` DECIMAL( 18, 14 ) NULL DEFAULT NULL, ADD `longitude` DECIMAL( 18, 14 ) NULL DEFAULT NULL;

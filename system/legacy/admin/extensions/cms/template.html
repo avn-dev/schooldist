@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * v1
+ */
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+print Admin_Html::loadAdminHeader("",0,"onload=\"init();\"");
+
+Access_Backend::checkAccess('templates');
+
+if($_VARS['action'] == "save") {
+	$strSql = "UPDATE cms_content SET backup = content, content = '".\DB::escapeQueryString($_VARS['template_code'])."', public = '".\DB::escapeQueryString($_VARS['template_code'])."' WHERE page_id = ".(int)$_VARS['page_id']." AND number = ".(int)$_VARS['element_id']."";
+	$resSql = DB::executeQuery($strSql);
+	if($resSql) {
+		$meldung = '<div class="alert alert-success" role="alert">Änderung erfolgreich gespeichert!</div>';
+	} else {
+		$meldung = '<div class="alert alert-danger" role="alert">Änderung nicht erfolgreich gespeichert!</div>';
+	}
+}
+
+// Templatecode laden
+$strSql = "SELECT * FROM cms_content WHERE page_id = ".(int)$_VARS['page_id']." AND number = ".(int)$_VARS['element_id']."";
+$my_template = DB::getQueryRow($strSql);
+$template = $my_template['content'];
+
+// prüfen ob das element ein modul ist
+// wenn dann das template leer ist wird das standarttemplate aus der element-tabelle geladen
+if(($my_template['element'] == 'modul' || $my_template['element'] == 'template') AND strlen($template) < 1){
+	$my_template_el = DB::getQueryRow("SELECT * FROM system_elements WHERE file = '".$my_template['file']."'");
+	$template = $my_template_el['template'];
+}//if
+
+// Seiteninfos laden
+$my_site = DB::getQueryRow("SELECT * FROM cms_pages WHERE id = ".(int)$_VARS['page_id']."");
+$my_modul = DB::getQueryRow("SELECT * FROM system_elements WHERE file = '".$my_template['file']."'");
+
+$modul = $my_modul['title'];
+$titel = $my_site['title'];
+
+/**************************************************************************************************/
+// ## Ende normales laden und speichern
+/**************************************************************************************************/
+//$showcode = str_replace("\n","<br>",htmlspecialchars($template));
+
+$showcode = $template;
+
+// Instantiate a CodeEditor\Editor Object
+$oCodeEditor = new Codemirror\Service\EditorService();
+
+// Editor must be configurated before including the resources - css/js -, because of the dependency between a configuration and a resource
+$oCodeEditor->mode("text/html", true);
+$oCodeEditor->enableFullscreen();
+$oCodeEditor->lineNumbers(true);
+$oCodeEditor->tabSize(2);
+
+// Get the resources and print them
+print $oCodeEditor->getResources();
+?>
+
+<section class="content-header">
+<h1>
+  Vorlage
+  <small>Erweiterung "<?=$modul?>" auf Seite "<?=$titel?>"</small>
+</h1>
+</section>
+
+<section class="content">
+	<p><?=$meldung?></p>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post" name="formular" id="formular">
+		<input type="hidden" name="element_id" value="<?=(int)$_VARS['element_id']?>">
+		<input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>">
+		<input type="hidden" name="content_id" value="<?=(int)$_VARS['content_id']?>">
+		<input type="hidden" name="action" value="save">
+		<textarea id="template_code" name="template_code" style="border:0px;width:100%;height:100%;overflow:visible;" wrap="off"><?=$showcode?></textarea>
+		<br />
+		<button type="button" onclick="parent.Page.closeModal(); return false;" class="btn btn-default">Abbrechen</button>
+		<button onclick="submit(this);" class="btn btn-primary pull-right">Speichern</button>
+	</form>
+</section>
+
+<script type="text/javascript">
+	// Append the CodeMirror editor
+	window.onload = function (){
+		<?=$oCodeEditor->getJavaScriptCode('template_code');?>
+	};
+</script>
+<?=Admin_Html::loadAdminFooter()?>

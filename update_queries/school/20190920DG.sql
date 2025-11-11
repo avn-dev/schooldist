@@ -1,0 +1,2 @@
+INSERT INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES
+(47, '2019-09-04 20:39:04', '0000-00-00 00:00:00', 1, 'Buchungen » Bezahlungen', 'inquiries_payments', 'inquiries_payments');

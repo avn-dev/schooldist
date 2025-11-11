@@ -1,0 +1,328 @@
+<?
+include("./includes/main.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("trashcan");
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Papierkorb', 'Framework')?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<div class="box-body">
+
+<?php
+
+foreach((array)$_POST['trashcan'] as $tid) {
+
+	if(empty($tid)) {
+		continue;
+	}
+	
+	$my_trash = DB::getQueryRow("SELECT * FROM system_trash WHERE id = ".(int)$tid."");
+			
+	if(empty($my_trash)) {
+		continue;
+	}
+			
+	extract($my_trash);
+	
+	try {
+
+		if($_VARS['daction'] == "recover") {
+
+			DB::executeQuery("UPDATE $tablename SET active = '1' WHERE id = ".(int)$trash_id."");
+
+			if($tablename == "cms_content") {
+				$content_id = DB::getQueryRow("SELECT number FROM $tablename WHERE id = '$trash_id'");
+				$content_id = str_pad($content_id['number'], 3, "0", STR_PAD_LEFT);
+				DB::executeQuery("UPDATE $tablename SET content = CONCAT('<#content$content_id#>',content) WHERE page_id = '$page_id' AND number = '$parent_id'");
+			}
+			$text = "Aus dem Papierkorb wurde Element \"$title\" aus der Tabelle \"$tablename\" wiederhergestellt";
+			\Log::enterLog($page_id,$text);
+
+		} elseif($_VARS['daction'] == "delete") {
+
+			// Wenn Datei gelöscht wird
+			if($tablename == "system_media") {
+				$my_media = DB::getQueryRow("SELECT * FROM $tablename WHERE id = ".(int)$trash_id."");
+				if($my_media['file'] != 'folder') {
+					$sFile = \Util::getDocumentRoot().$system_data['upload_dir'].$my_media['folder'].$my_media['file'];
+					if(is_file($sFile)) {
+						unlink($sFile);
+					}
+				} else {
+					rmdir(\Util::getDocumentRoot().$system_data['upload_dir'].$my_media['folder']);
+				}
+			// Wenn Seite gelöscht wird
+			} elseif($tablename == "cms_pages") {
+				$my_page = DB::getQueryRow("SELECT * FROM $tablename WHERE id = ".(int)$trash_id."");
+				if($my_page) {
+					DB::executeQuery("DELETE FROM cms_content WHERE page_id = ".(int)$trash_id."");
+					DB::executeQuery("DELETE FROM cms_extensions_config WHERE page_id = ".(int)$trash_id."");
+				}
+			} elseif($tablename == "cms_styles_files"){
+				$my_style = DB::getQueryRow("SELECT * FROM $tablename WHERE id = ".(int)$trash_id."");
+				if($my_style) {
+					$strSql = "DELETE FROM `cms_styles` WHERE `file` = :strName";
+					$arrSql = array();
+					$arrSql['strName'] = $my_style['name'];
+					DB::executePreparedQuery($strSql, $arrSql);
+				}
+			}
+			DB::executeQuery("DELETE FROM $tablename WHERE id = ".(int)$trash_id."");
+			
+			$text = "Aus dem Papierkorb wurde Element \"$title\" aus der Tabelle \"$tablename\" gelöscht";
+			\Log::enterLog($page_id, $text);
+
+		}
+		
+	} catch(\Throwable $e) {
+		__out($e->getMessage());
+	}
+	
+	DB::executeQuery("DELETE FROM system_trash WHERE id = ".(int)$tid."");
+
+}
+?>
+<style>
+.newfolder {
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+.select_on {
+	background-color: buttonface;
+	border-bottom: 1px solid buttonhighlight;
+	border-right: 1px solid buttonhighlight;
+	border-top: 1px solid buttonshadow;
+	border-left: 1px solid buttonshadow;
+}
+.select_off {
+	background-color: buttonface;
+	border-top: 1px solid buttonhighlight;
+	border-left: 1px solid buttonhighlight;
+	border-bottom: 1px solid buttonshadow;
+	border-right: 1px solid buttonshadow;
+}
+</style>
+<script>
+
+var folder = "<? echo $folder; ?>";
+/**
+ * Sets/unsets the pointer in browse mode
+ *
+ * @param   object   the table row
+ * @param   object   the color to use for this row
+ * @param   object   the background color
+ *
+ * @return  boolean  whether pointer is set or not
+ */
+var delete_media = new Array();
+var currentElement = "";
+
+function setPointer(theRow, thePointerColor, theNormalBgColor)
+{
+
+currentElement = theRow.id;
+
+if(!window.event.ctrlKey) {
+	var obj = document.getElementById('obj');
+
+	for (var i=1;i<obj.getElementsByTagName("tr").length;i++) {
+	var a = obj.getElementsByTagName('tr')[i];
+////////////////////////////////////////////////////////////////////////////////////////
+    var theCells = null;
+
+    if (thePointerColor == '' || typeof(a.style) == 'undefined') {
+        return false;
+    }
+    if (typeof(document.getElementsByTagName) != 'undefined') {
+        theCells = a.getElementsByTagName('td');
+    }
+    else if (typeof(theRow.cells) != 'undefined') {
+        theCells = a.cells;
+    }
+    else {
+        return false;
+    }
+    var rowCellsCnt  = theCells.length;
+    var currentColor = null;
+    var newColor     = null;
+	var newTextColor = 'HIGHLIGHTTEXT';
+    // Opera does not return valid values with "getAttribute"
+		currentColor = theCells[0].getAttribute('bgcolor');
+        newColor     = theNormalBgColor;
+        newTextColor = 'INFOTEXT';
+        delete_media[theRow.id] = 0;
+		theCells[0].getElementsByTagName('input')[0].checked = 0;
+        for (var c = 0; c < rowCellsCnt; c++) {
+            theCells[c].setAttribute('bgcolor', newColor, 0);
+			theCells[c].style.setAttribute('color', newTextColor, 0);
+        } // end for
+////////////////////////////////////////////////////////////////////////////////////////		
+}
+}
+    var theCells = null;
+
+    if (thePointerColor == '' || typeof(theRow.style) == 'undefined') {
+        return false;
+    }
+    if (typeof(document.getElementsByTagName) != 'undefined') {
+        theCells = theRow.getElementsByTagName('td');
+    }
+    else if (typeof(theRow.cells) != 'undefined') {
+        theCells = theRow.cells;
+    }
+    else {
+        return false;
+    }
+    var rowCellsCnt  = theCells.length;
+    var currentColor = null;
+    var newColor     = null;
+	var newTextColor = 'HIGHLIGHTTEXT';
+    // Opera does not return valid values with "getAttribute"
+	currentColor = theCells[0].getAttribute('bgcolor');
+	newColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                     ? theNormalBgColor
+                     : thePointerColor;
+	newTextColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                     ? 'INFOTEXT'
+                     : 'HIGHLIGHTTEXT';
+	delete_media[theRow.id] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+                     ? 0
+                     : 1;
+	theCells[0].getElementsByTagName('input')[0].checked = 1;
+        for (var c = 0; c < rowCellsCnt; c++) {
+            theCells[c].setAttribute('bgcolor', newColor, 0);
+			theCells[c].style.setAttribute('color', newTextColor, 0);
+        } // end for
+
+    return true;
+} // end of the 'setPointer()' function
+
+function sendaction(action) {
+	if(action == 'delete') {
+		var check = confirm('Möchten Sie das/die ausgewählte/n Element/e wirklich löschen?');
+	} else {
+		var check = confirm('Möchten Sie das/die ausgewählte/n Element/e wirklich wiederherstellen?');
+	}
+	if(check) {
+		document.f1.daction.value = action;
+		document.f1.submit(); //.location.href = '<?=$_SERVER['PHP_SELF']?>?action=trash&daction='+action+'&tid='+currentElement;
+	}
+}
+
+function selectAll(obj) {
+
+	var bolChecked = obj.checked;
+	var arrElements = Form.getInputs('trash_form', 'checkbox', 'trashcan[]'); //document.getElementsByTagName('input');
+	for(i in arrElements) {
+		delete_media[arrElements[i].value] = bolChecked;
+		arrElements[i].checked = bolChecked;
+	}
+
+}
+
+</script>
+<form name="f1" id="trash_form" method="POST" action="trashcan.html">
+<input type="hidden" name="daction" value="">
+<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table" id="obj">
+	<tr style="cursor:pointer;">
+		<th width=3%><input type="checkbox" name="checkall" value="1" onClick="selectAll(this)"></th>
+		<th width=27%><?=L10N::t('Titel', 'Framework')?></th>
+		<th width=20%><?=L10N::t('Tabelle', 'Framework')?></th>
+		<th width=15%><?=L10N::t('Gelöscht von', 'Framework')?></th>
+		<th width=35%><?=L10N::t('Gelöscht am', 'Framework')?></th>
+	</tr>
+<?php
+
+$resTrash = (array)DB::getQueryRows("SELECT *, UNIX_TIMESTAMP(`created`) `time` FROM system_trash ORDER BY created DESC");
+foreach($resTrash as $arrTrash) {
+
+	if(is_numeric($arrTrash['user'])) {
+		$objUser = new User($arrTrash['user']);
+		$arrTrash['user'] = $objUser->getName();	
+	}
+	
+	$bolCheck = true;
+
+	/*
+	 * if content element, check if it is no longer used
+	 */
+	if($arrTrash['tablename'] == 'cms_content') {
+		$strSql = "
+				SELECT 
+					*
+				FROM 
+					`cms_content`
+				WHERE
+					`id` = '".\DB::escapeQueryString($arrTrash['trash_id'])."' AND
+					`element` = 'modul'
+					";
+		$arrCheck = DB::getQueryRow($strSql);
+		if(is_array($arrCheck)) {
+			$strSql = "
+				SELECT 
+					*
+				FROM 
+					`cms_content`
+				WHERE
+					`page_id` = '".\DB::escapeQueryString($arrCheck['page_id'])."' AND
+					`level` = '".\DB::escapeQueryString($arrCheck['level'] - 1)."' AND
+					`element` = 'content' AND 
+					`content` LIKE '%<#content".str_pad($arrCheck['number'], 3, '0', STR_PAD_LEFT)."#>%'
+					";
+			$arrParent = DB::getQueryRow($strSql);
+			if(is_array($arrParent)) {
+				$bolCheck = false;
+			}
+		}
+	} elseif($arrTrash['tablename'] == 'system_media') {
+		$strSql = "
+				SELECT 
+					*
+				FROM 
+					`system_media`
+				WHERE
+					`id` = '".\DB::escapeQueryString($arrTrash['trash_id'])."' AND
+					`file`!= 'folder'
+					";
+		$arrMedia = DB::getQueryRow($strSql);
+		$intResults = searchContent($arrMedia['folder'].$arrMedia['file']);
+		if($intResults > 0) {
+			$bolCheck = false;
+		}
+	}
+	
+	?>
+
+	<tr class="<?=((!$bolCheck)?'red':'')?>" style="cursor:default;" id="<?=$arrTrash['id']?>" onClick="setPointer(this, 'ACTIVECAPTION', '#ffffff');">
+		<td><input type="checkbox" name="trashcan[]" value="<?=$arrTrash['id']?>"></td>
+		<td><?=$arrTrash['title']?></td>
+		<td><?=$arrTrash['tablename']?></td>
+		<td><?=$arrTrash['user']?></td>
+		<td><?=strftime("%x %X",$arrTrash['time'])?></td>
+	</tr>
+
+	<?
+}
+?>
+</table>
+<p align="right">
+	<button onClick="sendaction('recover');" class="btn btn-default"><?=L10N::t('Wiederherstellen', 'Framework')?></button>
+	&nbsp;&nbsp;
+	<button onClick="sendaction('delete');" class="btn btn-primary"><?=L10N::t('Entgültig löschen', 'Framework')?></button>
+</p>
+</form>
+
+	
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

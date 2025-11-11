@@ -1,0 +1,21 @@
+{
+	"name": "fidelo-software/verifactu",
+	"description": "Verifactu API Client",
+	"keywords": ["verifactu"],
+	"license": "MIT",
+	"homepage": "https://fidelo.com",
+	"autoload": {
+	    "psr-4": {
+	        "FideloSoftware\\Verifactu\\": "src/"
+	    }
+	},
+	"authors": [
+		{
+			"name": "Fidelo Software GmbH",
+			"email": "support@fidelo.com"
+		}
+	],
+	"require": {
+		"php": "^8.3"
+	}
+}

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ldml>
+	<delimiters>
+		<quotationStart>‘</quotationStart>
+		<quotationEnd>’</quotationEnd>
+		<alternateQuotationStart>“</alternateQuotationStart>
+		<alternateQuotationEnd>”</alternateQuotationEnd>
+	</delimiters>
+	<dates>
+		<calendar>
+			<months>
+				<monthWidth type="abbreviated">
+					<month type="1">ene</month>
+					<month type="2">feb</month>
+					<month type="3">mar</month>
+					<month type="4">abr</month>
+					<month type="5">may</month>
+					<month type="6">jun</month>
+					<month type="7">jul</month>
+					<month type="8">ago</month>
+					<month type="9">sep</month>
+					<month type="10">oct</month>
+					<month type="11">nov</month>
+					<month type="12">dic</month>
+				</monthWidth>
+				<monthWidth type="wide">
+					<month type="1">enero</month>
+					<month type="2">febrero</month>
+					<month type="3">marzo</month>
+					<month type="4">abril</month>
+					<month type="5">mayo</month>
+					<month type="6">junio</month>
+					<month type="7">julio</month>
+					<month type="8">agosto</month>
+					<month type="9">septiembre</month>
+					<month type="10">octubre</month>
+					<month type="11">noviembre</month>
+					<month type="12">diciembre</month>
+				</monthWidth>
+			</months>
+			<days>
+				<dayWidth type="abbreviated">
+					<day type="sun">dom</day>
+					<day type="mon">lun</day>
+					<day type="tue">mar</day>
+					<day type="wed">mié</day>
+					<day type="thu">jue</day>
+					<day type="fri">vie</day>
+					<day type="sat">sáb</day>
+				</dayWidth>
+				<dayWidth type="wide">
+					<day type="sun">domingo</day>
+					<day type="mon">lunes</day>
+					<day type="tue">martes</day>
+					<day type="wed">miércoles</day>
+					<day type="thu">jueves</day>
+					<day type="fri">viernes</day>
+					<day type="sat">sábado</day>
+				</dayWidth>
+			</days>
+			<quarters>
+				<quarterWidth type="abbreviated">
+					<quarter type="1">T1</quarter>
+					<quarter type="2">T2</quarter>
+					<quarter type="3">T3</quarter>
+					<quarter type="4">T4</quarter>
+				</quarterWidth>
+				<quarterWidth type="wide">
+					<quarter type="1">1er trimestre</quarter>
+					<quarter type="2">2º trimestre</quarter>
+					<quarter type="3">3er trimestre</quarter>
+					<quarter type="4">4º trimestre</quarter>
+				</quarterWidth>
+			</quarters>
+			<am>a.m.</am>
+			<pm>p.m.</pm>
+			<dateFormats>
+				<dateFormatLength type="long">
+					<dateFormat>
+						<pattern>%e %B %y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="medium">
+					<dateFormat>
+						<pattern>%d.%m.%Y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+				<dateFormatLength type="short">
+					<dateFormat>
+						<pattern>%d.%m.%y</pattern>
+					</dateFormat>
+				</dateFormatLength>
+			</dateFormats>
+			<timeFormats>
+				<timeFormatLength type="long">
+					<timeFormat>
+						<pattern>%H:%M:%S %p</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="medium">
+					<timeFormat>
+						<pattern>%H:%M:%S</pattern>
+					</timeFormat>
+				</timeFormatLength>
+				<timeFormatLength type="short">
+					<timeFormat>
+						<pattern>%H:%M</pattern>
+					</timeFormat>
+				</timeFormatLength>
+			</timeFormats>
+			<fields>
+				<field type="year">
+					<displayName>año</displayName>
+				</field>
+				<field type="month">
+					<displayName>mes</displayName>
+				</field>
+				<field type="week">
+					<displayName>semana</displayName>
+				</field>
+				<field type="day">
+					<displayName>día</displayName>
+					<relative type="-3">Hace tres días</relative>
+					<relative type="-2">antes de ayer</relative>
+					<relative type="-1">ayer</relative>
+					<relative type="0">hoy</relative>
+					<relative type="1">mañana</relative>
+					<relative type="2">pasado mañana</relative>
+					<relative type="3">Dentro de tres días</relative>
+				</field>
+				<field type="weekday">
+					<displayName>día de la semana</displayName>
+				</field>
+				<field type="dayperiod">
+					<displayName>periodo del día</displayName>
+				</field>
+				<field type="hour">
+					<displayName>hora</displayName>
+				</field>
+				<field type="minute">
+					<displayName>minuto</displayName>
+				</field>
+				<field type="second">
+					<displayName>segundo</displayName>
+				</field>
+			</fields>
+		</calendar>
+	</dates>
+	<numbers>
+		<symbols>
+			<decimal>,</decimal>
+			<group>.</group>
+			<list>;</list>
+			<percentSign>%</percentSign>
+			<nativeZeroDigit>0</nativeZeroDigit>
+			<plusSign>+</plusSign>
+			<minusSign>-</minusSign>
+			<exponential>E</exponential>
+			<perMille>‰</perMille>
+			<infinity>∞</infinity>
+			<nan>NaN</nan>
+		</symbols>
+		<decimalFormats>
+			<decimalFormatLength>
+				<decimalFormat>
+					<pattern>#,##0.###</pattern>
+				</decimalFormat>
+			</decimalFormatLength>
+		</decimalFormats>
+		<scientificFormats>
+			<scientificFormatLength>
+				<scientificFormat>
+					<pattern>#E0</pattern>
+				</scientificFormat>
+			</scientificFormatLength>
+		</scientificFormats>
+		<percentFormats>
+			<percentFormatLength>
+				<percentFormat>
+					<pattern>#,##0%</pattern>
+				</percentFormat>
+			</percentFormatLength>
+		</percentFormats>
+		<currencyFormats>
+			<currencyFormatLength>
+				<currencyFormat>
+					<pattern>¤ #,##0.00</pattern>
+				</currencyFormat>
+			</currencyFormatLength>
+			<unitPattern count="other">{0} {1}</unitPattern>
+		</currencyFormats>
+	</numbers>
+	<units>
+		<unit type="day">
+			<unitPattern count="one">{0} día</unitPattern>
+			<unitPattern count="other">{0} días</unitPattern>
+		</unit>
+		<unit type="hour">
+			<unitPattern count="one">{0} hora</unitPattern>
+			<unitPattern count="other">{0} horas</unitPattern>
+		</unit>
+		<unit type="minute">
+			<unitPattern count="one">{0} minuto</unitPattern>
+			<unitPattern count="other">{0} minutos</unitPattern>
+		</unit>
+		<unit type="month">
+			<unitPattern count="one">{0} mes</unitPattern>
+			<unitPattern count="other">{0} meses</unitPattern>
+		</unit>
+		<unit type="second">
+			<unitPattern count="one">{0} segundo</unitPattern>
+			<unitPattern count="other">{0} segundos</unitPattern>
+		</unit>
+		<unit type="week">
+			<unitPattern count="one">{0} semana</unitPattern>
+			<unitPattern count="other">{0} semanas</unitPattern>
+		</unit>
+		<unit type="year">
+			<unitPattern count="one">{0} año</unitPattern>
+			<unitPattern count="other">{0} años</unitPattern>
+		</unit>
+	</units>
+</ldml>

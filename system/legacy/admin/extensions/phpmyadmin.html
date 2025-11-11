@@ -1,0 +1,48 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+addSystemRight('phpmyadmin', 'phpMyAdmin', 'phpmyadmin');
+
+if(Util::isDebugIP()) {
+	Access_Backend::checkAccess("control");
+} else {
+	Access_Backend::checkAccess("phpmyadmin");
+}
+
+// Schreibrechte entfernen
+$sConfigFile = Util::getDocumentRoot().'admin/extensions/phpmyadmin/config.inc.php';
+@chmod($sConfigFile, 0755);
+
+unset($_SESSION['PMA_Theme_Manager']);
+
+$_SESSION['PMA_single_signon_host'] = $db_data['host'];
+$_SESSION['PMA_single_signon_user'] = $db_data['username'];
+$_SESSION['PMA_single_signon_password'] = $db_data['password'];
+if (!isset($_SESSION['PMA_single_signon_token'])) {    
+	$_SESSION['PMA_single_signon_token'] = md5(uniqid(rand(), true));
+}
+
+if(isset($_SESSION['PMA_single_signon_error_message'])) {
+
+	Admin_Html::loadAdminHeader();
+
+?>
+	
+	<div class="divHeader">
+		<h1>PHPMyAdmin</h1>
+	</div>
+	<div style="padding: 30px;">
+		<p class="error"><?=\Util::getEscapedString($_SESSION['PMA_single_signon_error_message'])?></p>
+	</div>
+		
+<?
+
+	Admin_Html::loadAdminFooter();
+
+	// Fehler zurücksetzen, damit das System es nochmal probiert.
+	unset($_SESSION['PMA_single_signon_error_message']);
+
+} else {
+	header("Location: /admin/extensions/phpmyadmin/");
+}

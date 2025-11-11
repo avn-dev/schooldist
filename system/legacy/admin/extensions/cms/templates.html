@@ -1,0 +1,72 @@
+<?php
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("pagetemplates");
+
+if($_VARS['task'] == "delete") {
+	$my_page = DB::getQueryRow("SELECT title FROM cms_pages WHERE id = ".(int)$_VARS['id']."");
+	postdeletion("cms_pages", $_VARS['id'], $my_page['title']);
+	Log::enterLog($did, "Seite wurde gelöscht!");
+}
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Seitenvorlagen', 'CMS')?></h1>
+</section>
+
+<section class="content">
+
+	<div class="box">
+		<div class="box-body no-padding">
+			<table class="table table-striped table-hover">
+				<tr>
+					<th style="width: auto;"><?=L10N::t('Seitenvorlage', 'CMS')?></th>
+					<th style="width: 250px;"><?=L10N::t('Übergeordnete Vorlage', 'CMS')?></th>
+					<th style="width: 120px;"><?=L10N::t('Verwendung', 'CMS')?></th>
+					<th style="width: 80px;"><?=L10N::t('Aktion', 'CMS')?></th>
+				</tr>
+<?
+				$sSql = "
+						SELECT 
+							p1.id,
+							p1.title,
+							p2.title as template,
+							COUNT(p3.id) count
+						FROM 
+							cms_pages p1 LEFT OUTER JOIN 
+							cms_pages p2 ON 
+								p1.path = p2.file AND 
+								p1.path != '' LEFT OUTER JOIN
+							cms_pages p3 ON
+								p1.file = p3.template
+						WHERE 
+							p1.element = 'template' AND 
+							p1.active != 2 
+						GROUP BY
+							p1.id
+						ORDER BY 
+							p1.title";
+				$res = DB::getQueryRows($sSql);
+				foreach($res as $my) {
+?>
+				<tr id="tr_<?=$my['id']?>">
+					<td><?=$my['title']?>&nbsp;</td>
+					<td><?=$my['template']?>&nbsp;</td>
+					<td style="text-align: right;"><?=$my['count']?>&nbsp;</td>
+					<td align="center">
+						<a href="javascript:void(0);" onclick="window.open('preferences.html?page_id=<?=$my['id']?>','preferences','status=no,resizable=no,menubar=no,scrollbars=yes,width=1000,height=600');"><img src="/admin/media/edit.png" border="0"></a>
+						&nbsp;<a href="javascript:void(null);" onclick="if(confirm('<?=L10N::t('Möchten Sie diese Seitenvorlage wirklich löschen?', 'CMS')?>')) self.location.href='templates.html?task=delete&id=<?=$my['id']?>';"><img src="/admin/media/delete.png" border="0"></a>
+					</td>
+				</tr>
+<?
+				}
+?>
+			</table>
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

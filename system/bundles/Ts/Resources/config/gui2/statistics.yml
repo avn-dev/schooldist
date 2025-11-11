@@ -1,0 +1,80 @@
+hash: d6808294c8ca32fbe53b137b7f4d637b
+class:
+  wdbasic: Ext_Thebing_Management_Statistic
+  data: Ext_Thebing_Management_Statistic_Gui2
+  js: StatisticGui
+access: thebing_management_statistics
+js:
+  - [management/js/statistic.js, thebing]
+  - [gui2/gui2.js, tc]    
+  - [js/access_matrix.js, tc]
+  - [management/js/scriptaculous/scriptaculous.js, thebing]
+css:
+  - /assets/ts-reporting/css/reporting_legacy.css
+id:
+  column: id
+  alias: kms
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        id: search
+        alias:
+          - kms
+        column:
+          - title
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Management_Statistic_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Management_Statistic_Gui2
+          - getDialog
+     -
+        element: icon_delete
+     -
+        element: labelgroup
+        label: 
+     -       
+        element: icon
+        label: Zugriff
+        task: openDialog
+        action: openAccessDialog
+        active: true
+        multipleId: true
+        visible: true
+        access: thebing_tuition_certificates_display_documents
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - access      
+columns:
+  - 
+    title: Titel
+    column: title
+    resize: true
+    width: comment
+  - 
+    title: Zeitraum
+    column: period
+    width: name
+    format: Ext_Thebing_Gui2_Format_Statistic_Period
+  - 
+    title: Statistik-Typ
+    column: type
+    width: name
+    format: Ext_Thebing_Gui2_Format_Statistic_Type
+  - 
+    title: Art
+    column: list_type
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_Statistic_ListType

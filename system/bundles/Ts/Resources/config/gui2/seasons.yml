@@ -1,0 +1,114 @@
+hash: c28299f74dd88061cfb4babe04715ca4
+class:
+  wdbasic: Ext_Thebing_Marketing_Saison
+  data: Ext_Thebing_Marketing_Saison_Gui2
+access: thebing_marketing_saisons
+id:
+  column: id
+where:
+  - Ext_Thebing_Marketing_Saison_Gui2
+  - getWhere
+orderby:
+  - Ext_Thebing_Marketing_Saison_Gui2
+  - getOrderBy
+limit: 30
+limit_selection: false
+multiple_selection: false
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        call:
+          - Ext_Thebing_Marketing_Saison_Gui2
+          - manipulateSearchFilter
+        id: search
+        searchtype: LIKE
+  -  
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Marketing_Saison_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Marketing_Saison_Gui2
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Saison
+    column: title
+    width: name
+    alias: ''
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Saison_Title
+    format_params: 
+      - [Ext_Thebing_Marketing_Saison_Gui2, getParams]
+    i18n: 
+      pass_language: true
+      interface: frontend
+  - 
+    title: Von
+    column: valid_from
+    width: date
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Bis
+    column: valid_until
+    width: date
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date 
+  - 
+    title: Preissaison
+    column: saison_for_price
+    width: short_name
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Saison_Checkmark 
+  - 
+    title: Versicherung
+    column: saison_for_insurance
+    width: short_name
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Saison_Checkmark 
+  - 
+    title: Aktivität
+    column: season_for_activity
+    width: short_name
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Saison_Checkmark 
+  - 
+    title: Lehrer
+    column: saison_for_teachercost
+    width: short_name
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Saison_Checkmark 
+  - 
+    title: Transfer
+    column: saison_for_transfercost
+    width: short_name
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Saison_Checkmark 
+  - 
+    title: Unterkunft
+    column: saison_for_accommodationcost
+    width: short_name
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Saison_Checkmark   
+    
+      

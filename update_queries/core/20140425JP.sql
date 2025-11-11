@@ -1,0 +1,1 @@
+ALTER TABLE `tc_marketing_questionaries_childs_questions` ADD `required_questions` TINYINT NOT NULL DEFAULT '0';

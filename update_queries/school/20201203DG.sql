@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_agencies` ADD `tracking_key` VARCHAR(50) NULL DEFAULT NULL AFTER `status`, ADD UNIQUE (`tracking_key`);

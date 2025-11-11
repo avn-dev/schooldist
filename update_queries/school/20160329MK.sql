@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_clients` ADD `execution_time_statistics_update` TINYINT NOT NULL;

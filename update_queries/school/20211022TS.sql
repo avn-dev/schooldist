@@ -1,0 +1,1 @@
+CREATE TABLE `ts_accommodation_rooms_latest_cleaning_status` ( `room_id` INT NOT NULL , `bed` MEDIUMINT(2) NOT NULL , `status` CHAR(30) NOT NULL , PRIMARY KEY (`room_id`, `bed`, `status`)) ENGINE = InnoDB;

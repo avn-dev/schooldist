@@ -1,0 +1,100 @@
+hash: 15ef58d32f193ff9e6fc7b42fbf66671
+class:
+  wdbasic: Ext_Thebing_Transfer_Package
+  data: Ext_Thebing_Transfer_Package_Gui2_Data
+  js: MarketingTransferPackagesGui
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/marketing/transfer_packages.js, thebing]
+access: thebing_pickup_resources_packages
+id:
+  column: id
+  alias: ktrp
+orderby:
+  - Ext_Thebing_Transfer_Package_Gui2_Data
+  - getOrderby
+limit: 30
+limit_selection: false
+multiple_selection: false
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+          - name
+        alias: 
+          - ktrp
+        searchtype: LIKE
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Saison
+        label_as_item: true
+        alias:
+          - ktpsp
+          - ktpsc
+        column:
+          - saison_id
+          - saison_id
+        entries:
+          - Ext_Thebing_Transfer_Package_Gui2_Data
+          - getSeasonSelectOptions
+     -
+        element: selectfilter
+        label: Transferanbieter
+        label_as_item: true
+        alias:
+          - ktpp
+        column:
+          - provider_id
+        entries:
+          - Ext_Thebing_Transfer_Package_Gui2_Data
+          - getTransferSelectOptions
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Transfer_Package_Gui2_Data
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Transfer_Package_Gui2_Data
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Name
+    column: name
+    width: 150
+    alias: ktrp
+    resize: true
+    format: Ext_Thebing_Transfer_Package_Gui2_Format_Name
+  - 
+    title: Preis
+    column: amount_price
+    alias: ktrp
+    width: 80
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  - 
+    title: Preis Hin & Zurück
+    column: amount_price_two_way
+    alias: ktrp
+    width: 80
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+  - 
+    title: Kosten
+    column: amount_cost
+    alias: ktrp
+    width: 80
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount

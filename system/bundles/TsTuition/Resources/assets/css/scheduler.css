@@ -1,0 +1,103 @@
+#divWeekDaySwitch {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  -moz-column-gap: 0.5rem;
+       column-gap: 0.5rem;
+  border-bottom-width: 1px;
+  border-color: rgba(197, 208, 213, 0.5);
+  padding-left: 0.375rem;
+  padding-right: 0.375rem
+}
+#divWeekDaySwitch .weekdays-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem
+}
+#divWeekDaySwitch .weekdays-nav .divButton {
+  border-radius: 0.25rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem
+}
+#divWeekDaySwitch .weekdays-nav .divButton:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgba(243, 244, 245, 1);
+  background-color: rgba(243, 244, 245, var(--tw-bg-opacity, 1))
+}
+#divWeekDaySwitch .weekDayLabel {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem
+}
+#divWeekDaySwitch .divToolbarLabelGroup {
+  font-weight: 700
+}
+
+#divPlanification table thead th, #divPlanificationOtherRooms table thead th {
+  border-bottom-width: 2px;
+  border-color: rgba(197, 208, 213, 0.5);
+  padding: 0.5rem;
+  text-align: left;
+  font-weight: 600
+}
+#divPlanification table tbody td, #divPlanificationOtherRooms table tbody td {
+  border-right-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(243, 244, 245, 1);
+  border-color: rgba(243, 244, 245, var(--tw-border-opacity, 1))
+}
+#divPlanification .room_container .room_content_inactive, #divPlanificationOtherRooms .room_container .room_content_inactive {
+  opacity: 0.6
+}
+#divPlanification .room_container .room_content,
+#divPlanification .room_container .room_content_inactive,
+#divPlanification .room_container .room_content_readonly, #divPlanificationOtherRooms .room_container .room_content,
+#divPlanificationOtherRooms .room_container .room_content_inactive,
+#divPlanificationOtherRooms .room_container .room_content_readonly {
+  box-sizing: border-box;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgba(197, 208, 213, 1);
+  border-color: rgba(197, 208, 213, var(--tw-border-opacity, 1));
+  font-size: 11px
+}
+#divPlanification .room_container .room_content .room_content_toolbar,
+#divPlanification .room_container .room_content_inactive .room_content_toolbar,
+#divPlanification .room_container .room_content_readonly .room_content_toolbar, #divPlanificationOtherRooms .room_container .room_content .room_content_toolbar,
+#divPlanificationOtherRooms .room_container .room_content_inactive .room_content_toolbar,
+#divPlanificationOtherRooms .room_container .room_content_readonly .room_content_toolbar {
+  margin-bottom: 0.125rem;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  -moz-column-gap: 0.25rem;
+       column-gap: 0.25rem
+}
+#divPlanification .room_container .room_content .room_content_toolbar div,
+#divPlanification .room_container .room_content_inactive .room_content_toolbar div,
+#divPlanification .room_container .room_content_readonly .room_content_toolbar div, #divPlanificationOtherRooms .room_container .room_content .room_content_toolbar div,
+#divPlanificationOtherRooms .room_container .room_content_inactive .room_content_toolbar div,
+#divPlanificationOtherRooms .room_container .room_content_readonly .room_content_toolbar div {
+  padding: 0.125rem;
+  opacity: 0.5
+}
+#divPlanification .room_container .room_content .room_content_toolbar div:hover,
+#divPlanification .room_container .room_content_inactive .room_content_toolbar div:hover,
+#divPlanification .room_container .room_content_readonly .room_content_toolbar div:hover, #divPlanificationOtherRooms .room_container .room_content .room_content_toolbar div:hover,
+#divPlanificationOtherRooms .room_container .room_content_inactive .room_content_toolbar div:hover,
+#divPlanificationOtherRooms .room_container .room_content_readonly .room_content_toolbar div:hover {
+  opacity: 1
+}
+#divPlanification .room_container .room_content .room_content_padding,
+#divPlanification .room_container .room_content_inactive .room_content_padding,
+#divPlanification .room_container .room_content_readonly .room_content_padding, #divPlanificationOtherRooms .room_container .room_content .room_content_padding,
+#divPlanificationOtherRooms .room_container .room_content_inactive .room_content_padding,
+#divPlanificationOtherRooms .room_container .room_content_readonly .room_content_padding {
+  border-radius: 0.375rem
+}

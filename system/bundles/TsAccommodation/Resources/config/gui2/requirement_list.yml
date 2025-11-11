@@ -1,0 +1,47 @@
+class:
+  wdbasic: \TsAccommodation\Entity\Requirement
+  data: \TsAccommodation\Gui2\Data\RequirementData
+  date_format: Ext_Thebing_Gui2_Format_Date
+description: Thebing » Admin » Requirement
+access: thebing_accommodation_requirements
+sortable: false
+only_pagecount: false
+title: 
+  - Ext_TS_System_Navigation
+  - t
+id:
+  column: id
+  alias: ts_apr
+bars:
+    - 
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \TsAccommodation\Gui2\Data\RequirementData
+          - getDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \TsAccommodation\Gui2\Data\RequirementData
+          - getDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_apr
+    width: name
+    sortable: false
+    resize: true

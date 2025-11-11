@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_accommodations_meals` ADD `meal_plan` BIT(3) NOT NULL DEFAULT b'000';

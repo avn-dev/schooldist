@@ -1,0 +1,4 @@
+# Für richtigen save() Aufruf.
+parent: TsCompany_contacts
+class:
+  wdbasic: Ext_Thebing_Agency_Contact

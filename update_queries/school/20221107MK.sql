@@ -1,0 +1,1 @@
+DROP TABLE `kolumbus_inquiries_documents_creditdocuments`;

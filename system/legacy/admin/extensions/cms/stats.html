@@ -1,0 +1,218 @@
+<?php
+
+include(\Util::getDocumentRoot()."storage/cms/includes/main.inc.php");
+
+Access_Backend::checkAccess("view_stats");
+
+\Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Statistik')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+
+<SCRIPT LANGUAGE=JavaScript>
+<!--
+var aSwitchStatus = new Array();
+
+var oImgDown = new Image();
+oImgDown.src = '/admin/media/2downarrow.gif';
+var oImgUp = new Image();
+oImgUp.src = '/admin/media/2uparrow.gif';
+
+function switchtr(trname) {
+	arr = document.getElementsByTagName("TR");
+	for(var i=0;i<arr.length;i++) {
+		var obj = arr[i];
+		if(obj.id.indexOf(trname) != -1) {
+			if(document.all)
+				obj.style.display = (aSwitchStatus[trname])?'none':'inline';
+			else
+				obj.style.display = (aSwitchStatus[trname])?'none':'table-row';
+
+		}
+	}
+	if(aSwitchStatus[trname]) {
+		document.getElementById(trname).src = oImgDown.src;
+		aSwitchStatus[trname] = false;
+	} else {
+		document.getElementById(trname).src = oImgUp.src;
+		aSwitchStatus[trname] = true;
+	}
+}
+
+function showRow(id,on) {
+	var oPopupTr = document.getElementById(id);
+			if(on==1)
+				oPopupTr.style.backgroundColor = '#d4ddf0';
+			else
+				oPopupTr.style.backgroundColor = '';
+}
+
+function popUpWindow(sessionId) {
+	window.open("stats.html?sessionId="+sessionId, "Detailseite","dependent=yes, location=no, toolbar=no, scrollbars=yes, menu=no")
+	}
+
+</SCRIPT>
+
+<style type="text/css">
+	img {border: none;}
+	table {width:100%;}
+</style>
+
+<?
+//GENERIERUNG DES POPUP-FENSTERS FÜR SESSION-TRACKING
+IF(isset($_VARS['sessionId'])) {
+$i=1;
+?>
+<h2>Session Tracking</h2>
+			<table cellpadding="4" cellspacing="0" border="0" class="table table-condensed" width="600">
+				<tr>
+					<th width="60%">Session: <?=$_VARS['sessionId']?></th>
+					<th width="20%">Zeit</th>
+					<th width="20%">Aufenthaltsdauer</th>
+				</tr>
+				<?
+				$aSession = array();
+				$query = "SELECT *, SUBSTRING_INDEX(referer,'/',3) as referer FROM cms_stats WHERE session = '".\DB::escapeQueryString($_VARS['sessionId'])."' ORDER BY time";
+				$rSession = \DB::getQueryRows($query);
+
+				$first = 1;
+				foreach($rSession as $aSession) {
+
+					if(!$old) $old = $aSession['time'];
+
+					if($first == 0) {
+						if(($aSession['time']-$old) > 300)
+							$duration = "<strong>Pause</strong>";
+						elseif($aSession['time']==0)
+							$duration = "<strong>Ende</strong>";
+						else
+							$duration = round(($aSession['time']-$old)/60)."min ".(($aSession['time']-$old)%60)."sek";
+						/*
+						if($i>6) $tag = " style=\"display:none;\" id=\"detail_".$i."\" onmouseout=\"showRow('detail_".$i."',0)\" onmousemove=\"showRow('detail_".$i."',1)\" ";
+						else
+						*/
+						$tag = " id=\"tr_".$i."\" onmouseout=\"showRow('tr_".$i."',0)\" onmousemove=\"showRow('tr_".$i."',1)\" ";?>
+						<tr <?=$tag?>>
+							<td><?=(isset($aSession['page_id']))?\Cms\Entity\Page::getInstance($aSession['page_id'])->getTrack():"&nbsp;"?></td>
+							<td><?=$aSession['time']?></td>
+							<td nowrap align=right><?=$duration?></td>
+						</tr>
+<?
+					}else{
+					/*
+					if($i>6) $tag = " style=\"display:none;\" id=\"detail_".$i."\" onmouseout=\"showRow('detail_".$i."',0)\" onmousemove=\"showRow('detail_".$i."',1)\" ";
+						else $tag = " id=\"tr_".$i."\" onmouseout=\"showRow('tr_".$i."',0)\" onmousemove=\"showRow('tr_".$i."',1)\" ";
+					*/
+					$tag = " id=\"tr_".$i."\" onmouseout=\"showRow('tr_".$i."',0)\" onmousemove=\"showRow('tr_".$i."',1)\" ";
+					?>
+					<tr <?=$tag?>>
+						<td><?=($aSession['referer']=='')?"Direkteingabe":$aSession['referer'];?></td>
+						<td><?=$aSession['time']?></td>
+						<td>&nbsp;</td>
+					</tr>
+					<?
+					}
+					$i++;
+					$first = 0;
+					$visit = $aSession['time'];
+					$old = $aSession['time'];
+				}
+?>
+		</table>
+		<p align="right">
+		<button class="btn" onClick="self.close();">Fenster schliessen</button>
+		</p>
+<?
+
+} else {
+
+	if(!isset($_VARS['month'])) $_VARS['month'] = 0;
+	if(!isset($_VARS['year'])) 	$_VARS['year'] 	= date("Y");
+
+	$oSiteSelection = new \Cms\Gui2\Selection\SiteSelection();
+	$aSites = $oSiteSelection->getOptions([], [], new \stdClass);
+	unset($aSites['']);
+	
+	if(empty($_VARS['site_id'])) {
+		$_VARS['site_id'] = key($aSites);
+	}
+	
+	$site = Cms\Entity\Site::getInstance($_VARS['site_id']);
+
+?>
+			
+			<h2>Zusammenfassung - Zeitraum <?=($_VARS['month']>0)?strftime("%B",mktime(0,0,0,$_VARS['month'],1,2000)):""?> <?=$_VARS['year']?></h2>
+			
+			<form action="stats.html" method="POST" name="f1" class="form-inline">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table table-condensed">
+				
+				<tr>
+					<th width="40%">Internetseite</th>
+					<td width="60%">
+					<select name="site_id" onChange="document.f1.submit();" class="form-control">
+					<?
+						
+						foreach($aSites as $siteId=>$siteName) {
+					?>
+							<option value="<?=$siteId?>" <?=(($_VARS['site_id']==$siteId)?"selected":"")?>><?=$siteName?></option>
+					<?
+						}
+					?>
+					</select>
+					</td>
+				</tr>
+				<tr>
+					<th width="40%">Zeitraum</th>
+					<td width="60%">
+					<select name="month" onChange="document.f1.submit();" class="form-control">
+						<option value="0">alle
+					<?
+						for($i=1;$i<=12;$i++) {
+					?>
+							<option value="<?=$i?>" <?=(($_VARS['month']==$i)?"selected":"")?>><?=strftime("%B",mktime(0,0,0,$i,1,2000))?>
+					<?
+						}
+					?>
+					</select>
+					<select name="year" onChange="document.f1.submit();" class="form-control">
+					<?
+
+						for($i=date("Y")-1;$i<=date("Y");$i++) {
+					?>
+							<option value="<?=$i?>" <?=(($_VARS['year']==$i)?"selected":"")?>><?=$i?>
+					<?
+						}
+					?>
+					</select>
+					</td>
+				</tr>
+			</table>
+				</form>
+
+<?
+
+	$sFile = \Util::getDocumentRoot()."storage/cms/stats/stats_".$site->id."_".$_VARS['year']."_".$_VARS['month'].".inc.php";
+
+	if(is_file($sFile)) {
+		@include($sFile);
+	} else {
+	?>
+	<p>Für diesen Zeitraum ist keine Statistik vorhanden</p>
+	<?
+	}
+
+}//Klammer vom ersten IF-ELSE
+
+?>
+
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

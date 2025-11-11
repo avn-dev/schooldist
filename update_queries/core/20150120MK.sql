@@ -1,0 +1,1 @@
+ALTER TABLE  `tc_language_data` ADD  `ru` TEXT NOT NULL ;

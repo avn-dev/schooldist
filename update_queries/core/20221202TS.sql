@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_emailaccounts` CHANGE `smtp_pass` `smtp_pass` TEXT CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL, CHANGE `imap_pass` `imap_pass` TEXT CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL;

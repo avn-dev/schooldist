@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `tuition_excused_absence_calculation` ENUM('include','exclude') NOT NULL DEFAULT 'include' AFTER `tuition_automatic_holiday_allocation`;

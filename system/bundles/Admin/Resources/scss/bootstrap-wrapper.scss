@@ -1,0 +1,259 @@
+
+.pull-right {
+	@apply float-right;
+}
+
+.pull-left {
+	@apply float-left;
+}
+
+.clearfix {
+	@apply clear-both;
+}
+
+.bootstrap-row {
+	@apply grid grid-cols-12 gap-2;
+
+	.col-md-6 {
+		@apply col-span-12 lg:col-span-6;
+	}
+}
+
+/*
+ * Box
+ */
+
+.box {
+	@apply border border-gray-50 bg-white rounded-md p-1 mb-2;
+
+	&.collapsed-box .box-body:not(.collapse.in .box-body),
+	&.collapsed-box .box-footer:not(.collapse.in .box-body) {
+		@apply hidden;
+	}
+
+	/*&:not(.collapsed-box) {
+		.box-header:not(.collapsed) {
+			@apply border-b border-gray-50;
+		}
+	}*/
+
+	.box-separator {
+		@apply h-1 rounded-full bg-gray-100/75 border-0 #{!important};
+	}
+
+	.box-header {
+		@apply flex items-center px-3 py-2;
+
+		&:has(.box-tools) {
+			@apply flex flex-row items-center justify-between;
+		}
+
+		&:not(.collapsed-box .box-header) {
+			@apply border-b border-gray-50;
+		}
+
+		.box-title {
+			@apply text-sm text-gray-900 font-semibold font-heading grow;
+		}
+
+		.box-tools {
+			@apply flex items-center gap-x-1 justify-items-end;
+			select {
+				@apply rounded bg-white ring-1 ring-gray-100 px-1.5 py-0.5;
+			}
+		}
+	}
+
+	.box-body {
+		@apply px-4 py-5 sm:p-4;
+
+		&.no-padding {
+			@apply p-0;
+		}
+	}
+}
+
+.collapse {
+	@apply hidden transition-all;
+	&.in {
+		@apply block visible;
+	}
+}
+
+/*
+ * Inputs
+ */
+
+.input-group {
+	@apply flex items-center rounded border border-gray-100 bg-white;
+
+	&:has(input:read-only) {
+		@apply bg-gray-50;
+	}
+
+	input {
+		@apply rounded p-1;
+	}
+
+	.input-group-addon {
+		@apply px-2 whitespace-nowrap;
+	}
+
+	&.colorpicker-element .input-group-addon {
+		@apply px-2;
+	}
+
+	.input-group-btn,
+	.input-group-addon {
+		.btn {
+			@apply ring-0 shadow-none rounded mr-1 bg-gray-50 hover:bg-gray-100;
+		}
+	}
+
+	input:not(.ui-widget-content):not([type='checkbox']),
+	select,
+	textarea {
+		@apply bg-transparent border-none;
+	}
+	
+	.form-control {
+		width: 100%;
+	}
+	
+}
+
+.input-sm {
+	@apply text-xs p-0.5;
+}
+
+.default-input {
+	@apply rounded items-center relative border-none ring-1 bg-white text-gray-500 ring-gray-100/75 hover:text-gray-600 hover:ring-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-500 dark:hover:text-gray-100;
+}
+
+/**
+ * Badge
+ */
+
+.badge {
+	@apply inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600;
+
+	&.bg-green { @apply bg-green-200 text-green-800; }
+	&.bg-red { @apply bg-red-200 text-red-800; }
+	&.bg-yellow { @apply bg-yellow-200 text-yellow-800; }
+	&.bg-black { @apply bg-gray-200 text-gray-800; }
+}
+
+/**
+ * Tooltip
+ */
+
+.tooltip {
+	@apply absolute font-normal text-xs;
+	filter: alpha(opacity=0);
+	line-break: auto;
+	line-height: normal;
+	z-index: 9999;
+
+	.tooltip-inner {
+		@apply text-white text-center bg-black rounded p-1;
+		max-width: 200px;
+	}
+
+	&.in {
+		filter: alpha(opacity=90);
+		opacity: .9
+	}
+
+	&.top {
+		padding: 5px 0;
+		margin-top: -3px
+	}
+
+	&.right {
+		padding: 0 5px;
+		margin-left: 3px
+	}
+
+	&.bottom {
+		padding: 5px 0;
+		margin-top: 3px
+	}
+
+	&.left {
+		padding: 0 5px;
+		margin-left: -3px
+	}
+
+	.tooltip-arrow {
+		position: absolute;
+		width: 0;
+		height: 0;
+		border-color: transparent;
+		border-style: solid
+	}
+
+	&.top .tooltip-arrow {
+		bottom: 0;
+		left: 50%;
+		margin-left: -5px;
+		border-width: 5px 5px 0;
+		border-top-color: #000
+	}
+
+	&.top-left .tooltip-arrow {
+		right: 5px;
+		bottom: 0;
+		margin-bottom: -5px;
+		border-width: 5px 5px 0;
+		border-top-color: #000
+	}
+
+	&.top-right .tooltip-arrow {
+		bottom: 0;
+		left: 5px;
+		margin-bottom: -5px;
+		border-width: 5px 5px 0;
+		border-top-color: #000
+	}
+
+	&.right .tooltip-arrow {
+		top: 50%;
+		left: 0;
+		margin-top: -5px;
+		border-width: 5px 5px 5px 0;
+		border-right-color: #000
+	}
+
+	&.left .tooltip-arrow {
+		top: 50%;
+		right: 0;
+		margin-top: -5px;
+		border-width: 5px 0 5px 5px;
+		border-left-color: #000
+	}
+
+	&.bottom .tooltip-arrow {
+		top: 0;
+		left: 50%;
+		margin-left: -5px;
+		border-width: 0 5px 5px;
+		border-bottom-color: #000
+	}
+
+	&.bottom-left .tooltip-arrow {
+		top: 0;
+		right: 5px;
+		margin-top: -5px;
+		border-width: 0 5px 5px;
+		border-bottom-color: #000
+	}
+
+	&.bottom-right .tooltip-arrow {
+		top: 0;
+		left: 5px;
+		margin-top: -5px;
+		border-width: 0 5px 5px;
+		border-bottom-color: #000
+	}
+}
+

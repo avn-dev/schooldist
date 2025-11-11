@@ -1,0 +1,513 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("edit");
+
+if($_VARS['task'] == 'save_description') {
+
+	$sSQL = "UPDATE `cms_content` SET `title` = :sText WHERE `id` = :iID";
+	$aSQL = array(
+		'sText'	=> $_VARS['sText'],
+		'iID'	=> $_VARS['iID']
+	);
+	DB::executePreparedQuery($sSQL, $aSQL);
+
+	exit();
+}
+
+if($_VARS['task'] == 'sort_blocks') {
+
+	foreach((array)$_VARS['mainContainer'] as $iKey => $iID) {
+
+		$sSQL = "
+			UPDATE 
+				`cms_content`
+			SET 
+				`level` = :level
+			WHERE
+				`element` = 'block' AND
+				`page_id` = :page_id  AND
+				`number` = :number AND
+				`id` = :iID AND
+				`level` < 800
+			LIMIT 1
+		";
+		$aSQL = array(
+			'level'	=> (int)($iKey+1),
+			'page_id'	=> (int)$_VARS['page_id'],
+			'number'	=> (int)$_VARS['number'],
+			'parent_id'	=> (int)$_VARS['parent_id'],
+			'iID'		=> (int)$iID
+		);
+		DB::executePreparedQuery($sSQL, $aSQL);
+	}
+
+	echo json_encode(array('reload' => 'RELOAD'));
+
+	exit();
+}
+
+$sParams = '<script type="text/javascript" src="/admin/js/sortable/sortable.js"></script>
+	<style>
+	table.table td, table.table th {
+		line-height: 34px!important;
+	}
+	</style>
+		';
+
+?>
+
+<?=Admin_Html::loadAdminHeader($sParams)?>
+
+<?
+
+if($_POST['task'] == "save") {
+
+	DB::executeQuery("UPDATE cms_content SET `limit` = '".$_VARS['displaylimit']."' WHERE element = 'block' AND page_id = '".$_VARS['page_id']."' AND number = '".$_VARS['number']."'");
+
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+
+if(!empty($_VARS['block'])) {
+
+	$aData = [
+		'page_id' => (int)$_VARS['page_id'],
+		'element' => 'block', 
+		'file' => $_VARS['block'], 
+		'author' => (int)$user_data['id'], 
+		'active' => 1, 
+		'number' => (int)$_VARS['number'], 
+		'level' => ($_VARS['level_id']+1)
+	];
+	
+	if(!empty($_VARS['parent_id'])) {
+		$aData['parent_id'] = (int)$_VARS['parent_id'];
+	}
+
+	$content_id = DB::insertData('cms_content', $aData);
+
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+
+if($_VARS['task'] == "random") {
+
+	$my_block = DB::getQueryRow("SELECT level FROM cms_content WHERE id = '".$_VARS['content_id']."'");
+	if($my_block['level'] >= 900) {
+		$my_block['level'] -= 900;
+	}
+	if($my_block['level'] >= 800) {
+		$my_block['level'] -= 800;
+	}
+	if($_VARS['switch']) {
+		DB::executeQuery("UPDATE cms_content SET level = ".($my_block['level']+900)." WHERE id = '".$_VARS['content_id']."'");
+	} else {
+		DB::executeQuery("UPDATE cms_content SET level = ".$my_block['level']." WHERE id = '".$_VARS['content_id']."'");
+	}
+	\Log::enterLog($_VARS['page_id'], L10N::t('Blockposition wurde auf "zufällig" geändert.', 'Framework'));
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+
+if($_VARS['task'] == "close") {
+	$my_block = DB::getQueryRow("SELECT level FROM cms_content WHERE id = '".$_VARS['content_id']."'");
+	if($my_block['level'] >= 900) {
+		$my_block['level'] -= 900;
+	}
+	if($my_block['level'] >= 800) {
+		$my_block['level'] -= 800;
+	}
+	if($_VARS['switch']) {
+		DB::executeQuery("UPDATE cms_content SET level = ".($my_block['level']+800)." WHERE id = '".$_VARS['content_id']."'");
+	} else {
+		DB::executeQuery("UPDATE cms_content SET level = ".$my_block['level']." WHERE id = '".$_VARS['content_id']."'");
+	}
+	\Log::enterLog($_VARS['page_id'],L10N::t('Blockposition wurde auf "fest" geändert.', 'Framework'));
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+
+if($_VARS['task'] == "delete") {
+	DB::executeQuery("DELETE FROM cms_blockdata WHERE (page_id IS NULL OR page_id = ".$_VARS['page_id'].") AND content_id = '".$_VARS['content_id']."'");
+	DB::executeQuery("DELETE FROM cms_content WHERE id = '".$_VARS['content_id']."'");
+	\Log::enterLog($_VARS['page_id'], "Block wurde gelöscht!");
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+
+if($_VARS['task'] == "move") {
+	changePosition($_VARS['dir'],$_VARS['content_id'],"cms_content","WHERE page_id = '".$_VARS['page_id']."' AND number = '".$_VARS['number']."' AND element = 'block' AND level < 800","system","level");
+	\Log::enterLog($_VARS['page_id'],L10N::t('Blockposition wurde geändert!', 'Framework'));
+?>
+<script>
+var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+if(oCmsFrame) {
+	oCmsFrame.contentDocument.location.reload();
+}
+</script>
+<?
+}
+?>
+
+<script>
+function open_media(form_field,s) {
+	self.open('/tinymce/resource/filemanager/dialog.php?type=1&lang=de&field_id='+form_field+'&popup=1', 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+
+function deleteBlock() {
+	self.location.href='block_admin.html?content_id=<?=$_VARS['content_id']?>&idBlock=<?=$_VARS['idBlock']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&idLevel=<?=$_VARS['idLevel']?>&task=delete';
+}
+
+function moveBlock(dir) {
+	self.location.href='block_admin.html?content_id=<?=$_VARS['content_id']?>&idBlock=<?=$_VARS['idBlock']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&idLevel=<?=$_VARS['idLevel']?>&task=move&dir='+dir;
+}
+
+</script>
+
+<section class="content-header">
+	<h1><?=L10N::t('Blockbereich bearbeiten', 'Framework')?></h1>
+</section>
+
+<section class="content">
+	
+			<form method="POST" action="content.html" name="contentForm" enctype="multipart/form-data">
+			<input type="hidden" name="foo" value="1">
+			<input type="hidden" name="task" value="save">
+			<input type="hidden" name="number" value="<?=(int)$_VARS['number']?>">
+			<input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>">
+			<input type="hidden" name="parent_id" value="<?=(int)$_VARS['parent_id']?>">
+	<div class="box box-default">
+		<div class="box-body">
+			
+			<table class="table">
+				<tr>
+					<th width="80%">Block</th>
+					<th width="20%">Position</th>
+				</tr>
+			</table>
+<?
+
+function cmp ($a, $b) {
+	$a = $a['position'];
+	$b = $b['position'];
+   if ($a == $b) return 0;
+   return ($a < $b) ? -1 : 1;
+}
+
+$aBlocks 	= array();
+$aFree 		= array();
+$aBlocked 	= array();
+
+$aSql = [
+	'parent_id' => (int)$_VARS['parent_id']
+];
+$sSql = "
+	SELECT
+		c.*,
+		b.id block_id,
+		b.title,
+		UNIX_TIMESTAMP(c.validfrom) as validfrom,
+		UNIX_TIMESTAMP(c.validto) as validto,
+		c.`limit`,
+		c.`level`,
+		c.title AS `manualy_title`
+	FROM
+		cms_content AS c INNER JOIN 
+		cms_blocks AS b
+			ON c.file = b.block LEFT OUTER JOIN 
+		cms_blockdata `bd`
+			ON `c`.`id` = `bd`.`content_id`
+	WHERE
+		c.page_id = ".(int)$_VARS['page_id']." AND
+		c.number = ".(int)$_VARS['number']." AND
+		c.active = 1 AND
+	";
+
+if(empty($_VARS['parent_id'])) {
+	$sSql .= "c.parent_id IS NULL AND";
+} else {
+	$sSql .= "c.parent_id = :parent_id AND";
+}
+
+$sSql .= "
+		
+		c.element = 'block'
+	GROUP BY 
+		`c`.`id`
+	";
+
+$res_blocks = (array)DB::getQueryRows($sSql, $aSql);
+
+foreach($res_blocks as $my_blocks) {
+
+	// Zufall
+	if($my_blocks['level'] >= 900) {
+		$my_blocks['position'] = $my_blocks['level']-900;
+		$my_blocks['position'] = 0;
+	// Fest
+	} elseif($my_blocks['level'] >= 800) {
+		$my_blocks['position'] = $my_blocks['level']-800;
+		$my_blocks['position'] = $my_blocks['position'];
+		$aBlocked[$my_blocks['position']] = 1;
+	// Normale Sortierung
+	} else {
+		$my_blocks['position'] = $my_blocks['level'];
+	}
+
+	if(!empty($my_blocks['manualy_title'])) {
+		$my_blocks['description'] = $my_blocks['manualy_title'];
+	} else {
+		$my_blocks['description'] = strip_tags($my_blocks['content_title']);
+
+		if(substr($my_blocks['description'], strlen($my_blocks['description'])-3) == ' - ') {
+			$my_blocks['description'] = substr($my_blocks['description'], 0, -3);
+		}
+	}
+
+	$aBlocks[] = $my_blocks;
+
+}
+
+$iTotal = count($aBlocks);
+
+for($i=1;$i<=$iTotal;$i++) {
+	if(!$aBlocked[$i])
+		$aFree[] = $i;
+}
+
+$iFree = count($aFree);
+
+foreach($aBlocks as $key=>$val) {
+	if(!$val['position']) {
+		srand ((double)microtime()*1000000);
+		$iRand = array_rand($aFree);
+		$aBlocks[$key]['position'] = $aFree[$iRand];
+		unset($aFree[$iRand]);
+	}
+}
+
+usort($aBlocks,"cmp");
+
+?>
+
+	<script type="text/javascript">
+		var aBlockIDs = new Array();
+			<? foreach($aBlocks as $iKey => $aValue) { ?>
+				aBlockIDs[<?=$iKey?>] = new Array(<?=$aValue['id']?>, <?=$aValue['position']?>, <?=$aValue['level']?>);
+			<? } ?>
+	</script>
+
+	<div id="mainContainer">
+
+<?
+
+foreach($aBlocks as $my_blocks) {
+?>
+		<div id="rowID_<?=$my_blocks['id']?>" style="cursor:move; <? if(!empty($my_blocks['validfrom']) || !empty($my_blocks['validto']) || !empty($my_blocks['access'])) { echo 'background-color: #e98b7f;'; } ?>">
+			<table class="table" style="margin-bottom: 0;">
+				<tr id="tr_<?=$my_blocks['id']?>">
+					<td width="80%">
+						<a href="block_admin.html?language=<?=$_VARS['language']?>&content_id=<?=(int)$my_blocks['id']?>&block_id=<?=(int)$my_blocks['block_id']?>&page_id=<?=(int)$_VARS['page_id']?>&number=<?=(int)$_VARS['number']?>"><i class="fa fa-fw fa-edit" title="Block editieren"></i></a>
+						<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=(int)$_VARS['page_id']?>&number=<?=(int)$_VARS['number']?>&parent_id=<?=(int)$_VARS['parent_id']?>&task=delete"><i class="fa fa-fw fa-remove" title="Block löschen"></i></a>
+						<?=$my_blocks['title']?>:
+						<input maxlength="100" class="txt form-control" style="display: inline; width: 300px;" value="<?=$my_blocks['description']?>" onblur="saveDescription(<?=$my_blocks['id']?>, this.value);" />
+					</td>
+					<td width="20%">
+						<? if($my_blocks['level'] < 800) { ?>
+						<? /* <input type="text" class="txt" style="width:30px;text-align:right;" name="position[<?=$my_blocks['id']?>]" value="<?=$my_blocks['level']?>"> */ ?>
+						<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=move&dir=up"><i class="fa fa-fw fa-arrow-up" title="hoch"></i></a>
+						<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=move&dir=down"><i class="fa fa-fw fa-arrow-down" title="runter"></i></a>
+						<i class="fa fa-fw"></i>
+						<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=close&switch=1"><i class="fa fa-fw fa-lock fa-inactive" title="<?=L10N::t('Blockposition feststellen', 'Framework')?>"></i></a>
+						<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=random&switch=1"><i class="fa fa-fw fa-random fa-inactive" title="<?=L10N::t('Blockposition zufällig', 'Framework')?>"></i></a>
+						<? } else { ?>
+						<? /* <input type="text" class="txt" style="width:30px;text-align:right;" name="position[<?=$my_blocks['id']?>]" value="<?=$my_blocks['level']?>" disabled> */ ?>
+						<i class="fa fa-fw"></i>
+						<i class="fa fa-fw"></i>
+						<i class="fa fa-fw"></i>
+							<? if($my_blocks['level'] >= 900) { ?>
+							<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=close&switch=1">
+								<i class="fa fa-fw fa-lock fa-inactive" id="closed_<?=$my_blocks['id']?>" title="<?=L10N::t('Blockposition feststellen', 'Framework')?>"></i></a>
+							<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=random&switch=0">
+								<i class="fa fa-fw fa-random" title="<?=L10N::t('Blockposition zufällig', 'Framework')?>"></i></a>
+							<? } else { ?>
+							<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=close&switch=0">
+								<i class="fa fa-fw fa-lock" title="<?=L10N::t('Blockposition feststellen', 'Framework')?>"></i></a>
+							<a href="content.html?content_id=<?=$my_blocks['id']?>&page_id=<?=$_VARS['page_id']?>&number=<?=$_VARS['number']?>&task=random&switch=1">
+								<i class="fa fa-fw fa-random fa-inactive" id="random_<?=$my_blocks['id']?>" title="<?=L10N::t('Blockposition zufällig', 'Framework')?>"></i></a>
+							<? } ?>
+						<? } ?>
+					</td>
+				</tr>
+			</table>
+		</div>
+<?
+}
+?>
+
+	</div>
+			<?
+			if($my_blocks['limit'] == 0) $my_blocks['limit'] = "";
+			?>
+			<?=printTableStart()?>
+				<tr>
+					<th>
+						<?=L10N::t('Zahl der Blöcke begrenzen auf', 'Framework')?>:
+					</th>
+					<td>
+						<input name="displaylimit" class="txt form-control" value="<?=$my_blocks['limit']?>" type="text" />
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<?=L10N::t('Block hinzufügen', 'Framework')?>:
+					</th>
+					<td>
+						<select name="block" class="txt form-control">
+							<option value=""></option>
+						<?
+						$res_blocks = DB::getQueryRows("SELECT * FROM cms_blocks WHERE active = 1 ORDER BY title");
+						foreach($res_blocks as $my_blocks) {
+							echo "<option value=\"".$my_blocks['block']."\">".$my_blocks['title']."\n";
+						}
+						?>
+						</select>
+					</td>
+				</tr>
+			<?=printTableEnd()?>
+
+			
+		</div>
+		<div class="box-footer">
+			<input value="<?=L10N::t('Speichern', 'Framework')?>" class="btn btn-primary pull-right" type="submit" />
+			<button class="btn btn-default" onclick="parent.jQuery('#cms-modal').modal('hide'); return false;"><?=L10N::t('Fenster schließen')?></button>
+		</div>
+		</form>
+	</div>
+</section>
+
+<script type="text/javascript">
+	
+	function init() {
+		$j( "#mainContainer" ).sortable({
+			update: sortBlocks
+		});
+	}
+
+	function sortBlocks()
+	{
+		for(var i = 0; i < aBlockIDs.length; i++)
+		{
+			if(aBlockIDs[i][2] >= 800)
+			{
+				var aContents = $('mainContainer').childElements();
+				for(var n = 0; n < aContents.length; n++)
+				{
+					if(aContents[n].id == 'rowID_'+aBlockIDs[i][0])
+					{
+						break;
+					}
+				}
+
+				while(n != i)
+				{
+					// Move down
+					if(n < i)
+					{
+						var sContent = aContents[n].remove();
+						aContents[n+1].insert({ after: sContent });
+						n++;
+					}
+					// Move up
+					if(n > i)
+					{
+						var sContent = aContents[n].remove();
+						aContents[n-1].insert({ before: sContent });
+						n--;
+					}
+
+					aContents = $('mainContainer').childElements();
+				}
+			}
+		}
+
+		var sBlocks = $j('#mainContainer').sortable('serialize', {key: 'mainContainer[]'});
+
+		var strRequestUrl = 'content.html';
+		var strParameters = 'task=sort_blocks&' + sBlocks;
+		strParameters += '&number=<?=$_VARS['number']?>';
+		strParameters += '&page_id=<?=$_VARS['page_id']?>';
+
+		var objAjax = new Ajax.Request(
+			strRequestUrl,
+			{
+				method		: 'post',
+				parameters	: strParameters,
+				onComplete	: reloadOpener
+			}
+		);
+	}
+
+	function reloadOpener(objResponse) {
+		var objData = objResponse.responseText.evalJSON();
+
+		if(objData['reload'] == 'RELOAD') {
+			var oCmsFrame = parent.jQuery('.cms-page-frame').get(0);
+			if(oCmsFrame) {
+				oCmsFrame.contentDocument.location.reload();
+			}
+		}
+	}
+
+	function saveDescription(iID, sText)
+	{
+		var strRequestUrl = 'content.html';
+		var strParameters = 'task=save_description';
+		strParameters += '&sText=' + sText;
+		strParameters += '&iID=' + iID;
+
+		var objAjax = new Ajax.Request(
+			strRequestUrl,
+			{
+				method		: 'post',
+				parameters	: strParameters,
+				onComplete	: true
+			}
+		);
+	}
+
+</script>
+
+<?=Admin_Html::loadAdminFooter('<script src="/assets/adminlte/components/jquery-ui/jquery-ui.js"></script><script> init(); </script>')?>

@@ -1,0 +1,150 @@
+hash: 9485067340beb54bb1b41e2d469c96f6
+class:
+  wdbasic: Ext_Thebing_Accounting_Cheque
+  data: Ext_Thebing_Accounting_Cheque_Gui2
+  icon_status: Ext_Thebing_Gui2_Icon_Cheque
+access: thebing_accounting_cheque
+css: 
+  - [css/cheque.css, thebing]
+id:
+  column: id
+limit_selection: false
+multiple_selection: true
+encode_data_unset_empty: false
+encode_data:
+  - type
+  - type_id
+  - school_id
+orderby:
+  - Ext_Thebing_Accounting_Cheque_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Accounting_Cheque_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche 
+        id: search
+        column:
+          - cheque_number
+          - recipient
+        searchtype: LIKE 
+     -
+        element: seperator   
+     -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column:
+            - created
+          default:
+            - Ext_Thebing_Accounting_Cheque_Gui2
+            - getFromDate
+        until:
+          column:
+            - 
+          default:
+            - Ext_Thebing_Accounting_Cheque_Gui2
+            - getUntilDate
+        text_after: basierend auf Erstellungszeitraum
+        search_type: between
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Druckstatus
+        searchempty: 1
+        alias: kcp
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Overview
+          - getPrintedFilterOptions
+        filter_query:
+          not_printed: '`print_created` IS NULL'
+          printed: '`print_created` != 0'
+          success_printed: '`print_success` = 1'
+          not_success_printed: '`print_created` != 0 AND `print_success` = 0' 
+        label_as_item: false
+  -
+    position: top
+    elements: 
+     -
+        element: labelgroup
+        label: 
+     -       
+        element: icon
+        label: Schecks ausdrucken
+        task: openDialog        
+        dialog:
+         - Ext_Thebing_Accounting_Cheque_Gui2
+         - getDialog
+        action: cheque_pdf
+        active: 0
+        access: thebing_accounting_cheque
+        multiple_id: true
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - pdf
+columns:
+  - 
+    title: Schecknummer
+    column: cheque_number
+    width: name
+    inplace_editor: true
+  - 
+    title: Erstellt am	
+    column: created
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date_Time
+    small: true
+  - 
+    title: Empfängertyp 	
+    column: type
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - getDataObject
+      - getMappedTypeLabels
+  - 
+    title: Empfänger
+    column: recipient
+    width: name
+    resize: true
+  - 
+    title: Schüler	
+    sortable: false
+    resize: true
+    width: name
+    format: Ts\Gui2\Format\Traveller
+  - 
+    title: Betrag
+    column: amount
+    width: amount
+    format: Ext_Thebing_Gui2_Format_Amount
+  - 
+    title: Bearbeitet von
+    column: editor_id
+    width: user_name
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+  - 
+    title: Gedruckt von
+    column: print_user
+    width: user_name
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+  - 
+    title: Gedruckt am
+    column: print_created
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date_Time
+  - 
+    title: Erfolgreich gedruckt?
+    column: print_success
+    width: name
+    format: Ext_Thebing_Gui2_Format_YesNo
+    small: true

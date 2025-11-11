@@ -1,0 +1,141 @@
+<?php
+ 
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('control');
+
+Admin_Html::loadAdminHeader();
+
+if(
+    !Ext_TC_Util::isCoreSystem() &&  
+    !Ext_TC_Util::isDevCoreSystem() &&
+    !Ext_TC_Util::isDevSchoolSystem() &&  
+    !Ext_TC_Util::isTestSchoolSystem() &&   
+    !Ext_TC_Util::isLocalSystem()     
+){
+    die();
+}
+
+$sLastUrl = '';
+$bDebugmodeSuccess = null;
+
+if($_VARS['task'] == 'changeDebugmode'){
+    $sLastUrl = $_VARS['url'];
+    $iStatus = $_VARS['status'];
+    $bDebugmodeSuccess = Ext_TC_System_Status::setDebugmode($sLastUrl, $iStatus);
+}
+
+
+$oUpdate = new Ext_TC_Update('update', $system_data['license']);
+
+// Check if Version equals
+if(Ext_TC_Util::isLocalSystem()){
+    $aLicences = DB::getQueryRows("SELECT * FROM `kolumbus_access_licence` WHERE `active` = 1");
+} else {
+    $sLicencs = $oUpdate->getFileContents('/database.php?action=get_server_list');
+    $aLicences = json_decode($sLicencs, true);
+}
+
+?>
+<div class="divHeader">
+	<h1>Thebing » Serverstatus</h1>
+</div>
+
+<div style="width: 1200px; padding: 30px;">
+
+    <table class="table" style="border-spacing: 0; border-collapse: collapse;">
+    <tr>
+        <th style="padding: 3px;">System</th>
+        <th style="padding: 3px;">Release</th>
+        <th style="padding: 3px;">Version</th>
+        <th style="padding: 3px;">Debugmodus</th>
+    </tr>
+<?
+
+if(is_array($aLicences)){
+    
+    foreach($aLicences as $aLicence){
+        
+        $bCheck = false;
+        
+        if(
+            (
+                $aLicence['version'] >= 1.113 &&
+                $aLicence['release'] == 'live'    
+            ) ||
+            (
+                $aLicence['version'] > 1.371 &&
+                $aLicence['release'] == 'prelive'    
+            ) ||
+            (
+                $aLicence['release'] != 'live'  &&
+                $aLicence['release'] != 'prelive'  
+            )
+        ){
+            $bCheck = true;
+        }
+        
+        if($bCheck){
+            $sUrl = $aLicence['external_server_url'];
+            $iDebugmode = -1;
+            $fVersion   = -1;
+            $aServerStatus = array();
+
+            if(!empty($sUrl)){
+
+                $sServerStatus = Ext_TC_System_Status::getStatus($sUrl);
+
+                if(!empty($sServerStatus)){
+                    $aServerStatus = json_decode($sServerStatus, true);
+                    $fVersion   = $aServerStatus['version'];
+                    $iDebugmode = $aServerStatus['debugmode'];
+                }
+
+            }
+        
+        
+                ?>
+            <tr>
+                <td style="padding: 3px;"><?=$aLicence['description']?></td>
+                <td style="padding: 3px;"><?=$aLicence['release']?></td>
+                <td style="padding: 3px;"><?=$aLicence['version'].'('.$fVersion.')'?></td>
+                <td style="padding: 3px;">
+                    <form method="post">
+                        <input type="hidden" name="task" value="changeDebugmode" />
+                        <input type="hidden" name="url" value="<?=$sUrl?>" />
+                        <select 
+                            name="status" 
+                            onchange="submit();"
+                            style=" <? 
+                                if($sLastUrl == $sUrl && $bDebugmodeSuccess === true) { 
+                                    echo 'background:green;'; 
+                                } else if($sLastUrl == $sUrl && $bDebugmodeSuccess === false){ 
+                                    echo "background:red;"; 
+                                }; 
+                            ?> ">
+                            <option value="-1" <? if($iDebugmode == -1) { echo "selected='selected'"; } ?>>Unbekannt</option>
+                            <option value="0" <? if($iDebugmode == 0) { echo "selected='selected'"; } ?>>Aus</option>
+                            <option value="1" <? if($iDebugmode == 1) { echo "selected='selected'"; } ?>>Stufe 1</option>
+                            <option value="1" <? if($iDebugmode == 2) { echo "selected='selected'"; } ?>>Stufe 2</option>
+                            <option value="1" <? if($iDebugmode == 3) { echo "selected='selected'"; } ?>>Stufe 3</option>
+                        </select>
+                    </form>
+                </td>
+            </tr>
+            <?
+        } else {
+            ?>
+            <tr>
+                <td style="padding: 3px;"><?=$aLicence['description']?></td>
+                <td style="padding: 3px;"><?=$aLicence['release']?></td>
+                <td colspan="2">not ready</td>
+            </tr>
+            <?
+        }
+    }
+}
+?>
+</div>  
+<?
+Admin_Html::loadAdminFooter();
+?>

@@ -1,0 +1,825 @@
+<?php
+
+/**
+ * Befehl: Keine Änderungen an dieser Datei ausführen ohne Rücksprache mit MK!
+ * v2
+ * @author Mark Koopmann
+ */
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+include \Util::getDocumentRoot().'config/internal.php';
+
+$sAdditional = '<style>.divUpdateContainer {margin-bottom: 10px;} .divUpdateContainer div {margin-bottom: 2px; border-bottom: 1px solid #ccc;} </style>';
+$sAdditional .= "
+<script>
+function deleteCommitFile(sFile) {
+	if(confirm('Möchten Sie diese Datei wirklich aus der Queue löschen?')) {
+		document.location.href = '".$_SERVER['PHP_SELF']."?delete_commit_file='+sFile;
+	}
+}
+</script>
+";
+Admin_Html::loadAdminHeader($sAdditional);
+
+/**
+ * - Updatedateien in Versionsverzeichnisse spielen
+ * - Aktuelle Version in Lizenztabelle speichern
+ * - Release test/prelive/live in Lizenztabelle
+ */
+
+if(empty($_VARS['extension'])) {
+	$_VARS['extension'] = null;
+}
+
+$iCurrentVersion = 1.001;
+
+$oUpdate = Ext_Internal_Update::getInstance();
+$oUpdate->setRepo($sRepo);
+$oDb = $oUpdate->getDb();
+
+// Dateien aus Commit-Liste löschen
+if(isset($_VARS['delete_commit_file'])) {
+	$oUpdate->deleteCommitFile($sRepo, $_VARS['delete_commit_file']);
+}
+
+if($_VARS['task'] == 'add') {
+
+	$aUpdate = $oUpdate->getCurrentUpdate($sRelease, $_VARS['extension']);
+
+	try {
+
+		if(!empty($_VARS['sql'])) {
+			$aData = array();
+			$aData['version_id'] = $aUpdate['id'];
+			$aData['query'] = $_VARS['sql'];
+			$aData['user'] = $user_data['name'];
+			$bSql = $oDb->insert('updates_sql', $aData);
+		}
+
+		if(!empty($_VARS['global_check'])) {
+			$aData = array();
+			$aData['version_id'] = $aUpdate['id'];
+			$aData['check'] = $_VARS['global_check'];
+			$aData['user'] = $user_data['name'];
+			$bCheck = $oDb->insert('updates_checks', $aData);
+		}
+
+		if(!empty($_VARS['global_requirement'])) {
+			$aData = array();
+			$aData['version_id'] = $aUpdate['id'];
+			$aData['requirement'] = $_VARS['global_requirement'];
+			$aData['user'] = $user_data['name'];
+			$bCheck = $oDb->insert('updates_requirements', $aData);
+			
+			// Datei der Klasse ins Update stellen
+			$_VARS['task'] = 'update';			
+			// Leerzeichen entfernen
+			$sRequirementClass = trim($_VARS['global_requirement']);							
+			// Dateiname aus dem Klassennamen erzeugen
+			$aClassData = explode('_', $sRequirementClass);
+			// Letztes Element für Dateinamen holen
+			$sRequirement = array_pop($aClassData);
+			// Pfad der Datei
+			$sFile = '/system/updates/requirements/class.'.mb_strtolower($sRequirement).'.php';
+			
+			$_VARS['filepath'] = array(
+				$sFile
+			);
+			
+		}
+		
+	} catch(Exception $e) {
+
+	}
+
+}
+
+$aErrors	= array();
+
+if(
+	$_VARS['task'] == 'update' &&
+	count($_VARS['filepath']) > 0
+) {
+
+	$aUpdate = $oUpdate->getCurrentUpdate($sRelease, $_VARS['extension']);
+
+	$oUpdate->resetDescriptionUpdate();
+	
+	$bFile = true;
+	foreach((array)$_VARS['filepath'] as $sFile) {
+
+		if(
+			isset($_VARS['directory']) &&
+			$_VARS['directory'] === 'vcs'
+		) {
+			// Datei kopieren, da diese auch dann vorhanden sein muss und alles mit Root-Pfad arbeitet
+			Util::checkDir(dirname(Util::getDocumentRoot().$sFile));
+			$bCopy = copy(Util::getDocumentRoot().'../git/master/'.$sFile, Util::getDocumentRoot().$sFile);
+			if(!$bCopy) {
+				__pout('Could not copy git file to installation!');
+			}
+		}
+
+		$bThisFile	= $oUpdate->putFile($aUpdate, $sFile);
+		if($bThisFile !== true) {
+			$aErrors = $oUpdate->getErrors();
+			$bFile = false;
+		} else {
+			// Datei aus Commit-Tabelle entfernen, falls vorhanden
+			$oUpdate->deleteCommitFile($sRepo, $sFile);
+		}
+
+	}
+
+	$oUpdate->saveDescriptionUpdate($aUpdate);
+
+}
+ 
+?>
+
+<section class="content-header">
+	<h1>Update</h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<div class="box-body">
+			
+<?php
+
+if(!empty($aExtensions)) {
+
+	echo '<select class="form-control" name="extension" onchange="location.href=\'update.html?extension=\'+this.value;"><option value="">Keine Erweiterung</option>';
+	foreach($aExtensions as $sExtension=>$aExtension) {
+		echo '<option value="'.convertHtmlEntities($sExtension).'" '.(($_VARS['extension'] == $sExtension)?'selected':'').'>'.convertHtmlEntities($aExtension['name']).'</option>';
+	}
+	echo '</select><br>';
+
+}
+
+if(!isset($_VARS['topic'])) {
+	$aTopic = reset($aTopics);
+	$_VARS['topic'] = $aTopic[0];
+}
+
+printAdminMenue($aTopics, '', 'topic', 'extension='.convertHtmlEntities($_VARS['extension']));
+
+echo '<br/>';
+
+if(
+	$_VARS['topic'] !== 'check' &&
+	$_VARS['topic'] !== 'updates'
+) {
+
+	$sError = false;
+
+	/**
+	 * Speichern
+	 * 1. Versionsbeschreibung speichern
+	 * 2. Wenn aktiv = 1, dann alle Daten für die nächste Ebene speichern und eine neue Version erstellen
+	 */
+	if(
+		isset($_VARS['id']) &&
+		isset($_VARS['active']) &&
+		isset($_VARS['description'])
+	) {
+
+		// Version auslesen
+		$sSql = "
+				SELECT
+					*
+				FROM
+					`updates_versions`
+				WHERE
+					`active` = 0 AND
+					`id` = :id
+				";
+		$aSql = array('id'=>$_VARS['id']);
+		$aUpdate = $oDb->queryRow($sSql, $aSql);
+
+		if(
+			!empty($_VARS['delete_item']) &&
+			!empty($_VARS['delete_id'])
+		) {
+
+			switch($_VARS['delete_item']) {
+				case 'file':
+					$sTable = 'updates_files';
+					break;
+				case 'query':
+					$sTable = 'updates_sql';
+					break;
+				case 'check':
+					$sTable = 'updates_checks';
+					break;
+				case 'requirement':
+					$sTable = 'updates_requirements';
+					break;
+			}
+
+			$aSql = array('table'=>$sTable, 'id'=>(int)$_VARS['delete_id'], 'version_id'=>(int)$aUpdate['id']);
+
+			$sSql = "SELECT * FROM #table WHERE `id` = :id AND `version_id` = :version_id LIMIT 1";
+			$aDelete = $oDb->queryRow($sSql, $aSql);
+
+			$sSql = "DELETE FROM #table WHERE `id` = :id AND `version_id` = :version_id LIMIT 1";
+			$oDb->preparedQuery($sSql, $aSql);
+
+			$oUpdate->log('delete', $aDelete);
+
+		}
+
+		$bActive = 0;
+		if($_VARS['active'] == 1) {
+
+			$bSuccess = true;
+
+			// Dateien prüfen
+			$aErrorFiles = $oUpdate->checkFiles($aUpdate['id']);
+			if(!empty($aErrorFiles)) {
+				$bSuccess = false;
+				$sError = 'Das Update konte nicht freigeschaltet werden! Es fehlen Dateien auf dem Updateserver!';
+			}
+
+			// Checklist prüfen
+			if($bSuccess === true) {
+				if(
+					$aUpdate['release'] == 'prelive' ||
+					$aUpdate['release'] == 'prelive_agency' ||
+					$aUpdate['release'] == 'prelive_school_legacy'
+				) {
+					
+					$bCheck = false;
+					
+					if($aUpdate['release'] == 'prelive'){
+						$bCheck = $oUpdate->checkChecklist('test');
+					} else {
+						$bCheck = $oUpdate->checkChecklist('test_agency');
+					}
+					
+					if($bCheck === false) {
+						$bSuccess = false;
+						$sError = 'Das Update konte nicht freigeschaltet werden! Es wurden nicht alle Updates als geprüft markiert!';
+					}
+					
+				}
+			}
+
+			// Update auf nächstes Release kopieren
+			if($bSuccess === true) {
+				
+				if(
+					$aUpdate['release'] == 'test' ||
+					$aUpdate['release'] == 'prelive' ||
+					$aUpdate['release'] == 'test_agency' ||
+					$aUpdate['release'] == 'prelive_agency' ||
+					$aUpdate['release'] == 'test_school_legacy' ||
+					$aUpdate['release'] == 'prelive_school_legacy'
+				) {
+
+					$sNextRelease = "";
+					
+					if($aUpdate['release'] == 'test') {
+						$sNextRelease = 'prelive';
+					} elseif($aUpdate['release'] == 'prelive') {
+						$sNextRelease = 'live';
+					} elseif($aUpdate['release'] == 'test_agency') {
+						$sNextRelease = 'prelive_agency';
+					} elseif($aUpdate['release'] == 'prelive_agency') {
+						$sNextRelease = 'live_agency';
+					} elseif($aUpdate['release'] == 'test_school_legacy') {
+						$sNextRelease = 'prelive_school_legacy';
+					} elseif($aUpdate['release'] == 'prelive_school_legacy') {
+						$sNextRelease = 'live_school_legacy';
+					}
+
+					$aNextReleaseUpdate = $oUpdate->addVersion($sNextRelease, $_VARS['description'], $_VARS['extension']);
+
+					$bCheck = $oUpdate->copyItems($aUpdate['id'], $aNextReleaseUpdate['id']);
+
+					if($bCheck === false) {
+						$sError = 'Das Update konte nicht freigeschaltet werden! Die Einträge konnten nicht kopiert werden!';
+						$bSuccess = false;
+					}
+
+				}
+			}
+
+			if($bSuccess) {
+				$bActive = 1;				
+			}
+
+		}
+				
+		// Nur speichern, wenn kein Fehler aufgetreten ist!
+		if($sError === false) {
+
+			// Version aktualisieren
+			$aData = array();
+			$aData['active'] = (int)$bActive;
+			$aData['description'] = $oUpdate->cleanDescription((string)$_VARS['description']);
+			$aData['database'] = (int)$_VARS['database'];
+			$aData['preactive'] = (int)$_VARS['preactive'];
+			
+			if(!empty($_VARS['set_version_number'])) {
+				$aData['version'] = $oUpdate->getNextVersionNumber($aUpdate, $_VARS['set_version_number']);
+			}
+			
+			$oDb->update('updates_versions', $aData, "`id` = ".(int)$aUpdate['id']);
+
+			if($bActive) {
+				$oUpdate->addVersion($aUpdate['release'], '', $_VARS['extension']);
+				$oUpdate->log('publish', $aUpdate);
+			}
+
+			$oUpdate->log('save', $aUpdate);
+
+		}
+
+	}
+
+	$aUpdate = $oUpdate->getCurrentUpdate($_VARS['topic'], $_VARS['extension']);
+
+?>
+
+	<script>
+		function deleteUpdateItem(sType, iId) {
+
+			var bConfirm = confirm('Möchtest Du den Eintrag wirklich löschen?');
+
+			if(bConfirm) {
+				$('delete_item').value = sType;
+				$('delete_id').value = iId;
+				$('update_form').submit();
+			}
+
+			return false;
+
+		}
+
+		function saveUpdate(oEvent) {
+
+			if($('active') && $('active').checked) {
+
+				var bConfirm = confirm('Möchtest Du das Update wirklich veröffentlichen? Dieser Vorgang kann nicht rückgängig gemacht werden!');
+
+				if(!bConfirm) {
+					Event.stop(oEvent);
+				}
+
+			}
+
+		}
+
+		Event.observe(window, 'load', function() {
+			Event.observe($('update_form'), 'submit', saveUpdate);
+		});
+
+	</script>
+
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post" id="update_form">
+<?=printFormHidden('topic', $_VARS['topic'])?>
+<?=printFormHidden('extension', $_VARS['extension'])?>
+<?=printFormHidden('delete_item', '', 'id="delete_item"')?>
+<?=printFormHidden('delete_id', '', 'id="delete_id"')?>
+
+	<h2>Version: <?=$aUpdate['version']?> (ID <?=$aUpdate['id']?>)</h2>
+
+<?php
+
+	if(!empty($sError)) {
+		echo '<p class="error">'.$sError.'</p>';
+	}
+
+	$aFiles = $oDb->queryRows("SELECT * FROM `updates_files` WHERE `version_id` = ".(int)$aUpdate['id']." ORDER BY `file`");
+	$aQueries = $oDb->queryRows("SELECT * FROM `updates_sql` WHERE `version_id` = ".(int)$aUpdate['id']." ORDER BY `id`");
+	$aChecks = $oDb->queryRows("SELECT * FROM `updates_checks` WHERE `version_id` = ".(int)$aUpdate['id']." ORDER BY `id`");
+	$aRequirements = $oDb->queryRows("SELECT * FROM `updates_requirements` WHERE `version_id` = ".(int)$aUpdate['id']." ORDER BY `id`");
+
+	$aErrorFiles = $oUpdate->checkFiles($aUpdate['id']);
+
+?>
+
+	<h3>Dateien</h3>
+	<div class="divUpdateContainer">
+<?php
+	foreach((array)$aFiles as $aFile) {
+		$sClass = '';
+		if(in_array($aFile['file'], $aErrorFiles)) {
+			$sClass = 'error';
+		}
+		echo '<div ondblclick="deleteUpdateItem(\'file\', '.(int)$aFile['id'].');return false;" class="'.$sClass.'">'.$aFile['file'].'</div>';
+	}
+?>
+
+	<h3>SQL-Queries</h3>
+<?php
+	foreach((array)$aQueries as $aQuery) {
+		echo '<div ondblclick="deleteUpdateItem(\'query\', '.(int)$aQuery['id'].');return false;">'.$aQuery['query'].'</div>';
+	}
+?>
+
+	<h3>Global checks</h3>
+<?php
+	foreach((array)$aChecks as $aCheck) {
+		echo '<div ondblclick="deleteUpdateItem(\'check\', '.(int)$aCheck['id'].');return false;">'.$aCheck['check'].'</div>';
+	}
+?>
+	
+	<h3>Requirements</h3>
+<?php
+	foreach((array)$aRequirements as $aRequirement) {
+		echo '<div ondblclick="deleteUpdateItem(\'requirement\', '.(int)$aRequirement['id'].');return false;">'.$aRequirement['requirement'].'</div>';
+	}
+?>	
+	</div>
+
+	<?=printFormHidden('id', $aUpdate['id'])?>
+	<?=printFormHidden('active', $aUpdate['active'])?>
+	<?=printTableStart()?>
+	<?php
+	if($aUpdate['version'] !== null) {
+	?>
+		<?=printFormCheckbox('Veröffentlichen?', 'active', 1, $aUpdate['active'])?>
+		<?=printFormCheckbox('Vorveröffentlichen?', 'preactive', 1, $aUpdate['preactive'])?>
+	<?php
+	} else {
+	?>
+		<?=printFormSelect('Versionsnummer setzen', 'set_version_number', [''=>'Noch nicht', 'patch'=>'Patch', 'minor'=>'Nebenversion', 'major'=>'Hauptversion'])?>
+	<?php
+	}
+	?>
+		<?=printFormCheckbox('Datenbank Update?', 'database', 1, $aUpdate['database'])?>
+		<?=printFormTextarea('Beschreibung', 'description', $aUpdate['description'], 10, 'style="width:600px;"')?>
+	<?=printTableEnd()?>
+	<?=printSubmit('Update speichern')?>
+
+	<script>var option = document.querySelector('select[name=set_version_number] option[value=major]'); if (option) option.disabled = true;</script>
+
+</form>
+
+<?
+
+} elseif($_VARS['topic'] == 'updates') {
+
+	if(!$bSql && !$bCheck) {
+
+		$iMaxLength = 93;
+
+		function cmp($a, $b) {
+			if ($a == $b) return 0;
+			return ($a[0] > $b[0]) ? -1 : 1;
+		}
+
+		function cmp2($a, $b) {
+			return strcmp($a[1], $b[1]);
+		}
+
+		if(empty($_VARS['search_days'])){
+			$_VARS['search_days'] = 1;
+		}
+
+		$aFiles = array();
+		$aUsers = array(''=>'Alle');
+
+		$oUpdateFiles = new Ext_Internal_Update_Files;
+
+		$oUpdateFiles->iDays = (int)$_VARS['search_days'];
+		$oUpdateFiles->sUser = $_VARS['user'];
+		// TODO Woher kommt $bInteral?
+		$oUpdateFiles->bInternal = (bool)$bInteral;
+
+		if(!empty($_VARS['searchstring'])) {
+			$oUpdateFiles->sSearch = $_VARS['searchstring'];
+		}
+
+		$bDeployment = !empty($_VARS['directory']) && $_VARS['directory'] === 'vcs';
+		$oUpdateFiles->searchChangedFiles($aFiles, $aUsers, $bDeployment, !empty($_VARS['commit_messages']));
+
+		if($_VARS['sortbypath'] == 1) {
+			usort($aFiles, "cmp2");
+		} else {
+			usort($aFiles, "cmp");
+		}
+
+			if($bFile) {
+				echo '<p>Der Eintrag wurde erfolgreich gespeichert!</p>';
+			} else if(!empty($aErrors)) {
+				echo '<p style="color:red">Es sind Fehler aufgetreten!</p>';
+				echo '<ul>';
+				foreach((array)$aErrors as $sError){
+					echo '<li style="color:red">'.$sError.'</li>';
+				}
+				echo '</ul><br/>';
+			}
+
+		$aSearchDays = array();
+
+
+		for($i = 1; $i <= 1000; $i++){
+			$sTitle = 'Tag';
+			if($i > 1){
+				$sTitle = 'Tage';
+			}
+			$aSearchDays[$i] = $i.' '.$sTitle;
+		}
+
+		/**
+		 * Commit Änderungen 
+		 */
+		$aCommitUsers = $oUpdate->getCommitUsers($sRepo);
+		$aCommitUsers = \Util::addEmptyItem($aCommitUsers);
+		
+		$aCommitFiles = $oUpdate->getCommitFiles($sRepo, $_VARS['commit_user']);
+		
+?>
+
+<h3>Änderungen in der Versionsverwaltung</h3>
+
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+<input type="hidden" name="task" value="search" />
+<input type="hidden" name="extension" value="<?=Util::convertHtmlEntities($_VARS['extension'])?>" />
+
+<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+	<colgroup>
+		<col style="width: 99px;"/>
+		<col style="width: auto;"/>
+	</colgroup>
+	<?=printFormSelect('Bearbeiter', 'commit_user', $aCommitUsers, $_VARS['commit_user'], 'onchange="this.form.submit();"')?>
+</table>
+
+</form>
+
+<br/>
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+	<input type="hidden" name="task" value="update" />
+	<input type="hidden" name="extension" value="<?=Util::convertHtmlEntities($_VARS['extension'])?>" />
+	<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+		<tr>
+			<th style="width: 90px;">Dateien</th>
+			<td>
+				<select class="txt form-control" name="filepath[]" size="10" multiple style="font-family: Monospace;">
+	<?
+	
+	$aPathBlacklist = [];
+	if(
+		!empty($aExtensions) && 
+		empty($_VARS['extension'])
+	) {
+		foreach($aExtensions as $aExtension) {
+
+			foreach($aExtension['paths'] as $sPath) {
+				$aPathBlacklist[] = $sPath;
+			}
+			
+		}
+	}
+
+	foreach((array)$aCommitFiles as $aCommitFile) {
+
+		if(!empty($_VARS['extension'])) {
+			$aPaths = $aExtensions[$_VARS['extension']]['paths'];
+
+			$bCheck = false;
+			foreach($aPaths as $sPath) {
+				if(strpos($aCommitFile['file'], $sPath) === 0) {
+					$bCheck = true;
+				}
+			}
+			if($bCheck === false) {
+				continue;
+			}
+		} else {
+			foreach($aPathBlacklist as $sPath) {
+				if(strpos($aCommitFile['file'], $sPath) === 0) {
+					continue 2;
+				}
+			}
+		}
+
+		$sText = str_pad($aCommitFile['file'], $iMaxLength, " ");
+
+		$sCreated = strftime("%x %X", $aCommitFile['created']);
+
+		$sText .= " ".$sCreated;
+
+		$sText .= " ".str_pad($aCommitFile['user'], 20, " ", STR_PAD_LEFT);
+
+		$sText .= "   ".mb_substr($aCommitFile['comment'], 0, 50);
+
+		$sText = str_replace(" ", "&nbsp;", $sText);
+
+		echo "<option value=\"".$aCommitFile['file']."\" ondblclick=\"deleteCommitFile(this.value);\">".$sText."</option>\n";
+
+	}
+	?>
+
+			</select>
+			</td>
+		</tr>
+	</table>
+	<?=printSubmit('Dateien aktualisieren')?>
+
+	</form>
+	
+<h3>Änderungen im Dateisystem</h3>
+
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post" class="form-inline">
+<input type="hidden" name="task" value="search" />
+<input type="hidden" name="extension" value="<?=Util::convertHtmlEntities($_VARS['extension'])?>" />
+
+<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+	<tr>
+		<th style="width: 90px;">Suche</th>
+		<td>
+			<input class="txt form-control" type="text" name="searchstring" value="<?=  \Util::convertHtmlEntities($_VARS['searchstring'])?>" />
+			Sortieren nach Pfad <input type="checkbox" name="sortbypath" value="1" <?=(($_VARS['sortbypath']==1)?'checked="checked"':'')?> />
+			<input class="btn btn-default" type="submit" value="suchen" />
+			<input class="btn btn-default" type="button" value="aktualisieren" onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>';" />
+ 		</td>
+	</tr>
+	<?=printFormSelect('Bearbeiter', 'user', $aUsers, $_VARS['user'])?>
+	<?=printFormSelect('Suchzeitraum', 'search_days', $aSearchDays, $_VARS['search_days'])?>
+	<?php
+	if(is_dir(Util::getDocumentRoot().'../git/master')) {
+		printFormSelect('Verzeichnis', 'directory', ['installation' => 'Installation', 'vcs' => 'VCS'], $_VARS['directory']);
+	}
+	?>
+	<?php printFormCheckbox('Commit-Messages (langsam)', 'commit_messages', 1, !empty($_VARS['commit_messages']) ? 1 : 0) ?>
+</table>
+</form>
+<br/>
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+	<input type="hidden" name="task" value="update" />
+	<input type="hidden" name="extension" value="<?=Util::convertHtmlEntities($_VARS['extension'])?>" />
+	<input type="hidden" name="directory" value="<?=$_VARS['directory']?>"/>
+	<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+		<tr>
+			<th style="width: 90px;">Dateien</th>
+			<td>
+				<select class="txt form-control" name="filepath[]" size="10" multiple style="min-width: 1290px; font-family: Monospace;">
+	<?
+	
+	foreach((array)$aFiles as $key=>$value) {
+
+		$sText = str_pad($value[1], $iMaxLength, " ");
+
+		$datum = strftime("%x %X", $value[0]);
+
+		$sText .= " ".$datum;
+
+		$sText .= " ".str_pad($value[2], 20, " ", STR_PAD_LEFT);
+
+		$sText .= "   ".mb_substr($value[3], 0, 50);
+
+		$sText = str_replace(" ", "&nbsp;", $sText);
+
+		echo "<option value=\"".$value[1]."\">".$sText."</option>\n";
+
+	}
+	?>
+
+			</select>
+			</td>
+		</tr>
+	</table>
+	<?=printSubmit('Dateien aktualisieren')?>
+
+	</form>
+	<br/>
+<?
+	}
+
+	if($bSql || $bCheck) {
+		echo '<p>Der Eintrag wurde erfolgreich gespeichert!</p>';
+	}
+	
+	$aRequirementClasses = Ext_Internal_Update::getRequirementClasses();
+	$aRequirementClasses = \Util::addEmptyItem($aRequirementClasses);
+		
+?>
+	<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+	<input type="hidden" name="task" value="add" />
+	<input type="hidden" name="extension" value="<?=Util::convertHtmlEntities($_VARS['extension'])?>" />
+	<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+		<tr>
+			<th style="width: 180px;">SQL Query</th>
+			<td>
+				<textarea class="txt form-control" name="sql" style="width: 900px; height: 100px; font-family: Monospace;"></textarea>
+			</td>
+		</tr>
+		<tr>
+			<th style="width: 180px;">Check</th>
+			<td>
+				<input type="text" class="txt form-control" name="global_check" style="width: 900px; font-family: Monospace;" />
+			</td>
+		</tr>
+		<tr>
+			<th style="width: 180px;">Systemvoraussetzungen</th>
+			<td>
+				<select class="txt form-control" name="global_requirement" style="font-family: Monospace;" />
+<?php
+				foreach($aRequirementClasses as $sClass) {
+?>
+					<option value="<?=$sClass?>"><?=$sClass?></option>
+<?php
+				}
+?>
+				</select>
+			</td>
+		</tr>
+	</table>
+	<?=printSubmit('Updates eintragen')?>
+
+	</form>
+
+<?php
+} elseif($_VARS['topic'] == 'check') {
+
+	$oUpdate = Ext_Internal_Update::getInstance();
+
+	if(!empty($_VARS['check_update'])) {
+		foreach((array)$_VARS['check_update'] as $iUpdateId) {
+			$oUpdate->checkUpdate($iUpdateId);
+		}
+	}
+
+	if($sRepo == 'agency') {
+		$sRelease = 'test_agency';
+	} else {
+		$sRelease = 'test';
+	}
+		
+	$aUpdates = $oUpdate->getUpdates($sRelease, false, $_VARS['extension']);
+
+	$aTickets = array();
+	foreach((array)$aUpdates as $iKey=>$aUpdate) {
+		preg_match_all('/\[T\-?([0-9]+)\]/', $aUpdate['description'], $aMatches);
+		foreach((array)$aMatches[1] as $iTicketId) {
+			$aUpdates[$iKey]['tickets'][] = $iTicketId;
+			$aTickets[] = $iTicketId;
+		}
+	}
+
+?>
+	<?/*<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+	<input type="hidden" name="topic" value="check" />
+	<?=printSubmit('Updates als getestet und abgenommen markieren')?>
+	<p class="note">Vor dem Markieren von Updates müssen die beinhalteten Tickets abgenommen werden!</p>*/?>
+	<table cellspacing="0" cellpadding="4" border="0" width="100%" class="table">
+		<tr>
+			<?/*<th style="width:50px;">Check</th>*/?>
+			<th style="width:80px;">TEST</th>
+			<th style="width:80px;">PRE-LIVE</th>
+			<th style="width:80px;">LIVE</th>
+			<th style="width:auto;">Description</th>
+		</tr>
+<?php
+
+	foreach((array)$aUpdates as $aUpdate) {
+
+		$bCheckbox = true;
+
+		foreach((array)$aUpdate['tickets'] as $iTicketId) {
+			if($aTicketState[$iTicketId] == 1) {
+				$aUpdate['description'] = str_replace(array('[T-'.$iTicketId.']', '[T'.$iTicketId.']'), '<span style="color:#00dc10">[T-'.$iTicketId.']</span>', $aUpdate['description']);
+			} else {
+				$aUpdate['description'] = str_replace(array('[T-'.$iTicketId.']', '[T'.$iTicketId.']'), '<span style="color:red">[T-'.$iTicketId.']</span>', $aUpdate['description']);
+				$bCheckbox = false;
+			}
+		}
+
+		$bCheckbox = true;
+
+?>
+		<tr>
+			<?/*<td><? if($bCheckbox) { ?><input type="checkbox" name="check_update[]" value="<?=(int)$aUpdate['id']?>" /><? } ?></td>*/?>
+			<td style="text-align: right;"><?=$aUpdate['version']?></td>
+			<td style="text-align: right;"><?=$aUpdate['prelive_version']?></td>
+			<td style="text-align: right;"><?=$aUpdate['live_version']?></td>
+			<td><?=nl2br($aUpdate['description'])?></td>
+		</tr>
+<?php
+	}
+?>
+	</table>
+	<?/*<?=printSubmit('Updates checked')?>
+
+	</form>*/?>
+
+<?php
+}
+?>
+
+		</div>
+	</div>
+</section>
+
+<?
+
+Admin_Html::loadAdminFooter();
+
+?>

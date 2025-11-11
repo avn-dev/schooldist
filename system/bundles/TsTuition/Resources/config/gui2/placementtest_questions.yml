@@ -1,0 +1,56 @@
+title: Fragen
+class:
+  wdbasic: Ext_Thebing_Placementtests_Question
+  data: Ext_Thebing_Placementtests_Question_Gui2
+access: thebing_tuition_resource_edit_placement_test
+sortable: true
+only_pagecount: true
+orderby:
+  - Ext_Thebing_Placementtests_Question_Gui2
+  - getOrderBy
+bars:
+  - position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - text
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Placementtests_Question_Gui2
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Placementtests_Question_Gui2
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Frage
+    column: text
+    width: name
+    resize: true
+    format: Gui2\Format\StripTags
+  -
+    title: Typ
+    column: type
+    width: name
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_Placementtests_Question, getTypesOptions, 'Thebing » Tuition » Placementtests', true]
+  -
+    title: Kategorie
+    column: idCategory
+    width: name
+    format: TsTuition\Gui2\Format\Placementtest\Categories
+    sortable: false

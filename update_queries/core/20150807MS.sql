@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questionaries_processes` ADD `assigned_to` INT(11) UNSIGNED NULL DEFAULT NULL;

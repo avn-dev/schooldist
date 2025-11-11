@@ -1,0 +1,43 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("backup");
+
+if($_VARS['task'] == 'download') {
+	
+	global $db_data;
+	
+	$access = Access::getInstance();
+	
+	$log = Log::getLogger('default', 'backup');
+	$log->info('Backup created', ['user_id'=>$access->id]);
+	
+	set_time_limit(3600);
+	$sCommand = "mysqldump --opt --compress --user=".$db_data['username']." --password=".$db_data['password']." --host=".$db_data['host']." ".$db_data['system']." | gzip -cf9";
+	header("Content-type: application/octetstream");
+	header("Content-Disposition: attachment; filename=".$db_data['system']."_backup_".date('YmdHis').'.wdz');
+	passthru($sCommand);
+	die();
+
+}
+
+Admin_Html::loadAdminHeader();
+ 
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen und Funktionen', 'Framework')?> &raquo; <?=L10N::t('Backup', 'Framework')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+	      <form action='<?=$_SERVER['PHP_SELF']?>' target="_blank">
+	        <input class="btn btn-primary" type="submit" value="<?=L10N::t('Datenbank-Backup herunterladen', 'Framework')?>" />
+	        <input type="hidden" name="task" value="download" />
+	      </form>
+		</div>
+	</div>
+</section>
+<?=Admin_Html::loadAdminFooter()?>

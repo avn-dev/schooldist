@@ -1,0 +1,4 @@
+class:
+  wdbasic: \TcComplaints\Entity\Complaint
+  gui: TcComplaints\Gui2\Complaint
+  date_format: Ext_TC_Gui2_Format_Date

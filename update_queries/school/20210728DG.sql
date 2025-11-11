@@ -1,0 +1,1 @@
+UPDATE `ts_vat_rates_combinations_to_objects` SET `class` = 'OTHER' WHERE `class` IN ('TRANSFER', 'NOT_ALLOCATED_EXTRAPOSITIONS');

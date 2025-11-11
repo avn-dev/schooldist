@@ -1,0 +1,1 @@
+ALTER TABLE `tc_feedback_questionaries_childs` ADD `parent_id` INT(10) UNSIGNED NOT NULL DEFAULT '0';

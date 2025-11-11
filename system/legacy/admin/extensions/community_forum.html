@@ -1,0 +1,267 @@
+<?php
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+
+
+<style>
+.form_elem{
+	width:350px;
+	border:1px solid black;
+}
+</style>
+<script>
+<!--
+
+function umklappen(aus, ein){	// (c) by plan-i GmbH, all rights reserved!!!
+   	var i = 0;				<?	// Diese Funktion blendet benannte Bereiche ein oder aus ?>
+   	var rows=document.getElementsByName(aus);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='inline';
+	  	}
+   	var rows=document.getElementsByName(ein);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='none';
+	  	}
+	document.all.active.value=aus;
+	}
+
+function go_detail(act) {
+	if(act == "add") {
+		document.discussions_form_1.discussions_action.value = 'properties'; 
+		document.discussions_form_1.submit();
+	} else if(document.discussions_form_1.forum_id.value > 0) {
+		document.discussions_form_1.discussions_action.value=act; 
+		document.discussions_form_1.submit();
+	} else {
+		alert("<?= $LANGUAGE_DATA[315]/*Bitte markieren Sie einen Eintrag!*/ ?>");
+	}
+}
+
+function go_entry(act) {
+	if(document.discussions_form_1.entry_id.value>0) {
+		document.discussions_form_1.discussions_action.value=act; 
+		document.discussions_form_1.submit();
+	} else {
+		alert("<?= $LANGUAGE_DATA[315]/*Bitte markieren Sie einen Eintrag!*/ ?>");
+	}
+}
+
+function open_media(form_field,s) {
+	window.open('/admin/frame.<? echo $file_ext; ?>?file=media&mode=selecticon&form_name=entry_form&input_name=&submit_button_value=Bild auswählen&form_submit=0&type=images&search='+s+'&input_name_title=&input_name_name='+form_field, 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+
+-->
+</script>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Community &raquo; Forum</h1>
+
+<?
+if($_VARS['page_id'] && $_VARS['element_id']) {
+	
+	if($_POST['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$config->table_id 			= $_VARS['table_id'];
+		$config->forum_id 			= $_VARS['forum_id'];
+		$config->useforCustomers 	= $_VARS['useforCustomers'];
+		$config->access 			= $_VARS['access'];
+		$config->blacklist			= $_VARS['blacklist'];
+		$config->perpage			= $_VARS['perpage'];
+		$config->email_subject		= $_VARS['email_subject'];
+		$config->email_body			= $_VARS['email_body'];
+		$config->show_overview		= $_VARS['show_overview'];
+		$config->pure_topic_list	= $_VARS['pure_topic_list'];
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	}
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$aForum = array("0"=>"Bitte wählen!");
+	$res = db_query($db_data['module'],"SELECT * FROM community_forum_init WHERE name NOT LIKE '%|%|%' ORDER BY name");
+	while($my = get_data($res)) {
+		$aForum[$my['id']] = $my['name'];
+	}
+
+	$arrCustomerTables = getCustomerTables();
+
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<?=printFormHidden('action', 'config')?>
+			<?=printFormHidden('page_id', $_VARS['page_id'])?>
+			<?=printFormHidden('element_id', $_VARS['element_id'])?>
+			<?=printFormHidden('content_id', $_VARS['content_id'])?>
+			<?=printFormHidden('language', $_VARS['language'])?>
+			<?=printTableStart()?>
+			<?=printFormSelect("Forum", "forum_id", $aForum, $config->forum_id)?>
+			<?=printFormCheckbox("".$LANGUAGE_DATA[316]/*Oder Forum als Kundengästebuch nutzen*/."", "useforCustomers", "1", $config->useforCustomers)?>
+<?
+	if($config->useforCustomers) {
+?>
+			<?=printFormSelect("Datenbank", "table_id", $arrCustomerTables, $config->table_id)?>
+<?
+	}
+?>
+			<?=printFormSelect("".$LANGUAGE_DATA[317]/*Schreibrechte*/."", "access", array("private"=>"nur eingeloggte Besucher","public"=>"Alle Besucher"), $config->access)?>
+			<?=printFormText("".$LANGUAGE_DATA[318]/*Verbotene Wörter (Komma getrennt)*/."", "blacklist", $config->blacklist)?>
+			<?=printFormText("Einträge pro Seite", "perpage", $config->perpage)?>
+			<?=printFormText("Benachrichtung: Betreff (<#title#>, <#subject#>, <#link#>)", "email_subject", $config->email_subject)?>
+			<?=printFormTextarea("Benachrichtung: Inhalt (<#title#>, <#subject#>, <#link#>)", "email_body", $config->email_body)?>
+			<?=printFormCheckbox("Auflistung aller Foren anzeigen", "show_overview", "1", $config->show_overview)?>
+			<?=printFormCheckbox("Liste der Beiträge ohne Antworten", "pure_topic_list", "1", $config->pure_topic_list)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("".$LANGUAGE_DATA[319]/*Konfiguration speichern*/."")?>
+			</form>
+<?
+} else {
+
+	$active=(int)$active; // so kommt in $active eine Null, wenn da ein text, oder gar nichts drin steht.
+?>
+
+			<form name="formular" method="post">
+			<input type="HIDDEN" NAME="active" value="<?=$active?>">
+			</form>
+
+<?
+if(!$_VARS['discussions_action']){
+?>
+
+			<form name="discussions_form_1">
+			<input type="hidden" name="forum_id" value="<?=$_VARS['forum_id']?>">
+			<input type="hidden" name="discussions_action" value="0">
+			<input type="HIDDEN" NAME="active" value="0">
+			</form>
+
+			<h2><?= $LANGUAGE_DATA[320]/*Bitte wählen ein Forum aus oder legen Sie ein neues an:*/ ?></h2>
+
+			<table cellpadding="0" cellspacing="0" border="0" class="table" width="100%">
+				<TR>
+					<td><IFRAME src="community_forum_elements.html" style="width:100%;height:340" name="detail2" frameborder="0" scrolling="yes"></IFRAME></TD>
+				</TR>
+			</table>
+
+			<p align="right">
+			<?make_button("Forum anlegen", "#", "onclick=\"go_detail('add');\"");?> &nbsp;
+			<?make_button("Eigenschaften ändern", "#", "onclick=\"go_detail('properties');\"");?> &nbsp;
+			<?make_button("Einträge ändern", "#", "onclick=\"go_detail('entries');\"");?>
+			</p>
+
+<?
+} elseif($_VARS['discussions_action'] == 'entries') {
+	$discussions_abfrage3 = (db_query($db_data['module'], "SELECT * FROM community_forum_init WHERE id = '".$_VARS['forum_id']."'"));
+	$discussions_array3 = get_data($discussions_abfrage3);
+?>
+<form name="discussions_form_1">
+<input type="hidden" name="entry_id" value="0">
+<input type="hidden" name="forum_id" value="<?=$_VARS['forum_id']?>">
+<input type="hidden" name="discussions_action" value="0">
+<input type="HIDDEN" NAME="active" value="0">
+</form>
+			<h2>Einträge in "<?=$discussions_array3['name']?>":</h2>
+			<TABLE cellpadding="0" cellspacing="0" border="0" width="100%" class="table">
+				<TR>
+					<TD><IFRAME src="community_forum_detail.html?discussions_action=<?=$_VARS['discussions_action']?>&forum_id=<?=$_VARS['forum_id']?>" style="width:100%;height:340" name="detail" frameborder="0" scrolling="yes"></IFRAME></TD>
+				</TR>
+			</table>
+			<p align="right">
+			<?make_button("editieren", "#", "onclick=\"go_entry('edit');\"");?>&nbsp;
+			<?make_button("löschen", "#", "onclick=\"detail.deleteitem();\"");?>
+			</p>
+<?
+} elseif($_VARS['discussions_action'] == 'properties') {
+	if($_VARS['forum_id'] > 0) {
+		$discussions_abfrage3 = (db_query($db_data['module'], "SELECT * FROM community_forum_init WHERE id = '".$_VARS['forum_id']."'"));
+		$discussions_array3 = get_data($discussions_abfrage3);
+	} else {
+		$discussions_array3['name'] = "Neues Forum";
+	}
+?>
+			<h2>Eigenschaften von "<?=$discussions_array3['name']?>":</h2>
+			<form name="init_form">
+			<input type="hidden" name="forum_id" value="<?=$_VARS['forum_id']?>">
+			<input type="hidden" name="discussions_action" value="saveinit">
+			<input type="hidden" name="di_access" value="<?=$discussions_array3['access']?>">
+			<?=printTableStart()?>
+				<?=printFormText("Name","di_name",$discussions_array3['name'])?>
+				<?=printFormText("E-Mail-Adresse für die Benachrichtigung","di_notify",$discussions_array3['notify'])?>
+				<?=printFormText("Verbotene Wörter (\",\" getrennt)","di_blacklist",$discussions_array3['blacklist'])?>
+			<?=printTableEnd()?>
+			</form>
+			<p align="right">
+			<?make_button("speichern", "#", "onclick=\"document.init_form.submit();\"");?>&nbsp;
+			<?make_button("zurück", "#", "onclick=\"document.location.href='community_forum.html';\"");?>
+			</p>
+<?
+} elseif($_VARS['discussions_action'] == 'new' || $_VARS['discussions_action'] == 'edit') {
+
+$discussions_abfrage2 = (db_query($db_data['module'], "SELECT * FROM community_forum_init WHERE forum_id = '".$_VARS['forum_id']."'"));
+$discussions_array2 = get_data($discussions_abfrage2);
+$discussions_id = $discussions_array2['id'];
+
+$discussions_abfrage = (db_query($db_data['module'], "SELECT * FROM community_forum_data WHERE id= '".$_VARS['entry_id']."' AND forum_id = '".$_VARS['forum_id']."'"));
+$discussions_array = get_data($discussions_abfrage);
+if(!$discussions_array['subject']) $discussions_array['subject'] = "Neuer Eintrag";
+?>
+<h2>Eigenschaften von "<?=$discussions_array['subject']?>"</h2>
+<form method="POST" name="entry_form" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="discussions_action" value="save">
+<input type="hidden" name="forum_id" value="<?=$_VARS['forum_id']?>">
+<input type="hidden" name="entry_id" value="<?=$_VARS['entry_id']?>">
+	<?=printTableStart()?>
+		<?=printFormText("Name","entry_name",$discussions_array['name'])?>
+		<?=printFormText("E-Mail","entry_email",$discussions_array['email'])?>
+		<?=printFormText("Betreff","entry_subject",$discussions_array['subject'])?>
+		<?=printFormTextarea("Nachricht","entry_text",$discussions_array['text'])?>
+	<?=printTableEnd()?>
+</form>
+<p align="right">
+<?make_button("speichern", "#", "onclick=\"document.entry_form.submit();\"");?>
+&nbsp;
+<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='community_forum.html?forum_id=".$_VARS['forum_id']."&discussions_action=entries&active=0';\"");?>
+</p>
+
+<?
+} elseif($_VARS['discussions_action'] == 'save') {
+	if($_VARS['entry_id'] > 0) {
+		db_query($db_data['module'],"UPDATE community_forum_data SET name = '".\DB::escapeQueryString($_VARS['entry_name'])."', email = '".\DB::escapeQueryString($_VARS['entry_email'])."', subject = '".\DB::escapeQueryString($_VARS['entry_subject'])."', text = '".\DB::escapeQueryString($_VARS['entry_text'])."', created = created WHERE id = '".$_VARS['entry_id']."'");
+	}
+?>
+<script>
+	document.location.href='community_forum.html?forum_id=<?=$_VARS['forum_id']?>&discussions_action=entries&active=0';
+</script>
+<?
+} elseif($_VARS['discussions_action'] == 'saveinit') {
+	if($_VARS['forum_id'] > 0) {
+		db_query($db_data['module'],"UPDATE community_forum_init SET name = '".$_VARS['di_name']."', access = '".$_VARS['di_access']."', notify = '".$_VARS['di_notify']."', blacklist = '".$_VARS['di_blacklist']."' WHERE id = '".$_VARS['forum_id']."'");
+	} else {
+		db_query($db_data['module'],"INSERT INTO community_forum_init SET name = '".$_VARS['di_name']."', access = '".$_VARS['di_access']."', notify = '".$_VARS['di_notify']."', blacklist = '".$_VARS['di_blacklist']."'");
+		$_VARS['forum_id'] = get_insert_id();
+	}
+?>
+<script>
+	document.location.href='community_forum.html?forum_id=<?=$_VARS['forum_id']?>&discussions_action=properties&active=0';
+</script>
+<?
+} elseif($_VARS['discussions_action'] == 'delete') {
+
+?>
+<script>
+	document.location.href='community_forum.html?page_id=<?=$page_id?>&element_id=<?=$element_id?>&discussions_action=entries&active=0';
+</script>
+<?
+	}
+}
+?>
+</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>
+
+

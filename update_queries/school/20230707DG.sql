@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_inquiries_payments` ADD `status` ENUM('pending','paid') NOT NULL DEFAULT 'paid' AFTER `inquiry_id`;

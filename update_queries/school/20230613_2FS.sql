@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_statistic_statistics` CHANGE `user_id` `editor_id` INT(11) NOT NULL DEFAULT '0'; 

@@ -1,0 +1,9 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+WDCache::flush();
+
+echo "Cache wurde erfolgreich geleert!";

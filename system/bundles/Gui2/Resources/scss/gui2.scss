@@ -1,0 +1,863 @@
+html, body {
+	@apply p-0 m-0;
+}
+
+@import "filter";
+
+.divHeaderSeparator {
+	@apply bg-white dark:bg-gray-800 rounded-t-md px-1 pt-1;
+
+	&:has(.Gui2ChildTableDraggable) {
+		@apply mt-2;
+	}
+
+	.header-line {
+		@apply h-1 rounded-full bg-gray-100/75 dark:bg-gray-700 #{!important};
+	}
+}
+.divHeader {
+	@apply bg-white dark:bg-gray-800 rounded-t-md;
+}
+
+.divBody {
+	@apply bg-white dark:bg-gray-800 relative overflow-hidden;
+}
+
+.divGui2ChildContainer {
+	.divHeader {
+		@apply rounded-none border-t-0;
+	}
+}
+
+.divFooter {
+	@apply bg-white dark:bg-gray-800 rounded-b-md p-1;
+	.guiBarElement, .divToolbarHtml {
+		@apply text-xs p-0 m-0;
+	}
+	.divToolbar {
+		@apply flex flex-row items-center bg-gray-100/50 dark:bg-gray-900 rounded-md;
+	}
+}
+
+.guiTableBars {
+	@apply divide-y divide-gray-100/50 dark:divide-gray-700;
+	&:not(:has(.divToolbar)) {
+		@apply mt-1;
+	}
+}
+
+.divToolbar {
+	@apply px-1.5 flex;
+	padding-top: 3px;
+	padding-bottom: 3px;
+
+	.elements-container {
+		@apply flex flex-wrap gap-x-2 gap-y-0.5 items-center;
+		min-height: 29px;
+	}
+
+	&.with-padding {
+		@apply gap-y-1.5 py-1;
+	}
+
+	.gui-help-btn {
+		@apply flex flex-nowrap items-center gap-x-1 text-gray-700 border border-gray-100/75 px-1.5 py-1 rounded cursor-pointer hover:bg-gray-100;
+		&.inactive {
+			@apply opacity-50;
+		}
+	}
+
+	.divToolbarToggleIcon {
+		@apply flex flex-nowrap items-center gap-x-1 px-1.5 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-gray-900 dark:hover:text-gray-400;
+	}
+
+	.guiBarFilter {
+		@apply text-xs flex items-center gap-x-1.5;
+		padding-top: 3px;
+		padding-bottom: 3px;
+
+		&:not(:has(.divToolbarLabel)) {
+			@apply px-1.5;
+			margin-top: 3px;
+			margin-bottom: 3px;
+
+			input {
+				@apply ring-0;
+			}
+		}
+
+		&:has(.divToolbarLabel) > input, select {
+			@apply px-1.5;
+		}
+
+		.input-group,
+		&:not(:has(.divToolbarLabel)),
+		&:has(.divToolbarLabel) > select, input {
+			@apply rounded items-center relative border-none ring-1 bg-white text-gray-500 ring-gray-100/75 hover:text-gray-600 hover:ring-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-500 dark:hover:text-gray-100;
+			height: 24px;
+			box-sizing: border-box;
+		}
+
+		input, select {
+			@apply bg-white dark:bg-gray-600 hover:dark:bg-gray-500 border-none;
+		}
+
+		input[type="checkbox"] {
+			@apply ring-0;
+		}
+
+		.input-group {
+			@apply flex;
+			input {
+				@apply ring-0;
+			}
+		}
+
+		.input-group-btn {
+			button {
+				@apply text-xs;
+			}
+		}
+	}
+
+	.divPagination {
+		@apply h-full flex gap-x-1 items-center;
+		.divToolbarIcon {
+			@apply m-0 w-8 h-auto text-center bg-gray-50 text-gray-700 dark:bg-gray-600 dark:text-gray-50 cursor-pointer px-1.5 py-1 rounded text-sm hover:bg-gray-100 flex-none;
+		}
+		.divToolbarLabel {
+			@apply text-gray-700 dark:text-gray-50 text-xs;
+		}
+
+		.guiBarFilter {
+			@apply m-0;
+		}
+	}
+
+	.guiBarFilter .divToolbarLabel,
+	.divToolbarLabelGroup {
+		@apply text-gray-700 font-semibold text-xs;
+	}
+
+}
+
+.divToolbarSeparator  {
+	@apply text-gray-400 h-6 w-px bg-gray-100/75 dark:bg-gray-700;
+}
+
+.guiBarElement {
+	@apply flex flex-nowrap items-center gap-x-1 px-1.5 rounded text-gray-700 dark:text-gray-500;
+
+	&:has(.divToolbarHtml) {
+		@apply px-0 py-1;
+	}
+
+	&.guiBarLink {
+		@apply hover:bg-gray-50 hover:text-gray-800 dark:text-gray-200 dark:hover:bg-gray-900 dark:hover:text-gray-400;
+	}
+
+	&.guiBarLink, &.guiBarInactive {
+		@apply text-sm;
+		.divToolbarLabel, .divToolbarLabel {
+			@apply text-xs;
+		}
+	}
+}
+
+.Gui2ChildTableDraggable {
+	@apply bg-gray-100 z-40;
+}
+
+.Gui2ChildTableButtonContainer {
+	@apply bg-white;
+
+	.Gui2ChildTableButtons {
+		@apply p-1.5 flex flex-row gap-x-1 items-center border-b border-gray-100/50;
+
+		.Gui2ChildTableButton {
+			@apply text-xs text-gray-700 font-medium rounded-md hover:bg-gray-50 px-2 py-1;
+		}
+	}
+}
+
+.guiTableHead {
+	@apply w-full text-gray-700 dark:text-gray-400 text-xs divide-y divide-gray-100/50 border-b border-gray-100/50 dark:divide-gray-900/50 dark:border-gray-900/50;
+
+	tr {
+		@apply divide-x divide-gray-100/50 dark:divide-gray-900/50;
+
+		&:not(:last-child) {
+			@apply border-b border-gray-100/50;
+		}
+
+		th {
+			@apply bg-gray-50/50 dark:bg-gray-700 font-semibold p-1.5 text-left content-center truncate;
+			img { @apply inline; }
+
+			&.sortasc,
+			&.sortdesc {
+				position: relative;
+				padding-right: 22px;
+
+				&:after {
+					font: normal normal bold 14px/1 "Font Awesome 5 Free";
+					position: absolute;
+					bottom: 8px;
+					right: 8px;
+					display: block;
+				}
+			}
+
+			&.sortasc { @apply bg-lime-200; }
+			&.sortdesc { @apply bg-sky-200; }
+			&.sortasc:after { content: "\f884"; }
+			&.sortdesc:after { content: "\f160"; }
+		}
+	}
+}
+
+.guiTableBody {
+	border-collapse: collapse;
+
+	tr {
+		@apply even:bg-gray-50/50 dark:even:bg-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-100/50 hover:text-gray-950;
+
+		&:not(:last-child) {
+			/*@apply border-b border-gray-50 dark:border-gray-900/50;*/
+			@apply border-gray-50 dark:border-gray-900/50;
+
+			td {
+				@apply border-b;
+			}
+		}
+
+		td {
+			@apply border-gray-100/25 dark:border-gray-900/50 font-normal text-xs p-1.5 border-spacing-0;
+			&:not(:last-child) {
+				@apply border-r;
+			}
+
+			select, textarea, input:not([type="checkbox"]) {
+				@apply w-full rounded p-1 bg-white text-gray-500 border-none ring-1 ring-gray-100/75;
+			}
+
+			.input-group {
+				@apply flex flex-row divide-x divide-gray-100 text-gray-700;
+
+				.input-group-addon, input:not([type="checkbox"]) {
+					padding: 2px 4px;
+				}
+
+				input:not([type="checkbox"]) {
+					@apply bg-white rounded-none;
+				}
+			}
+
+			.guiInplaceEditor {
+				
+				display: block;
+				min-height: 1em;
+				width: 100%;
+				
+				input {
+					padding: 0 2px;
+				}
+				
+			}
+		}
+	}
+}
+
+.divToolbarIconArrowBox {
+	@apply p-2 bg-white border border-gray-50 rounded-md shadow-lg;
+}
+
+.modal {
+	@apply fixed top-0 right-0 bottom-0 left-0 text-sm;
+
+}
+
+.modal-header {
+	@apply bg-white flex py-2 px-2 sm:px-3 items-center text-black dark:text-gray-50 border-primary-800;
+
+	button.close {
+		@apply px-1.5 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 flex items-center text-xl;
+	}
+}
+
+.modal-title {
+	/* RoundedBox.vue */
+	@apply grow text-base font-semibold font-heading leading-6;
+}
+
+.modal-dialog {
+	//@apply bg-white/20 border border-white/15 p-2 rounded-xl backdrop-blur-[1px];
+}
+
+.modal-content {
+	@apply bg-white p-1 rounded-md shadow;
+
+	.GUIDialogContentPadding {
+		@apply px-1 pt-2;
+	}
+
+	iframe {
+		@apply rounded-md;
+	}
+}
+
+.modal-footer {
+	@apply text-sm mt-1;
+
+	.form-inline {
+		@apply w-full flex items-center gap-x-1 px-3 py-2 rounded-md bg-gray-100/50 dark:bg-gray-900;
+
+		*:first-child:not(button) {
+			@apply grow;
+		}
+
+		select {
+			@apply rounded ring-1 ring-inset ring-gray-100 p-2 bg-white;
+		}
+	}
+
+	.GUIDialogMessages {
+		@apply mb-1 flex flex-col gap-y-1;
+
+		.GUIDialogNotification {
+			@apply p-2 rounded-md;
+
+			h4 {
+				@apply font-semibold;
+			}
+			
+			.GuiDescriptionActions {
+				input[type='checkbox'] {
+					margin-right: 5px;
+				}
+			}
+			
+		}
+
+		.alert {
+			h3 {
+				@apply m-0 p-0 border-none bg-transparent #{!important};
+				margin: 0 !important;
+				padding: 0 !important;
+			}
+
+			&.alert-info {
+				@apply bg-blue-500 text-blue-50 border-blue-700;
+			}
+
+			&.alert-warning {
+				@apply bg-yellow-500 text-yellow-50 border-yellow-800;
+			}
+
+			&.alert-danger {
+				@apply bg-red-700 text-red-50 border-red-800;
+			}
+
+			&.alert-success {
+				@apply bg-green-700 text-green-50 border-green-800;
+			}
+		}
+	}
+}
+
+.modal-body {
+	@apply text-sm pt-1;
+
+	&:not(:has(.GUIDialogTabDiv)) {
+		@apply border-t border-gray-50;
+	}
+
+	h1:not(.box-title):not(.GUIDialogNotification h1) { @apply text-xl; }
+	h2:not(.box-title):not(.GUIDialogNotification h2) { @apply text-lg; }
+	h3:not(.box-title):not(.GUIDialogNotification h3) { @apply text-base; }
+	h4:not(.box-title):not(.GUIDialogNotification h4) { @apply text-sm; }
+	h5:not(.box-title):not(.GUIDialogNotification h5) { @apply text-xs; }
+
+	h1:not(.box-title):not(.GUIDialogNotification h1),
+	h2:not(.box-title):not(.GUIDialogNotification h2) {
+		@apply font-heading font-semibold px-0.5 py-1 mb-2 text-gray-900 border-b border-gray-100/50;
+	}
+
+	h3:not(.box-title):not(.GUIDialogNotification h3),
+	h4:not(.box-title):not(.GUIDialogNotification h4),
+	h5:not(.box-title):not(.GUIDialogNotification h5) {
+		@apply font-heading font-semibold py-1 px-2 rounded-md my-1;
+	}
+
+	h3:not(.box-title):not(.designDiv h3):not(.GUIDialogNotification h3),
+	h4:not(.box-title):not(.designDiv h4):not(.GUIDialogNotification h3),
+	h5:not(.box-title):not(.designDiv h5):not(.GUIDialogNotification h3) {
+		@apply bg-gray-50 text-gray-500;
+	}
+
+	.GUIDialogTabDiv {
+		@apply  border-b border-gray-50 text-sm font-body font-medium pb-2;
+
+		ul {
+			@apply flex flex-row gap-x-1 items-center;
+
+			li {
+				@apply flex-none;
+			}
+		}
+
+		&:not(:has(.tabs_scroll_left)) {
+			@apply px-2;
+		}
+
+		.GUIDialogTabHeader  {
+			@apply flex flex-row items-center gap-1 font-heading px-2 py-1 rounded-md hover:bg-gray-50;
+		}
+
+		.tabs_scroll_left,
+		.tabs_scroll_right {
+			@apply bg-white;
+		}
+	}
+
+	.GUITab .divBody {
+		@apply p-0;
+	}
+
+	.divHeaderSeparator.gui2 {
+		@apply hidden;
+	}
+
+	.nav-tabs {
+		@apply px-1 py-2 flex flex-row gap-x-1 items-center border-b border-gray-50;
+
+		li {
+			@apply font-heading px-2 py-1 rounded-md hover:bg-gray-50;
+
+			a {
+				@apply text-gray-600;
+			}
+		}
+	}
+
+	.tab-content {
+		.tab-pane {
+			@apply hidden;
+			&.active {
+				@apply block;
+			}
+		}
+	}
+
+	/* Dialog-GUI2 */
+
+	.GUIDialogContentDiv.gui2, .GUITab.gui2 {
+		@apply bg-gray-50 rounded-md;
+
+		.divHeaderSeparator {
+			@apply mt-1;
+		}
+
+		.divHeaderSeparator,
+		.divFooter {
+			@apply rounded-none;
+		}
+
+		.divFooter {
+			@apply px-0;
+		}
+
+		.divGui2ChildContainer .divFooter:not(:has(.divToolbar)) {
+			@apply py-0 #{!important};
+		}
+
+	}
+
+}
+
+.GUIDialogRow {
+	@apply relative text-xs text-gray-900 py-2 sm:grid sm:grid-cols-12 sm:gap-4;
+
+	.i18n-fields {
+		@apply grid grid-cols-1 gap-1;
+
+		.mce-container {
+			@apply my-0.5 mr-0.5;
+		}
+	}
+
+	/*&:not(:last-child) {
+		@apply border-b border-gray-50;
+	}*/
+
+	.GUIDialogRowLabelDiv,
+	.GUIDialogRowLabelDivSmall,
+	.GUIDialogRowLabelDivBig {
+		@apply relative block font-semibold leading-6 sm:pt-1.5 sm:px-3 text-right;
+	}
+
+	.GUIDialogRowLabelDiv {
+		@apply sm:col-span-3;
+	}
+
+	.GUIDialogRowLabelDivSmall {
+		@apply sm:col-span-2;
+	}
+
+	.GUIDialogRowLabelDivBig {
+		@apply sm:col-span-4;
+	}
+
+	&:has(.GUIDialogRowLabelDiv) .GUIDialogRowInputDiv {
+		@apply sm:col-span-9;
+	}
+
+	&:has(.GUIDialogRowLabelDivSmall) .GUIDialogRowInputDiv {
+		@apply sm:col-span-10;
+	}
+
+	&:has(.GUIDialogRowLabelDivBig) .GUIDialogRowInputDiv {
+		@apply sm:col-span-8;
+	}
+
+	&:not(:has(.GUIDialogRowLabelDiv, .GUIDialogRowLabelDivSmall, .GUIDialogRowLabelDivBig)) .GUIDialogRowInputDiv {
+		@apply sm:col-span-12;
+	}
+
+	.GUIDialogRowInputDiv {
+		@apply relative mt-1 sm:mt-2 sm:mt-0 sm:items-center;
+
+		&.GUIDialogRowInputGridDiv {
+			@apply grid grid-flow-col items-center gap-x-1;
+		}
+
+		*.GuiDialogErrorInput {
+			@apply border-red-500 #{!important};
+		}
+
+		&:not(.i18n-fields):has(.mce-tinymce) {
+			@apply p-1 rounded border border-gray-100;
+		}
+
+		.help-block {
+			@apply text-gray-500 block mt-0.5;
+		}
+	}
+
+	.GUIDialogRowLabelDiv,
+	.GUIDialogRowInputDiv {
+		input:not(.ui-widget-content):not([type='checkbox']):not([type='file']):not(.bootstrap-tagsinput > input),
+		select,
+		textarea,
+		.bootstrap-tagsinput {
+			@apply w-full rounded border border-gray-100 p-2 text-xs shadow-none focus:outline-none;
+
+			&:not([readonly]) {
+				@apply bg-white;
+			}
+		}
+
+		input[type='checkbox'] {
+			@apply mt-2.5;
+		}
+
+		.bootstrap-tagsinput {
+			@apply p-1;
+
+			input {
+				@apply my-1;
+			}
+
+			.tag {
+				@apply flex flex-row items-center gap-1 rounded bg-gray-100 my-0 p-1 text-xs font-medium text-gray-600;
+
+				*[data-role="remove"] {
+					@apply m-0 p-0;
+				}
+			}
+		}
+
+		&:has(.gui2_uploads) {
+			@apply flex flex-col gap-2;
+		}
+
+		.gui2_uploads,
+		.gui2_upload_existing_files {
+			@apply w-full flex flex-col gap-2;
+
+			.gui2_upload,
+			.gui2_upload_existing_file {
+				@apply w-full flex rounded border border-gray-100 bg-white;
+				a {
+					@apply grow p-2;
+				}
+				input {
+					@apply p-1.5 grow;
+				}
+			}
+		}
+	}
+
+	.GUIDialogRowInputDivContainer {
+		@apply flex flex-row items-center gap-1;
+	}
+
+	&:not(.GUIDialogMultiRow) .bootstrap-tagsinput {
+		@apply w-full;
+	}
+}
+
+.GUIDialogMultiRow {
+	.GUIDialogRowInputDiv,
+	.GUIDialogRowInputDiv .row:not(.grid-row) {
+		@apply flex items-center gap-1 text-nowrap;
+
+		&:has(.GUIDialogRowInputDivContainer ) {
+			@apply flex-col;
+		}
+
+		input[type='checkbox'] {
+			@apply mt-0;
+		}
+	}
+
+	.GUIDialogRowInputDiv .grid-row {
+		@apply w-full grid grid-cols-12 gap-2 items-center;
+		.col-md-1 { @apply col-span-1; }
+		.col-md-2 { @apply col-span-2; }
+		.col-md-3 { @apply col-span-3; }
+		.col-md-4 { @apply col-span-4; }
+		.col-md-5 { @apply col-span-5; }
+		.col-md-6 { @apply col-span-6; }
+		.col-md-7 { @apply col-span-7; }
+		.col-md-8 { @apply col-span-8; }
+		.col-md-9 { @apply col-span-9; }
+		.col-md-10 { @apply col-span-10; }
+		.col-md-11 { @apply col-span-11; }
+		.col-md-12 { @apply col-span-12; }
+	}
+
+	.bootstrap-tagsinput {
+		min-width: 150px;
+	}
+}
+
+.GUIDialogFlexRowList {
+	@apply flex flex-col gap-0.5;
+
+	.GUIDialogRow {
+		@apply flex flex-row items-center gap-1 p-2 bg-gray-50 rounded-md;
+	}
+
+	label {
+		@apply flex flex-row items-center gap-1;
+	}
+}
+
+.GUIDialogJoinedObjectContainer {
+	@apply flex flex-col gap-y-2 bg-gray-50 p-2 rounded-xl;
+
+	&.bordered {
+		@apply bg-transparent border border-gray-100/50;
+	}
+
+	.add-btn-container {
+		@apply form-inline flex;
+	}
+}
+
+.GUIDialogJoinedObjectContainerCountField {
+	@apply w-[50px] float-left;
+}
+
+.GUIDialogJoinedObjectContainerRow {
+	@apply bg-white p-2 rounded-md;
+}
+
+#guiLoadingDiv, .guiLoadingDiv {
+	@apply absolute top-0 left-0 text-xl text-gray-950 rounded-md bg-gray-200 flex flex-row justify-center items-center opacity-50;
+}
+
+.box_container {
+	.add-btn-container {
+		@apply my-1 form-inline flex gap-1 items-stretch;
+
+		input {
+			@apply rounded border border-gray-100 w-8 px-2 py-1 text-xs shadow-none focus:outline-none;
+		}
+	}
+}
+
+	// TODO Hierfür müssten die Bilder raus
+//@import "/system/legacy/admin/extensions/gui2/gui2.css";
+
+.box-group {
+	> .box {
+		margin-bottom: 0;
+
+		.box-header {
+			h4 {
+				display: block;
+				a {
+					display: block;
+				}
+			}
+		}
+	}
+}
+
+.gui-info-icon {
+	cursor: help;
+
+	&.inactive {
+		opacity: .2;
+	}
+
+	&.editable {
+		cursor: pointer;
+	}
+}
+
+.datepicker {
+	@apply text-xs bg-white rounded border border-gray-100;
+	td {
+		@apply p-1.5;
+	}
+}
+
+.dropdown-menu {
+	@apply absolute z-10;
+	z-index: 9999;
+}
+
+.divTooltip {
+	@apply absolute text-xs max-w-lg p-2 rounded-md bg-gray-50 border border-gray-100/75;
+}
+
+.divLegend {
+	@apply flex px-1.5 py-2 bg-gray-100/50 dark:bg-gray-700 rounded-md items-center;
+}
+
+.colorkey {
+	@apply rounded;
+}
+
+.divCleaner {
+	@apply clear-both;
+}
+
+/* TODO entfernen oder umbennen */
+.designDivShadow,
+.designDiv:not(.box) {
+	@apply bg-gray-50 border border-gray-100/50 rounded p-2;
+
+	h3:not(.box-title),
+	h4:not(.box-title),
+	h5:not(.box-title) {
+		@apply bg-gray-100/50 text-gray-600;
+	}
+
+	.designDivButtonContainer {
+		@apply form-inline flex gap-1;
+	}
+}
+
+.placeholderTools {
+	@apply rounded-md bg-gray-50 flex flex-row items-center mb-2 gap-2 p-2 text-gray-500;
+
+	input {
+		@apply rounded items-center relative border-none ring-1 bg-white text-gray-500 ring-gray-100/75 hover:text-gray-600 hover:ring-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-500 dark:hover:text-gray-100;
+	}
+
+}
+
+.placeholderContentScroll {
+	@apply overflow-scroll pb-4;
+}
+
+.placeholdertable {
+	tr.loop td {
+		@apply bg-gray-100/50;
+	}
+
+	tr.parent td,
+	td.indent {
+		@apply bg-gray-50/50;
+	}
+}
+
+/* Multiselect ---------------------------------- */
+
+.ui-multiselect { @apply border border-gray-100 text-xs relative rounded; }
+.ui-multiselect ul { -moz-user-select: none; }
+.ui-multiselect li {
+	@apply m-0 py-0 px-1 cursor-default text-xs font-body list-none;
+	line-height: 15px;
+	height: 15px;
+}
+.ui-multiselect li a { @apply text-gray-700 underline p-0 block cursor-pointer float-left; }
+.ui-multiselect li.ui-draggable-dragging { padding-left: 10px; }
+.ui-multiselect li.ui-state-default { @apply bg-gray-50 text-gray-600; }
+
+.ui-multiselect div.selected { position: relative; padding: 0; margin: 0; border: 0; float:right; width:50%; }
+.ui-multiselect ul.selected {
+	@apply rounded-br;
+	position: relative; padding: 0; overflow: auto; overflow-x: hidden; background: #fff; margin: 0; list-style: none; border: 0; width: 100%;
+}
+
+.ui-multiselect ul.selected.ui-sortable li { padding-left:15px !important; }
+
+.ui-multiselect div.available { position: relative; padding: 0; margin: 0; border: 0; float:left; width:50%; }
+.ui-multiselect ul.available {
+	@apply border-r border-gray-100 rounded-bl;
+	position: relative; padding: 0; overflow: auto; overflow-x: hidden; background: #fff; margin: 0; list-style: none; width: 100%;
+}
+
+.ui-multiselect ul.available li, .ui-multiselect ul.selected li { @apply px-1; overflow:hidden; }
+
+.ui-multiselect div.available .actions { @apply border-r border-gray-100 w-full; }
+
+.ui-multiselect .ui-state-default { border: none; margin-bottom: 1px; position: relative; padding-left: 20px;}
+.ui-multiselect .ui-state-hover { border: none; }
+.ui-multiselect .ui-widget-header {
+	@apply bg-gray-100/50 font-body text-xs h-6 px-1;
+	border: none; margin-bottom: 1px;
+}
+
+.ui-multiselect .available .ui-widget-header { @apply rounded-tl; }
+.ui-multiselect .selected .ui-widget-header { @apply rounded-tr; }
+
+.ui-multiselect .available .li-text { float:left; }
+
+.ui-multiselect .add-all { float: right; padding: 4px 0;}
+.ui-multiselect .remove-all { float: right; padding: 4px 0;}
+.ui-multiselect .search { float: left; }
+.ui-multiselect .count { float: left; padding: 4px 0;}
+
+.ui-multiselect li span.ui-icon-arrowthick-2-n-s { position: absolute; left: 1px; }
+.ui-multiselect li a.action {
+	@apply right-1;
+	position: absolute;
+	top: -2px;
+}
+
+.ui-multiselect input.search {
+	@apply rounded border border-gray-100;
+	margin-top: 3px; width: 150px; float:left; font-size: 10px;
+}
+
+.ui-multiselect.readonly {
+	border-style: dotted !important;
+	opacity: 0.6;
+}
+
+.ui-multiselect.readonly a,
+.ui-multiselect.readonly .ui-widget-header > .search {
+	visibility: hidden;
+}
+
+.input-group {
+	.mce-tinymce.mce-panel {
+		@apply border-none;
+	}
+}

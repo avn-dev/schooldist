@@ -1,0 +1,132 @@
+<?php	
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+/**
+ * Daten vorbereiten 
+ */
+
+$aLanguages	= Ext_TC_Factory::executeStatic('Ext_TC_Util', 'getTranslationLanguages');
+
+$sSubObjectLabel = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjectLabel');
+$aSubObjects = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getSubObjects', array(true));
+
+$sWDBasic = Ext_TC_Factory::getClassName('Ext_TC_Extrafield');
+
+/**
+ * GUI Objekt aufbauen 
+ */
+
+$oGui = new Ext_TC_Gui2(md5('tc_extrafields'), 'Ext_TC_Frontend_Extrafield_Gui2_Data');
+$oGui->access = array('core_frontend_extra_fields', '');
+$oGui->calendar_format = Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+$oGui->i18n_languages = $aLanguages;
+$oGui->class_js = 'ExtrafieldGui';
+
+$oGui->setWDBasic($sWDBasic);
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_fc.name' => 'ASC'));
+
+
+// Filter
+
+$oBar = $oGui->createBar();
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name');
+$oFilter->db_alias = array('tc_fc');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+//Icon
+
+$oBar = $oGui->createBar();
+
+$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+// Loading/Pagination
+
+$oBar = $oGui->createBar();
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// List 
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = 'tc_fc';
+$oColumn->title = $oGui->t('Name');
+$oColumn->width = Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+//------------------------------------------------------------------------------
+
+/**
+ * GUI Objekt aufbauen (unten)
+ */
+
+$oGuiContent = new Ext_TC_Gui2(md5('tc_extrafields_content'));
+$oGuiContent->access = array('core_marketing_referrers', '');
+$oGuiContent->gui_title = $oGui->t('Inhalt');
+$oGuiContent->calendar_format = Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGuiContent->include_jquery = true;
+$oGuiContent->include_jquery_multiselect = true;
+$oGuiContent->i18n_languages = $aLanguages;
+
+$sWDBasicContent = Ext_TC_Factory::getClassName('Ext_TC_Frontend_Extrafield_Content');
+$oGuiContent->setWDBasic($sWDBasicContent);
+
+$oGuiContent->setTableData('orderby', array('tc_fcc.type' => 'ASC'));
+$oGuiContent->setTableData('limit', 100000);
+
+// List 
+
+$oColumn = $oGuiContent->createColumn();
+$oColumn->db_column = 'type';
+$oColumn->db_alias = 'tc_fcc';
+$oColumn->title = $oGui->t('Art des Feldes');
+$oColumn->width = Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->format = new Ext_TC_Frontend_Extrafield_Format_Type();
+$oColumn->width_resize = true;
+$oGuiContent->setColumn($oColumn);
+
+$oGuiContent->addDefaultColumns();
+
+//------------------------------------------------------------------------------
+
+/**
+ * GUI-PAGE Objekt aufbauen 
+ */
+
+$aOptional = array();
+$aOptional['js'][]	= '/admin/extensions/tc/gui2/gui2.js';
+$aOptional['js'][]	= '/admin/extensions/tc/js/extrafield.js';
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiContent, array('hash' => $oGui->hash, 'foreign_key' => 'checkbox_id',  'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display($aOptional);
+
+?>

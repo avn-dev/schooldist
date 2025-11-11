@@ -1,0 +1,229 @@
+  
+	table.table TD, table.table TH {
+		padding: 		4px 3px;
+	}
+
+	table.table TH SPAN {
+		cursor: 			pointer;
+	}
+
+	table.table TH SPAN.active {
+		color: 				red;
+	}
+
+	.selectedRow TD {
+		background: 		#8D93A0;
+	}
+	
+	.divHeader {
+		position: 			relative; 
+		overflow: 			hidden; 
+		background-color:	#f7f7f7;	
+		padding: 0;
+	}
+	
+	.divHeader H1 {
+		background-color:	#29527A;
+		color:				#fff;
+		line-height:		25px;
+		font-size:			18px;
+		margin:				0px;
+		padding:			0px 5px;
+	}
+	
+	.divToolbar {
+		padding: 			0px 5px;
+		line-height:		16px;
+		clear:				both;
+		height:				26px;
+		overflow:			hidden;
+	}
+	
+	.divToolbar INPUT,
+	.divToolbar SELECT {
+		padding:			0px;
+		margin:				0px;
+	}
+	
+	.divTopLine {
+		border-top: 	1px solid #ccc;
+	}
+	
+	.divToolbar .divToolbarIcon {
+		margin-top:		5px;
+		float: 			left;
+		width: 			24px;
+		height:			16px;
+		cursor:			pointer;
+		overflow:		hidden;
+		text-align:		center;
+	}
+	
+	.divToolbar .divToolbarLabel {
+		margin-top:		5px;
+		float: 			left;
+		height:			16px;
+		padding-right:	4px;
+		font-weight:	bold;
+		line-height:	16px;
+	}
+	
+	.divToolbar .divToolbarSeparator {
+		margin-top:		5px;
+		float: 			left;
+		height:			16px;
+		padding-right:	4px;
+		line-height:	16px;
+	}
+	
+	.divToolbar .divToolbarFormItem {
+		margin-top:		5px;
+		float: 			left;
+		height:			16px;
+		padding-right:	4px;
+		line-height:	16px;
+	}
+
+	.divHeader .divToolbar .divToolbarFormItem {
+		margin-top:		2px;
+	}
+
+	.txtRight {
+		text-align:		right;
+	}
+
+	#divAccordionContainer {
+		margin:	10px;
+	}
+
+	#accordionTitleBorderDiv {
+		width:		100%;
+	}
+
+	#accordionTitle {
+		cursor:		pointer;
+		font-size:	8pt;
+	}
+
+	.divOfficeFieldsetContainer {
+		padding:	5px;
+	}
+	
+	.divOfficeFieldsetContainer .divOfficeFieldset {
+		overflow: hidden; 
+		border: 1px solid #ccc; 
+		margin: 0px; 
+		padding: 0px;
+	}
+	
+	
+	.divOfficeFieldsetContainer .divOfficeFieldsetLegend {
+		margin-left: 6px; 
+		color:#29527A;
+	}
+	
+	* html .divOfficeFieldsetContainer .divOfficeFieldsetLegend {
+		margin-left: 0px!important;
+	} 
+	
+	.divOfficeFieldsetContainer .divOfficeFieldsetContent {
+		padding: 3px 8px;
+	}
+	
+	.divOfficeFieldsetContainer .divOfficeFieldsetContent DIV {
+		padding-top: 2px;
+	}
+
+	input.txt {
+		height: auto;
+	}
+	
+	.divHeaderBottomGrey {
+		width: 100%; 
+		border-top: 1px solid #ccc; 
+		border-bottom: 1px solid #ccc; 
+		background: #eee;
+		height: 7px;
+	}
+	
+	.divHeaderBottomWhite {
+		width: 100%; 
+		background: #fff;
+		height: 5px;
+	}
+	
+.GUIDialogNotification {
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	padding: 5px 6px;
+	font-size: 11px;
+	margin: 10px;
+}
+
+.GUIDialogNotification div {
+	clear: both;
+}
+
+.GUIDialogNotification p {
+	font-size: 11px;
+	margin: 5px 0;
+}
+
+.GUIDialogNotification.GUIHint{
+	border: 1px solid #FED22F;
+	color: #363636;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #ffe45c;
+}
+
+.GUIDialogNotification.GUIInfo {
+	border: 1px solid #82C1EC;
+	color: #363636;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #B9CDE5;
+}
+
+.GUIDialogNotification.GUIError {
+	border: 1px solid #CD0A0A;
+	color: #FFFFFF;
+	background: url(/admin/extensions/gui2/bg_hatching.png) #b81900;
+}
+
+.GUIDialogNotification.GUISuccess {
+	border: 1px solid green;
+	color: #FFFFFF;
+	background: url(/admin/extensions/gui2/bg_hatching.png) green;
+}
+
+.GUIDialogNotification .GUITitle span {
+	font-weight: bold;
+}
+
+.GUIDialogNotification .GUITitle img {
+	float: left;
+	display: block;
+	margin-right: 4px;
+}
+
+.custom-gui table.table {
+	margin-bottom: 0;
+}
+
+
+div.logo-container{
+	width: 100px;
+	height: 100px;
+	padding-top: 5px;
+	position: relative;
+}
+
+/* Das Lösch-Bild für das Logo. Also das 'X' (Cross)' */
+div.logo-container img:first-child{
+	width: 10px;
+	height: 10px;
+	left: 85px;	/* padding-left von 'div#logo_preview' - width von 'iv#logo_preview #delete_customer_logo' - 5 */
+	position: absolute;
+}
+
+div.logo-container img:last-child{
+	max-width: 100%;
+	max-height: 100%;
+}

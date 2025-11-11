@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "vue": ["./node_modules/vue3"],
+      "@Gui2/*": ["./system/bundles/Gui2/Resources/js/*"],
+      "@Admin/*": ["./system/bundles/Admin/Resources/js/*"]
+    },
+    "sourceMap": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "esnext",
+    "allowJs": true,
+    "noImplicitAny": true,
+    "strict": true
+  },
+  "include": [
+    "./*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

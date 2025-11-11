@@ -1,0 +1,481 @@
+hash: 9770e87ec6f99fa6d97f733a70445960
+class:
+  wdbasic: Ext_TS_Accounting_Receivable
+  data: \Ts\Gui2\Data\InvoiceReceivables
+access: thebing_accounting_incoming_accounts_receivable
+id:
+  column: id
+  alias: kid
+orderby:
+  - \Ts\Gui2\Data\InvoiceReceivables
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\InvoiceReceivables
+  - getWhere
+sum_row_columns:
+  - expected_amount
+  - payed_amount
+  - open_amount
+  - course_pending_amount
+  - accommodation_pending_amount
+  - transfer_pending_amount
+  - insurance_pending_amount
+  - additional_course_pending_amount
+  - additional_accommodation_pending_amount
+  - additional_general_pending_amount
+  - extraPosition_pending_amount
+designer:
+  additional_flex:
+    -
+      section: student_record_general
+      primary_key: inquiry_id
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        label: Suche
+        column:
+          - firstname
+          - lastname
+          - ext_1
+          - number
+          - short
+          - document_number
+          - number
+        alias:
+          - tc_c
+          - tc_c
+          - ka
+          - ts_an
+          - kg
+          - kid
+          - tc_cn
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column:
+            - created
+          alias:
+            - kid
+          default:
+            - \Ts\Gui2\Data\InvoiceReceivables
+            - getDefaultFilterFrom
+        until:
+          column:
+            -
+          alias:
+            -
+          default:
+            - \Ts\Gui2\Data\InvoiceReceivables
+            - getDefaultFilterUntil
+        searchtype: between
+        query_value_key: filter_invoice_created
+        skip_query: true
+      -
+        element: selectfilter
+        value: service_start
+        label: basierend auf
+        entries:
+          - \Ts\Gui2\Data\InvoiceReceivables
+          - getFilterBasedOn
+        label_as_item: false
+        filter_query:
+          service_start: "DATE(`ts_i`.`service_from`) != '0000-00-00' AND
+                            DATE(`ts_i`.`service_from`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          invoice_created: "DATE(`kid`.`created`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          service_date: "(DATE(`ts_i_j_c`.`from`) != '0000-00-00' AND
+                            DATE(`ts_i_j_c`.`from`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until)
+                            OR ( DATE(`ts_i_j_a`.`from`) != '0000-00-00' AND
+                            DATE(`ts_i_j_a`.`from`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until )
+                            OR (DATE(`ts_i_j_t`.`transfer_date`) != '0000-00-00' AND
+                            DATE(`ts_i_j_t`.`transfer_date`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until)"
+          course_start: "DATE(`ts_i_j_c`.`from`) != '0000-00-00' AND
+                           DATE(`ts_i_j_c`.`from`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          course_end: "DATE(`ts_i_j_c`.`until`) != '0000-00-00' AND
+                         DATE(`ts_i_j_c`.`until`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          accommodation_start: "DATE(`ts_i_j_a`.`from`) != '0000-00-00' AND
+                                  DATE(`ts_i_j_a`.`from`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          accommodation_end: "DATE(`ts_i_j_a`.`until`) != '0000-00-00' AND
+                                DATE(`ts_i_j_a`.`until`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          service_end: "DATE(`ts_i`.`service_until`) != '0000-00-00' AND
+                          DATE(`ts_i`.`service_until`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+          final_payment_date: "DATE(`ts_dvp`.`date`) BETWEEN :filter_invoice_created_from AND :filter_invoice_created_until"
+      -
+        element: selectfilter
+        value: invoices
+        label: Alle
+        entries:
+          - \Ts\Gui2\Data\InvoiceReceivables
+          - getDocumentFilterOptions
+        label_as_item: true
+        filter_query:
+          - \Ts\Gui2\Data\InvoiceReceivables
+          - getDocumentFilterQueries
+      -
+        element: seperator
+      -
+        element: selectfilter
+        id: accommodation_filter
+        label: Schule
+        alias:
+          - ts_i_j
+        column:
+          - school_id
+        entries:
+          - Ext_Thebing_Client
+          - getSchoolList
+          - true
+        label_as_item: true
+        serachtype: =
+      -
+        element: selectfilter
+        label: Währung
+        column:
+          - currency_id
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_System
+          - getCurrencyList
+        label_as_item: true
+        searchtype: =
+      -
+        element: selectfilter
+        label: Buchungstyp
+        entries:
+          - \Ts\Gui2\Data\InvoiceReceivables
+          - getBookingTypes
+        label_as_item: true
+        filter_query:
+          1: '`ts_i`.`agency_id` > 0'
+          2: '`ts_i`.`agency_id` = 0'
+      -
+        element: selectfilter
+        access: thebing_accommodation_communicate_filter_agency
+        label: Agentur
+        alias:
+          - ts_i
+        column:
+          - agency_id
+        entries:
+          - Ext_Thebing_Special_Gui2
+          - getAgencyGroups
+        label_as_item: true
+        serachtype: =
+      -
+        element: selectfilter
+        id: group_filter
+        label: Gruppe
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ts_i`.`group_id` != 0'
+          no: '`ts_i`.`group_id` = 0'
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Land
+        entries:
+          - Ext_Thebing_Data
+          - getCountryList
+        column:
+          - country_iso
+        alias:
+          - tc_a
+        label_as_item: true
+        serachtype: =
+      -
+        element: selectfilter
+        label: Nationalität
+        column:
+          - nationality
+        alias:
+          - tc_c
+        entries:
+          - Ext_Thebing_Nationality
+          - getNationalities
+        label_as_item: true
+        serachtype: =
+      -
+        element: selectfilter
+        label: Inbox
+        column:
+          - inbox
+        alias:
+          - ts_i
+        entries:
+          - Ext_Thebing_Gui2_Data
+          - getInboxes
+          - true
+          - true
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Schülerstatus
+        label_as_item: true
+        alias:
+          - ts_i
+        column:
+          - status_id
+        entries:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getCustomerStatusOptions
+columns:
+  -
+    group: Persöhnliche Daten
+    title: Name
+    column: name
+    alias: tc_c
+    sortable_column: lastname
+    width: customer_name
+    resize: true
+    format: Ext_Gui2_View_Format_Name
+  -
+    group: Persöhnliche Daten
+    title: Vorname
+    column: firstname
+    alias: tc_c
+    data: firstname
+    width: number
+    resize: true
+    default: false
+  -
+    group: Persöhnliche Daten
+    title: Nachname
+    column: lastname
+    alias: tc_c
+    data: lastname
+    width: number
+    resize: true
+    default: false
+  -
+    group: Persöhnliche Daten
+    title: Kundenummer
+    column: number
+    alias: tc_cn
+    data: contact_number
+    width: number
+    resize: true
+  -
+    group: Persöhnliche Daten
+    title: Re. Nr.
+    column: document_number
+    alias: kid
+    data: document_number
+    width: number
+  -
+    group: Persöhnliche Daten
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: group_name
+    width: short_name
+  -
+    group: Persöhnliche Daten
+    title: Schülerstatus
+    column: status_id
+    alias: ts_i
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_TS_Inquiry_Index_Gui2_Data, getCustomerStatusOptions]
+    default: false
+    sortable: false
+  -
+    visible: true
+    title: Währung
+    default: false
+    column: currency_id
+    alias: ts_i
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Currency
+  -
+    title: Agentur
+    column: ext_1
+    alias: ka
+    data: agency_name
+    width: name
+  -
+    title: Agenturnummer
+    column: number
+    alias: ts_an
+    data: agency_number
+    width: name
+    default: false
+  -
+    title: Inbox
+    column: inbox
+    alias: ts_i
+    default: false
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_System, getInboxList, true, true]
+  -
+    group: Kurs
+    title: Kurs
+    column: course_names_short
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    data: course_names_short
+    width: name
+    default: false
+  -
+    group: Kurs
+    title: Beginn
+    column: course_dates_from
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    data: course_dates_from
+    width: date
+    default: false
+  -
+    group: Kurs
+    title: Ende
+    column: course_dates_until
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    data: course_dates_until
+    width: date
+    default: false
+  -
+    group: Unterkunft
+    title: Unterkunft
+    column: accommodation_names_short
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    data: accommodation_names_short
+    width: name
+    default: false
+  -
+    group: Unterkunft
+    title: Beginn
+    column: accommodation_dates_from
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    data: accommodation_dates_from
+    width: date
+    default: false
+  -
+    group: Unterkunft
+    title: Ende
+    column: accommodation_dates_until
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    data: accommodation_dates_until
+    width: date
+    default: false
+  -
+    group: Bezahlung
+    title: Zahlungsmethode
+    alias: ts_i
+    column: payment_method
+    data: payment_method
+    width: amount
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Agency, getAgencyPaymentMethods]
+    default: false
+  -
+    group: Bezahlung
+    title: Erwarteter Betrag
+    column: expected_amount
+    data: expected_amount
+    width: number
+    format: Ext_Thebing_Gui2_Format_Amount
+  -
+    group: Bezahlung
+    title: Bezahlter Betrag
+    column: payed_amount
+    data: payed_amount
+    width: number
+    format: Ext_Thebing_Gui2_Format_Amount
+  -
+    group: Bezahlung
+    title: Offener Betrag
+    column: open_amount
+    data: open_amount
+    width: number
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Kurs
+    column: course_pending_amount
+    data: course_pending_amount
+    width: name
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Unterkunft
+    column: accommodation_pending_amount
+    data: accommodation_pending_amount
+    width: name
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Transfer
+    column: transfer_amount
+    data: transfer_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Versicherung
+    column: insurance_amount
+    data: insurance_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Kurs Zusatzgebühren
+    column: additional_course_pending_amount
+    data: additional_course_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Unterkunft Zusatzgebühren
+    column: additional_accommodation_pending_amount
+    data: additional_accommodation_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Generelle Zusatzgebühren
+    column: additional_general_pending_amount
+    data: additional_general_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Manuelle Position
+    column: extraPosition_amount
+    data: extraPosition_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Andere
+    alias: ts_i
+    column: storno_amount
+    data: storno_pending_amount
+    width: amount
+    format: Ext_TS_Accounting_Receivable_Format_Data
+    sortable: false
+  -
+    group: Bezahlung
+    title: Restzahlungsdatum
+    column: amount_finalpay_due
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date

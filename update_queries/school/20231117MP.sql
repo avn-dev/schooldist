@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_courses` ADD `different_price_per_language` BOOLEAN NOT NULL DEFAULT FALSE AFTER `category_id`;

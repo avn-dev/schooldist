@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_4` ADD `requirement_valid` tinyint(1) NOT NULL DEFAULT '1', ADD `requirement_missing` tinyint(1) NOT NULL DEFAULT '0', ADD `requirement_expired` tinyint(1) NOT NULL DEFAULT '0';

@@ -1,0 +1,1 @@
+UPDATE `kolumbus_agencies` SET `active` = 0 WHERE `ext_1` = '';

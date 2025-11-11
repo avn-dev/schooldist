@@ -1,0 +1,335 @@
+<?php
+
+include("../../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+Admin_Html::loadAdminHeader();
+
+// Sicherheitsabfrage
+if(
+	empty($_VARS['item']) ||
+	(
+		$_VARS['item'] !== 'poll' &&
+		empty($_VARS['item_id'])
+	)
+) {
+	throw new Exception('Item or item id is missing!');
+}
+
+// Umfrage Objekt
+$oPoll = new Ext_Poll_Poll($_VARS['poll_id']);
+$aLanguages = $oPoll->getLanguages();
+
+// Sprache ermitteln
+if(in_array($system_data['systemlanguage'], $aLanguages)) {
+	$sLanguage = $system_data['systemlanguage'];
+} else {
+	$sLanguage = reset($aLanguages);
+}
+
+switch($_VARS['item']) {
+	case 'poll':
+		$sClass = 'Ext_Poll_Poll';
+		$oRouting = $oPoll;
+		$sConditionField = 'complete_condition';
+		break;
+	case 'page':
+		$sClass = 'Ext_Poll_Routing';
+		$oRouting = new $sClass($_VARS['item_id']);
+		$sConditionField = 'settings';
+		break;
+	case 'question':
+		$sClass = 'Poll\Entity\Question\Condition';
+		$oRepo = $sClass::getRepository();
+		$oRouting = $oRepo->findOneBy(array('question_id'=>(int)$_VARS['item_id']));
+		if($oRouting === null) {
+			$oRouting = new $sClass;
+			$oRouting->question_id = (int)$_VARS['item_id'];
+		}
+		$sConditionField = 'settings';
+		break;
+}
+
+if($_VARS['task'] == "save") {
+
+	if(empty($_VARS['iFilter'])) {
+		$sSettings = '';
+	} else {
+		$aFilter = array(
+			'iFilter'	=> $_VARS['iFilter'],
+			'sFilter'	=> $_VARS['sFilter'],
+			'iMode'		=> $_VARS['iMode'],
+			'iOpen'		=> $_VARS['iOpen'],
+			'iOperator'	=> $_VARS['iOperator'],
+			'iClose'	=> $_VARS['iClose'],
+			'iCheckAll'	=> $_VARS['iCheckAll']
+		);
+		$sSettings = json_encode($aFilter);
+	}
+
+	$oRouting->$sConditionField = $sSettings;
+	$oRouting->save();
+
+}
+
+$aFilter = json_decode($oRouting->$sConditionField, true);
+
+if(!is_array($_VARS['iFilter'])) {
+
+	$_VARS['iFilter']	= $aFilter['iFilter'];
+	$_VARS['sFilter']	= $aFilter['sFilter'];
+	$_VARS['iMode']		= $aFilter['iMode'];
+	$_VARS['iOpen']		= $aFilter['iOpen'];
+	$_VARS['iOperator']	= $aFilter['iOperator'];
+	$_VARS['iClose']	= $aFilter['iClose'];
+
+	if (isset($aFilter['iCheckAll'])) {
+		$_VARS['iCheckAll'] = $aFilter['iCheckAll'];
+	} else {
+		$_VARS['iCheckAll'] = [];
+	}
+
+}
+
+$aFields = array();
+
+// Fragen abrufen
+$aQuestions = $oPoll->getQuestions($sLanguage, true);
+
+foreach($aQuestions as $aQuestion) {
+	if ($aQuestion['template'] === 'matrix') {
+		$data = json_decode($aQuestion['data'], true);
+		foreach ($data['questions'] as $aMatrixQuestion) {
+			foreach ($data['answer_groups'] as $aMatrixAnswerGroup) {
+				$aFields['question_'.$aQuestion['id'].'_'.$aMatrixQuestion['key'].'_'.$aMatrixAnswerGroup['key']] = 'Matrix-Frage: '.$aMatrixQuestion['name_german'].' ('.$aMatrixAnswerGroup['name_german'].')';
+			}
+		}
+	} else {
+		$aFields['question_'.$aQuestion['id']] = 'Frage: '.$aQuestion['title'];
+	}
+}
+
+if($oPoll->connect_customer > 0) {
+	$aCustomerFields = (array)CustomerDb\Helper\Functions::getCustomerFields($oPoll->connect_customer);
+
+	foreach($aCustomerFields as $sCustomerFieldKey=>$sCustomerField) {
+		$aFields['customer_'.$sCustomerFieldKey] = 'Login-Information: '. $sCustomerField;
+	}
+
+}
+
+$aOperators = array(
+	1	=> "beinhaltet",
+	2	=> "gleich",
+	3	=> "ungleich",
+	6	=> "größer",
+	7	=> "kleiner",
+	8	=> "nicht leer",
+	#10	=> "innerhalb der letzten X Tage",
+	#11	=> "älter als"
+);
+
+$i=0;
+$aFilter = array();
+$sQueryString = ' ( ';
+foreach((array)$_VARS['iFilter'] as $k => $v) {
+	if(
+		$_VARS['task'] != 'delete' ||
+		!isset($_VARS['condition_key']) ||
+		$_VARS['condition_key'] != $k
+	) {
+		$aFilter[$i] = array(
+			$_VARS['iFilter'][$k],
+			$_VARS['sFilter'][$k],
+			$_VARS['iMode'][$k],
+			$_VARS['iOpen'][$k],
+			$_VARS['iOperator'][$k-1],
+			$_VARS['iClose'][$k],
+			(int)$_VARS['iCheckAll'][$k],
+		);
+
+		// ==================================================
+
+		if($i != 0)
+		{
+			$sQueryString .= ' '. $aFilter[$i][4] .' ';
+		}
+
+		if($aFilter[$i][3] == 1)
+		{
+			$sQueryString .= ' ( ';
+		}
+
+		$aFieldTitleLines = explode(PHP_EOL, $aFields[$aFilter[$i][0]]);
+
+		$sQueryString .= '"'.strip_tags($aFieldTitleLines[0]).'"';
+
+		$sQueryString .= ' '. $aOperators[$aFilter[$i][2]] .' ';
+
+		if($aFilter[$i][1] != '')
+		{
+			$sQueryString .= '"'.$aFilter[$i][1].'"';
+		}
+
+		if($aFilter[$i][5] == 1)
+		{
+			$sQueryString .= ' ) ';
+		}
+
+		// ==================================================
+
+		$i++;
+
+	} else {
+		unset($aFilter[$k]);
+	}
+}
+
+$sQueryString .= ' ) ';
+
+if($_VARS['task'] == "add") {
+	$aFilter[] = array(0,0,0);
+}
+
+$aYesNo = array(0 => 'Nein', 1 => 'Ja');
+
+?>
+
+<div style="padding: 20px;">
+
+	<h2>Bedingungen von "<?=$oRouting->getItemName()?>"</h2>
+
+	<form method="post" name="f3" id="f3" action="<?=$_SERVER['PHP_SELF']?>">
+		<?=printFormHidden('poll_id', (int)$_VARS['poll_id'])?>
+		<?=printFormHidden('item', $_VARS['item'])?>
+		<?=printFormHidden('item_id', (int)$_VARS['item_id'])?>
+		<?=printFormHidden('task', '')?>
+		<?=printFormHidden('condition_key', '')?>
+
+	<? if(isset($_VARS['brace_flag']) && $_VARS['brace_flag'] == 'brace_error') { ?>
+		<div style="color:red;margin-top: 10px;">
+			Fehler! Bitte prüfen Sie die Setzung der Klammern.
+		</div>
+	<? } ?>
+
+	<br/>
+
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+		<tr>
+			<th style="width:10px;">Verknüpfung</th>
+			<th style="width:10px; text-align:center;">(</th>
+			<th>Feld</th>
+			<th>Bedingung</th>
+			<th>Wert</th>
+			<th style="width:10px; text-align:center;">)</th>
+			<th style="width:10px;">&nbsp;</th>
+		</tr>
+<?
+			foreach((array)$aFilter as $iKey => $aValue) {
+
+				$oQuestion = null;
+				if (isset($aValue[0])) {
+					$aFieldInfo = explode('_', $aValue[0]);
+					if($aFieldInfo[0] == 'question') {
+						$oQuestion = Poll\Entity\Question::getInstance($aFieldInfo[1]);
+					}
+				}
+
+?>
+			<tr>
+				<td style="text-align:center;">
+					<? if($iKey != 0) { ?>
+						<select name="iOperator[]" class="txt">
+							<option value="AND" <? if($aValue[4] == 'AND') { ?>selected="selected"<? } ?>>UND</option>
+							<option value="OR" <? if($aValue[4] == 'OR') { ?>selected="selected"<? } ?>>ODER</option>
+						</select>
+					<? } ?>
+				</td>
+				<td>
+					<input type="checkbox" name="iOpen[<?=$iKey?>]" value="1" class="txt" <? if($aValue[3] == 1) { ?>checked="checked"<? } ?> />
+				</td>
+				<td>
+					<select name="iFilter[]" class="txt w250" onchange="document.f3.task.value='edit'; document.f3.submit();">
+						<? foreach($aFields as $mKey => $sValue) { ?>
+							<option value="<?=$mKey?>" <? if($mKey == $aValue[0].'') { ?>selected="selected"<? } ?>><?=$sValue?></option>
+						<? } ?>
+					</select>
+				</td>
+				<td <? if ($oQuestion && $oQuestion->isCheckbox()) { ?>style="display: flex"<? } ?>>
+					<select name="iMode[]" class="txt">
+						<? foreach($aOperators as $mKey => $sValue) { ?>
+							<option value="<?=$mKey?>" <? if($mKey == $aValue[2]) { ?>selected="selected"<? } ?>><?=$sValue?></option>
+						<? } ?>
+					</select>
+					<input type="hidden" name="iCheckAll[<?=$iKey?>]" value="0" />
+					<?
+						if($oQuestion && $oQuestion->isCheckbox()) {
+							?><input type="checkbox" name="iCheckAll[<?=$iKey?>]" value="1" class="txt" title="Alle Werte müssen zutreffen" <? if($aValue[6] == 1) { ?>checked="checked"<? } ?> /><?
+						}
+					?>
+				</td>
+				<td>
+					<?
+						$aFieldOptions = null;
+
+						if(isset($aValue[0]))
+						{
+							$aFieldInfo = explode('_', $aValue[0]);
+
+							if($aFieldInfo[0] == 'question') {
+
+								$oQuestion = Poll\Entity\Question::getInstance($aFieldInfo[1]);
+								if($oQuestion->isOptionField()) {
+
+									$aFieldOptions = $oQuestion->getOptions($sLanguage);
+
+								}
+							}
+
+							if($aFieldOptions !== null)
+							{
+
+								?>
+									<select name="sFilter[]" class="txt">
+										<? foreach($aFieldOptions as $mKey => $mValue) { ?>
+											<option value="<?=$mKey?>" <? if($mKey == $aValue[1]) { ?>selected="selected"<? } ?>><?=$mValue?></option>
+										<? } ?>
+									</select>
+								<?
+							}
+							else
+							{
+								?>
+									<input type="text" name="sFilter[]" value="<?=$aValue[1]?>" class="txt" />
+								<?
+							}
+						}
+					?>
+				</td>
+				<td>
+					<input type="checkbox" name="iClose[<?=$iKey?>]" value="1" class="txt" <? if($aValue[5] == 1) { ?>checked="checked"<? } ?> />
+				</td>
+				<td>
+					<a href="javascript:document.f3.task.value='delete'; document.f3.condition_key.value='<?=$iKey?>'; document.f3.submit();">
+						<img src="/admin/media/delete.png" border="0" align="absmiddle" /></a>
+				</td>
+			</tr>
+		<? } ?>
+		<tr>
+			<th>Abfrage:</th>
+			<th colspan="6"><?=$sQueryString?></th>
+		</tr>
+	</table>
+
+	<p align="right">
+		<button onclick="document.f3.task.value='add'; document.f3.submit();" class="btn">Filter hinzufügen</button>
+		<button onclick="document.f3.task.value='save'; document.f3.submit();" class="btn">Speichern</button>
+	</p>
+
+	</form>
+
+</div>
+
+<?php
+Admin_Html::loadAdminFooter();

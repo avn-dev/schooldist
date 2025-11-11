@@ -1,0 +1,17 @@
+/* 
+    Document   : cancellation_fee.css
+    Created on : 05.08.2011, 14:25:19
+    Author     : Mehmet Durmaz
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+
+.GUIDialogRowInputDiv input.amount {
+    width: 70px;
+}
+
+.GUIDialogRowInputDiv select.fee{
+	width: 150px;
+}
+

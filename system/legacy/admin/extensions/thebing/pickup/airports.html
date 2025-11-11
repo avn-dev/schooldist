@@ -1,0 +1,214 @@
+<?php
+
+require_once(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_pickup_resources_airports");
+
+$oSchool				= Ext_Thebing_Client::getFirstSchool();
+$iSchoolID				= (int)$oSchool->id;
+$aSchools = Ext_Thebing_Client::getSchoolList(true);
+
+$oGui					= new Ext_TC_Gui2(md5('thebing_pickup_resources_airports'), 'Ext_Thebing_Pickup_Service_Gui2_Data');
+
+
+// Datenbasis
+$oGui->setWDBasic('Ext_TS_Transfer_Location');
+//$oGui->setTableData('where', array('idClient' => $user_data['client'], 'idPartnerschool' => $iSchoolID, 'active' => 1));
+//$oGui->setTableData('orderby', array('airport_en' => 'ASC'));
+
+// Listenoptionen
+$oGui->row_icon_status_active = new Ext_Thebing_Pickup_Airport_Gui2_Icon_Active();
+$oGui->column_sortable		= 0;
+$oGui->row_sortable			= 1;
+$oGui->multiple_selection	= 0;
+$oGui->sSection				= 'airports';
+$oGui->i18n_languages = Ext_Thebing_Util::getTranslationLanguages();
+
+// Dialog
+$oDialog						= $oGui->createDialog(L10N::t('Transferort editieren', $oGui->gui_description).' - {short}', L10N::t('Neuen Transferort anlegen', $oGui->gui_description));
+$oDialog->width					= 900;
+$oDialog->height				= 650;
+
+$oDialog->aOptions['section'] = 'airports';
+
+$oDialog->setElement($oDialog->createI18NRow($oGui->t('Name'), [
+	'db_alias' => 'i18n',
+	'db_column'=> 'name',
+	'required' => true,
+	'i18n_parent_column' => 'location_id'
+]));
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Kürzel', $oGui->gui_description), 'input', array('db_alias' => '', 'db_column'=>'short','required' => 1)));
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Schulen'), 'select', [
+	'db_alias' => '',
+	'db_column' => 'schools',
+	'multiple' => 5,
+	'select_options' => $aSchools,
+	'jquery_multiple' => 1,
+	'searchable' => 1,
+	'required' => 1,
+]));
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Adresse', $oGui->gui_description), 'textarea', array('db_alias' => '', 'db_column'=>'address')));
+
+
+// Leiste(n)
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'name','short');
+$oFilter->db_alias		= array('', 'i18n', '');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+$oBar->setElement($oBar->createSeperator());
+
+$oFilter = $oBar->createValidFilter($oGui->t('Gültigkeit'), array('db_alias' => 'ts_tl'));
+$oBar->setElement($oFilter);
+
+$aFilterSchools = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Client::getStaticSchoolListByAccess(false, true), $oGui->t('Schule'));
+$iSelectedSchoolId = Ext_Thebing_School::getSchoolIdFromSession();
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_alias = 'schools';
+$oFilter->db_column = 'school_id';
+$oFilter->value = $iSelectedSchoolId;
+$oFilter->select_options = $aFilterSchools;
+$oBar->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon(L10N::t('Neuer Eintrag', $oGui->gui_description), $oDialog, L10N::t('Neuer Eintrag', $oGui->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon(L10N::t('Editieren', $oGui->gui_description), $oDialog, L10N::t('Editieren', $oGui->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeactivateIcon(L10N::t('Deaktivieren', $oGui->gui_description), L10N::t('Deaktivieren', $oGui->gui_description), array('db_alias' => 'ka'));
+$oBar->setElement($oIcon);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+/*
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+*/
+
+$oGui->addInterfaceLanguageColumn('name', 'i18n', $oGui->t('Name'), true);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'short';
+$oColumn->title = L10N::t('Kürzel', $oGui->gui_description);
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'schools';
+$oColumn->title = $oGui->t('Schulen');
+$oColumn->width = Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->format = new Ext_TC_Gui2_Format_Multiselect($aSchools);
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+
+// ------------------------------ NEUE LISTE ------------------------------------
+
+$oGuiAdditional			= new Ext_TC_Gui2(md5('thebing_pickup_airport_additional'));
+//$iSessionSchoolId = \Core\Handler\SessionHandler::getInstance()->get('sid');
+
+// Datenbasis
+$oGuiAdditional->setWDBasic('Ext_TS_Transfer_Location_Terminal');
+//$oGuiAdditional->setTableData('where', array('idClient' => $user_data['client'], 'idSchool' => $iSessionSchoolId, 'active' => 1));
+$oGuiAdditional->setTableData('limit', 30);
+$oGuiAdditional->setTableData('orderby', array('id' => 'ASC'));
+
+// Listenoptionen
+$oGuiAdditional->gui_description		= 'Thebing » Pickup » Destination';
+$oGuiAdditional->gui_title				= L10N::t('Terminals', $oGuiAdditional->gui_description);
+$oGuiAdditional->column_sortable		= 1;
+$oGuiAdditional->row_sortable			= 0;
+$oGuiAdditional->multiple_selection	= 0;
+$oGuiAdditional->i18n_languages = Ext_Thebing_Util::getTranslationLanguages();
+
+// Dialog
+$oDialog						= $oGuiAdditional->createDialog(L10N::t('Terminal editieren', $oGuiAdditional->gui_description).' - {short}', L10N::t('Neues Terminal anlegen', $oGuiAdditional->gui_description));
+$oDialog->width					= 900;
+$oDialog->height				= 650;
+
+$oDialog->setElement($oDialog->createI18NRow($oGui->t('Name'), [
+	'db_alias' => 'i18n',
+	'db_column'=> 'name',
+	'required' => true,
+	'i18n_parent_column' => 'location_terminal_id'
+]));
+
+$oDialog->setElement($oDialog->createRow(L10N::t('Kürzel', $oGuiAdditional->gui_description), 'input', array('db_alias' => '', 'db_column'=>'short','required' => 1)));
+
+// Leiste(n)
+$oBar					= $oGuiAdditional->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'description', 'short');
+$oFilter->db_alias		= array('', '');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder	= $oGuiAdditional->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGuiAdditional->setBar($oBar);
+
+$oBar			= $oGuiAdditional->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon(L10N::t('Neuer Eintrag', $oGuiAdditional->gui_description), $oDialog, L10N::t('Neuer Eintrag', $oGuiAdditional->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon(L10N::t('Editieren', $oGuiAdditional->gui_description), $oDialog, L10N::t('Editieren', $oGuiAdditional->gui_description));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon(L10N::t('Löschen', $oGuiAdditional->gui_description), L10N::t('Löschen', $oGuiAdditional->gui_description));
+$oBar->setElement($oIcon);
+$oGuiAdditional->setBar($oBar);
+
+$oBar			= $oGuiAdditional->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiAdditional->setBar($oBar);
+
+$oGuiAdditional->addInterfaceLanguageColumn('name', 'i18n', $oGui->t('Name'), true);
+
+$oColumn				= $oGuiAdditional->createColumn();
+$oColumn->db_column		= 'short';
+$oColumn->db_alias		= '';
+$oColumn->title			= L10N::t('Kürzel', $oGuiAdditional->gui_description);
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGuiAdditional->setColumn($oColumn);
+
+$oGuiAdditional->addDefaultColumns();
+
+// Anzeige
+$aOptionalInfo			= array();
+$aOptionalInfo['css'][]	= '/assets/ts/css/gui2.css';
+
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oGuiAdditional, array('hash' => $oGui->hash, 'foreign_key' => 'location_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display($aOptionalInfo);

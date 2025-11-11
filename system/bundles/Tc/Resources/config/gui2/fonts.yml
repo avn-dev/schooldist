@@ -1,0 +1,62 @@
+hash: 61229e37bd2762bba49fb498c207b227
+class:
+  wdbasic: Ext_TC_System_Font
+  data: Ext_TC_System_Font_Gui2_Data
+access: core_admin_templates_fonts
+orderby:
+  - Ext_TC_System_Font_Gui2_Data
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        id: search
+        column:
+          - name
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_System_Font_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_System_Font_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    title: Normal
+    column: font
+    width: name
+  -
+    title: Kursiv
+    column: font_i
+    width: name
+    format: Ext_TC_Gui2_Format_WDBasic
+    format_params: [Ext_TC_System_Font, font]
+  -
+    title: Fett
+    column: font_b
+    width: name
+    format: Ext_TC_Gui2_Format_WDBasic
+    format_params: [Ext_TC_System_Font, font]
+  -
+    title: Fett und Kursiv
+    column: font_bi
+    width: name
+    format: Ext_TC_Gui2_Format_WDBasic
+    format_params: [ Ext_TC_System_Font, font ]

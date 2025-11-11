@@ -1,0 +1,86 @@
+hash: 4c55ecf5a34ff8e5881fb005f78378ab
+class:
+  wdbasic: Ext_Thebing_Client_Inbox
+  data: \Ts\Gui2\Data\Inbox
+  js: AccessMatrixGui
+js:
+  - [js/access_matrix.js, tc]
+access: thebing_admin_inbox
+sortable: true
+only_pagecount: true
+orderby:
+  - \Ts\Gui2\Data\Inbox
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\Inbox
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        column:
+          - id
+          - name
+          - short
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Gültigkeit
+        id: status_filter
+        value: active
+        filter_part: having
+        entries:
+          - \Ts\Gui2\Data\Inbox
+          - getStatusFilterOptions
+        filter_query:
+          active: '`status` = 1'
+          disabled: '`status` = 0'
+        label_as_item: true
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\Inbox
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\Inbox
+          - getDialog
+      -
+        element: icon_delete
+  -
+    position: top
+    last: true
+    elements:
+      -
+        element: icon
+        label: Rechte
+        task: openDialog
+        action: openAccessDialog
+        multipleId: true
+        visible: true
+        active: true
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - access
+columns:
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    title: Snippet Key
+    column: short
+    width: short_name
+    resize: true
+    default: false

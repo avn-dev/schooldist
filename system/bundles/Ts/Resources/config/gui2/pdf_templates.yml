@@ -1,0 +1,130 @@
+hash: afa09a013009f59c123406832d48cee7
+class:
+  wdbasic: Ext_Thebing_Pdf_Template
+  data: Ext_Thebing_Pdf_Template_Gui2
+  js: Templates
+id:
+  column: id
+  alias: kpt
+js:
+  - [gui2/util.js, thebing]
+  - [admin/js/templates.js, thebing]
+access: thebing_admin_template_types
+orderby:
+  - Ext_Thebing_Pdf_Template_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Pdf_Template_Gui2
+  - getWhere
+limit: 30
+limit_selection: false
+multiple_selection: 0
+designer: 
+  flex: pdf_templates
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+        alias:
+          - kpt
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Typen
+        label_as_item: true
+        searchtype: =
+        column:
+          - type
+        alias:
+          - ""
+        entries:
+          - Ext_Thebing_Pdf_Template_Gui2
+          - getTypeSelectOptions
+        id: template_type_id
+      -
+        element: selectfilter
+        label: Schulen
+        label_as_item: true
+        searchtype: =
+        column:
+          - school_id
+        alias:
+          - schools
+        entries:
+          - Ext_Thebing_Pdf_Template_Gui2
+          - getSchoolSelectOptions
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Pdf_Template_Gui2
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Pdf_Template_Gui2
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: kpt
+    width: name
+    resize: true
+  -
+    title: Sprachen
+    column: id
+    alias: kpt
+    width: language
+    format: Ext_Thebing_Gui2_Format_Pdf_ImageList
+    resize: false
+  -
+    title: Layout
+    column: name
+    data: template_type_name
+    alias: kptt
+    width: name
+    resize: false
+  -
+    title: Typ
+    column: type
+    alias: kpt
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Pdf_Template, getApplications]
+    width: name
+    resize: false
+    sortable: false
+  -
+    title: Schulen
+    column: schools
+    alias: kpt
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Pdf_Template_Gui2, getFormatParamsSchools]
+    width: name
+    resize: false
+    order_settings:
+      school_names: ASC
+  -
+    title: Inboxen
+    column: inboxes
+    alias: kpt
+    width: name
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_System, getInboxList, 'use_id', true]
+    order_settings:
+      inboxes: ASC
+    resize: false

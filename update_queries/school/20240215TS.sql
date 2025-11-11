@@ -1,0 +1,1 @@
+ALTER TABLE `ts_activities_blocks` ADD `frontend_min_bookable_days_ahead` TINYINT(3) UNSIGNED NULL DEFAULT NULL AFTER `released_for_app`; 

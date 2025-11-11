@@ -1,0 +1,111 @@
+hash: 1355e64eed64142b0ccedae87ef8f135
+class:
+  wdbasic: Ext_Thebing_Holiday_Holiday
+  data: Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+  row_style: Ext_Thebing_Gui2_Style_Holiday_Row
+access: thebing_marketing_public_holidays
+where:
+  - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+  - getWhere
+orderby:
+  - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+  - getOrderBy
+limit: 30
+limit_selection: false
+multiple_selection: false
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+          - id
+          - name
+        id: search
+        searchtype: LIKE
+     -
+        element: seperator
+     -
+       element: selectfilter
+       label: Jahr
+       label_as_item: true
+       value:
+         - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+         - getYear
+       entries:
+         - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+         - getYears
+       filter_query:
+         - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+         - getFilterQueryYearSelectFilter
+  -  
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Marketing_Gui2_PublicHolidays_Gui2
+          - getDialog
+     -
+        element: icon_delete
+  -
+      position: bottom
+      type: legend
+      elements:
+        -
+          element: legend_label
+          label: Wiederholung
+        -
+          element: legend_info
+          label: jährlich
+          info:
+            color: good
+columns:
+  - 
+    title: Aktiv
+    column: status
+    width: yes_no
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_YesNo
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    alias: ''
+    resize: true
+  - 
+    title: Kommentar
+    column: comment
+    width: name
+    alias: ''
+    resize: true 
+  - 
+    title: Datum
+    column: date
+    width: date
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date 
+  - 
+    title: Schulen
+    column: id
+    width: 250
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Holiday_Schoollist 
+  - 
+    title: Wiederholung
+    column: annual
+    width: 80
+    alias: ''
+    resize: false
+    format: Ext_Thebing_Gui2_Format_YesNo
+    small: true

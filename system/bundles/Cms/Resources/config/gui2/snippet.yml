@@ -1,0 +1,56 @@
+class:
+  wdbasic: Cms\Entity\Snippet
+orderby : 
+  - Cms\Gui2\Dialog\SnippetDialog
+  - getOrderBy
+id:
+  column: id
+  alias: cms_s
+title: "CMS &raquo; Schnipsel"
+description: "CMS"
+access: "page_admin"
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - title
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Cms\Gui2\Dialog\SnippetDialog
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Cms\Gui2\Dialog\SnippetDialog
+            - getEditDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: Titel
+    column: title
+    description: ""
+    resize: true
+    width: name
+  -
+    title: Platzhalter
+    column: placeholder
+    description: ""
+    width: name

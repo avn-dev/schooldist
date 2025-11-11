@@ -1,0 +1,59 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+accesschecker('thebing_management_reports_booking_export_per_course');
+
+if(
+	isset($_VARS['task']) &&
+	$_VARS['task'] === 'export'
+) {
+	$oSchool = Ext_Thebing_School::getInstance($_VARS['school_id']);
+	$oExport = new Ext_Thebing_Management_Statistic_Static_BookingExportPerCourse($oSchool, $_VARS['year']);
+	$oExport->getExport();
+
+	die;
+}
+
+Admin_Html::loadAdminHeader("", 0, "", "UTF-8", 0);
+
+?>
+
+<div class="divHeader">
+	<h1><?= Ext_TS_System_Navigation::t() ?></h1>
+</div>
+
+<div style="padding: 30px;">
+	<form>
+		<input type="hidden" name="task" value="export"/>
+
+		<label><?= L10N::t('Schule') ?></label>
+		<select name="school_id">
+			<?
+			$aSchool = Ext_Thebing_Client::getSchoolList(true);
+			foreach($aSchool as $iSchool => $sSchool) {
+				$sDefault = $_VARS['school_id'] == $iSchool ? 'selected' : '';
+				echo '<option value="' . $iSchool . '" '.$sDefault.'>' . $sSchool . '</option>';
+			}
+			?>
+		</select>
+
+		<label><?= L10N::t('Jahr') ?></label>
+		<select name="year">
+			<?
+			$aYears = Ext_Thebing_Management_Statistic_Static_BookingExportPerCourse::getJourneyCourseYears();
+			sort($aYears);
+			foreach($aYears as $iYear) {
+				$sDefault = $_VARS['year'] == $iYear ? 'selected' : '';
+				echo '<option value="'.$iYear.'" '.$sDefault.'>'.$iYear.'</option>';
+			}
+			?>
+		</select>
+
+		<input type="submit" value="<?= L10N::t('Exportieren') ?>"/>
+	</form>
+</div>
+
+<?php
+
+Admin_Html::loadAdminFooter();

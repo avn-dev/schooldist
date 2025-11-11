@@ -1,0 +1,2741 @@
+# Sets:
+#
+# list: Release
+# dialog: Release » Release Dialog
+# invoice: Overview
+# print_dialog_inner: Overview » Print Dialog
+# inquiry_invoice: inquiry_document.yml / Bookings Invoices / Enquiries Offers
+# additional_document: inquiry_document.yml / Bookings Invoices / Enquiries Offers
+# booking_stack_clear_dialog: booking_stack_clear_dialog.yml / Booking stack » Clean up booking stack
+# proforma: document_proforma.yml » Convert proforma
+#
+
+hook: ts_document_gui2_hook
+class:
+  wdbasic: Ext_Thebing_Inquiry_Document
+  data: Ext_Thebing_Accounting_Gui2_Overview
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+  js: DocumentRelease # nötig für print dialog ID problematic
+  icon_status: Ext_TS_Document_Gui2_Icon_Active
+description: "Thebing » Inquiry » Documents"
+access: ""
+hash: e15b20f36e95f15cd137f4300cee6b2b
+multiple_selection: true
+title: ""
+where:
+  - Ext_Thebing_Document_Gui2
+  - getListWhere
+orderby:
+  - Ext_Thebing_Document_Gui2
+  - getOrderby
+designer: 
+  filter: ts_document
+index:
+  registry: 
+    generate: true 
+  name : ts_document
+  where:
+    - Ext_Thebing_Document_Gui2
+    - getIndexWhere
+  priority:
+    Ext_Thebing_Inquiry_Document: 0
+    Ext_Thebing_Inquiry_Document_Version: 0
+    Ext_Thebing_Inquiry_Document_Version_Item: 0
+    # Auf 1 gesetzt, da beim Speichern einer Buchung Dokumente nicht unbedingt sofort mit aktualisiert werden müssten
+    # Vor allem aber Bezahlbelege beim Speichern einer Zahlung nicht
+    Ext_TS_Inquiry: 1
+    Ext_Thebing_Inquiry_Document_Version_Field: 0
+    Ext_Thebing_Inquiry_Document_Version_Price: 0
+pagination: true
+export: true
+sidebar: true
+bars:
+  - 
+    position: top
+    set: [invoice]
+    elements:
+      -
+        element: icon
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - print
+        task: openDialog
+        action: print_invoice
+        active: 0
+        label: Rechnungen drucken
+        multipleId: 1
+      -
+        element: icon
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - table_go
+        task: requestAsUrl
+        action: extended_export
+        access: thebing_accounting_extended_invoice_export
+        active: 0
+        label: Erweiterter Export
+        multipleId: 1
+      -
+        element: icon
+        img: fa-file-archive-o
+        task: requestAsUrl
+        action: zipExport
+        access: thebing_accounting_extended_invoice_export
+        active: 0
+        label: ZIP-Export
+        multipleId: 1
+      -
+        element: icon_communication
+        application: invoice
+  - 
+      position: bottom
+      set: [invoice]
+      type: legend
+      elements: 
+        - 
+          element: legend_label
+          label: Zahlung
+        - 
+          element: legend_info
+          label: eingegangen
+          info:
+            color: [soft_green, 30]
+            background: true
+        - 
+          element: legend_info
+          label: vollständig
+          info:
+            color: lightgreen
+            background: true
+        - 
+          element: legend_info
+          label: nicht erfolgt
+          info:
+            color: red
+            background: true   
+        - 
+          element: legend_label
+          label: Druck 
+        - 
+          element: legend_info
+          label: gedruckt
+          info:
+            color: good
+            background: true
+        - 
+          element: legend_info
+          label: alte Version gedruckt
+          info:
+            color: neutral
+            background: true
+columns:
+  -
+    column: id
+    visible: true
+    title: ID
+    index:
+      call:
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  ## Nicht sichtbare Felder
+  -
+    column: draft
+    visible: false
+    index:
+      call:
+        - draft
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    column: version_id
+    visible: false
+    index:
+      call:
+        - getLastVersion()
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    column: entity
+    visible: false
+    index:
+      call:
+        - entity
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: entity_id
+    visible: false
+    index:
+      call:
+        - entity_id
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    column: inquiry_id
+    visible: false
+    index:
+      call:
+        - getInquiry()
+        - getId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    column: group_id # Notwendig für Proforma-Liste, da Gruppe + individuell nicht zusammen gewählt werden können
+    index:
+      call:
+         - getInquiry()
+         - getGroup()
+         - id
+      mapping:
+        index: false
+        type: integer
+  -
+    column: is_last_document
+    visible: false
+    index:
+      call:
+        - isLastInquiryDocument()
+      mapping:
+        index: false
+        type: boolean
+  -
+    column: school_id
+    visible: false
+    access: all_school
+    title: Schule
+    set: [list, invoice]
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Client
+        - getStaticSchoolListByAccess
+        - true
+    index:
+      call:
+        - getSchoolId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    # Filter für Recht: thebing_gui_document_areas
+    column: gui2_list
+    visible: false
+    title: GUI2-Liste
+    index:
+      call:
+        - getGUINameAndSet()
+      mapping:
+        index: not_analyzed
+        type: keyword
+        null_value: no_allocation
+  -
+    visible: false
+    title: Proforma/Rechnung
+    set: [invoice]
+    column: is_invoice
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Accounting_Gui2_Overview
+        - getProformaFilterOptions
+    index:
+      call: 
+         - isInvoice()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    visible: false
+    set: [invoice, list]
+    title: Zahlungsstatus
+    column: filter_payment_status
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getPaymentTypeOptions
+      wdsearch:
+        open: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, open, ts_document]
+        due: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, due, ts_document]
+        prepayed: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, prepayed, ts_document]
+        payed: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, payed, ts_document]
+        open_and_overpayed: [Ext_TS_Inquiry_Index_Gui2_Data, getPaymentTypeFilterOptionQuery, open_and_overpayed, ts_document]
+    index:
+      add_field: false
+  -
+    column: document_date_original
+    visible: false
+    title: Dokumentendatum
+    set: [list, invoice]
+    filterset: 
+      type: date 
+    index:
+      call:
+        - [getLastVersionDateField(), 'date']
+      mapping:
+        index: not_analyzed
+        type: date
+  -
+    visible: false
+    column: inquiry_cancelled
+    title: Buchung storniert
+    set: [list, invoice]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Accounting_Gui2_Overview
+        - getCancellationFilterOptions
+    index:
+      call:
+        - getInquiry()
+        - isCancelled()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    column: release_date
+    visible: false
+    title: Freigabedatum
+    set: [list, invoice]
+    filterset: 
+      type: date 
+    index:
+      call:
+        - [getReleaseTime(), DB_DATE]
+      mapping:
+        index: not_analyzed
+        type: date
+  -
+    column: service_from
+    visible: false
+    title: Leistungsbeginn
+    format: Ext_TS_Document_Release_Gui2_Format_TimeFrame
+    index:
+      call:
+        - [getServiceDate(), from]
+      add_original: true
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    column: service_until
+    visible: false
+    title: Leistungsende
+    format: Ext_TS_Document_Release_Gui2_Format_TimeFrame
+    index:
+      call:
+        - [getServiceDate(), until]
+      add_original: true
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    column: service_timerange
+    visible: false
+    title: Leistungszeitraum
+    set: [list, invoice, proforma]
+    filterset: 
+      type: date 
+      from_column: service_from_original
+      until_column: service_until_original
+      search_type: contact
+    index:
+      add_field: false
+  -
+    column: service_from_filter
+    visible: false
+    title: Leistungbeginn
+    set: [list, invoice]
+    filterset: 
+      type: date 
+      from_column: service_from_original
+      until_column: service_from_original
+      search_type: contact
+    index:
+      add_field: false
+  -
+    column: is_released
+    visible: false
+    title: Freigabefilter
+    set: [list, invoice]
+    filterset: 
+      type: select
+      options: 
+        - Ext_TS_Document_Release_Gui2_Data
+        - getIsReleasedFilterOptions
+      default: not_released
+    index:
+      call:
+        - isReleasedForIndex()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    # Fake-Doc-Type mit weiteren Werten (Array!)
+    column: type_status
+    visible: false
+    title: Dokument-Typ (Filter)
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Document_Release_Gui2_Data
+        - getTypeFilterOptions
+    index:
+      call:
+        - getTypeForIndex()
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: false
+    set: [invoice]
+    title: Gruppen
+    column: inquiry_has_group
+    width: name
+    seperator: none
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+    index:
+      call:
+        - getInquiry()
+        - hasGroup()
+      mapping:
+        index: not_analyzed
+        type: boolean
+  -
+    column: template_type # Wird in ES-Querys benutzt
+    visible: false
+    title: Template-Art
+    index:
+      call:
+        - getTemplateType()
+      mapping:
+        index: true
+        type: keyword
+  -
+    column: template_inboxes
+    visible: false
+    title: Zugewiesene Inboxen des Templates
+    seperator: none
+    index:
+      call:
+        - getTemplateInboxes()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    column: currency_id
+    visible: false
+    title: Währung
+    set: [list, invoice]
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_System
+        - getCurrencyList
+    index:
+      call:
+        - getCurrencyId()
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    column: booking_type
+    visible: false
+    title: Buchungstyp
+    set: [list, invoice]
+    filterset: 
+      type: select 
+      options: 
+        - Ext_TS_Document_Release_Gui2_Data
+        - getBookingTypes
+    index:
+      call:
+        - getBookingType()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: inbox
+    visible: false
+    title: Inbox
+    set: [list, invoice]
+    filterset: 
+      type: select 
+      options:
+        - Ext_Thebing_System
+        - getInboxList
+        - true
+        - true
+    index:
+      call:
+        - getInbox()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: filter_addressee
+    visible: false
+    title: Adressat
+    set: [list, invoice]
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Document_Address
+        - getLabels
+    index:
+      call:
+        - getLastVersion()
+        - getAddressType()
+      mapping:
+        index: true
+        type: keyword
+  -
+    visible: false
+    title: Zahlungsbelegnummer
+    set: [list, invoice]
+    column: filter_paymentnumber
+    width: name
+    filterset: 
+      type: input
+    index:
+      call:
+         - getInquiry()
+         - [getDocuments(), [receipt_customer, receipt_agency, document_payment_customer, document_payment_agency, document_payment_overview_agency, document_payment_overview_customer], true, true]
+         - document_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    # TODO Wofür ist das?
+    column: document_number_formatted
+    visible: false
+    title: Dok. Nr.
+    format: Ext_TS_Document_Release_Gui2_Format_DocNumber
+    format_params: 
+      - document_number
+      - true
+    width: document_number
+    resize: false
+    set: [list, dialog, inquiry_invoice, invoice, print_dialog_inner, booking_stack_clear_dialog]
+    index:
+      call:
+        - document_number
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    column: is_converted
+    visible: false
+    index:
+      call:
+        - isConvertedProforma()
+      mapping:
+        type: boolean
+  -
+    visible: false
+    set: [invoice]
+    title: Gruppenname
+    column: group_name
+    filterset:
+      type: input
+    index:
+      call:
+         - getInquiry()
+         - getGroup()
+         - getName()
+      mapping:
+        index: analyzed
+        type: string
+        analyzer: lowercase_whitespace
+  -
+    #    Die Spalte "Kurse" gibt es schon, aber durch die Units am Ende ist der Wert eine Mischung aus Journey_Course und Course
+    #    und das Formartieren und Filtern klappt beides nicht wirklich mit der Spalte also hier nochmal nur Filter.
+    visible: false
+    set: [ invoice, proforma, list]
+    title: Kurs
+    column: course
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Journey_Course_Gui2_Data
+        - getCourseList
+    index:
+#      "add_original: true" obwohl keine Formatklasse angegeben ist, weil automatisch formartiert wird, durch die mehreren
+#      Werte bei "call:"
+      add_original: true
+      call:
+        - getInquiry()
+        - getCourses()
+        - course_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  -
+    visible: false
+    set: [ invoice, proforma, list ]
+    title: Kurskategorie
+    column: course_categories
+    width: name
+    unique_values: false
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCourseCategories
+    index:
+#      "add_original: true" obwohl keine Formatklasse angegeben ist, weil automatisch formartiert wird, durch die mehreren
+#      Werte bei "call:"
+      add_original: true
+      call:
+        - getInquiry()
+        - getCourses()
+        - getCourse()
+        - category_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: string
+  ## sichtbare Felder
+  -
+    # add_original funktioniert bei document_number wegen dem blöden Tooltip nicht
+    column: document_number_original
+    visible: false
+    title: Dokumentennummer
+    filterset:
+      type: input
+    index:
+      call:
+        - document_number
+      mapping:
+        index: true
+        type: keyword
+  -
+    column: document_number
+    visible: true
+    title: Dok. Nr.
+    format: Ext_TS_Document_Release_Gui2_Format_DocNumber
+    format_params: 
+      - document_number_formatted
+      - true
+      - 15
+    width: number
+    resize: false
+    set: [list, invoice, dialog, inquiry_invoice, print_dialog_inner, booking_stack_clear_dialog, proforma]
+    filterset: 
+      type: input 
+    index:
+      add_original: false
+      call:
+        - document_number
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    # Originaler Doc-Typ aus der DB (kein Array); siehe ansonsten type_status
+    column: type_original
+    visible: true
+    title: Dok. Typ
+    post_format: Ext_TS_Document_Release_Gui2_Format_DocType
+    width: comment
+    set: [list, invoice, inquiry_invoice, additional_document, booking_stack_clear_dialog, proforma]
+    resize: true
+    index:
+      call:
+        - type
+      mapping:
+        index: true
+        type: keyword
+  -
+    column: document_date
+    sortable_column: document_date_original
+    visible: true
+    title: Dokumentendatum
+    set: [list, invoice, proforma]
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getLastVersionDateField(), 'date']
+      mapping:
+        index: no
+        type: string
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [list, invoice, proforma]
+    column: inbox_visible
+    title: Inbox
+    default: false
+    width: short_name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_System, getInboxListForSelect, false, false]
+    index:
+      call:
+        - getInbox()
+      mapping:
+        index: false
+        type: keyword    
+  -
+    visible: true
+    set: [list, invoice, proforma]
+    title: Buchungsnummer
+    column: booking_number
+    width: number
+    default: false
+    filterset:
+      type: input
+    index:
+      call:
+        - getInquiry()
+        - number
+      mapping:
+        index: true
+        type: keyword
+  -
+    column: addressee
+    group: Persönliche Daten
+    visible: true
+    title: Adressaten
+    width: long_description
+    set: [list, invoice, proforma]
+    resize: false
+    seperator: none
+    post_format: Ext_TS_Document_Release_Gui2_Format_Addressee
+    index:
+      call:
+        - getLastVersion()
+        - getAddressee()
+      mapping:
+        index: no
+        type: keyword
+  -
+    column: addressee_email
+    group: Persönliche Daten
+    visible: true
+    default: false
+    title: Adressat - E-Mail
+    width: long_description
+    set: [list, invoice, proforma]
+    resize: false
+    seperator: none
+    index:
+      call:
+        - getLastVersion()
+        - getAddresseeEmail()
+      mapping:
+        index: no
+        type: keyword
+  -
+    visible: true
+    group: Persönliche Daten
+    set: [invoice, proforma]
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    column: group
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params: group_name
+    filterset:
+      type: input
+    index:
+      call:
+         - getInquiry()
+         - getGroupShortName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    group: Persönliche Daten
+    set: [list, dialog, invoice, print_dialog_inner, booking_stack_clear_dialog, proforma]
+    title: Name
+    column: customer_name
+    width: name
+    resize: true
+    filterset: 
+      type: input 
+    index:
+      call: 
+         - getInquiry()
+         - getFirstTraveller()
+         - getName()
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    column: contact_lastname
+    visible: true
+    group: Persönliche Daten
+    default: false
+    title: Nachname
+    width: name
+    resize: false
+    set: [list, invoice, print_dialog_inner]
+    filterset: 
+      type: input 
+    index:
+      call:
+        - getInquiry()
+        - getFirstTraveller()
+        - lastname
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    column: contact_firstname
+    visible: true
+    default: false
+    group: Persönliche Daten
+    title: Vorname
+    width: name
+    set: [list, invoice]
+    resize: false
+    filterset: 
+      type: input 
+    index:
+      call:
+        - getInquiry()
+        - getFirstTraveller()
+        - firstname
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    visible: true
+    group: Persönliche Daten
+    set: [list, invoice]
+    default: false
+    title: Schule
+    column: school_name
+    access: all_school
+    index:
+      call:
+        - getSchool()
+        - getName()
+      mapping:
+        index: false
+        type: keyword
+  -
+    column: customer_number
+    visible: true
+    group: Persönliche Daten
+    title: Kundennummer
+    width: customer_number
+    resize: false
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params: 
+      - customer_number
+      - true
+    set: [list, dialog, invoice, print_dialog_inner, booking_stack_clear_dialog, proforma]
+    filterset: 
+      type: input 
+    index:
+      call:
+        - getInquiry()
+        - getFirstTraveller()
+        - getCustomerNumber()
+      mapping:
+        index: true
+        type: keyword # Sortierung für BS-Bereinigung (fielddate-Exception)
+        #analyzer: lowercase_whitespace
+  -
+    visible: true
+    group: Persönliche Daten
+    set: [invoice, proforma, list]
+    title: Status
+    column: customer_status
+    sortable_column: customer_status
+    width: name
+    resize: true 
+    format: Ext_Thebing_Gui2_Format_CustomerStatus
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCustomerStatusOptions
+    index:
+      add_original: true
+      call:
+         - getInquiry()
+         - status_id
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    set: [invoice]
+    title: Alter
+    group: Persönliche Daten
+    column: customer_age
+    width: date
+    default: false
+    format: Ext_TC_Gui2_Format_Age
+    index:
+      add_original: true
+      call:
+        - getInquiry()
+        - getFirstTravellerBirthday()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    set: [invoice]
+    title: Lektionen
+    group: Persönliche Daten
+    column: course_units
+    width: name
+    default: false
+    unique_values: false
+    format: Ext_Thebing_Gui2_Format_Float
+    format_params:
+      - 2
+      - false
+    index:
+      call:
+        - getInquiry()
+        - getCourseUnits()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    visible: true
+    column: sponsored
+    title: Sponsoring
+    sortable_column: sponsored_original
+    set: [invoice]
+    group: Persönliche Daten
+    default: false
+    width: yes_no
+    post_format: Ext_TC_Gui2_Format_YesNo
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+        - true
+    index:
+      add_original: true
+      call:
+        - getInquiry()
+        - sponsored
+      mapping:
+        index: true
+        type: keyword
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    column: agency_id
+    visible: false
+    title: Agentur
+    set: [list, invoice, booking_stack_clear_dialog, proforma]
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Abstract
+        - getAgenciesForSelect
+    index:
+      call:
+        - getAgency()
+        - id
+      mapping:
+        index: true
+        type: integer
+  -
+    column: agency_name
+    visible: true
+    group: Agentur
+    title: Agentur
+    width: short_name
+    resize: false
+    set: [list, invoice, booking_stack_clear_dialog, proforma]
+    filterset: 
+      type: input 
+    index:
+      call:
+        - getAgency()
+        - ext_2
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    column: agency_name_full
+    visible: true
+    group: Agentur
+    default: false
+    title: Agenturname
+    width: name
+    resize: false
+    set: [list, invoice, booking_stack_clear_dialog, proforma]
+    filterset: 
+      type: input 
+    index:
+      call:
+        - getAgency()
+        - ext_1
+      mapping:
+        index: true
+        type: text
+        analyzer: lowercase_whitespace
+  -
+    column: agency_number
+    visible: true
+    group: Agentur
+    title: Agenturnummer
+    width: number
+    set: [list, invoice, proforma]
+    resize: false
+    default: false
+    index:
+      call:
+        - getAgency()
+        - getNumber()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    group: Rechnung
+    set: [list, invoice]
+    default: false
+    title: Währung
+    column: currency_name
+    index:
+      call:
+        - getCurrency()
+        - getSign()
+      mapping:
+        index: false
+        type: keyword
+  -
+    visible: true
+    group: Rechnung
+    column: amount_total
+    title: Betrag
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    sortable_column: amount_total_original
+    width: amount
+    set: [list, inquiry_invoice, invoice, booking_stack_clear_dialog, dialog, proforma]
+    resize: false
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    index:
+      call:
+        - getAmountForIndex()
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: true
+        type: float
+  -
+    column: amount_before_arrival # Abhängigkeit in IH Nice-Hook
+    sortable_column: amount_before_arrival_original
+    visible: true
+    group: Rechnung
+    title: Betrag vor Anreise
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [invoice]
+    resize: false
+    index:
+      add_original: true
+      call:
+        - [getAmount(), true, false]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_payed_before_arrival
+    sortable_column: amount_payed_before_arrival_original
+    visible: true
+    group: Rechnung
+    title: Betrag vor Anreise bezahlt
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [invoice]
+    resize: false
+    index:
+      add_original: true
+      call:
+        - [getPayedAmount(), 0, 1]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_open_before_arrival
+    sortable_column: amount_open_before_arrival_original
+    visible: true
+    group: Rechnung
+    title: Betrag vor Anreise offen
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [invoice]
+    resize: false
+    index:
+      add_original: true
+      call:
+        - [getOpenAmount(), 1]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_at_school
+    sortable_column: amount_at_school_original
+    visible: true
+    group: Rechnung
+    title: Betrag vor Ort
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [invoice]
+    resize: false
+    index:
+      add_original: true
+      call:
+        - [getAmount(), false, true]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_payed_at_school
+    sortable_column: amount_payed_at_school_original
+    visible: true
+    group: Rechnung
+    title: Betrag vor Ort bezahlt
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [invoice]
+    resize: false
+    index:
+      add_original: true
+      call:
+        - [getPayedAmount(), 0, 2]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_open_at_school
+    sortable_column: amount_open_at_school_original
+    visible: true
+    group: Rechnung
+    title: Betrag vor Ort offen
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [invoice]
+    resize: false
+    index:
+      add_original: true
+      call:
+        - [getOpenAmount(), 2]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    group: Rechnung
+    column: amount_payed
+    sortable_column: amount_payed_original
+    title: Bezahlter Betrag gesamt
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [list, invoice]
+    index:
+      add_original: true
+      call:
+        # Anmerkung: CN-Beträge werden hier umgedreht (wichtig für Style-Klassen)
+        - [getPayedAmountForIndex()]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    group: Rechnung
+    column: amount_open
+    sortable_column: amount_open_original
+    title: Offener Betrag gesamt
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Amount
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    width: amount
+    set: [list, invoice]
+    index:
+      add_original: true
+      call:
+        - [getOpenAmount()]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: true
+        type: float
+  -
+    visible: true
+    group: Rechnung
+    column: paymentterms_info
+    set: [list, invoice]
+    title: Erwartete Zahlungen
+    format: Ext_TS_Inquiry_Index_Gui2_Format_PaymentTermTooltip
+    format_params:
+      - paymentterms_info
+      - true
+      - 10
+      - true
+    sortable: false
+    width: date
+    index:
+      add_original: true
+      call:
+        - getLastVersion()
+        - getIndexPaymentTermOverview()
+      mapping:
+        index: no
+        type: string
+      mapping_original:
+        index: no
+        type: string
+  -
+    visible: true
+    group: Rechnung
+    column: paymentterms_next_date
+    sortable_column: paymentterms_next_date_original
+    set: [list, invoice]
+    title: Nächste Zahlung (Datum)
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    index:
+      add_original: true
+      call:
+        - getLastVersion()
+        - [getIndexPaymentTermData(), paymentterms_next_payment_date]
+      mapping:
+        index: no
+        type: string
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Rechnung
+    column: paymentterms_next_amount
+    sortable_column: paymentterms_next_amount_original
+    set: [list, invoice]
+    title: Nächste Zahlung (Betrag)
+    width: date
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    index:
+      add_original: true
+      call:
+        - getLastVersion()
+        - [getIndexPaymentTermData(), paymentterms_next_payment_amount]
+      mapping:
+        index: no
+        type: string
+      mapping_original:
+        index: true
+        type: float
+  -
+    column: pdf_path
+    visible: true
+    group: Rechnung
+    title: PDF
+    format: Ext_TS_Document_Release_Gui2_Format_Pdf
+    sortable: false
+    width: icon
+    set: [list, inquiry_invoice, invoice, additional_document, proforma]
+    resize: false
+    index:
+      call:
+        - getLastVersion()
+        - path
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: released_student_login
+    access: thebing_release_documents_sl
+    title: SL
+    description: Schüler-Portal
+    visible: true
+    inplace_editor: true
+    inplaceEditorStart: true
+    db_type: tinyint
+    width: icon
+    set: [invoice, inquiry_invoice, additional_document]
+    resize: false
+    style: Ext_TS_Document_Gui2_Style_AppCheckbox
+    index:
+      call:
+        - released_student_login
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    column: released
+    visible: true
+    group: Rechnung
+    title: Freigegeben
+    format: Ext_TS_Document_Release_Gui2_Format_DateUser
+    style: \TsAccounting\Gui2\Style\Released
+    width: date_user
+    set: [list, inquiry_invoice]
+    index:
+      call:
+        - getReleaseTime()
+      mapping:
+        index: false
+        type: keyword
+  -
+    column: comment
+    visible: true
+    title: Kommentar
+    width: comment
+    set: [inquiry_invoice, additional_document]
+    resize: false
+    index:
+      call:
+        - getLastVersion()
+        - comment
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_path
+    visible: true
+    group: Agenturgutschrift
+    title: PDF
+    width: icon
+    set: [inquiry_invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Pdf
+    index:
+      call:
+        - getCreditNote()
+        - getLastVersion()
+        - path
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_number
+    visible: true
+    group: Agenturgutschrift
+    title: Nummer
+    format: Ext_TS_Document_Release_Gui2_Format_DocNumber
+    format_params:
+      - ''
+    width: document_number
+    set: [inquiry_invoice]
+    resize: false
+    index:
+      call:
+        - getCreditNote()
+        - document_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_document_id
+    visible: true
+    group: Agenturgutschrift
+    title: Betrag
+    width: amount
+    set: [inquiry_invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    index:
+      call:
+        - getCreditNote()
+        - [getAmountForIndex(), true]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_released
+    data: cn_released
+    visible: true
+    group: Agenturgutschrift
+    title: Freigegeben
+    format: Ext_TS_Document_Release_Gui2_Format_DateUser
+    format_params:
+      - true
+    style: \TsAccounting\Gui2\Style\Released
+    width: date_user
+    set: [inquiry_invoice]
+    resize: false
+    index:
+      call:
+        - getCreditNote()
+        - getReleaseTime()
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    column: cn_subagency_path
+    visible: true
+    default: false
+    group: Unteragenturgutschrift
+    title: PDF
+    width: icon
+    set: [inquiry_invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Pdf
+    index:
+      call:
+        - getCreditNoteSubAgency()
+        - getLastVersion()
+        - path
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_subagency_number
+    visible: true
+    default: false
+    group: Unteragenturgutschrift
+    title: Nummer
+    width: document_number
+    set: [inquiry_invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_DocNumber
+    format_params:
+      - ''
+    index:
+      call:
+        - getCreditNoteSubAgency()
+        - document_number
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_subagency_document_id
+    visible: true
+    default: false
+    group: Unteragenturgutschrift
+    title: Betrag
+    width: amount
+    set: [inquiry_invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    index:
+      call:
+        - getCreditNoteSubAgency()
+        - [getAmountForIndex(), true]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: cn_subagency_released
+    data: cn_released
+    visible: true
+    default: false
+    group: Unteragenturgutschrift
+    title: Freigegeben
+    format: Ext_TS_Document_Release_Gui2_Format_DateUser
+    format_params:
+      - true
+    style: \TsAccounting\Gui2\Style\Released
+    width: date_user
+    set: [inquiry_invoice]
+    resize: false
+    index:
+      call:
+        - getCreditNoteSubAgency()
+        - getReleaseTime()
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: integer
+  -
+    column: amount_course
+    sortable_column: amount_course_original
+    visible: true
+    group: Kurs
+    title: Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), course, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_course_commission
+    sortable_column: amount_course_commission_original
+    visible: true
+    group: Kurs
+    title: Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), course, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_course_discount
+    sortable_column: amount_course_discount_original
+    visible: true
+    group: Kurs
+    title: Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), course, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_course_open
+    sortable_column: amount_course_open_original
+    visible: true
+    group: Kurs
+    title: Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), course, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_course
+    sortable_column: amount_additional_course_original
+    visible: true
+    group: Kurs
+    title: Zus. Kursgebühren - Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_course, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_course_commission
+    sortable_column: amount_additional_course_commission_original
+    visible: true
+    group: Kurs
+    title: Zus. Kursgebühren - Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_course, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_course_discount
+    sortable_column: amount_additional_course_discount_original
+    visible: true
+    group: Kurs
+    title: Zus. Kursgebühren - Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_course, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_course_open
+    sortable_column: amount_additional_course_open_original
+    visible: true
+    group: Kurs
+    title: Zus. Kursgebühren - Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_course, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_accommodation
+    sortable_column: amount_accommodation_original
+    visible: true
+    group: Unterkunft
+    title: Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), accommodation, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_accommodation_commission
+    sortable_column: amount_accommodation_commission_original
+    visible: true
+    group: Unterkunft
+    title: Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), accommodation, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_accommodation_discount
+    sortable_column: amount_accommodation_discount_original
+    visible: true
+    group: Unterkunft
+    title: Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), accommodation, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_accommodation_open
+    sortable_column: amount_accommodation_open_original
+    visible: true
+    group: Unterkunft
+    title: Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), accommodation, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_accommodation
+    sortable_column: amount_additional_accommodation_original
+    visible: true
+    group: Unterkunft
+    title: Zus. Unterkunftsgebühren - Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_accommodation, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_accommodation_commission
+    sortable_column: amount_additional_accommodation_commission_original
+    visible: true
+    group: Unterkunft
+    title: Zus. Unterkunftsgebühren - Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_accommodation, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_accommodation_discount
+    sortable_column: amount_additional_accommodation_discount_original
+    visible: true
+    group: Unterkunft
+    title: Zus. Unterkunftsgebühren - Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_accommodation, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_accommodation_open
+    sortable_column: amount_additional_accommodation_open_original
+    visible: true
+    group: Unterkunft
+    title: Zus. Unterkunftsgebühren - Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_accommodation, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_transfer
+    sortable_column: amount_transfer_original
+    visible: true
+    group: Transfer
+    title: Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), transfer, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_transfer_commission
+    sortable_column: amount_transfer_commission_original
+    visible: true
+    group: Transfer
+    title: Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), transfer, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_transfer_discount
+    sortable_column: amount_transfer_discount_original
+    visible: true
+    group: Transfer
+    title: Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), transfer, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_transfer_open
+    sortable_column: amount_transfer_open_original
+    visible: true
+    group: Transfer
+    title: Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), transfer, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_insurance
+    sortable_column: amount_insurance_original
+    visible: true
+    group: Versicherung
+    title: Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), insurance, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_insurance_commission
+    sortable_column: amount_insurance_commission_original
+    visible: true
+    group: Versicherung
+    title: Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), insurance, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_insurance_discount
+    sortable_column: amount_insurance_discount_original
+    visible: true
+    group: Versicherung
+    title: Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), insurance, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_insurance_open
+    sortable_column: amount_insurance_open_original
+    visible: true
+    group: Versicherung
+    title: Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), insurance, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_activity
+    sortable_column: amount_activity_original
+    visible: true
+    group: Aktivität
+    title: Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), activity, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_activity_commission
+    sortable_column: amount_activity_commission_original
+    visible: true
+    group: Aktivität
+    title: Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), activity, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_activity_discount
+    sortable_column: amount_activity_discount_original
+    visible: true
+    group: Aktivität
+    title: Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), activity, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_activity_open
+    sortable_column: amount_activity_open_original
+    visible: true
+    group: Aktivität
+    title: Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), activity, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_general
+    sortable_column: amount_additional_general_original
+    visible: true
+    group: Rechnung
+    title: Generelle Gebühren - Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_general, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_general_commission
+    sortable_column: amount_additional_general_commission_original
+    visible: true
+    group: Rechnung
+    title: Generelle Gebühren - Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_general, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_general_discount
+    sortable_column: amount_additional_general_discount_original
+    visible: true
+    group: Rechnung
+    title: Generelle Gebühren - Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_general, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_additional_general_open
+    sortable_column: amount_additional_general_open_original
+    visible: true
+    group: Rechnung
+    title: Generelle Gebühren - Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), additional_general, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+        
+  -
+    column: amount_manual_positions
+    sortable_column: amount_manual_positions_original
+    visible: true
+    group: Rechnung
+    title: Manuelle Positionen - Total
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), extraPosition, gross]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_manual_positions_commission
+    sortable_column: amount_manual_positions_commission_original
+    visible: true
+    group: Rechnung
+    title: Manuelle Positionen - Provision
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), extraPosition, commission]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_manual_positions_discount
+    sortable_column: amount_manual_positions_discount_original
+    visible: true
+    group: Rechnung
+    title: Manuelle Positionen - Rabatt
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), extraPosition, discount]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: amount_manual_positions_open
+    sortable_column: amount_manual_positions_open_original
+    visible: true
+    group: Rechnung
+    title: Manuelle Positionen - Offen
+    width: amount
+    set: [invoice]
+    resize: false
+    format: Ext_TS_Document_Release_Gui2_Format_Amount
+    default: false
+    index:
+      add_original: true
+      call:
+        - [getServiceAmountForOverview(), extraPosition, open]
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: float
+  -
+    column: printed
+    sortable_column: printed_original
+    visible: true
+    group: Rechnung
+    title: gedruckt am
+    width: date
+    set: [invoice]
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Overview_Print
+    style: Ext_Thebing_Gui2_Style_Accounting_Overview_Print
+    index:
+      call:
+        - getPrintDate()
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    column: printed_from
+    visible: true
+    group: Rechnung
+    title: gedruckt von
+    width: user_name
+    set: [invoice]
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params:
+      - true
+    index:
+      call:
+        - getPrinter()
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    column: print_success
+    sortable_column: print_success_original
+    visible: true
+    group: Rechnung
+    title: erfolgreich gedruckt
+    width: date
+    set: [invoice]
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    filterset: 
+      type: select 
+      options: 
+        - Ext_Thebing_Accounting_Gui2_Overview
+        - getPrintedFilterOptions
+      wdsearch:
+        printed: [Ext_Thebing_Accounting_Gui2_Overview, getPrintedFilterOptionQuery, printed]
+        not_printed: [Ext_Thebing_Accounting_Gui2_Overview, getPrintedFilterOptionQuery, not_printed]
+        success_printed: [Ext_Thebing_Accounting_Gui2_Overview, getPrintedFilterOptionQuery, success_printed]
+        not_success_printed: [Ext_Thebing_Accounting_Gui2_Overview, getPrintedFilterOptionQuery, not_success_printed]
+    index:
+      call:
+        - isSuccessPrinted()
+      add_original: true
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: not_analyzed
+        type: date
+  -
+    visible: true
+    group: Kurs
+    set: [invoice, list, proforma]
+    title: Kurse
+    column: course_list
+    width: name
+    unique_values: false
+    index:
+      call:
+         - getInquiry()
+         - getCourses()
+         - [getCourseName(), true, true]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    group: Kurs
+    set: [invoice, proforma]
+    title: Kursstart
+    column: course_from
+    sortable_column: course_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    default: false
+    filterset: 
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getInquiry()
+         - getCourses()
+         - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Kurs
+    set: [invoice, proforma]
+    title: Kursende
+    column: course_until
+    sortable_column: course_until_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    default: false
+    filterset: 
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getInquiry()
+         - getCourses()
+         - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [invoice]
+    group: Kurs
+    title: Erster Kursbeginn
+    column: first_course_start # Filter-Abhängigkeit (manuell)
+    sortable_column: first_course_start_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getInquiry()
+         - getFirstCourse()
+         - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Kurs
+    set: [ invoice, proforma, list ]
+    title: Kurssprachen
+    default: false
+    column: course_languages
+    sortable_column: course_languages
+    width: name
+    unique_values: false
+    i18n:
+      pass_language: true
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_Tuition_LevelGroup, getSelectOptions ]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_Tuition_LevelGroup
+        - getSelectOptions
+    index:
+      add_original: true
+      call:
+        - getInquiry()
+        - getCourses()
+        - courselanguage_id
+      mapping:
+        index: true
+        type: keyword
+      mapping_original:
+        index: true
+        type: integer
+  -
+    visible: true
+    set: [invoice]
+    group: Kurs
+     # Für den LETZTEN Kurs (gibt noch eine Spalte für alle)
+    column: course_last_end_date # Filter-Abhängigkeit (manuell)
+    sortable_column: course_last_end_date_original
+    title: Letztes Kursende
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    unique_values: false
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call: 
+         - getInquiry()
+         - getLatestCourseEnd()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Kurs
+    set: [invoice]
+    title: Kurse Rechnung
+    column: course_list_invoiced
+    width: name
+    unique_values: false
+    index:
+      call:
+         - getLastVersion()
+         - [getInvoicedJourneyServices(), course]
+         - [getCourseName(), true, true]
+      mapping:
+        index: not_analyzed
+        type: string
+  -
+    visible: true
+    group: Kurs
+    set: [invoice]
+    title: Kursstart Rechnung
+    column: course_from_invoiced
+    sortable_column: course_from_invoiced_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      call:
+         - getLastVersion()
+         - [getInvoicedJourneyServices(), course]
+         - getFrom()
+      mapping:
+        index: not_analyzed
+        type: string
+      add_original: true
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Kurs
+    set: [invoice]
+    title: Kursende Rechnung
+    column: course_until_invoiced
+    sortable_column: course_until_invoiced_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    index:
+      add_original: true
+      call:
+         - getLastVersion()
+         - [getInvoicedJourneyServices(), course]
+         - getUntil()
+      mapping:
+        index: not_analyzed
+        type: string
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [invoice]
+    title: Versicherungsstart
+    group: Versicherung
+    column: insurance_from
+    sortable_column: insurance_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - getInquiry()
+        - getInsurances()
+        - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    set: [invoice]
+    title: Versicherungsende
+    group: Versicherung
+    column: insurance_until
+    sortable_column: insurance_until_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    default: false
+    filterset:
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+        - getInquiry()
+        - getInsurances()
+        - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Unterkunft
+    set: [invoice]
+    title: Unterkunftsstart
+    column: accommodation_from
+    sortable_column: accommodation_from_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset: 
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getInquiry()
+         - getAccommodations()
+         - getFrom()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    group: Unterkunft
+    set: [invoice]
+    title: Unterkunftsende
+    column: accommodation_until
+    sortable_column: accommodation_until_original
+    format: Ext_Thebing_Gui2_Format_Date
+    width: date
+    unique_values: false
+    filterset: 
+      type: date
+      search_type: between
+    index:
+      add_original: true
+      call:
+         - getInquiry()
+         - getAccommodations()
+         - getUntil()
+      mapping:
+        index: false
+        type: keyword
+      mapping_original:
+        index: true
+        type: date
+  -
+    visible: true
+    column: tax_registered
+    group: Rechnung
+    title: Registriert
+    set: [ invoice, list, inquiry_invoice ]
+    access:
+      - Ext_Thebing_Client
+      - immutableInvoicesForced
+    default: false
+    width: yes_no
+    post_format: Ext_TC_Gui2_Format_YesNo
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+        - true
+    index:
+      call:
+        - tax_registered
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: true
+    column: draft
+    group: Rechnung
+    title: Entwurf
+    set: [ invoice, list, inquiry_invoice ]
+    access:
+      - Ext_Thebing_School
+      - draftInvoicesActive
+    default: false
+    width: yes_no
+    post_format: Ext_TC_Gui2_Format_YesNo
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+        - true
+    index:
+      call:
+        - draft
+      mapping:
+        index: not_analyzed
+        type: integer
+  -
+    visible: false
+    set: [invoice, list]
+    title: Automatisch erstellt
+    column: filter_automatic_document
+    filterset:
+      type: select
+      options:
+        - Ext_TC_Util
+        - getYesNoArray
+      wdsearch:
+        yes: [Ext_Thebing_Accounting_Gui2_Overview, buildAutomaticDocumentQuery, 'yes']
+        no: [Ext_Thebing_Accounting_Gui2_Overview, buildAutomaticDocumentQuery, 'no']
+    index:
+      add_field: false
+js:
+  - [document/release/js/gui2.js, ts]

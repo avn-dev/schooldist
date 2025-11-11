@@ -1,0 +1,62 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = new Ext_TC_Gui2(md5('tc_incomingfiles_categories'));
+
+$oGui->access = array('core_admin_incomingfiles_categories', '');
+
+$oGui->setWDBasic('Ext_TC_IncomingFile_Category');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('name' => 'ASC'));
+
+$aLanguages = Ext_TC_Factory::executeStatic('Ext_TC_Util', 'getTranslationLanguages');
+
+$oDialog = $oGui->createDialog($oGui->t('Kategorie editieren'), $oGui->t('Kategorie anlegen'));
+
+$oDialog->setElement($oDialog->createI18NRow($oGui->t('Name'), array(
+	'db_alias' => 'tc_idc_i18n', 
+	'db_column'=> 'name', 
+	'i18n_parent_column' => 'category_id',
+	'required' => true
+), $aLanguages));
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oIcon = $oBar->createDeactivateIcon($oGui->t('Deaktivieren'), $oGui->t('Deaktivieren'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+$oBar->position = 'top';
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+$oGui->addLanguageColumns($aLanguages, 'name', 'tc_idc_i18n', $oGui->t('Name'), true);
+
+$oGui->addDefaultColumns();
+
+$oGui->display();

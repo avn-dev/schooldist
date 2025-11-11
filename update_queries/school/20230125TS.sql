@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_courses` ADD `frontend_min_bookable_days_ahead` TINYINT UNSIGNED NULL DEFAULT NULL;

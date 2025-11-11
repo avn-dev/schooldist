@@ -1,0 +1,94 @@
+class:
+  wdbasic: Ext_TC_Marketing_Feedback_Rating
+  data: Ext_TC_Marketing_Feedback_Rating_Gui2_Data
+  js: RatingGUI
+id:
+  column: id
+  alias: tc_fr
+access: 
+  - core_marketing_ratings
+  - ""
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+        alias:
+          - tc_fr
+
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Marketing_Feedback_Rating_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Marketing_Feedback_Rating_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+
+columns:
+  -
+    visible: true
+    title: Name
+    column: name
+    alias: tc_fr
+    width: name
+    resize: true
+  -
+    visible: true
+    title: Anzahl d. Bewertungen
+    column: number_of_ratings
+    alias: tc_fr
+    width: name
+    format: Ext_TC_Gui2_Format_Align
+    format_params: 
+      - right
+    resize: false
+
+      
+default_columns:
+   -
+     title: Ersteller
+     column: creator_id
+     width: user_name
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Erstellt
+     column: created
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true
+   -
+     title: Bearbeiter
+     column: editor_id
+     width: editor_id
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Verändert
+     column: changed
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true
+
+js:
+  - [marketing/js/ratings.js, tc]
+  

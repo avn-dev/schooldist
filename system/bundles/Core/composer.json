@@ -1,0 +1,39 @@
+{
+  "name": "fidelo-bundle/core",
+  "version": "1.0.5",
+  "require": {
+    "ezyang/htmlpurifier": "4.18.*",
+    "fidelosoftware/mailing": "1.*",
+    "fidelo-software/zend-locale": "1.13.*",
+    "giggsey/libphonenumber-for-php": "9.0.*",
+    "guzzlehttp/guzzle": "7.10.*",
+    "jenssegers/agent": "2.6.*",
+    "jschaedl/iban-validation": "2.6.*",
+    "laravel/framework": "12.29.*",
+    "pear/net_dns2": "2.0.*",
+    "phpoffice/phpspreadsheet": "5.1.*",
+    "sirprize/postal-code-validator": "1.5.*",
+    "smarty/smarty": "5.5.*",
+    "spatie/period": "2.4.*",
+    "symfony/mailer": "7.3.*",
+    "symfony/yaml": "7.3.*",
+    "symfony/console": "7.3.*",
+    "thomaswelton/gravatarlib": "0.1.*",
+    "inertiajs/inertia-laravel": "2.0.*",
+    "oefenweb/damerau-levenshtein": "3.0.*"
+  },
+  "require-dev": {
+    "pestphp/pest": "4.1.*"
+  },
+  "scripts": {
+    "post-update-cmd": [
+      "mkdir -p ./storage/smarty3/templates || true",
+      "mkdir -p ./storage/smarty3/templates_c || true",
+      "mkdir -p ./storage/smarty3/configs || true",
+      "mkdir -p ./storage/smarty3/cache || true",
+      "chmod -R 0777 ./storage/smarty3 || true",
+      "@php console core:key:generate --if-needed",
+      "@php console package:discover"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+parent: TcComplaints_category_list
+class:
+  date_format: Ext_Thebing_Gui2_Format_Date
+title:
+  - Ext_TS_System_Navigation
+  - t
+access: thebing_marketing_resources_complaints

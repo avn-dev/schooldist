@@ -1,0 +1,184 @@
+<? 
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess("office_config");
+
+DB::addField('office_payment_terms', 'days_reminder', 'INT(11) NOT NULL');
+DB::addField('office_payment_terms', 'days_reminder2', 'INT(11) NOT NULL');
+
+Admin_Html::loadAdminHeader();
+
+$aLanguages = System::getBackendLanguages(true);
+
+// Default Sprache setzen, wenn keine Sprache übergeben oder übergebene Sprache nicht valide
+if(
+	!isset($_VARS['language']) ||
+	!isset($aLanguages[$_VARS['language']])
+) {
+	$_VARS['language'] = System::d('systemlanguage');
+}
+
+if(isset($_VARS['task']) && $_VARS['task'] == "delete")
+{
+	if(($iID = (int)$_VARS['id']) > 0)
+	{
+		$sSQL = "
+			DELETE FROM
+				`office_payment_terms`
+			WHERE
+				`id` = :iID
+		";
+		$aSQL = array('iID' => $iID);
+
+		DB::executePreparedQuery($sSQL, $aSQL);
+	}
+}
+
+if(
+	isset($_VARS['task']) && 
+	$_VARS['task'] == "save"
+) {
+
+	$sMessageField = 'message_'.$_VARS['language'];
+
+	// Prüfen, ob Sprachfeld vorhanden
+	DB::addField('office_payment_terms', $sMessageField, 'TEXT NOT NULL');
+
+	$arrTransfer = array();
+	if($_VARS['id'] > 0) {
+		$strSql = "
+					UPDATE
+						`office_payment_terms`
+					SET
+						`title` = :strTitle,
+						`days` = :intDays,
+						`days_reminder` = :days_reminder,
+						`days_reminder2` = :days_reminder2,
+						#message_field = :strMessage,
+						`type_flag` = :iTypeFlag
+					WHERE
+						id = :intId
+					LIMIT 1
+				";
+		$arrTransfer['intId'] = (int)$_VARS['id'];
+	} else {
+		$strSql = "
+					INSERT INTO
+						office_payment_terms
+					SET
+						`created` = NOW(),
+						`active` = 1,
+						`client_id` = :iClientID,
+						`title` = :strTitle,
+						`days` = :intDays,
+						`days_reminder` = :days_reminder,
+						`days_reminder2` = :days_reminder2,
+						#message_field = :strMessage,
+						`type_flag` = :iTypeFlag
+				";
+	}
+	$arrTransfer['iClientID']		= (int)\Core\Handler\SessionHandler::getInstance()->get('office_client_id');
+	$arrTransfer['strTitle']		= (string)$_VARS['title'];
+	$arrTransfer['intDays']			= (int)$_VARS['days'];
+	$arrTransfer['days_reminder']	= (int)$_VARS['days_reminder'];
+	$arrTransfer['days_reminder2']	= (int)$_VARS['days_reminder2'];
+	$arrTransfer['strMessage']		= (string)$_VARS['message'];
+	$arrTransfer['iTypeFlag']		= (string)$_VARS['type_flag'];
+	$arrTransfer['message_field']	= (string)$sMessageField;
+
+	DB::executePreparedQuery($strSql, $arrTransfer);
+
+}
+
+$arrTerms = classExtensionDao_Office::getPaymentTerms(null, true);
+
+$arrSelectedTerm = null;
+$sMessage = null;
+
+if($_VARS['id'] > 0) {
+	
+	foreach((array)$arrTerms as $aTerm) {
+		if($aTerm['id'] == $_VARS['id']) {
+			$arrSelectedTerm = $aTerm;
+			if(empty($arrSelectedTerm['message_'.$_VARS['language']])) {
+				$sMessage = $arrSelectedTerm['message'];
+			} else {
+				$sMessage = $arrSelectedTerm['message_'.$_VARS['language']];
+			}
+
+			break;
+		}
+	}
+	
+}
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Zahlungshinweise', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+			<form method="post" name="mask" action="<?=$_SERVER['PHP_SELF']?>">
+			<?=printTableStart()?>
+				<?=printFormSelect("Mandant", "client_id", (array)$aClients, (int)\Core\Handler\SessionHandler::getInstance()->get('office_client_id'), ' onchange="document.mask.submit();"')?>
+				<?=printFormSelect("Sprache", "language", $aLanguages, $_VARS['language'], ' onchange="document.mask.submit();"')?></td>
+			<?=printTableEnd()?>
+			</form>
+			<br/>
+
+			<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table highlightRows">
+				<tr>
+					<th width="80%">Titel</th>
+					<th width="10%">Tage</th>
+					<th width="10%">Aktionen</th>
+				</tr>
+<?
+			$aCategories = array(
+				'0'	=> 'Alle Kategorien',
+				'1'	=> 'Angebote',
+				'2'	=> 'Rechnungen, Mahnungen, Daueraufträge',
+				'3'	=> 'Gutschriften'
+			);
+			foreach((array)$arrTerms as $arrTerm) {
+?>
+				<tr>
+					<td><?=$arrTerm['title']?></td>
+					<td><?=$arrTerm['days']?></td>
+					<td align="center">
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&amp;language=<?=\Util::convertHtmlEntities($_VARS['language'])?>&amp;id=<?=$arrTerm['id']?>"><img src="/admin/media/edit.png" border="0" alt="Eintrag editieren"/></a>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=delete&amp;language=<?=\Util::convertHtmlEntities($_VARS['language'])?>&amp;id=<?=$arrTerm['id']?>"><img src="/admin/media/delete.png" border="0" alt="Eintrag löschen"/></a>
+					</td>
+				</tr>
+<?
+			}
+?>
+			</table>
+			<br/>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="save"/>
+			<input type="hidden" name="id" value="<?=(int)$arrSelectedTerm['id']?>"/>
+			<?=printFormHidden('language', $_VARS['language'])?>
+			<?=printTableStart()?>
+				<?=printFormText("Titel", "title", (string)$arrSelectedTerm['title'])?>
+				<?=printFormText("Anzahl der Tage", "days", (int)$arrSelectedTerm['days'])?>
+				<?=printFormText("Tage bis Zahlungserinnerung 1 versendet wird (nur bei Rechnung)", "days_reminder", (int)$arrSelectedTerm['days_reminder'])?>
+				<?=printFormText("Tage bis Zahlungserinnerung 2 versendet wird (nur bei Rechnung)", "days_reminder2", (int)$arrSelectedTerm['days_reminder2'])?>
+				<?=printFormTextarea("Zahlungshinweis (mit Platzhalter <#date#>)", "message", (string)$sMessage, 3, 'style="width: 500px; height: 150px;"')?>
+				<?=printFormSelect("Kategorie", "type_flag", (array)$aCategories, (int)$arrSelectedTerm['type_flag'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit("speichern")?>
+			
+			</form>
+
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

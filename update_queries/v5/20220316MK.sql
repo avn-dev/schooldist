@@ -1,0 +1,3 @@
+CREATE TABLE `gui2_lists` ( `updated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `hash` VARCHAR(100) NOT NULL , `title` VARCHAR(255) NOT NULL , `origin` VARCHAR(255) NOT NULL , UNIQUE (`hash`)) ENGINE = InnoDB;
+ALTER TABLE `gui2_lists` CHANGE `origin` `origin` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL;
+ALTER TABLE `gui2_lists` ADD `description` VARCHAR(255) NOT NULL AFTER `title`;

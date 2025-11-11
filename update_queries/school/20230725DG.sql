@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_forms_schools` ADD `payment_condition_id` SMALLINT UNSIGNED NOT NULL AFTER `student_status_id`;

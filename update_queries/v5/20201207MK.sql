@@ -1,0 +1,5 @@
+ALTER TABLE `cms_stats` CHANGE `time` `__time` BIGINT(20) NOT NULL DEFAULT '0';
+ALTER TABLE `cms_stats` ADD `time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `ip`;
+UPDATE `cms_stats` SET time = FROM_UNIXTIME(__time);
+ALTER TABLE `cms_stats` DROP `__time`;
+ALTER TABLE `cms_stats` CHANGE `idUser` `idUser` INT(11) NULL DEFAULT NULL, CHANGE `idTable` `idTable` INT(11) NULL DEFAULT NULL, CHANGE `ip` `ip` VARCHAR(15) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;

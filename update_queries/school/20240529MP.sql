@@ -1,0 +1,2 @@
+ALTER TABLE `ts_placementtests` CHANGE `language_id` `courselanguage_id` INT(11) NULL DEFAULT NULL;
+ALTER TABLE `ts_placementtests_results` CHANGE `course_language_id` `courselanguage_id` INT(11) NOT NULL;

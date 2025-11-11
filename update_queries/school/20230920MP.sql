@@ -1,0 +1,1 @@
+ALTER TABLE `ts_payment_conditions` CHANGE `user_id` `editor_id` INT(11) NOT NULL DEFAULT '0';

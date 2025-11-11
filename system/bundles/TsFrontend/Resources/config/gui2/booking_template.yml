@@ -1,0 +1,54 @@
+class:
+  data: \TsFrontend\Gui2\BookingTemplate\BookingTemplateData
+  wdbasic: \TsFrontend\Entity\BookingTemplate
+foreign_key: form_id
+access: ""
+pagination: true
+export: false
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsFrontend\Gui2\BookingTemplate\BookingTemplateData
+          - createDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsFrontend\Gui2\BookingTemplate\BookingTemplateData
+          - createDialog
+      -
+        element: icon_delete
+columns:
+  -
+    column: key
+    title: Key
+    sortable: true
+    width: name
+    default: true
+  -
+    column: description
+    title: Beschreibung
+    width: comment
+    resize: true
+  -
+    column: school_id
+    title: Schule
+    width: comment
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getSchoolList, true]
+  -
+    column: course_id
+    title: Kurs
+    width: name
+    format: Ext_Thebing_Gui2_Format_Course_List
+  -
+    column: courselanguage_id
+    title: Kurssprache
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Tuition_LevelGroup, getSelectOptions]

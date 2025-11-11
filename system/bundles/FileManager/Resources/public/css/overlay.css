@@ -1,0 +1,213 @@
+.kom-element-overlay .kom-overlay-1 {
+  width: 100%;
+  min-height: 162px;
+  overflow: hidden;
+  position: relative;
+  cursor: default; 
+}
+
+.kom-element-overlay .kom-overlay-1 img {
+    display: block;
+    position: relative;
+    -webkit-transition: all 0.4s linear;
+    transition: all 0.4s linear;
+    width: 100%;
+    height: auto; 
+}
+
+.kom-element-overlay .kom-overlay-1 h2 {
+    text-transform: uppercase;
+    color: #fff;
+    text-align: center;
+    position: relative;
+    font-size: 17px;
+    background: rgba(0, 0, 0, 0.6);
+    -webkit-transform: translatey(-100px) translateZ(0);
+    -ms-transform: translatey(-100px) translateZ(0);
+    transform: translatey(-100px) translateZ(0);
+    -webkit-transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+    padding: 10px; }
+
+	.kom-element-overlay .kom-overlay-1 .kom-info {
+		text-decoration: none;
+		display: inline-block;
+		text-transform: uppercase;
+		color: #fff;
+		background-color: transparent;
+		opacity: 0;
+		filter: alpha(opacity=0);
+		-webkit-transition: all 0.2s ease-in-out;
+		transition: all 0.2s ease-in-out;
+		padding: 0;
+		margin: auto;
+		position: absolute;
+		top: 50%;
+		left: 0;
+		right: 0;
+		transform: translateY(-50%) translateZ(0);
+		-webkit-transform: translateY(-50%) translateZ(0);
+		-ms-transform: translateY(-50%) translateZ(0); 
+	}
+
+    .kom-element-overlay .kom-overlay-1 .kom-info > li {
+		list-style: none;
+		display: inline-block;
+		margin: 0 3px; 
+		border: 0;
+		float: none;
+		width: auto;
+	}
+
+	.kom-element-overlay .kom-overlay-1 .kom-info > li:hover {
+        -webkit-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer; 
+	}
+
+  .kom-element-overlay .kom-overlay-1:hover .kom-overlay {
+    opacity: 1;
+    filter: alpha(opacity=100);
+    -webkit-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    transform: translateZ(0); 
+  }
+
+.kom-element-overlay .kom-overlay-1 .kom-info .btn {
+	vertical-align: inherit;
+	margin-bottom: 53px;
+}
+  
+.kom-element-overlay .kom-overlay-1:hover > img {
+    -ms-transform: scale(1.2) translateZ(0);
+    -webkit-transform: scale(1.2) translateZ(0);
+    transform: scale(1.2) translateZ(0); 
+}
+  
+.kom-element-overlay .kom-overlay-1:hover .kom-info {
+    opacity: 1;
+    filter: alpha(opacity=100);
+    -webkit-transition-delay: .2s;
+    transition-delay: .2s; 
+}
+  
+.kom-element-overlay .kom-overlay-1 .kom-overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    -webkit-transition: all 0.4s ease-in-out;
+    transition: all 0.4s ease-in-out; 
+}
+
+.kom-element-overlay .kom-overlay-1.kom-scroll-up:hover .kom-overlay {
+    bottom: 0; 
+}
+
+.kom-element-overlay .kom-overlay-1.kom-scroll-up .kom-overlay {
+    bottom: -100%;
+    top: auto; }
+  .kom-element-overlay .kom-overlay-1.kom-scroll-down:hover .kom-overlay {
+    top: 0; }
+  .kom-element-overlay .kom-overlay-1.kom-scroll-down .kom-overlay {
+    top: -100%; }
+  .kom-element-overlay .kom-overlay-1.kom-scroll-left:hover .kom-overlay {
+    right: 0; }
+  .kom-element-overlay .kom-overlay-1.kom-scroll-left .kom-overlay {
+    right: -100%;
+    left: auto; }
+  .kom-element-overlay .kom-overlay-1.kom-scroll-right:hover .kom-overlay {
+    left: 0; }
+.kom-element-overlay .kom-overlay-1.kom-scroll-right .kom-overlay {
+	left: -100%; 
+}
+
+#filemanager-container { 
+	list-style-type: none; 
+	margin: 0; 
+	padding: 0; 
+}
+
+#filemanager-container > li { 
+	float: left; 
+	width: 245px; 
+	min-height: 245px; 
+	cursor: move;
+}
+
+/* Irgendwie deutlicher machen was aktiv und nicht aktiv ist, da immer alle Tags pro Upload angezeigt werden */
+#filemanager-container .mailbox-attachment-info label.btn:not(.active) {
+	opacity: 0.4;
+}
+
+#filemanager-container .mailbox-attachment-info label.btn.active {
+	color: green;
+	font-weight: bold;
+}
+
+.mailbox-attachment-icon {
+	padding: 36px 10px;
+}
+
+.mailbox-attachment-name {
+    white-space: nowrap;
+}
+
+.mailbox-attachment-info {
+    min-height: 81px;
+}
+
+#form-template {
+	display: none;
+}
+
+.form-box {
+	border: 1px solid #d2d6de;
+}
+
+.form-container {
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 243px;
+	height: 243px;
+	display: none;
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+.nav.nav-tabs li {
+	width: auto;
+	border: 0;
+	border-top: 3px solid transparent;
+}
+
+.form-box .nav-tabs-custom {
+	border-radius: 0;
+	margin: 0;
+	height: 241px;
+}
+
+.nav-tabs-custom > .nav-tabs > li.active {
+	border-top-color: #d2d6de;
+}
+
+.form-box .nav > li > a {
+	padding: 2px 4px;
+}
+
+.form-box textarea {
+	resize: none;
+}
+
+.form-container > i {
+	color: lime;
+    display: block;
+    font-size: 60px;
+    margin: 80px;
+    text-align: center;
+}

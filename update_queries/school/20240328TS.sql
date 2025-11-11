@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `teacherlogin_reportcards_period` CHAR(50) NULL DEFAULT NULL AFTER `teacherlogin_attendance_view`, ADD `teacherlogin_timetable_period` CHAR(50) NULL DEFAULT NULL AFTER `teacherlogin_reportcards_period`, ADD `teacherlogin_attendance_period` CHAR(50) NULL DEFAULT NULL AFTER `teacherlogin_timetable_period`;

@@ -1,0 +1,107 @@
+<?
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+Admin_Html::loadAdminHeader();
+
+$system_data['sites'] = (new \Cms\Helper\Data())->getSites();
+	
+if($_VARS['action'] == "save") {
+	foreach((array)$_VARS['error'] as $key=>$val) {
+		DB::executeQuery("DELETE FROM system_config WHERE c_key = '".\DB::escapeQueryString($key)."'");
+		DB::executeQuery("INSERT INTO system_config SET c_value = '".\DB::escapeQueryString($val)."', c_key = '".\DB::escapeQueryString($key)."'");
+	}
+}
+
+if($_VARS['action'] == "config") {
+	foreach((array)$_VARS['error'] as $key=>$val) {
+		DB::executeQuery("REPLACE system_config SET c_value = '".\DB::escapeQueryString($val)."', c_key = 'error_page_".\DB::escapeQueryString($key)."'");
+	}
+}
+
+$aData = DB::getQueryRow("SELECT * FROM system_config WHERE c_key = 'error_altimg'");
+
+$strSql = "
+			SELECT
+				*
+			FROM
+				system_config
+			WHERE 
+				c_key LIKE 'error_page_%'
+			";
+$arrErrorPages = DB::getQueryData($strSql);
+foreach($arrErrorPages as $arrErrorPage) {
+	$arrErrorPages[$arrErrorPage['c_key']] = $arrErrorPage['c_value'];
+}
+
+$aGlobals = array(
+	''			=> 'Nichts machen',			
+	'404'		=> 'HTTP Statuscode 404 zurückgeben und auf Hauptdomain des ersten Internetauftrittes weiterleiten',
+	'301'		=> 'HTTP Statuscode 301 zurückgeben und auf Hauptdomain des ersten Internetauftrittes weiterleiten',
+	'404_die'	=> 'Nur HTTP Statuscode 404 zurückgeben'
+);
+
+$aDisabled = array(
+	''			=> 'Nichts machen',
+	'200'		=> 'HTTP Statuscode 200 zurückgeben',
+	'404'		=> 'HTTP Statuscode 404 zurückgeben',
+	'301'		=> 'HTTP Statuscode 301 zurückgeben',
+	'200_rel'	=> 'HTTP Statuscode 200 zurückgeben und auf Fehlerseite umleiten',
+	'404_rel'	=> 'HTTP Statuscode 404 zurückgeben und auf Fehlerseite umleiten',
+	'301_rel'	=> 'HTTP Statuscode 301 zurückgeben und auf Fehlerseite umleiten',
+	'200_dom'	=> 'HTTP Statuscode 200 zurückgeben und auf Domain umleiten',
+	'404_dom'	=> 'HTTP Statuscode 404 zurückgeben und auf Domain umleiten',
+	'301_dom'	=> 'HTTP Statuscode 301 zurückgeben und auf Domain umleiten'
+);
+
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			<h1>Fehlerbehandlung</h1>
+			<form method="POST" action="errors.html">
+			<input class="txt" type="hidden" name="action" value="config">
+
+			<h2>Allgemein</h2>
+
+			<?=printTableStart()?>
+				<?=printFormSelect('Domain kommt nicht vor', "error[global]", $aGlobals, $arrErrorPages['error_page_global'])?>
+			<?=printTableEnd()?>
+<?
+			foreach((array)$system_data['sites'] as $arrSite) {
+?>
+				<h2>Internetauftritt <?=$arrSite['name']?></h2>
+				<?=printTableStart()?>
+				<?
+				$oSite = \Cms\Entity\Site::getInstance($arrSite['id']);
+				$arrLanguages = $oSite->getLanguages();
+				foreach((array)$arrLanguages as $arrLanguage) {
+					$arrOptions = array();
+					$arrOptions['language'] = $arrLanguage['code'];
+					$arrOptions['site_id'] = $arrSite['id'];
+					$arrOptions['value_type'] = 1;
+					printFormPageSelect('Fehlerseite für "'.$arrLanguage['name'].'"', "error[".$arrSite['id']."_".$arrLanguage['code']."]", $arrErrorPages['error_page_'.$arrSite['id'].'_'.$arrLanguage['code']], $arrOptions);
+				}
+				printFormSelect('Seite nicht vorhanden oder nicht aktiv', "error[" . $arrSite['id'] . "_disabled]", $aDisabled, $arrErrorPages['error_page_' . $arrSite['id'] . '_disabled']);
+				?>
+				<?=printTableEnd()?>
+<?			}
+?>
+
+			<?=printSubmit("Änderungen speichern")?>
+			</form>
+			<h2>Einstellungen</h2>
+			<form method="POST" action="errors.html">
+			<input type="hidden" name="action" value="save">
+			<?=printTableStart()?>
+			<?=printFormText("Alternativbild für fehlende Grafikdateien","error[error_altimg]",$aData['c_value'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Einstellungen speichern")?>
+			</form>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

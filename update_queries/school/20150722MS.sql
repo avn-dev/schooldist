@@ -1,0 +1,2 @@
+ALTER TABLE `ts_placementtests_results` ADD `answered` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00' AFTER `invited`;
+ALTER TABLE `ts_placementtests_results` CHANGE `placementtest_date` `placementtest_date` DATE NOT NULL;

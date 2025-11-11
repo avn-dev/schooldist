@@ -1,0 +1,1 @@
+ALTER TABLE `system_user` ADD `status` TINYINT NOT NULL DEFAULT '1' COMMENT 'aktiv / inaktiv';

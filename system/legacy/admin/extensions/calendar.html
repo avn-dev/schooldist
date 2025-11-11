@@ -1,0 +1,481 @@
+<?
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+/**
+ * sql structure updates
+ */
+$aCheck = DB::getQueryData("DESCRIBE `calendar_data` `language_code`");
+if(empty($aCheck)) {
+	DB::executeQuery("ALTER TABLE `calendar_data` ADD `language_code` VARCHAR( 2 ) NOT NULL AFTER `category`");
+}
+/**
+ * end sql structure updates
+ */
+
+$state = array("0" => "inaktiv", "1" => "aktiv");
+$aData = $oSite->getLanguages();
+$aLanguages = array(""=>"");
+foreach((array)$aData as $aLanguage) {
+	$aLanguages[$aLanguage['code']] = $aLanguage['name'];		
+}
+
+$sTimeNow			= mktime();
+$sMonthDayNow		= date("d", $sTimeNow);
+$sWeekDayNow		= date("w", $sTimeNow);
+$sYearNow			= date("Y", $sTimeNow);
+
+$aWeekDayNamesTime = mktime(0, 0, 0, 2, 6, 2006);
+for ($k = 1; $k <= 7; $k++) {
+	$aW[$k] = strftime("%a", $aWeekDayNamesTime);
+	$aWeekDayNamesTime += 86400;
+}
+$aWeekDayNames		= array(1 => $aW[1], 2 => $aW[2], 3 => $aW[3], 4 => $aW[4], 5 => $aW[5], 6 => $aW[6], 0 => $aW[7]);
+
+for ($i = 1; $i <= 12; $i++) {
+	$aSelectMonth[$i] = strftime("%B", mktime(0, 0, 0, $i, 1, 2006));
+}
+for ($j = $sYearNow-1; $j <= $sYearNow+2; $j++) {
+	$aSelectYear[$j] = $j;
+}
+
+if (isset($_VARS['calendar_id'])) {
+	$aCalendarName = get_data(db_query("SELECT name FROM calendar_init WHERE id = '".$_VARS['calendar_id']."'"));
+	$sCalendarName = $aCalendarName['name'];
+}
+if (!($_VARS['month']))
+	$_VARS['month'] = date("m", $sTimeNow);
+if (!($_VARS['year']))
+	$_VARS['year'] = date("Y", $sTimeNow);
+
+$sMonthFwd			= ($_VARS['month'] == 12)?1:$_VARS['month']+1;
+$sMonthBack			= ($_VARS['month'] == 1)?12:$_VARS['month']-1;
+$sYearFwd			= ($_VARS['month'] == 12)?$_VARS['year']+1:$_VARS['year'];
+$sYearBack			= ($_VARS['month'] == 1)?$_VARS['year']-1:$_VARS['year'];
+
+$sMonthStart		= mktime(0, 0, 0, $_VARS['month'], 1, $_VARS['year']);
+
+$sMonthNameBack		= strftime("%B %Y", mktime(0, 0, 0, $sMonthBack, 1, $sYearBack));
+$sMonthName			= strftime("%B %Y", $sMonthStart);
+$sMonthNameFwd		= strftime("%B %Y", mktime(0, 0, 0, $sMonthFwd, 1, $sYearFwd));
+
+$sMonthWeekDayStart	= date("w", $sMonthStart);
+$sMonthDay			= date("j", $sMonthStart);
+$sMonthDayAmount	= date("t", $sMonthStart);
+$sYearWeek			= ($_VARS['month'] == 1)?1:date("W", $sMonthStart);
+$sYear				= date("Y", $sMonthStart);
+
+//print_r($_VARS);
+
+if ($_VARS['task'] == "categories" and $_VARS['action'] == "save") {
+	
+	// Wenn der letzte Eintrag leer ist, wird er nicht gespeichert
+	krsort($_VARS['categories']);
+	$delete_key = key($_VARS['categories']);
+	if ($_VARS['categories'][$delete_key]['title'] == "") unset($_VARS['categories'][$delete_key]);
+	ksort($_VARS['categories']);
+	
+	$_VARS['categories'] = serialize($_VARS['categories']);
+	db_query("UPDATE calendar_init SET categories = '".\DB::escapeQueryString($_VARS['categories'])."'");
+}
+
+if ($_VARS['task'] == "categories" and $_VARS['action'] == "delete") {
+
+	$aCalendar = get_data(db_query("SELECT * FROM calendar_init WHERE id = '".$_VARS['calendar_id']."'"));
+	$aCalendar['categories'] = unserialize($aCalendar['categories']);
+	unset($aCalendar['categories'][$_VARS['id']]);
+	db_query("UPDATE calendar_init SET categories = '".\DB::escapeQueryString(serialize($aCalendar['categories']))."'");
+
+}
+
+if ($_VARS['task'] == "setup" and $_VARS['action'] == "save") {
+
+	if ($_VARS['create'] == 1) {
+		db_query("INSERT INTO calendar_init SET name = '".$_VARS['name']."'");
+	} else {
+		db_query("UPDATE calendar_init SET name = '".$_VARS['name']."' WHERE id = '".$_VARS['calendar_id']."' LIMIT 1");
+	}
+
+}
+
+if ($_VARS['task'] == "edit" and $_VARS['action'] == "save") {
+
+	$aSplitDate = explode(":", $_VARS['date']);
+	$aSplitDuration = explode(":", $_VARS['duration']);
+
+	$time = mktime((int)$aSplitDate[0], (int)$aSplitDate[1], 0, (int)$_VARS['month'], (int)$_VARS['day'], (int)$_VARS['year']);
+	$date = date("YmdHis", $time);
+	$duration = mktime($aSplitDuration[0], $aSplitDuration[1], 0, 1, 1, 1970) + 3600;
+	
+	if ($_VARS['id'] == "") {
+		$sSql = "INSERT INTO calendar_data SET calendar_id = '".$_VARS['calendar_id']."', category = '".$_VARS['category']."', language_code = '".$_VARS['language_code']."', date = '".$date."', duration = '".$duration."', title = '".\DB::escapeQueryString($_VARS['title'])."', text = '".\DB::escapeQueryString($_VARS['text'])."', active = '".$_VARS['active']."'";
+	} elseif ($_VARS['id'] != "") {
+		$sSql = "UPDATE calendar_data SET calendar_id = 1, category = '".$_VARS['category']."', language_code = '".$_VARS['language_code']."', date = '".$date."', duration = '".$duration."', title = '".\DB::escapeQueryString($_VARS['title'])."', text = '".\DB::escapeQueryString($_VARS['text'])."', active = '".$_VARS['active']."' WHERE id = '".$_VARS['id']."'";
+	}
+
+	db_query($sSql);
+	
+}
+
+if ($_VARS['task'] == "edit" and $_VARS['action'] == "delete" and isset($_VARS['id'])) {
+
+	db_query("DELETE FROM calendar_data WHERE id = '".$_VARS['id']."' LIMIT 1");
+
+}
+
+if ($_VARS['task'] == "edit" and isset($_VARS['id']) and isset($_VARS['active'])) {
+
+	db_query("UPDATE calendar_data SET date = date, active = '".$_VARS['active']."' WHERE id = '".$_VARS['id']."'");
+
+}
+
+if ($_VARS['task'] == "delete" and $_VARS['calendar_id'] != "") {
+
+	db_query("DELETE FROM calendar_init WHERE id = '".$_VARS['calendar_id']."' LIMIT 1");
+	db_query("DELETE FROM calendar_data WHERE calendar_id = '".$_VARS['calendar_id']."'");
+
+}
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+ 
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1><?=($_VARS['calendar_id'] != "" and !$_VARS['create'])?$sCalendarName:"Kalender";?></h1>
+			<br>
+<?
+if ($_VARS['page_id'] && $_VARS['element_id']) {
+	
+	$aViews = array('' => '', 'calendar' => 'Kalendaransicht', 'timetable' => 'Timetable');
+	
+	if ($_VARS['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$config->calendar_id 	= $_VARS['calendar_id'];
+		$config->view 			= $_VARS['view'];
+		$config->date_from 			= strtotimestamp($_VARS['date_from']);
+		$config->date_to 			= strtotimestamp($_VARS['date_to']);
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$res = db_query($db_data['module'],"SELECT * FROM calendar_init ORDER BY name");
+	while($my = get_data($res)) {
+		$aCalendar[$my['id']] = $my['name'];
+	}
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<?=printTableStart()?>
+				<?=printFormSelect("Kalendar", "calendar_id", $aCalendar, $config->calendar_id)?>
+				<?=printFormSelect("Ansicht", "view", $aViews, $config->view)?>
+				<?=printFormText("Termine von...", "date_from", date('d.m.Y', $config->date_from))?>
+				<?=printFormText("...bis", "date_to", date('d.m.Y', $config->date_to))?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+<?
+} elseif ($_VARS['calendar_id'] != "" and $_VARS['task'] == "edit" and $_VARS['action'] == "edit") {
+
+	$sDayStart = mktime(0, 0, 0, $_VARS['month'], $_VARS['day'], $_VARS['year']);
+	$aDate = get_data(db_query("SELECT *, UNIX_TIMESTAMP(`date`) as date FROM calendar_data WHERE id = '".$_VARS['id']."' AND calendar_id = '".$_VARS['calendar_id']."'"));
+	$aCalendar = get_data(db_query("SELECT * FROM calendar_init WHERE id = '".$_VARS['calendar_id']."'"));
+	$aCalendar['categories'] = unserialize($aCalendar['categories']);
+	foreach ((array)$aCalendar['categories'] as $id => $category) {
+		$aCategories[$id] = $category['title'];
+	}
+	
+?>
+			<h2><?=(isset($aDate['title']))?$aDate['title']:"Neuer Eintrag"?> am <?=strftime("%d. %B %Y", $sDayStart)?></h2>
+			<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+			<input type="hidden" name="calendar_id" value="<?=$_VARS['calendar_id']?>">
+			<input type="hidden" name="task" value="edit">
+			<input type="hidden" name="action" value="edit">
+			<input type="hidden" name="day" value="<?=$_VARS['day']?>">
+			<input type="hidden" name="month" value="<?=$_VARS['month']?>">
+			<input type="hidden" name="year" value="<?=$_VARS['year']?>">
+			<?=printTableStart()?>
+				<?=printFormText("Titel", "title", $aDate['title'])?>
+				<?=printFormHTMLarea("Beschreibung", "text", $aDate['text'])?>
+				<?=printFormSelect("Kategorie", "category", $aCategories, $aDate['category'])?>
+				<?=printFormSelect("Sprache", "language_code", $aLanguages, $aDate['language_code'])?>
+				<?=printFormText("Startzeit (z.B. 15:45)", "date", ($aDate['date'] > 0)?date("H:i", $aDate['date']):"")?>
+				<?=printFormText("Dauer (z.B. 2:00)", "duration", date("H:i", $aDate['duration']-3600))?>
+				<?=printFormSelect("Status", "active", $state, $aDate['active'])?>
+			<?=printTableEnd()?>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Eintrag speichern", "onclick=\"this.form.action.value='save'\"")?></td>
+					<td width="1"><?=printSubmit("zurück", "onclick=\"this.form.action.value=''\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+} elseif ($_VARS['calendar_id'] != "" and $_VARS['task'] == "edit") {
+	$sDayStart = mktime(0, 0, 0, $_VARS['month'], $_VARS['day'], $_VARS['year']);
+	$sDayEnd = $sDayStart + 86400;
+	$rDate = db_query("SELECT *, UNIX_TIMESTAMP(`date`) as date FROM calendar_data WHERE `date` BETWEEN ".date("YmdHis", $sDayStart)." AND ".date("YmdHis", $sDayEnd)." AND calendar_id = '".$_VARS['calendar_id']."'");
+	while ($aDate = get_data($rDate)) {
+		$aDates[$aDate['id']] = $aDate;
+	}
+?>
+			<h2>Einträge für den <?=strftime("%d. %B %Y", $sDayStart)?></h2>
+			<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="calendar_id" value="<?=$_VARS['calendar_id']?>">
+			<input type="hidden" name="task" value="edit">
+			<input type="hidden" name="action" value="">
+			<input type="hidden" name="day" value="<?=$_VARS['day']?>">
+			<input type="hidden" name="month" value="<?=$_VARS['month']?>">
+			<input type="hidden" name="year" value="<?=$_VARS['year']?>">
+			<table cellpadding="4" cellspacing="0" width="100%" border="0" class="table">		
+				<tr>
+					<th>Titel</th>
+					<th>Beschreibung</th>
+					<th>Startzeit</th>
+					<th>Dauer</th>
+					<th>Aktiv</th>
+					<th>Aktion</th>
+				</tr>
+<?
+	if (count($aDates) == 0) {
+?>
+				<tr>
+					<td colspan="6">keine Einträge vorhanden</td>
+				</tr>
+<?
+	} else {
+		foreach ((array)$aDates as $id => $date) {
+?>
+				<tr id="tr_<?=$id?>" style="cursor:pointer!;">
+					<td onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&id=<?=$date['id']?>'"><?=$date['title']?></td>
+					<td onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&id=<?=$date['id']?>'"><?=$date['text']?></td>
+					<td onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&id=<?=$date['id']?>'"><?=date("H:i", $date['date'])?></td>
+					<td onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&id=<?=$date['id']?>'"><?=date("H:i", $date['duration']-3600)?></td>
+					<td width="30" align="center">
+		<?
+			if ($date['active']) {
+		?>
+				<a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&active=0&id=<?=$date['id']?>"><img src="/admin/media/sitemap_active.gif" border="0"></a>
+		<?
+			} else {
+		?>
+				<a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&active=1&id=<?=$date['id']?>"><img src="/admin/media/sitemap_inactive.gif" border="0"></a>
+		<?
+			}
+		?>
+					</td>
+					<td width="40" align="center"><a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&id=<?=$date['id']?>"><img src="/admin/media/edit.png" border="0"></a> <a href="#" onClick="if (confirm('Eintrag löschen?')) document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=delete&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$_VARS['day']?>&id=<?=$date['id']?>'"><img src="/admin/media/delete.png" border="0"></a></td>
+				</tr>
+<?
+		}
+	}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Neuer Eintrag", "onclick=\"this.form.action.value='edit'\"")?></td>
+					<td width="1"><?=printSubmit("zurück", "onclick=\"this.form.task.value=''\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+} elseif ($_VARS['task'] == "setup" and ($_VARS['action'] != "save")) {
+	$aCalendar = get_data(db_query("SELECT * FROM calendar_init WHERE id = '".$_VARS['calendar_id']."'"));
+?>
+			<h2><?=($_VARS['create'] == 1)?"Neuer Kalender":"Einstellungen für ".$aCalendar['name']?></h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="calendar_id" value="<?=($_VARS['create'] == 1)?"":$_VARS['calendar_id']?>">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="action" value="save">
+			<input type="hidden" name="create" value="<?=($_VARS['create'])?>">
+			<?=printTableStart()?>
+				<?=printFormText("Name", "name", ($_VARS['create'] == 1)?"":$aCalendar['name'])?>
+			<?=printTableEnd()?>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("speichern", "onclick=\"this.form.task.value='setup'\"")?></td>
+					<td width="1"><?=printSubmit("zurück", "onclick=\"this.form.action.value='';this.form.task.value='';this.form.calendar_id.value=''\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+} elseif ($_VARS['task'] == "categories") {
+	$aCalendar = get_data(db_query("SELECT * FROM calendar_init WHERE id = '".$_VARS['calendar_id']."'"));
+	$aCalendar['categories'] = unserialize($aCalendar['categories']);
+?>
+			<h2>Kategorien</h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="calendar_id" value="<?=$_VARS['calendar_id']?>">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="action" value="save">
+			<input type="hidden" name="create" value="<?=($_VARS['create'])?>">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th>Name</th>
+					<th>Beschreibung</th>
+					<th>Farbe</th>
+					<th width="40">Aktion</th>
+				</tr>
+<?
+	foreach((array)$aCalendar['categories'] as $id => $category) {
+?>
+				<tr>
+					<td><input type="text" class="txt" name="categories[<?=$id?>][title]" value="<?=$category['title']?>"></td>
+					<td><textarea class="txt" type="textarea" cols="20" rows="3" name="categories[<?=$id?>][description]"><?=$category['description']?></textarea></td>
+					<td><input type="text" class="txt" name="categories[<?=$id?>][color]" value="<?=$category['color']?>"></td>
+					<td width="40" align="center"><a href="#" onClick="if (confirm('Kategorie löschen?')) document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=categories&id=<?=$id?>&action=delete'"><img src="/admin/media/delete.png" border="0"></a></td>
+				</tr>
+<?
+		$count_cat = $id + 1;
+	}
+?>
+				<tr>
+					<td><input type="text" class="txt" name="categories[<?=$count_cat?>][title]" value=""></td>
+					<td><textarea class="txt" type="textarea" cols="20" rows="3" name="categories[<?=$count_cat?>][description]"></textarea></td>
+					<td><input type="text" class="txt" name="categories[<?=$count_cat?>][color]" value=""></td>
+					<td width="40" align="center">&nbsp;</td>
+				</tr>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("speichern", "onclick=\"this.form.task.value='categories'\"")?></td>
+					<td width="1"><?=printSubmit("zurück", "onclick=\"this.form.action.value='';this.form.task.value='';this.form.calendar_id.value=''\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+} elseif ($_VARS['calendar_id'] != "" and $_VARS['action'] != "save" and $_VARS['task'] != "delete") {
+
+	$iFrom = mktime(0, 0, 0, $_VARS['month'], 1, $_VARS['year']);
+	$iUntil = mktime(23, 59, 59, date("m", $iFrom), date("t", $iFrom), date("Y", $iFrom));
+	$rDate = db_query("SELECT *, UNIX_TIMESTAMP(`date`) as date_ts FROM calendar_data WHERE date BETWEEN ".date("YmdHis", $iFrom)." AND ".date("YmdHis", $iUntil)." AND calendar_id = '".$_VARS['calendar_id']."' ORDER BY date ASC");
+	while ($aDate = get_data($rDate)) {
+		$aDates[date("j", $aDate['date_ts'])][] = $aDate;
+	}
+	
+?>
+			<h2>Übersicht <?=strftime("%B %Y", $sMonthStart)?></h2>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="calendar_id" value="<?=$_VARS['calendar_id']?>">
+			<?=printTableStart()?>
+				<?=printFormSelect("Monat", "month", $aSelectMonth, $_VARS['month'], "onchange=\"this.form.submit();\"")?>
+				<?=printFormSelect("Jahr", "year", $aSelectYear, $_VARS['year'], "onchange=\"this.form.submit();\"")?>
+			<?=printTableEnd()?>
+			<br>
+			<table cellpadding="4" cellspacing="0" border="0" class="table">
+				<tr>
+					<th colspan="8">
+						<table cellspacing="0" cellpadding="0" border="0" width="100%">
+							<tr>
+								<th width="33%" style="text-align:left!;border:0px;"><a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&year=<?=$sYearBack?>&month=<?=$sMonthBack?>"><?=$sMonthNameBack?></a></td>
+								<th width="33%" style="text-align:center!;border:0px;"><?=$sMonthName?></td>
+								<th width="33%" style="text-align:right!;border:0px;"><a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&year=<?=$sYearFwd?>&month=<?=$sMonthFwd?>"><?=$sMonthNameFwd?></a></td>
+							</tr>
+						</table>
+					</th>
+				</tr>
+				<tr>
+					<th width="30">KW</th>
+<?
+	foreach ((array)$aWeekDayNames as $dayname) {
+?>
+					<th width="80"><?=$dayname?></th>
+<?
+	}
+?>
+				</tr>
+<?
+	while ($sMonthDay <= $sMonthDayAmount)
+	{
+?>
+				<tr>
+					<th width="30" height="80" style="vertical-align:top!;"><?=$sYearWeek?></th>
+<?
+		foreach ((array)$aWeekDayNames as $daynumber => $dayname) {
+?>
+					<td <? if (($sMonthWeekDayStart == $daynumber and $sMonthDay == 1) xor ($sMonthDay <= $sMonthDayAmount and $sMonthDay > 1)) { ?> id="tr_<?=$sMonthDay?>" style="cursor:pointer;" onclick="document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$sMonthDay?>';"<? } ?> width="80" height="80" style="vertical-align:top!;" <? if ($daynumber == 0) { ?>bgcolor="#F6F6F6"<? } ?>>
+					<? if (($sMonthWeekDayStart == $daynumber and $sMonthDay == 1) xor ($sMonthDay <= $sMonthDayAmount and $sMonthDay > 1)) {
+							echo $sMonthDay++;
+							if ((array)$aDates[$sMonthDay-1]) {
+								?>
+						<span style="font-family: 'small fonts', verdana; font-size: 9px;"><br><br>
+								<?		foreach ((array)$aDates[$sMonthDay-1] as $date) { ?>
+											<a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$_VARS['calendar_id']?>&task=edit&action=edit&year=<?=$_VARS['year']?>&month=<?=$_VARS['month']?>&day=<?=$sMonthDay-1?>&id=<?=$date['id']?>"><?if ($date['active'] == 1) { ?><?=$date['title']?> (<?=date("H:i", $date['date_ts'])?>)<? } else { ?><font color="#ff0000"><?=$date['title']?> (<?=date("H:i", $date['date_ts'])?>)</font><? } ?> <br>
+								<?		} ?>
+						</span><?
+							}
+					   } else { echo "&nbsp;"; } ?></td>
+<?
+		}
+?>
+				</tr>
+<?
+	$sYearWeek++;
+	}
+?>
+			</table>
+			</form>
+<?
+} else {
+	$rCalendar = db_query("SELECT * FROM calendar_init");
+	while ($aCalendar = get_data($rCalendar)) {
+		$aCalendarList[$aCalendar['id']] = $aCalendar['name'];
+	}
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="create" value="">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th width="1%">&nbsp;</th>
+					<th>Name</th>
+					<th width="40">Aktion</th>
+				</tr>
+				<h2>Auswahl</h2>
+<?
+	$j = 1;
+	foreach((array)$aCalendarList as $key => $val) {
+?>
+				<tr>
+					<td><input type="radio" name="calendar_id" value="<?=$key?>" <?=(($j == 1)?"checked":"")?>></td>
+					<td><?=$val?></td>
+					<td width="40" align="center"><a href="<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$key?>&task=setup"><img src="/admin/media/edit.png" border="0"></a> <a href="#" onClick="if (confirm('Kalender löschen?')) document.location.href='<?=$_SERVER['PHP_SELF']?>?calendar_id=<?=$key?>&task=delete'"><img src="/admin/media/delete.png" border="0"></a></td>
+				</tr>
+<?
+		$j++;
+	}
+?>
+			</table>
+			<br>
+			<table cellspacing="0" cellpadding="5" border="0" width="100%">
+				<tr>
+					<td>&nbsp;</td>
+					<td width="1"><?=printSubmit("Einträge pflegen", "onclick=\"this.form.task.value=''\"")?></td>
+					<td width="1"><?=printSubmit("Einstellungen", "onclick=\"this.form.task.value='setup'\"")?></td>
+					<td width="1"><?=printSubmit("Kategorien editieren", "onclick=\"this.form.task.value='categories'\"")?></td>
+					<td width="1"><?=printSubmit("Neuer Kalender", "onclick=\"this.form.task.value='setup'; this.form.create.value='1';\"")?></td>
+				</tr>
+			</table>
+			</form>
+<?
+}
+?>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

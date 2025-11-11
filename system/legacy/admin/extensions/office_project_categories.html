@@ -1,0 +1,185 @@
+<? 
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess("office_config");
+
+echo Admin_Html::loadAdminHeader();
+
+/*======================================================*/
+
+// Delete
+if(isset($_VARS['task']) && $_VARS['task'] == "delete")
+{
+	if(($iID = (int)$_VARS['id']) > 0)
+	{
+		$sSQL = "
+			DELETE FROM
+				`office_project_categories`
+			WHERE
+				`id` = :iID
+		";
+		$aSQL = array('iID' => $iID);
+
+		DB::executePreparedQuery($sSQL, $aSQL);
+	}
+}
+
+/*======================================================*/
+
+
+/*======================================================*/
+
+// Save
+if(isset($_VARS['task']) && $_VARS['task'] == "save") {
+	
+	$arrTransfer = array();
+	if($_VARS['id'] > 0) {
+		$strSql = "
+					UPDATE
+						`office_project_categories`
+					SET
+						`title` = :strTitle,
+						`description` = :strdescription,
+						`type` = 'project'
+					WHERE
+						`id` = :intId
+					LIMIT 1
+				";
+		$arrTransfer['intId'] = (int)$_VARS['id'];
+	} else {
+		$strSql = "
+					INSERT INTO
+						office_project_categories
+					SET
+						`created` = NOW(),
+						`active` = 1,
+						`title` = :strTitle,
+						`description` = :strdescription,
+						`type` = 'project'
+				";
+	}
+
+	$arrTransfer['strTitle']			= (string)$_VARS['title'];
+	$arrTransfer['strdescription']		= (string)$_VARS['description'];
+	$arrTransfer['intId']				= (int)$_VARS['id'];
+
+	DB::executePreparedQuery($strSql, $arrTransfer);
+
+}
+
+/*======================================================*/
+
+
+/*======================================================*/
+// Task edit
+if($_VARS['task'] == 'edit')
+{
+	if($_VARS['id'] > 0)
+	{
+		$aActivity = get_projecttoedit((int)$_VARS['id']);
+	}
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Projektkategorien', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="save"/>
+			<input type="hidden" name="id" value="<?=(int)$_VARS['id']?>"/>
+			<?=printTableStart()?>
+				<?=printFormText("Titel", "title", $aActivity['title'])?>
+				<?=printFormTextarea("Beschreibung", "description", $aActivity['description'], 3, 3)?>
+			<?=printTableEnd()?>
+			<div style="clear:both;"></div>
+			<div style="float:left;"><input type="button" class="btn" value="zurück" onclick="javascript:history.back()" /></div>
+			<div style="float:right;"><?=printSubmit("speichern")?></div>
+			
+			</form>
+		</td>
+	</tr>
+</table>
+
+<?	
+die();
+}
+
+/*======================================================*/
+
+
+/*======================================================*/
+// Get activity categories
+$sSQL = "SELECT * FROM `office_project_categories` WHERE `type` = 'project'";
+$aActivities = DB::getQueryData($sSQL);
+
+// Get activity for task edit
+function get_projecttoedit($id)
+{
+	$aSql = array('id' => $id);
+	$sSql = "SELECT * FROM `office_project_categories` WHERE `id` = :id";
+	$aActivity = DB::getQueryRow($sSql, $aSql);
+	return $aActivity;
+}
+
+/*======================================================*/
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Konfiguration', 'Office')?> &raquo; <?=L10N::t('Projektkategorien', 'Office')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+				<input type="hidden" name="task" value="edit" />
+				<div style="clear:both;">
+					<input type="submit" class="btn" value="Neues Projektkategorie hinzufügen" style="float:right; margin-bottom:5px;" />
+				</div>
+				<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+					<tr>
+						<th width="40%">Titel</th>
+						<th width="50%">Beschreibung</th>
+						<th width="10%">Aktionen</th>
+					</tr>
+<?
+
+				foreach((array)$aActivities as $aActivities) {
+
+					if(empty($aActivities['description']))
+					{
+						$aActivities['description'] = '&nbsp;';
+					}
+?>
+					<tr>
+						<td><?=$aActivities['title']?></td>
+						<td><?=$aActivities['description']?></td>
+						<td align="center">
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=edit&amp;id=<?=$aActivities['id']?>"><img src="/admin/media/edit.png" border="0" alt="Eintrag editieren"/></a>
+							<a href="<?=$_SERVER['PHP_SELF']?>?task=delete&amp;id=<?=$aActivities['id']?>"><img src="/admin/media/delete.png" border="0" alt="Eintrag löschen"/></a>
+						</td>
+					</tr>
+<?
+				}
+?>
+					
+				
+				</table>
+			<input type="submit" class="btn" value="Neues Projektkategorie hinzufügen" style="float:right;" />
+			</form>
+		</td>
+	</tr>
+</table>
+
+
+
+<?=Admin_Html::loadAdminFooter()?>
+

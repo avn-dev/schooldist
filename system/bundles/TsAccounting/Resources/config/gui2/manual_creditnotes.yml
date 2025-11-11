@@ -1,0 +1,258 @@
+hash: 4dd93c051c140bb3ff84fc1865124e74
+class:
+  wdbasic: Ext_Thebing_Agency_Manual_Creditnote
+  data: Ext_Thebing_Agency_Manual_Creditnote_Gui2
+  icon_status: Ext_Thebing_Gui2_Icon_Agency_Creditnotes
+  row_style: Ext_Thebing_Gui2_Style_Agency_Creditnotes
+  js: CreditnotesGui
+sets:
+  agency:
+    title: Manuelle Creditnotes
+    hash: 648d97e1c77d1c53b14b194aeb12967c
+js:
+  - [gui2/util.js, thebing]
+  - [accounting/js/creditnotes.js, thebing]
+access:
+  - thebing_marketing_agencies_creditnotes_edit
+  -
+id:
+  alias: kamc
+  column: id
+orderby:
+  - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+  - getWhere
+limit_selection: false
+multiple_selection: 1
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - comment
+          - document_number
+          - note
+        alias:
+          - kidv
+          - kid
+        searchtype: LIKE
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          column:
+            - created
+          alias:
+            - kamc
+          default:
+            - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+            - getDefaultFilterFrom
+        until:
+          column:
+            - created
+          default:
+            - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+            - getDefaultFilterUntil
+        searchtype: between
+        text_after: basierend auf Erstellungszeitraum
+      -
+        element: seperator
+      -
+        element: selectfilter
+        set: [main]
+        label: Agentur
+        label_as_item: true
+        searchtype: =
+        value: ''
+        column:
+          - agency_id
+        alias:
+          - kamc
+        entries:
+          - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+          - getAgencySelectOptions
+      -
+        element: selectfilter
+        label: Grund
+        label_as_item: true
+        searchtype: =
+        value: ''
+        id: reason_id
+        column:
+          - reason_id
+        alias:
+          - ''
+        entries:
+          - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+          - getReasonSelectOptions
+      -
+        element: selectfilter
+        label: Status
+        id: status
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+          - getStatusSelectOptions
+        filter_part: having
+        filter_query:
+          all: '1 = 1'
+          not_paid: ' `amount_used` < `kamc`.`amount` AND `storno_id` = 0 AND `amount` > 0'
+          paid: '`amount_used` >= `kamc`.`amount` AND `storno_id` = 0 AND `amount` > 0'
+          storno: '( `storno_id` > 0 OR `amount` < 0 )'
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+          - getNewDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+          - getEditDialog
+      -
+        element: icon_delete
+      -
+        element: icon
+        label: Stornieren
+        task: openDialog
+        action: storno
+        access:
+          - thebing_marketing_agencies_creditnotes_edit
+          - cancel
+        dialog:
+          - Ext_Thebing_Agency_Manual_Creditnote_Gui2
+          - getStornoDialog
+        img:
+          - Util
+          - getIcon
+          - storno
+  -
+    position: bottom
+    type: legend
+    elements:
+      -
+        element: legend_label
+        label: Zahlung
+      -
+        element: legend_info
+        label: Teilzahlung
+        info:
+          color: [soft_green, 30]
+      -
+        element: legend_info
+        label: Bezahlt
+        info:
+          color: lightgreen
+      -
+        element: legend_label
+        label: Dokumente
+      -
+        element: legend_info
+        label: Storniert
+        info:
+          color: storno
+      -
+        element: legend_info
+        label: Stornierung
+        info:
+          color: red
+columns:
+  -
+    title: CN Nr.
+    column: document_number
+    alias: kid
+    width: document_number
+    resize: false
+  -
+    title: Agentur
+    column: agency_short
+    width: agency_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'agency'
+      - true
+  -
+    title: Schule
+    column: school_id
+    default: false
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Client, getSchoolList, true]
+  -
+    title: Betrag
+    column: amount
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Gui2_Style_Agency_Creditnotes
+    style_params: false
+  -
+    title: Verwendet
+    column: amount_used
+    width: amount
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: Ext_Thebing_Gui2_Style_Agency_Creditnotes
+    style_params: false
+  -
+    title: Art
+    column: type
+    width: name
+    resize: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Agency_Manual_Creditnote_Gui2, getFormatParamsTypeColumn]
+  -
+    title: Grund
+    column: reason_id
+    width: name
+    resize: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Agency_Manual_Creditnote_Gui2, getFormatParamsReasonColumn]
+  -
+    title: Verwendung
+    column: invoice_numbers
+    width: name
+    resize: true
+  -
+    title: Kommentar
+    column: comment
+    width: name
+    resize: true
+  -
+    title: Notiz
+    column: note
+    width: name
+    inplace_editor: true
+    resize: true
+  -
+    title: PDF
+    column: path
+    alias: kidv
+    width: icon
+    resize: true
+    format: Ext_TS_Document_Release_Gui2_Format_Pdf
+    format_params:
+      - 'path'
+  -
+    title: Freigegeben
+    column: release_time
+    access: thebing_accounting_release_documents_list
+    alias: ''
+    width: date_user
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Contract_DateUser
+    style: \TsAccounting\Gui2\Style\Released

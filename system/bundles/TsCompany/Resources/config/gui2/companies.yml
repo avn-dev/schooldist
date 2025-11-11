@@ -1,0 +1,466 @@
+class:
+  wdbasic: \TsCompany\Entity\Company
+  data: \TsCompany\Gui2\Data\Company
+  date_format: Ext_Thebing_Gui2_Format_Date
+  gui: Ext_Thebing_Gui2
+  row_style: \TsCompany\Gui2\Style\Comments
+  js: UtilGui
+access:
+  - ts_marketing_companies
+  -
+title: Firmen
+description: Fidelo » Marketing » Companies
+options:
+id:
+  column: id
+  alias: ka
+multiple_selection: true
+orderby:
+  - \TsCompany\Gui2\Data\Company
+  - getOrderby
+  - ""
+sets:
+  agency:
+    class:
+      wdbasic: Ext_Thebing_Agency
+      data: \TsCompany\Gui2\Data\Agency
+      icon_status: \TsCompany\Gui2\Icon\AgencyStatus
+    description: Thebing » Marketing » Agenciegroups
+    hash: f896acf92ad89c6b115a88c736b786d1
+    access: thebing_marketing_agencies
+    title: Agenturen
+    designer:
+      flex: agencies
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - ext_1
+          - ext_2
+          - ext_5
+          - email
+          - firstname
+          - lastname
+          - number
+        alias:
+          - ka
+          - ka
+          - ka
+          - ka
+          - contacts
+          - contacts
+          - contacts
+          - numbers
+      -
+        element: seperator
+      -
+        element: selectfilter
+        set: [agency]
+        id: category_filter
+        label: Kategorie
+        label_as_item: true
+        column:
+          - ext_39
+        alias:
+          - ka
+        entries:
+          - Ext_Thebing_Agency
+          - getCategoryList
+      -
+        element: selectfilter
+        id: status_filter
+        label: Status
+        label_as_item: true
+        value: status_1
+        filter_query:
+          - Ext_Thebing_Agency_Gui2
+          - getFilterStatusQueryArray
+        entries:
+          - Ext_Thebing_Agency_Gui2
+          - getFilterStatusArray
+      -
+        element: selectfilter
+        set: [agency]
+        access: thebing_marketing_agency_list
+        id: list_filter
+        label: Agenturliste
+        label_as_item: true
+        filter_query:
+          - Ext_Thebing_Agency_Gui2
+          - getFilterAgencyListQueryArray
+        entries:
+          - Ext_Thebing_Agency_Gui2
+          - getFilterAgencyListArray
+      -
+        element: selectfilter
+        set: [ agency ]
+        access: [core_admin_countrygroups, '']
+        id: country_list_filter
+        label: Ländergruppe
+        label_as_item: true
+        filter_query:
+          - Ext_Thebing_Agency_Gui2
+          - getFilterCountryGroupQueryArray
+        entries:
+          - Ext_TC_Countrygroup
+          - getSelectOptions
+      -
+        element: selectfilter
+        set: [agency]
+        label: Schule
+        label_as_item: true
+        filter_query: "`schools`.`school_id` = {value} OR `schools_limited` = 0 "
+        entries:
+          - Ext_Thebing_Client
+          - getSchoolList
+          - true
+      -
+        element: selectfilter
+        id: country_filter
+        label: Land
+        label_as_item: true
+        column:
+          - ext_6
+        alias:
+          - ka
+        entries:
+          - Ext_Thebing_Data
+          - getCountryList
+      -
+        element: selectfilter
+        set: [agency]
+        id: group_filter
+        label: Gruppe
+        label_as_item: true
+        column:
+          - group_id
+        alias:
+          - groups
+        entries:
+          - Ext_Thebing_Agency
+          - getGroupList
+          - true
+      -
+        element: selectfilter
+        id: group_filter
+        label: Uploads vorhanden
+        label_as_item: true
+        filter_query:
+          no: "`kau`.`id` IS NULL"
+          yes: "`kau`.`id` IS NOT NULL"
+        entries:
+          - Ext_TC_Util
+          - getYesNoArray
+          - false
+      -
+        element: selectfilter
+        id: follow_up_filter
+        label: Nachhaken
+        label_as_item: true
+        filter_query:
+          follow_up_due: "`comments`.`follow_up` != '0000-00-00' AND `comments`.`follow_up` < NOW()"
+          follow_up_entered: "`comments`.`follow_up` != '0000-00-00'"
+        entries:
+          - Ext_Thebing_Gui2_Comments
+          - getFollowupOptions
+      -
+        element: selectfilter
+        id: subagency_filter
+        label: Unteragentur
+        label_as_item: true
+        filter_query:
+          no: "`wb_a_subagency`.`value` IS NULL OR `wb_a_subagency`.`value` = 0"
+          yes: "`wb_a_subagency`.`value` > 0"
+        entries:
+          - Ext_TC_Util
+          - getYesNoArray
+          - false
+  -
+    position: top
+    set: [company]
+    elements:
+      -
+        element: icon_new
+      -
+        element: icon_edit
+      -
+        element: icon_delete
+#      -
+#        element: labelgroup
+#        label: Kommunikation
+#      -
+#        element: icon_communication
+#        label: Nachricht senden
+#        application: marketing_companies
+  -
+    position: top
+    set: [agency]
+    elements:
+      -
+        element: icon_new
+        access: thebing_marketing_agencies_edit
+      -
+        element: icon_edit
+        access: thebing_marketing_agencies_edit
+      -
+        element: icon_delete
+        access: thebing_marketing_agencies_edit
+      -
+        element: labelgroup
+        label: Kommunikation
+        access: thebing_marketing_agency_communication
+      -
+        element: icon_communication
+        label: Nachricht senden
+        application: marketing_agencies
+        access: thebing_marketing_agency_communication
+      -
+        element: labelgroup
+        label: CRM-Report
+        access: thebing_marketing_agency_crm
+      -
+        element: icon
+        access: thebing_marketing_agency_crm
+        label: PDF Übersicht
+        task: openDialog
+        action: agency_pdf
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - pdf
+      -
+        element: icon
+        access: thebing_marketing_agency_extended_export
+        label: Erweiterter Export
+        task: requestAsUrl
+        action: extend_export
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - csv
+columns:
+  -
+    title: Nummer
+    column: number
+    alias: numbers
+    data: company_number
+    width: number
+    resize: false
+  -
+    title: Name
+    column: ext_1
+    alias: ka
+    width: name
+    resize: true
+  -
+    title: Abkürzung
+    column: ext_2
+    alias: ka
+    width: short_name
+    resize: false
+    default: false
+  -
+    title: Korrespondenzsprache
+    column: ext_33
+    alias: ka
+    width: name
+    sortable: false
+    resize: false
+    default: false
+    format: Ext_Thebing_Gui2_Format_Language
+  -
+    title: Adresse
+    column: ext_3
+    alias:
+    width: name
+    resize: false
+  -
+    title: Adresszusatz
+    column: ext_35
+    alias:
+    width: name
+    resize: false
+  -
+    title: PLZ
+    column: ext_4
+    alias:
+    width: zip
+    resize: false
+  -
+    title: Stadt
+    column: ext_5
+    alias:
+    width: name
+    resize: false
+  -
+    title: Bundesland
+    column: state
+    alias:
+    width: name
+    resize: false
+  -
+    title: Land
+    column: country
+    alias: data_c
+    sortable_column: cn_iso_2
+    width: name
+    resize: false
+  -
+    title: Telefon
+    column: phone
+    data: id
+    alias:
+    width: phone
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Agency_MainContactPhone
+  -
+    title: Kategorie
+    column: ext_39
+    set: [agency]
+    alias:
+    width: name
+    resize: false
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Agency, getCategoryList]
+  -
+    visible: true
+    title: Währung
+    default: false
+    column: ext_23
+    width: short_name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Currency
+  -
+    title: Zahlungsmethode
+    set: [agency]
+    column: ext_26
+    alias:
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Agency, getAgencyPaymentMethods]
+  -
+    title: Kommentar Zahlungsart
+    set: [agency]
+    column: ext_38
+    alias:
+    width: comment
+    resize: false
+    default: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - ext_38
+      - true
+      - 50
+  -
+    title: Steuernummer
+    column: ext_24
+    alias:
+    width: name
+    resize: false
+    default: false
+  -
+    title: Web
+    column: ext_10
+    alias:
+    width: name
+    resize: false
+  -
+    title: Gruppen
+    set: [agency]
+    column: name
+    alias: kag
+    data: groups
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Agency, getGroupList, true]
+      - ', '
+  -
+    title: Branchen
+    set: [company]
+    column: industry_ids
+    alias:
+    data: industry_ids
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+      - [\TsCompany\Entity\Industry, getSelectOptions, true]
+      - ', '
+  -
+    title: Aktiv
+    column: status
+    alias:
+    width: yes_no
+    resize: false
+    format: Ext_Thebing_Gui2_Format_YesNo
+  -
+    title: Vorname
+    column: contact_firstname
+    alias:
+    width: name
+    resize: false
+    default: false
+  -
+    title: Nachname
+    column: contact_lastname
+    alias:
+    width: name
+    resize: false
+    default: false
+  -
+    title: E-Mail
+    set: [agency]
+    column: email
+    alias: ts_ac
+    data: contact_email
+    width: email
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Communication_Email
+    event: \TsCompany\Gui2\Event\AgencyEmail
+  -
+    title: E-Mail
+    set: [company]
+    column: email
+    alias: ts_ac
+    data: contact_email
+    width: email
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Communication_Email
+  -
+    title: Provisionsgruppe
+    set: [agency]
+    column: provision_group_name
+    alias:
+    width: name
+    resize: false
+    default: false
+  -
+    title: Bezahlgruppe
+    set: [agency]
+    column: payment_group_name
+    alias:
+    width: name
+    resize: false
+    default: false
+  -
+    title: Stornokategorie
+    set: [agency]
+    column: storno_group_name
+    alias:
+    width: name
+    resize: false
+    default: false

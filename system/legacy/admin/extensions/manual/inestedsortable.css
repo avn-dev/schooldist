@@ -1,0 +1,158 @@
+.track {
+
+	border:1px solid #BBBBBB;
+	padding: 10px 10px 10px 10px;
+	margin: 10px 10px 10px 10px;
+
+}
+.search {
+
+	border:1px solid #BBBBBB;
+	padding: 10px 10px 10px 10px;
+	margin: 10px 10px 10px 10px;
+
+}
+.wrap-admin {
+
+	border:1px solid #BBBBBB;
+	padding: 10px 10px 10px 10px;
+	margin: 10px 10px 10px 10px;
+}
+
+.wrap-admin ul {
+
+		list-style-type:none;
+		padding-right:10px;
+		min-height:1px;
+}
+.wrap-admin li {
+
+		list-style-type:none;
+		border:1px solid gray;
+		line-height:17px;
+		padding-top:2px;
+		padding-left:5px;
+
+}
+.wrap-admin .page-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: block;
+}
+
+.wrap-admin .sort-handle {
+	cursor:move;
+}
+
+.wrap-admin img {
+	cursor:pointer;
+}
+
+.spacer_li{
+
+	border:0px !important;
+
+}
+
+
+
+.wrap {
+	border:1px solid #BBBBBB;
+	padding: 10px 10px 10px 10px;
+	margin: 10px 10px 10px 10px;
+}
+.wrap div {
+	border-top:1px dotted #000;
+	width:100%
+}
+.wrap ul {
+
+		list-style-type:none;
+		padding-right:10px;
+}
+.wrap li {
+
+		list-style-type:none;
+		border:1px solid gray;
+		padding-top:2px;
+		padding-left:5px;
+}
+
+.wrap .page-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: block;
+}
+.wrap .sort-handle {
+	cursor:pointer;
+}
+
+
+
+ul {
+	font-size:11px;
+	list-style-type:square;
+	margin:0px 0px 5px 0px;
+	padding:0px 0px 0px 10px;
+}
+
+
+.clear-element {
+	clear: both;
+}
+
+.page-item{
+	background: #f8f8f8;
+	margin: 0.25em 0 0 0;
+}
+
+
+
+ul .page-item-hover{
+	background: #FFB2B2;
+	margin: 0.25em 0px 0px 0px;
+	padding:8px;
+}
+
+.wrap .innerContent {
+	border:0px;
+	width:auto;
+}
+
+.wrap .innerContent ul {
+
+		list-style-type:auto;
+		padding:auto;
+
+}
+
+.wrap .innerContent li {
+
+		list-style-type:auto;
+		border:none;
+		padding:auto;
+		padding:auto;
+
+}
+
+.wrap .innerContent div {
+	border:0px;
+	width:auto;
+}
+
+.divHeader {
+	position: 			relative; 
+	background-color:	#f7f7f7;	
+}
+
+.divHeader H1 {
+	background-color:	#29527A;
+	color:				#fff;
+	line-height:		25px;
+	font-size:			18px;
+	margin:				0px;
+	padding:			0px 5px;
+}
+		

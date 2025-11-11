@@ -1,0 +1,1950 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+global $LANGUAGE_DATA, $user_data;
+
+getExtensionTranslations('customer_db');
+
+ob_start();
+$bolTranslate = 0;
+	
+$aFieldTypes = array(
+	"TEXT"=>"Text",
+	"INTEGER"=>"Zahl",
+	"PASSWORD"=>"Passwort",
+	"Select Field"=>"Auswahlfeld",
+	"image"=>"Grafik",
+	"Datei"=>"Datei",
+	"ProtectedDatei"=>"geschützte Datei",
+	"Radio-Button"=>"Radio-Button",
+	"Checkbox"=>"Checkbox",
+	"Kategoriefeld"=>"Kategoriefeld",
+	"timestamp"=>"Datum/Zeit",
+	"groups"=>"Gruppen",
+	"reference"=>"Datenbankverknüpfung"
+);
+
+// Kunden db-Modul
+// Dieses Modul administriert die Datenfelder, die beim Log-in
+// zu einer Webseite ausgefüllt werden müssen und erstellt die zugehörigen
+// Datenbankfelder
+// weiterhin können hier einzelne Datensätze gepflegt werden
+// ( ansehen, hinzufügen, bearbeiten, löschen )
+
+
+// nötige Tabellen:
+// customer_db_definition - speichert die Namen der Felder in den "Datenbanken"
+// customer_db_values - speichert die Optionen aller Auswahlfelder
+
+require(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+require(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_functions.inc.php");
+
+// Daten( später in config.inc auslagern! )
+$tree_identifier="tree_db";
+$identifier="customer_db_";
+$definition_table=$identifier."definition";
+$value_table=$identifier."values";
+$SQL_handler = new customer_db;
+
+$db_name=$db_data['module'];
+
+if ($_VARS['form_action']=="Zurück") {
+    if ($current_status==$last_status) {
+	   $_VARS['form_action']="cancel";
+    } else {
+        $current_status=$last_status;
+        $_VARS['form_action']=$current_status;
+    }
+} else {
+  $last_status=$current_status;
+  $current_status=$_VARS['form_action'];
+}
+
+if ($last_status=="add_data") {
+    $auswahl=0;
+}
+
+
+if ($_VARS['form_action'] == "save_option") {
+
+	$aSql = array();
+	$aSql['display'] = $_VARS['selected_option'];
+	$aSql['value'] = $_VARS['selected_value'];
+
+	$sSet = "`display` = :display, `value` = :value";
+
+	if(empty($_VARS['idOption'])) {
+
+		$sSql = "INSERT INTO customer_db_values SET `definition_id` = :definition_id, ".$sSet."";
+		
+		$aSql['definition_id'] = (int)$_VARS['field_id'];
+		
+	} else {
+		
+		$sSql = "UPDATE customer_db_values SET ".$sSet." WHERE `id` = :id";
+		$aSql['id'] = $_VARS['idOption'];
+
+	}
+	
+	DB::executePreparedQuery($sSql, $aSql);
+
+	$_VARS['form_action'] = "display_option";
+
+}
+
+////////////////////////////////////////////////
+////////////   Beginn Hauptteil   //////////////
+////////////////////////////////////////////////
+
+if($_VARS['idDatabase']) {
+	$selected_table = "customer_db_".$_VARS['idDatabase'];
+	$database_data = DB::getQueryRow("SELECT db_name, db_encode_pw FROM customer_db_config WHERE id = '".intval($_VARS['idDatabase'])."'");
+}
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<section class="content-header">
+	<h1><?=$LANGUAGE_DATA['customer_db']?> &raquo; <?=$LANGUAGE_DATA['administration'] ?></h1>
+</section>
+
+<section class="content">
+	<div class="box">
+		<div class="box-body table-responsive">
+        <form name="formular1" method=post enctype="multipart/form-data" action="<?=$PHP_SELF?>" class="form-inline">
+            <input type="hidden" name="form_action" value="">
+            <input type="hidden" name="idDatabase" value="<?=intval($_VARS['idDatabase'])?>">
+            <input type="hidden" name="selected_field" value="<?=$_VARS['selected_field']?>">
+            <input type="hidden" name="selected_option" value="<?=$_VARS['selected_option']?>">
+            <input type="hidden" name="selected_value" value="<?=$_VARS['selected_value']?>">
+            <input type="hidden" name="field_id" value="<?=$_VARS['field_id']?>">
+            <input type="hidden" name="last_status" value="<?=$_VARS['last_status']?>">
+            <input type="hidden" name="current_status" value="<?=$_VARS['current_status']?>">
+            <input type="hidden" name="field" value="<?=$_VARS['field']?>">
+            <input type="hidden" name="auswahl" value="<?=$_VARS['auswahl']?>">
+            <input type="hidden" name="file_field" value="<?=$_VARS['file_field']?>">
+            <input type="hidden" name="path" value="<?=$_VARS['current_display']?>">
+<!---------------------------------------------------------------->
+
+        
+
+<?
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+//////////////////   EBENE DATENBANKEN   //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+
+// �bersicht �ber vorhandene Datenbanken
+
+if ($_VARS['form_action']=="" OR $_VARS['form_action']=="".$LANGUAGE_DATA['ready']/*Fertig*/."" OR $_VARS['form_action']=="cancel") // AND $_VARS['form_action']2=="") //
+{
+?>
+		<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+			<tr>
+				<th width="1%">&nbsp;</th>
+				<th width="1%">ID</th>
+				<th width="98%"><?=$LANGUAGE_DATA['db_name'] ?></th>
+			</tr>
+
+<?
+	$aDatabases = getCustomerDbs();
+	$tmp="checked";
+	foreach($aDatabases as $key=>$val) {
+
+		try {
+			DB::addField("customer_db_".$key, "access_code", "VARCHAR(32) NOT NULL", "groups");
+		}
+		catch(Exception $oException) {
+			echo $oException->getMessage();
+		}
+
+?>
+			<tr>
+				<td><input type="radio" name="idDatabase" value="<?=$key."\" ".$tmp;?> /></td>
+				<td style="text-align: right;"><?=$key?></td>
+				<td><?=$val?></td>
+			</tr>
+<?
+    unset($tmp);
+	}
+?>
+		</table>
+		<br>
+<?
+
+    if (count($aDatabases)>0)
+    {
+?>
+	<p align="right">
+	<input type=button value="<?= $LANGUAGE_DATA['edit_groups']/*Gruppen bearbeiten*/ ?>"			class="btn btn-default" OnClick='document.formular1.form_action.value="edit_groups"; document.formular1.submit();'>
+	<input type=button value="<?= $LANGUAGE_DATA['settings']/*Einstellungen*/ ?>"      				class="btn btn-default" OnClick='document.formular1.form_action.value="edit_conf_db"; document.formular1.submit();'>
+	<input type=button value="<?= $LANGUAGE_DATA['edit_structure']/*Struktur bearbeiten*/ ?>"		class="btn btn-default" OnClick='document.formular1.form_action.value="edit_structure_db"; document.formular1.submit();'>
+	<input type=button value="<?= $LANGUAGE_DATA['administrate_data_records']/*Datensätze pflegen*/ ?>"  class="btn btn-default" OnClick='document.formular1.form_action.value="display_data"; document.formular1.submit();'>
+	<input type=button value="<?= $LANGUAGE_DATA['import_data_records']/*Datensätze importieren*/ ?>"  class="btn btn-default" OnClick='document.formular1.action="/admin/extensions/customer_db_import.html"; document.formular1.form_action.value="delete_db"; document.formular1.submit();'>
+	<input type=button value="<?= $LANGUAGE_DATA['export_data_records']/*Datensätze exportieren*/ ?>"  class="btn btn-default" OnClick='document.formular1.action="/admin/extensions/customer_db_export.html"; document.formular1.form_action.value="delete_db"; document.formular1.submit();'>
+	<?if(hasRight('customer_db_admin_delete_db')) {?>
+	<input type=button value="<?= $LANGUAGE_DATA['delete_db']/*Datenbank löschen*/ ?>"            	class="btn btn-default" OnClick='document.formular1.form_action.value="delete_db"; document.formular1.submit();'>
+	<?}?>
+	<input type=button value="<?= $LANGUAGE_DATA['publish_images']/*Bilder freischalten*/ ?>"		class="btn btn-default" OnClick='document.formular1.form_action.value="unlock_images"; document.formular1.submit();'>
+	<input type=button value="<?= $LANGUAGE_DATA['show_modification']/*�nderungen zeigen*/ ?>"						class="btn btn-default" OnClick='document.formular1.form_action.value="show_changes"; document.formular1.submit();'>
+	</p>
+<?
+    }
+
+?>
+	<p align="right">
+	<input type = button value = "<?= $LANGUAGE_DATA['create_db']/*neue Datenbank anlegen*/ ?>"       class = "btn btn-default" OnClick = 'document.formular1.form_action.value="add_db"       ; document.formular1.submit();'>
+	</p>
+
+<?
+
+} // ende if $_VARS['form_action'] = start
+
+
+
+// Neue Datenbank hinzufügen ...
+
+if ($_VARS['form_action']=="add_db")
+{
+?>
+<p><?= $LANGUAGE_DATA['enter_new_db_name']/*Bitte geben Sie einen Namen für die neue Datenbank ein:*/ ?></p>
+	<?=printTableStart()?>
+	<?=printFormText("".$LANGUAGE_DATA['name_of_new_db']/*Name der neuen Datenbank*/."","customer_db_name")?>
+	<?=printTableEnd()?>
+	<p align="right">
+		<input type=button value="<?=$LANGUAGE_DATA['save']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="confirmed_add_db";document.formular1.submit();'>
+		&nbsp;
+		<input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+	</p>
+<?
+} // ende if $_VARS['form_action'] = neue Datenbank anlegen
+
+if ($_VARS['form_action']=="confirmed_add_db") {
+    // neue Tabelle anlegen
+
+    // Neuer Insert für die config
+	$aInsert = array(
+		"db_name" => $_VARS['customer_db_name']
+	);
+ 
+	$table_number = DB::insertData("customer_db_config", $aInsert);
+
+    // neuen Tabellennamen erzeugen!
+    $table_name=$identifier.$table_number;
+    $selected_table = $table_name;
+
+	$sSql = "CREATE TABLE `".$table_name."`
+        (
+		`id` int(11) NOT NULL auto_increment,
+		`active` tinyint(4) NOT NULL,
+		`email` varchar(150) NOT NULL,
+		`nickname` varchar(150) NOT NULL,
+		`password` varchar(255) NOT NULL,
+		`changed` timestamp NOT NULL,
+		`last_login` timestamp NOT NULL,
+		`changed_by` int(11) NOT NULL,
+		`created` timestamp NOT NULL,
+		`views` int(11) NOT NULL,
+		`groups` text NOT NULL,
+		PRIMARY KEY  (`id`),
+		UNIQUE KEY `email` (`email`),
+		UNIQUE KEY `nickname` (`nickname`)
+	    )";
+	DB::executeQuery($sSql);
+
+    // Einträge für die neue Tabelle in der "_definition" erzeugen
+	$aDefinition = array();
+	$aDefinition[] = array("0","email","TEXT","1");
+	$aDefinition[] = array("0","nickname","TEXT","1");
+	$aDefinition[] = array("0","password","PASSWORD","1");
+	$aDefinition[] = array("0","changed","timestamp","0");
+	$aDefinition[] = array("0","last_login","timestamp","0");
+	$aDefinition[] = array("0","changed_by","INTEGER","0");
+	$aDefinition[] = array("0","created","timestamp","0");
+	$aDefinition[] = array("0","views","INTEGER","0");
+	$aDefinition[] = array("0","groups","groups","0");
+
+	foreach($aDefinition as $aElem) {
+		DB::executeQuery("INSERT INTO `customer_db_definition` SET field_nr = '".$aElem[0]."', name = '".$aElem[1]."', type = '".$aElem[2]."', required = '".$aElem[3]."', db_nr = '".$table_number."', active = '1' ");
+	}
+
+?>
+	<p align="right">
+		<input type=button value="<?=L10N::t('Zurück')?>" class="btn btn-default" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+	</p>
+<?
+
+} // ende if $_VARS['form_action'] = Neu anlegen
+
+
+if ($_VARS['form_action']=="delete_db")
+{
+
+    $SQL_handler->SQL_get_row_by_option($db_name,"customer_db_config", $table_name, "id", (int)$_VARS['idDatabase']);
+    $name_result=$SQL_handler->result[1];
+    $customer_db_name=$name_result[0]["db_name"];
+
+    echo "<h2>".$LANGUAGE_DATA['warning']."</h2><br>".$LANGUAGE_DATA['warning_explain']."<br>";
+    echo $LANGUAGE_DATA['warning_explain_db']." <br><br>";
+    echo $LANGUAGE_DATA['warning_delete_db']." <b>$customer_db_name</b><br><br><br><br>";
+?>
+    <input type=button value="<?=$LANGUAGE_DATA['delete_db']?>" class="btn btn-default" style="width:250" OnClick='document.formular1.form_action.value="confirmed_delete_db";document.formular1.submit();'>&nbsp;&nbsp;&nbsp;
+    <input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" style="width:250" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+<?
+
+} // ende if $_VARS['form_action'] = Datenbank löschen
+
+if ($_VARS['form_action']=="confirmed_delete_db")
+{	
+	
+	// Recht prüfen
+	Access_Backend::checkAccess('customer_db_admin_delete_db');
+	
+    // Löschen der Tabelle
+    $SQL_handler->SQL_delete_table($db_name,$identifier.(int)$_VARS['idDatabase']);
+
+    // löschen der Felder
+    $SQL_handler->SQL_delete_row_by_option($db_name,$definition_table,"db_nr",(int)$_VARS['idDatabase']);
+
+    // löschen des config Eintrags
+    $SQL_handler->SQL_delete_row_by_option($db_name,"customer_db_config","id",(int)$_VARS['idDatabase']);
+
+?>
+    <script>
+    self.location.href='<?=$PHP_SELF?>';
+    </script>
+<?
+
+
+
+} // ende if $_VARS['form_action'] = ausgewählte DB löschen
+
+if ($_VARS['form_action'] =="edit_conf_db") {
+
+	if(isset($_VARS['customer_db_name'])) {
+		$query = "
+					UPDATE 
+						customer_db_config 
+					SET 
+						db_name = '".\DB::escapeQueryString($_VARS['customer_db_name'])."', 
+						db_encode_pw = '".$_VARS['customer_db_encode_pw']."', 
+						multi_login = '".$_VARS['multi_login']."', 
+						allow_accesscode = ".$_VARS['allow_accesscode'].", 
+						external_table = '".\DB::escapeQueryString($_VARS['external_table'])."', 
+						external_table_pk = '".\DB::escapeQueryString($_VARS['external_table_pk'])."', 
+						external_table_user = '".\DB::escapeQueryString($_VARS['external_table_user'])."', 
+						external_table_email = '".\DB::escapeQueryString($_VARS['external_table_email'])."', 
+						external_table_pass = '".\DB::escapeQueryString($_VARS['external_table_pass'])."', 
+						external_table_active = '".\DB::escapeQueryString($_VARS['external_table_active'])."', 
+						external_table_accesscode = '".\DB::escapeQueryString($_VARS['external_table_accesscode'])."' , 
+						external_table_groups = '".\DB::escapeQueryString($_VARS['external_table_groups'])."' 
+					WHERE 
+						id = ".(int)$_VARS['idDatabase']."";
+		DB::executeQuery($query);
+	}
+
+	$aExternalTables = array(''=>L10N::t('Nein'));
+	$aItems = DB::listTables();
+	foreach((array)$aItems as $sTable) {
+		$aExternalTables[$sTable] = $sTable;
+	}
+
+	$my_config = DB::getQueryRow("SELECT * FROM customer_db_config WHERE id = ".(int)$_VARS['idDatabase']." AND active=1");
+?>
+	<h2><?=$LANGUAGE_DATA['data_base']?> <?= $LANGUAGE_DATA['settings']/*Einstellungen*/ ?></h2>
+    <table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+        <?=printFormText($LANGUAGE_DATA['db_name'],"customer_db_name",$my_config['db_name'])?>
+        <?=printFormSelect($LANGUAGE_DATA['save_password_coded'],"customer_db_encode_pw",array("1"=>$LANGUAGE_DATA['yes'],"0"=>$LANGUAGE_DATA['no']),$my_config['db_encode_pw'])?>
+        <?=printFormCheckbox($LANGUAGE_DATA['multiple_login'],"multi_login",1,$my_config['multi_login'])?>
+        <?=printFormCheckbox(L10N::t('Zugriff per Access-Code erlauben'),"allow_accesscode",1,$my_config['allow_accesscode'])?>
+        <?=printFormSelect(L10N::t('Daten in externer Tabelle'), "external_table", $aExternalTables, $my_config['external_table'])?>
+<?
+	if($my_config['external_table']) {
+		$sSql = "DESCRIBE #table";
+		$aSql = array('table'=>$my_config['external_table']);
+		$aData = DB::getPreparedQueryData($sSql, $aSql);
+		$aExternalTable = array(
+			'' => ''
+		);
+		$sPk = "";
+		foreach((array)$aData as $aItem) {
+			if(
+				$aItem['Key'] == 'PRI' &&
+				empty($my_config['external_table_pk'])
+			)  {
+				$my_config['external_table_pk'] = $aItem['Field'];
+			}
+			$aExternalTable[$aItem['Field']] = $aItem['Field']." (".$aItem['Type'].")";
+		}
+
+?>
+        <?=printFormSelect(L10N::t('E-Mail'), "external_table_email", $aExternalTable, $my_config['external_table_email'])?>
+        <?=printFormSelect(L10N::t('Benutzername'), "external_table_user", $aExternalTable, $my_config['external_table_user'])?>
+        <?=printFormSelect(L10N::t('Passwort'), "external_table_pass", $aExternalTable, $my_config['external_table_pass'])?>
+        <?=printFormSelect(L10N::t('Primärschlüssel'), "external_table_pk", $aExternalTable, $my_config['external_table_pk'])?>
+        <?=printFormSelect(L10N::t('Aktiv'), "external_table_active", $aExternalTable, $my_config['external_table_active'])?>
+        <?=printFormSelect(L10N::t('Access-Code'), "external_table_accesscode", $aExternalTable, $my_config['external_table_accesscode'])?>
+        <?=printFormSelect(L10N::t('Gruppen'), "external_table_groups", $aExternalTable, $my_config['external_table_groups'])?>
+        <?
+	}
+?>    	
+    </table>
+	<p align="right">
+    	<input type=button value="<?=$LANGUAGE_DATA['save']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="edit_conf_db";document.formular1.submit();'>
+        &nbsp;
+        <input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+	</p>
+
+<?
+
+} // ende if ($_VARS['form_action'] =="Datenbankname bearbeiten")
+
+
+if ($_VARS['form_action'] =="unlock_images") {
+
+	foreach((array)$_VARS['unlockImg'] as $k=>$v) {
+		foreach($v as $iEntry) {
+			DB::executeQuery("UPDATE ".$selected_table." SET `changed` = `changed`, `ext_".$k."` = SUBSTRING_INDEX(`ext_".$k."`,'|',-1) WHERE id = '".$iEntry."' LIMIT 1");
+		}
+	}
+
+	foreach((array)$_VARS['lockImg'] as $k=>$v) {
+		foreach($v as $iEntry) {
+			DB::executeQuery("UPDATE ".$selected_table." SET `changed` = `changed`, `ext_".$k."` = SUBSTRING_INDEX(`ext_".$k."`,'|',1) WHERE id = '".$iEntry."' LIMIT 1");
+		}
+	}
+
+?>
+	<h2><?= $LANGUAGE_DATA['publish_picture']/*Bilder freischalten*/ ?></h2>
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th width="30%"><?=$LANGUAGE_DATA['user']?></th>
+			<th width="30%"><?=$LANGUAGE_DATA['date']?></th>
+			<th width="100"><?=$LANGUAGE_DATA['old_image']?></th>
+			<th width="100"><?=$LANGUAGE_DATA['new_image']?></th>
+			<th width="5%"><?=$LANGUAGE_DATA['publish_image']?></th>
+			<th width="5%"><?=$LANGUAGE_DATA['deny_image']?></th>
+		</tr>
+		<?
+		$sImages = "";
+		$aImages = array();
+		$res_images = DB::getQueryRows("SELECT * FROM customer_db_definition WHERE db_nr = '".$_VARS['idDatabase']."' AND type = 'image' AND active=1 ORDER BY field_nr");
+		foreach($res_images as $my_images) {
+			$sQuery = "SELECT `id`,`nickname`,`email`,`ext_".$my_images['field_nr']."`,UNIX_TIMESTAMP(changed) as changed FROM `customer_db_1` WHERE ext_".$my_images['field_nr']." != '' AND (SUBSTRING_INDEX(ext_".$my_images['field_nr'].",'|',-1) != SUBSTRING_INDEX(ext_".$my_images['field_nr'].",'|',1) OR SUBSTRING_INDEX(ext_".$my_images['field_nr'].",'|',1) = '')";
+			$res_changes = DB::getQueryRows($sQuery);
+			foreach($res_changes as $my_changes) {
+		?>
+		<tr>
+			<td><?=$my_changes['nickname']?> (<?=$my_changes['email']?>)</td>
+			<td><?=strftime("%x %X",$my_changes['changed'])?></td>
+			<?
+			$aValue = explode("|",$my_changes["ext_".$my_images['field_nr'].""]);
+			?>
+			<td>
+				<? if($aValue[0]) { ?>
+				<a href="/system/extensions/customer_db/<?=$aValue[0]?>" target="_blank"><img src="/system/extensions/customer_db/<?=$aValue[0]?>" height="100" border="0" align="absmiddle" alt="ALT: <?=$v?>"></a>
+				<? } ?>
+			</td>
+			<td>
+				<? if($aValue[1]) { ?>
+				<a href="/system/extensions/customer_db/<?=$aValue[1]?>" target="_blank"><img src="/system/extensions/customer_db/<?=$aValue[1]?>" height="100" border="0" align="absmiddle" alt="NEU: <?=$v?>"></a>
+				<? } ?>
+			</td>
+			<td>
+				<input type="checkbox" name="unlockImg[<?=$my_images['field_nr']?>][]" value="<?=$my_changes['id']?>" checked>
+			</td>
+			<td>
+				<input type="checkbox" name="lockImg[<?=$my_images['field_nr']?>][]" value="<?=$my_changes['id']?>">
+			</td>
+		</tr>
+		<?
+			}
+		}
+		?>
+	</table>
+	<p align="right">
+		<input type="button" class="btn btn-default" value="<?=$LANGUAGE_DATA['publish_marked_images']?>" onClick="document.formular1.form_action.value='unlock_images';document.formular1.submit();">
+		&nbsp;
+		<input type="button" class="btn btn-default" value="<?=$LANGUAGE_DATA['cancel']?>" onClick="document.formular1.form_action.value='cancel';document.formular1.submit();">
+	</p>
+<?
+}
+
+if ($_VARS['form_action'] =="show_changes") {
+
+	if(!$_VARS['iDays']) {
+		$_VARS['iDays'] = 2;
+	}
+?>
+	<h2><?=$LANGUAGE_DATA['db_changes']?></h2>
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th width="40%"><?=$LANGUAGE_DATA['period']?></th>
+			<td width="60%"><input type="text" class="txt" size="2" name="iDays" value="<?=$_VARS['iDays']?>"> <?=$LANGUAGE_DATA['days']?> <input type=button value="<?=$LANGUAGE_DATA['show']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="show_changes";document.formular1.submit();'></td>
+		</tr>
+	</table>
+	<br>
+	<input type="hidden" name="idEntry" value="">
+	<input type="hidden" name="idImage" value="">
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th><?=$LANGUAGE_DATA['nickname']?></th>
+			<th><?=$LANGUAGE_DATA['e-mail']?></th>
+			<th><?=$LANGUAGE_DATA['last_change']?></th>
+			<th><?=$LANGUAGE_DATA['images']?></th>
+		</tr>
+		<?
+		$sImages = "";
+		$aImages = array();
+		$res_images = DB::getQueryRows("SELECT * FROM customer_db_definition WHERE db_nr = '".$_VARS['idDatabase']."' AND type = 'image' AND active=1 ORDER BY field_nr");
+		foreach($res_images as $my_images) {
+			$aImages['ext_'.$my_images['field_nr']] = $my_images['name'];
+			$sImages .= 'ext_'.$my_images['field_nr'].",";
+		}
+		$res_changes = DB::getQueryRows("SELECT ".$sImages." id, nickname, email, UNIX_TIMESTAMP(changed) as changed FROM ".$selected_table." WHERE active = 1 AND `changed` > SUBDATE(NOW(),INTERVAL ".$_VARS['iDays']." DAY) ORDER BY changed DESC LIMIT 1000");
+		foreach($res_changes as $my_changes) {
+		?>
+		<tr>
+			<td><?=$my_changes['nickname']?></td>
+			<td><?=$my_changes['email']?></td>
+			<td><?=strftime("%x %X",$my_changes['changed'])?></td>
+			<td>
+				<?
+				foreach($aImages as $k=>$v) {
+					$aValue = explode("|",$my_changes[$k]);
+				?>
+					<? if($aValue[0]) { ?>
+					<a href="/system/extensions/customer_db/<?=$aValue[0]?>" target="_blank"><img src="/system/extensions/customer_db/<?=$aValue[0]?>" height="100" border="0" align="absmiddle" alt="<?=$LANGUAGE_DATA['old'] ?> <?=$v?>"></a>
+					<? } ?>
+					<? if($aValue[1]) { ?>
+					<a href="/system/extensions/customer_db/<?=$aValue[1]?>" target="_blank"><img src="/system/extensions/customer_db/<?=$aValue[1]?>" height="100" border="0" align="absmiddle" alt="<?=$LANGUAGE_DATA['new'] ?> <?=$v?>"></a>
+					<? } ?>
+					<? if(count($aValue) > 1) { ?>
+					<input type=button value="<?=$LANGUAGE_DATA['deny_image'] ?>" class="btn btn-default" OnClick='document.formular1.idImage.value="<?=$k?>";document.formular1.idEntry.value="<?=$my_changes['id']?>";document.formular1.form_action.value="deny_image";document.formular1.submit();'>
+					<input type=button value="<?=$LANGUAGE_DATA['publish_image'] ?>" class="btn btn-default" OnClick='document.formular1.idImage.value="<?=$k?>";document.formular1.idEntry.value="<?=$my_changes['id']?>";document.formular1.form_action.value="activate_image";document.formular1.submit();'>
+					<? } ?>
+					<br>
+				<?
+				}
+				?>
+			</td>
+		</tr>
+		<?
+		}
+		?>
+	</table>
+<?
+}
+
+if ($_VARS['form_action'] == "deny_image") {
+	DB::executeQuery("UPDATE ".$selected_table." SET `changed` = `changed`, `".$_VARS['idImage']."` = SUBSTRING_INDEX(`".$_VARS['idImage']."`,'|',1) WHERE id = '".(int)$_VARS['idEntry']."' LIMIT 1");
+?>
+    <script>
+    document.formular1.form_action.value = 'show_changes';
+    document.formular1.submit();
+    </script>
+<?
+}
+
+if ($_VARS['form_action'] == "activate_image") {
+	DB::executeQuery("UPDATE ".$selected_table." SET `changed` = `changed`, `".$_VARS['idImage']."` = SUBSTRING_INDEX(`".$_VARS['idImage']."`,'|',-1) WHERE id = '".(int)$_VARS['idEntry']."' LIMIT 1");
+?>
+    <script>
+    document.formular1.form_action.value = 'show_changes';
+    document.formular1.submit();
+    </script>
+<?
+}
+
+if ($_VARS['form_action'] == "delete_group") {
+	if($_VARS['id'] > 0) {
+		DB::executeQuery("DELETE FROM customer_groups WHERE id = '".(int)$_VARS['id']."'");
+	}
+	$_VARS['form_action'] = "edit_groups";
+}
+
+if ($_VARS['form_action'] == "edit_groups") {
+?>
+	<h2><?=$LANGUAGE_DATA['groups_of_db'] ?> "<?=$database_data['db_name']?>" <?=$LANGUAGE_DATA['edit_groups_of_db'] ?></h2>
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th width="5%">ID</th>
+			<th width="35%"><?=$LANGUAGE_DATA['db_name'] /*Name*/ ?></th>
+			<th width="45%"><?=$LANGUAGE_DATA['description'] ?></th>
+			<th width="15%"><?=$LANGUAGE_DATA['actions'] ?></th>
+		</tr>
+		<?
+		$res_groups = DB::getQueryRows("SELECT id, name, description FROM customer_groups WHERE db_nr = '".$_VARS['idDatabase']."' AND active = 1 ORDER BY name");
+		foreach($res_groups as $my_group) {
+		?>
+		<tr>
+			<td style="text-align: right;"><?=$my_group['id']?></td>
+			<td><?=$my_group['name']?>&nbsp;</td>
+			<td><?=$my_group['description']?>&nbsp;</td>
+			<td align="center"><a href="<?=$_SERVER['PHP_SELF']?>?form_action=edit_group&id=<?=$my_group['id']?>&idDatabase=<?=$_VARS['idDatabase']?>"><img src="/admin/media/edit.png" border="0"></a>&nbsp;<a href="#" onClick="if(confirm('<?=$LANGUAGE_DATA['delete_group'] ?>')) document.location.href='<?=$_SERVER['PHP_SELF']?>?form_action=delete_group&id=<?=$my_group['id']?>&idDatabase=<?=$_VARS['idDatabase']?>';"><img src="/admin/media/delete.png" border="0"></a></td>
+		</tr>
+		<?
+		}
+		?>
+	</table>
+	<p align="right">
+		<input type="button" class="btn btn-default" value="<?=$LANGUAGE_DATA['add_new_group'] ?>" onClick="document.formular1.form_action.value='edit_group';document.formular1.submit();">
+		&nbsp;
+		<input type="button" class="btn btn-default" value="<?=$LANGUAGE_DATA['cancel']?>" onClick="document.formular1.form_action.value='cancel';document.formular1.submit();">
+	</p>
+<?
+} elseif ($_VARS['form_action'] == "edit_group") {
+	if($_VARS['id'] > 0) {
+		$aGroup = DB::getQueryRow("SELECT * FROM customer_groups WHERE id = '".(int)$_VARS['id']."'");
+	}
+?>
+	<h2><?=$LANGUAGE_DATA['groups_of_db'] ?> "<?=$database_data['db_name']?>" <?=$LANGUAGE_DATA['edit_groups_of_db'] ?></h2>
+	<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+	<?=printTableStart()?>
+		<?=printFormText($LANGUAGE_DATA['db_name'],"group_name",$aGroup['name'])?>
+		<?=printFormTextarea($LANGUAGE_DATA['description'],"group_description",$aGroup['description'])?>
+	<?=printTableEnd()?>
+	<p align="right">
+		<input type="button" class="btn btn-default" value="<?=$LANGUAGE_DATA['save']?>" onClick="document.formular1.form_action.value='save_group';document.formular1.submit();">
+		&nbsp;
+		<input type="button" class="btn btn-default" value="<?=$LANGUAGE_DATA['cancel']?>" onClick="document.formular1.form_action.value='cancel';document.formular1.submit();">
+	</p>
+
+<?
+} elseif ($_VARS['form_action'] == "save_group") {
+	if($_VARS['id'] > 0) {
+		DB::executeQuery("UPDATE customer_groups SET name = '".$_VARS['group_name']."', description = '".$_VARS['group_description']."', active = 1 WHERE id = '".$_VARS['id']."'");
+	} else {
+		DB::executeQuery("INSERT INTO customer_groups SET db_nr = '".$_VARS['idDatabase']."', name = '".$_VARS['group_name']."', description = '".$_VARS['group_description']."', active = 1");
+	}
+?>
+    <script>
+    document.formular1.form_action.value = 'edit_groups';
+    document.formular1.submit();
+    </script>
+<?
+}
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+/////////////////////   EBENE FELDER   ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+if ( ($_VARS['form_action']=="edit_structure_db" OR $_VARS['form_action']=="Ausgewählte Datenbank bearbeiten" OR $_VARS['form_action']=="Datenbank bearbeiten" ) && $_VARS['idDatabase']) {
+?>
+    <h2><?=$LANGUAGE_DATA['db_fields'] ?> "<?=$database_data['db_name']?>":</h2>
+
+	<table border="0" class="table" cellpadding="4" cellspacing="0" width="100%">
+        <tr>
+			<th width="10%">ID</th>
+			<th width="50%"><?=$LANGUAGE_DATA['db_name'] ?></th>
+			<th width="20%"><?=$LANGUAGE_DATA['type'] ?></th>
+			<th width="10%"><?=$LANGUAGE_DATA['actions'] ?></th>
+		</tr>
+<?
+ 
+	$aSql = array(
+		'iDatabase'	=> $_VARS['idDatabase']
+	);
+	$sSql = "
+		SELECT
+			*
+		FROM
+			`customer_db_definition`
+		WHERE
+			`db_nr` = :iDatabase
+		AND
+			`active` = 1
+		ORDER BY `field_nr`
+	";
+	$aResult = DB::getPreparedQueryData($sSql, $aSql);
+	
+	foreach($aResult as $mKey => $mValue)
+	{
+		if($mValue['field_nr'] > 0) {
+?>
+            <tr id="tr_<?=$mValue['id']?>" onmouseout="showRow(<?=$mValue['id']?>,0)" onmousemove="showRow(<?=$mValue['id']?>,1);" onDblClick="self.location.href='customer_db_admin.html?form_action=edit_field&idDatabase=<?=$_VARS['idDatabase']?>&selected_field=<?=$mValue['id']?>';">
+<?
+        } else {
+?>
+            <tr id="tr_<?=$mValue['id']?>" onmouseout="showRow(<?=$mValue['id']?>,0)" onmousemove="showRow(<?=$mValue['id']?>,1);">
+<?
+        }
+?>
+				<td><?=$mValue['field_nr']?></td>
+				<td><?=$mValue['name']?></td>
+				<td><?=$aFieldTypes[$mValue['type']]?></td>
+<? if($mValue['field_nr'] > 0) { ?>
+				<td align="center"><a href="<?=$_SERVER['PHP_SELF']?>?form_action=edit_field&idDatabase=<?=$_VARS['idDatabase']?>&selected_field=<?=$mValue['id']?>"><img src="/admin/media/edit.png" align="absmiddle" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?form_action=delete_field&idDatabase=<?=$_VARS['idDatabase']?>&selected_field=<?=$mValue['id']?>"><img src="/admin/media/delete.png" align="absmiddle" border="0"></a></td>
+<? } else { ?>
+				<td align="center">&nbsp;</td>
+<? } ?>
+			</tr>
+<? } ?>
+
+		</table>
+        <p align="right">
+		<input type=button value="<?=$LANGUAGE_DATA['add_fields']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="add_field";document.formular1.submit();'>
+		&nbsp;
+		<input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+        </p>
+<?
+} // end if ($_VARS['form_action'] =="" AND $selected_table)
+
+
+if ($_VARS['form_action'] =="add_field" OR $_VARS['form_action']=="Feldnamen eintragen") {
+?>
+
+	<h2><?=$LANGUAGE_DATA['new_field_in_db'] /*Neues Feld in Datenbank*/ ?>"<?=$database_data['db_name']?>":</h2>
+	<?=printTableStart()?>
+		<?=printFormText($LANGUAGE_DATA['field_name'],"selected_field_name")?>
+		<?=printFormCheckbox($LANGUAGE_DATA['mandatory_field'],"is_required")?>
+		<?=printFormSelect($LANGUAGE_DATA['field_type'],"field_type",$aFieldTypes,$field_type)?>
+	<?=printTableEnd()?>
+
+	<p align="right">
+		<input type=button value="<?=$LANGUAGE_DATA['save']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="save_field";document.formular1.submit();'>
+        &nbsp;
+        <input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+	</p>
+
+<?
+
+} // ende if $_VARS['form_action'] = Ausgewählte Datenbank bearbeiten
+
+
+if ($_VARS['form_action']=="save_field") {
+
+	$selected_field_name	= $_VARS['selected_field_name'];
+	$is_required			= $_VARS['is_required'];
+	$field_type				= $_VARS['field_type'];
+	$iIDDatabase			= (int)$_VARS['idDatabase'];
+
+    // Daten speichern
+	if (
+		$selected_field_name != "" && 
+		$selected_field_name != $LANGUAGE_DATA['no_field_selected'] /*kein Feld ausgewählt*/
+	) {
+
+		$aDescriptions = DB::describeTable($identifier.$iIDDatabase);
+
+		$aIndex = array();
+		foreach((array)$aDescriptions as $aDescription) {
+			if(strpos($aDescription['COLUMN_NAME'], 'ext_') !== false) {
+				$aIndex[] = (int)str_replace('ext_', '', $aDescription['COLUMN_NAME']);
+			}
+		}
+
+		rsort($aIndex, SORT_NUMERIC);
+		$iLatestIndex = reset($aIndex);
+
+		$iNewIndex = $iLatestIndex + 1;
+
+        $selected_field = $iNewIndex;
+
+		$aInsert = array();
+		$aInsert['active'] = 1;
+        $aInsert["name"] = $selected_field_name;
+        $aInsert["type"] = $field_type;
+        $aInsert["required"] = ($is_required=="on" || $is_required == 1)?1:0;
+        $aInsert["db_nr"] = $iIDDatabase;
+        $aInsert["field_nr"] = $selected_field;
+		
+	    $ext_name="ext_".$selected_field;
+		switch($field_type) {
+			case "INTEGER":
+				$options="int(11) NOT NULL";
+				break;
+			case "Select Field":
+				$options="int(11) NOT NULL";
+				break;
+			case "timestamp":
+				$options="DATETIME NOT NULL";
+				break;
+			default:
+	        	$options="TEXT NOT NULL";
+				break;
+		}
+
+		DB::addField($selected_table, $ext_name, $options);
+		DB::insertData($definition_table, $aInsert);
+
+?>
+        <script>
+       document.formular1.form_action.value='edit_structure_db';
+       document.formular1.submit();
+        </script>
+<?
+
+    }
+    else
+    {
+   	    echo $LANGUAGE_DATA['please_enter_field_name']."<br><br>";
+   	    echo "<input type=button value=\"".$LANGUAGE_DATA['enter_field_name']."\" class=\"btn btn-default\" style=\"width:250\" OnClick='document.formular1.form_action.value=\"add_field\";document.formular1.submit();'>";
+    }
+
+} // ende if $_VARS['form_action'] = Speichern und weiteres Feld hinzufügen OR Feld hinzufügen und zurück
+
+
+
+//TODO
+if ($_VARS['form_action']=="edit_field") {
+    // Feld Daten anzeigen und Änderungen speichern
+    
+    $iSelectedField = (int)$_VARS['selected_field'];
+    if (intval($iSelectedField)) {
+        $SQL_handler->SQL_get_row_by_option($db_name, $definition_table, $selected_table, "id", $iSelectedField);
+        $data=$SQL_handler->result[1];
+?>
+	<h2><?=$LANGUAGE_DATA['field_of_db'] /*Feld in Datenbank*/ ?> "<?=$database_data['db_name']?>" <?=$LANGUAGE_DATA['edit_field'] /*bearbeiten:*/ ?></h2>
+
+        <input type="hidden" name="field_id" value="<?=$iSelectedField?>">
+        <input type="hidden" name="selected_field" value="<?=$iSelectedField?>">
+<?
+        $field_id=$data[0]["id"];
+        $field_type=$data[0]["type"];
+        $is_required=$data[0]["required"];
+		$additional=unserialize($data[0]["additional"]);
+
+?>
+        <?=printTableStart()?>
+			<?=printFormText($LANGUAGE_DATA['field_name'], "selected_field_name", $data[0]['name'])?>
+			<?=printFormCheckbox($LANGUAGE_DATA['mandatory_field'], "is_required", "1", $is_required)?>
+        	<?=printFormSelect($LANGUAGE_DATA['field_type'], "field_type", $aFieldTypes, $field_type)?>
+<?
+		if ($data[0]["type"] == "reference") {
+
+			$aTables = array(0=>$LANGUAGE_DATA['pls_choose']);
+			$aItems = DB::listTables();
+			foreach((array)$aItems as $sTable) {
+				$aTables[$sTable] = $sTable;
+			}
+
+			echo printFormCheckbox($LANGUAGE_DATA['multiple_select']/*Mehrfachauswahl*/,"multiple", 1,$additional['multiple']);
+			echo printFormSelect($LANGUAGE_DATA['data_base'],"db_table",$aTables,$additional['db_table']);
+			if ($additional['db_table']) {
+				$aItems = DB::describeTable($additional['db_table']);
+				
+				$aFields = [
+					0=>$LANGUAGE_DATA['pls_choose']
+				];
+				foreach($aItems as $aField) {
+					$aFields[$aField['Field']] = $aField['Field'];
+				}
+				echo printFormSelect($LANGUAGE_DATA['value']/*Wert*/,"db_field_value",$aFields,$additional['db_field_value']);
+				echo printFormSelect($LANGUAGE_DATA['field_name']/*Bezeichnung*/,"db_field_text",$aFields,$additional['db_field_text']);
+			}
+			echo printFormTextarea("Query (WHERE id > 2 ORDER BY id)","db_query",$additional['db_query']);
+		}
+
+        if ($field_type=="Checkbox" )
+        {
+            $my_option = DB::getQueryRow("SELECT display FROM customer_db_values WHERE definition_id = '".$field_id."'");
+            echo printFormText($LANGUAGE_DATA['value']/*Wert*/,"selected_option",$my_option['display']);
+	    }
+
+        if ($field_type=="Select Field" OR $field_type=="Radio-Button" ) {
+            echo "<tr><td><input type=button value=\"".$LANGUAGE_DATA['edit_options']/*Optionen bearbeiten*/."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"display_option\";document.formular1.submit();'></td></tr>";
+        }
+        if ($field_type=="Datei" || $field_type=="ProtectedDatei" || $field_type=="image") {
+			$aAdditional = unserialize($data[0]['additional']);
+			echo printFormText($LANGUAGE_DATA['allowed_file_format']/*Erlaubte Dateiformate (Komma getrennt)*/,"extensions",implode(",",(array)$aAdditional["extensions"]));
+			echo printFormText($LANGUAGE_DATA['allowed_file_size']/*Erlaubte Dateigröße (in KB)*/,"size",$aAdditional["size"]);
+			echo printFormCheckbox($LANGUAGE_DATA['publish_images_directly']/*Bilder direkt veröffentlichen*/,"publish","1",$aAdditional["publish"]);
+        }
+        if ($field_type=="Kategoriefeld") {
+			echo "<tr><td><input type=button value=\"".$LANGUAGE_DATA['edit_options']/*Optionen bearbeiten*/."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"edit_catfield\";document.formular1.submit();'></td></tr>";
+        }
+
+        echo "</table>";
+        	$strWarnungTyp ="";
+
+		?>
+		<p align="right">
+		<input type=button value="<?=$LANGUAGE_DATA['save']?>" class="btn btn-default"  OnClick='if(confirm("Bei verändern des Feldtyp kann es zu Datenverlust kommen!")){ document.formular1.form_action.value="save_changes_field";document.formular1.submit();} else { document.formular1.form_action.value="edit_structure_db"; document.formular1.submit(); }'>&nbsp;
+        <input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default"  OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'><br>
+        <input type=button value="<?=$LANGUAGE_DATA['back']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="edit_structure_db";document.formular1.submit();'>
+		</p>
+
+		<?
+    } else {
+        // kein gültiges Feld ausgewählt!
+        ?>
+        <script>
+            document.formular1.form_action.value='edit_structure_db';
+            document.formular1.submit();
+        </script>
+        <?
+    }
+} // ende if $_VARS['form_action'] = Feld bearbeiten
+
+
+if ($_VARS['form_action'] == "save_changes_field") {
+
+
+	$iSelectedField = (int)$_VARS['selected_field'];
+
+	$field_data = DB::getQueryRow("SELECT * FROM customer_db_definition WHERE id = '".$iSelectedField."'");
+
+    $ext_name="ext_".$field_data['field_nr'];
+	switch($_VARS['field_type']) {
+		case "INTEGER":
+			$options="int(11) NOT NULL";
+			break;
+		case "Select Field":
+			$options="int(11) NOT NULL";
+			break;
+		case "timestamp":
+			$options="timestamp(14) NOT NULL";
+			break;
+		default:
+        	$options="TEXT NOT NULL";
+			break;
+	}
+	
+	$bSuccess = DB::executeQuery("ALTER TABLE `".$selected_table."` CHANGE `".$ext_name."` `".$ext_name."` ".$options." ");
+	if($bSuccess === false) {
+		DB::addField($selected_table, $ext_name, $options);
+	}
+
+	if ($_VARS['extensions']) {
+		$aAdditional['extensions'] = explode(",",$_VARS['extensions']);
+	}
+	if ($_VARS['size']) {
+		$aAdditional['size'] = $_VARS['size'];
+	}
+	if ($_VARS['publish']) {
+		$aAdditional['publish'] = $_VARS['publish'];
+	}
+	if ($_VARS['db_table']) {
+		$aAdditional['db_table'] = $_VARS['db_table'];
+	}
+	if ($_VARS['multiple']) {
+		$aAdditional['multiple'] = $_VARS['multiple'];
+	}
+	if ($_VARS['db_field_value']) {
+		$aAdditional['db_field_value'] = $_VARS['db_field_value'];
+	}
+	if ($_VARS['db_field_text']) {
+		$aAdditional['db_field_text'] = $_VARS['db_field_text'];
+	}
+	if ($_VARS['db_query']) {
+		$aAdditional['db_query'] = $_VARS['db_query'];
+	}
+	if ($_VARS['db_add_query']) {
+		if(!preg_match("/(DROP|DELETE|PROCESS|SHUTDOWN|INSERT|CREATE|UPDATE|ALTER)/i",$_VARS['db_add_query']) && preg_match("/(SELECT)/i",$_VARS['db_add_query'])) {
+			$aAdditional['db_add_query'] = $_VARS['db_add_query'];
+		}
+	}
+
+	DB::executeQuery("UPDATE customer_db_definition SET name = '".\DB::escapeQueryString($_VARS['selected_field_name'])."', type = '".\DB::escapeQueryString($_VARS['field_type'])."', required = '".\DB::escapeQueryString($_VARS['is_required'])."', additional = '".\DB::escapeQueryString(serialize($aAdditional))."' WHERE id = '".$iSelectedField."'");
+	if($_VARS['selected_option']) {
+		if(count(DB::getQueryRows("SELECT display FROM customer_db_values WHERE definition_id = '".$_VARS['field_id']."'")) > 0) {
+			DB::executeQuery("UPDATE customer_db_values SET display = '".$_VARS['selected_option']."' WHERE definition_id = '".$_VARS['field_id']."'");
+		} else {
+			DB::executeQuery("INSERT INTO customer_db_values SET display = '".$_VARS['selected_option']."', value = 1, active = 1, definition_id = '".$_VARS['field_id']."'");
+		}
+	}
+
+    ?>
+    <script>
+        document.formular1.form_action.value='edit_structure_db';
+		document.formular1.submit();
+    </script>
+    <?
+
+}// ende if $_VARS['form_action'] = �nderungen speichern
+
+
+
+if ($_VARS['form_action']=="delete_field")
+{
+	$selected_field = (int)$_VARS['selected_field'];
+
+     // Feld löschen
+    // Prüfen, ob Feld ein Auswahlfeld ist -> zugehörige Optionen löschen!
+    $SQL_handler->SQL_get_row_by_option($db_name, $definition_table, $selected_table, "id", $selected_field);
+    $temp = $SQL_handler->result[1];
+    #die(var_dump($temp));
+    $field_name="ext_".$temp[0]["field_nr"];
+    $SQL_handler->SQL_delete_field($db_name,$selected_table,$field_name);
+
+    $type_of_field = $temp[0]["type"];
+
+    if ($type_of_field == "Select Field" OR $type_of_field == "Radio-Button")
+    {
+        #$SQL_handler->SQL_get_ID($db_name,$definition_table,$selected_table,$selected_field);
+        #$id=$SQL_handler->result[1];
+        #echo $id."<br>";
+        $SQL_handler->SQL_delete_row_by_option($db_name,$value_table,"definition_id",$selected_field);
+    }
+    #$SQL_handler->SQL_delete_row($db_name,$definition_table,$selected_field);
+    $SQL_handler->SQL_delete_row_by_option($db_name,$definition_table,"id",$selected_field)
+    #die($selected_field);
+
+    ?>
+    <script>
+        document.formular1.form_action.value='Ausgewählte Datenbank bearbeiten';
+        document.formular1.submit();
+    </script>
+    <?
+
+} // ende if $_VARS['form_action'] = Feld löschen
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+/////////////////////   EBENE OPTIONEN   //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+if ($_VARS['form_action']=="edit_path_option")
+{
+    edit_path($db_name,$SQL_handler,$definition_table,$value_table,$selected_table,$selected_field);
+
+    echo "<input type=button value=\"".$LANGUAGE_DATA['save_path']."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"save_path_option\";document.formular1.submit();'>&nbsp&nbsp&nbsp&nbsp";
+    echo "<input type=button value=\"".$LANGUAGE_DATA['back']."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"edit_field\";document.formular1.submit();'>";
+} // Ende if ($_VARS['form_action']=="Verzeichnis bearbeiten")
+
+if ($_VARS['form_action']=="save_path_option")
+{
+    echo "<input type=\"hidden\" name=\"save_path\" value=\"$save_path\">";
+    if($current_display[strlen($current_display)-1]=="/")
+    {
+        $current_display=substr($current_display,0,strlen($current_display)-1);
+    }
+    if($current_display[0]=="/")
+    {
+        $current_display=substr($current_display,1,strlen($current_display));
+    }
+
+    if (!is_dir($current_display) AND $current_display!="" )
+    {
+        echo $LANGUAGE_DATA['path']/*Das Verzeichnis*/ ." ".$save_path." ". $LANGUAGE_DATA['path_doesnt_exist']/*existiert noch nicht - möchten Sie es anlegen ?*/."<br>";
+        echo "<input type=button value=\"".$LANGUAGE_DATA['create_path']."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"create_path_option\";document.formular1.submit();'>&nbsp&nbsp&nbsp&nbsp";
+        echo "<input type=button value=\"".$LANGUAGE_DATA['back']."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"edit_path_option\";document.formular1.submit();'>";
+    }
+    else
+    {
+        $SQL_handler->SQL_get_id($db_name,$definition_table,$selected_table,$selected_field);
+        $data=$SQL_handler->result[1];
+
+        // Daten speichern
+        $name_array[0]="display";			$value_array[0]=$save_path;
+        $name_array[1]="active";			$value_array[1]="1";
+
+        $option_name[0]="definition_id";  $option[0]=$data;
+        $option_name[1]="display";        $option[1]=$old_selected_option;
+
+        $SQL_handler->SQL_update_row_by_option($db_name,$value_table,$name_array,$value_array,$option_name, $option);
+
+        ?>
+        <script>
+            document.formular1.form_action.value='edit_structure_db';
+            document.formular1.submit();
+        </script>
+        <?
+
+    }
+
+} // ende if form_action = Pfad speichern
+
+if ($_VARS['form_action']=="create_path_option")
+{
+  //echo "chdir($DOCUMENT_ROOT.$upload_dir);";
+  //chdir($DOCUMENT_ROOT.$upload_dir);
+
+
+    if ($save_path[strlen($save_path)-1]=="/"){$save_path=substr($save_path,0,strlen($save_path)-1);}
+    if ($save_path[0]=="/"){$save_path=substr($save_path,1,strlen($save_path));}
+
+    echo "chdir($DOCUMENT_ROOT.$upload_dir);mkdir($save_path,".$system_data['chmod_mode_dir'].")";
+    chdir($DOCUMENT_ROOT.$upload_dir);
+    if (mkdir($save_path,$system_data['chmod_mode_dir']))
+    {
+        // echo "Verzeichnis erfolgreich angelegt!<br>";
+        $SQL_handler->SQL_get_id($db_name,$definition_table,$selected_table,$selected_field);
+        $data=$SQL_handler->result[1];
+
+        // Daten speichern
+        $name_array[0]="display";			$value_array[0]=$save_path;
+        $name_array[1]="active";			$value_array[1]="1";
+
+        $option_name[0]="definition_id";  $option[0]=$data;
+        $option_name[1]="display";        $option[1]=$old_selected_option;
+
+        $SQL_handler->SQL_update_row_by_option($db_name,$value_table,$name_array,$value_array,$option_name, $option);
+
+        ?>
+        <script>
+            document.formular1.form_action.value='Ausgewählte Datenbank bearbeiten';
+            document.formular1.submit();
+        </script>
+        <?
+
+    }
+    else
+    {
+        echo $LANGUAGE_DATA['path']." ".$save_path." ".$LANGUAGE_DATA['couldnt_be_created']."<br>";
+    }
+    echo "<input type=button value=\"".$LANGUAGE_DATA['edit_selected_db']/*Ausgewählte Datenbank bearbeiten.*/."\" class=\"btn btn-default\" style=\"width:250\" OnClick='document.formular1.form_action.value=\"edit_structure_db\";document.formular1.submit();'>&nbsp&nbsp&nbsp&nbsp";
+    echo "<input type=button value=\"".$LANGUAGE_DATA['back']."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"edit_path_option\";document.formular1.submit();'>&nbsp&nbsp&nbsp&nbsp";
+    echo "<input type=button value=\"".$LANGUAGE_DATA['cancel']."\" class=\"btn btn-default\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"cancel\";document.formular1.submit();'>&nbsp&nbsp&nbsp&nbsp";
+}  // ende if form_action = Verzeichnis erzeugen
+
+if ($_VARS['form_action']=="display_option") {
+
+?>
+	<h2><?=$LANGUAGE_DATA['field_belonging_options']/*Zu diesem Feld gehörende Optionen:*/ ?></h2>
+
+    <table border=0 class=table cellpadding=4 cellspacing=0 width="100%">
+        <tr>
+            <th width="80%"><?=$LANGUAGE_DATA['option'] ?></th>
+            <th width="10%"><?=$LANGUAGE_DATA['field_value'] /*Wert*/ ?></th>
+			<th width="10%"><?=$LANGUAGE_DATA['actions'] ?></th>
+        </tr>
+ <?
+	$aSql = array(
+		'field_id'	=> $_VARS['field_id']
+	);
+	$sSql = "
+		SELECT
+			*
+		FROM
+			`customer_db_values`
+		WHERE
+			`definition_id` = :field_id
+		ORDER BY 
+			`value`
+	";
+	$aResult = DB::getPreparedQueryData($sSql, $aSql);
+
+	foreach((array)$aResult as $mKey => $mValue)
+	{
+	?>
+        <tr>
+			<td><?=$mValue['display']?></td>
+			<td align="right"><?=$mValue['value']?></td>
+			<td align="center"><a href="<?=$_SERVER['PHP_SELF']?>?form_action=edit_option&idDatabase=<?=$_VARS['idDatabase']?>&field_id=<?=$_VARS['field_id']?>&idOption=<?=$mValue['id']?>"><img src="/admin/media/edit.png" align="absmiddle" border="0"></a> <a href="<?=$_SERVER['PHP_SELF']?>?form_action=delete_option&idDatabase=<?=$_VARS['idDatabase']?>&field_id=<?=$_VARS['field_id']?>&idOption=<?=$mValue['id']?>"><img src="/admin/media/delete.png" align="absmiddle" border="0"></a></td>
+		</tr>
+    <?
+	}
+?>
+	</table>
+	<p align="right">
+	<input type=button value="<?=$LANGUAGE_DATA['add_option'] /*Option hinzufügen*/ ?>" class="btn btn-default" OnClick='document.formular1.form_action.value="edit_option";document.formular1.submit();'>
+	&nbsp;
+	<input type=button value="<?=$LANGUAGE_DATA['back'] ?>" class="btn btn-default" OnClick='document.formular1.form_action.value="edit_field";document.formular1.submit();'>
+	</p>
+<?
+}  // ende if form_action = Optionen bearbeiten OR Weitere Option bearbeiten
+
+
+
+if ($_VARS['form_action']=="edit_catfield")
+{
+//  show_category($db_name,$SQL_handler,$definition_table,$value_table,$selected_table,$selected_field);
+//  echo "<input type=submit name=\"form_action\" value=\"Zurück\" class=\"btn\">";
+
+ // if ($selected_field!="")
+  //	{
+     //echo "sel_opt : ".$selected_option."!";
+
+	 #$SQL_handler->SQL_get_id($db_name,$definition_table,$selected_table,$selected_field);
+	 #$option=$SQL_handler->result[1];
+
+     #? ><input type="hidden" name="field_id" value="<?=$option? >"><?
+
+    $option_name="definition_id";
+	$SQL_handler->SQL_get_row_by_option($db_name, $value_table, $selected_table, $option_name, $selected_field);
+	$data=$SQL_handler->result[1];
+
+###########################################
+     #echo "SQL_get_row_by_option($db_name,$value_table, $selected_table, $option_name, $selected_field)";
+     #var_dump($data);
+###########################################
+
+    $current_display=$data[0]["display"];
+    $current_value=$data[0]["value"];
+	?><input type="hidden" name="old_selected_option" value="<?=$current_display?>"><?
+	 //echo $option;
+
+?>
+    <?=$LANGUAGE_DATA['belonging_options_to_category']/*Zu diesem Kategoriefeld gehörende Optionen:*/ ?> <br><br>
+
+    <table border=0 class=table cellpadding=4 cellspacing=0>
+        <tr>
+            <td>
+                <?=$LANGUAGE_DATA['choose_category_tree']/*Kategoriebaum wählen*/ ?>
+            </td>
+            <td>
+                <?=$LANGUAGE_DATA['allowed_amount_categories']/*Erlaubte Anzahl wählbarer Kategorien*/ ?>
+            </td>
+        </tr>
+
+<?
+    // Datenbankabfrage, welche Bäume verfügbar sind
+    $SQL_handler->SQL_get_table_names($db_name, $tree_identifier);
+    $result=$SQL_handler->result[1];
+    if(is_string($result[0]))
+    {
+        $tree_names=$result;
+    }
+    else
+    {
+        $tree_names=$result[0];
+    }
+    //var_dump($tree_names);
+
+	echo "<tr><td><select name=\"display\">";//<input type=text class=txt name=\"display\" value=\"$current_display\">
+    for ($i=0;$i<count($tree_names);$i++)
+    {
+        echo "<option ";
+        if ($tree_names[$i]==$current_display OR $tree_names==$current_display)
+        {
+            echo "SELECTED";
+        }
+        echo ">$tree_names[$i]</option>";
+    }
+    echo "</select></td>";
+
+	echo "</td><td>";// <input type=text class=txt name=\"value\" value=\"$current_value\"></td></tr>";
+    echo " <select name=\"value\">";
+    for ($i=1;$i<51;$i++)
+    {
+        echo "<option ";
+        if ($i==$current_value)
+        {
+            echo "SELECTED";
+        }
+        echo " >".$i."</option>";
+    }
+    echo "</select></td></tr>";
+    echo "curr_val : ".$current_value;
+
+?>
+
+        <tr>
+            <td>
+                <input type=button value="<?=$LANGUAGE_DATA['save']?>" class="btn btn-default" style="width:150" OnClick='document.formular1.form_action.value="save_catfield";document.formular1.submit();'>
+            </td>
+            <td>
+                <input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" style="width:150" OnClick='document.formular1.form_action.value="cancel";document.formular1.submit();'>
+            </td>
+        </tr>
+    </table>
+    <br>
+
+<?
+
+} // ende if $_VARS['form_action'] = Eigenschaften bearbeiten
+
+
+
+
+
+if ($_VARS['form_action']=="save_catfield")
+{
+	$SQL_handler->SQL_get_id($db_name,$definition_table,$selected_table,$selected_field);
+	$data=$SQL_handler->result[1];
+
+	// Daten speichern
+	$name_array[0]="display";			$value_array[0]=$display;
+	$name_array[1]="value";			$value_array[1]=$value;
+	$name_array[2]="active";			$value_array[2]="1";
+
+	$option_name[0]="definition_id";  $option[0]=$data;
+	$option_name[1]="display";        $option[1]=$old_selected_option;
+
+	/*  echo "SQL_handler->SQL_update_row_by_option($db_name,$value_table,$name_array,$value_array,$option_name, $option)<br>";
+	var_dump($value_array);
+	var_dump($option);
+	*/
+	//  echo "def id : $data<br>";
+
+	$SQL_handler->SQL_get_row_by_option($db_name, $value_table, $table_name, $option_name, $option);
+	$result=$SQL_handler->result[1];
+
+	if ($result) {
+
+		$SQL_handler->SQL_update_row_by_option($db_name,$value_table,$name_array,$value_array,$option_name, $option);
+
+	} else {
+    
+		$aInsert = array();
+		$aInsert['display'] = $display;
+		$aInsert['value'] = $value;
+		$aInsert['definition_id'] = (int)$selected_field;
+		DB::insertData($value_table, $aInsert);
+
+	}
+
+?>
+    <script>
+        document.formular1.form_action.value='edit_structure_db';
+        document.formular1.submit();
+    </script>
+<?
+
+} // Ende if ($_VARS['form_action']=="Eigenschaften speichern")
+
+
+if ($_VARS['form_action']=="delete_option") {
+
+	$selected_option = $_VARS['selected_option'];
+	$selected_field = $_VARS['selected_field'];
+
+	$SQL_handler->SQL_get_ID($db_name,$definition_table,$selected_table,$selected_field);
+	$def_id=$SQL_handler->result[1];
+
+	$name_array[0]="active";  $value_array[0]="0";
+
+	$option_name[0]="display";    	$option[0]=$selected_option;
+	$option_name[1]="definition_id";  $option[1]=$def_id;
+
+
+ 	$SQL_handler->SQL_update_row_by_option($db_name,$value_table,$name_array,$value_array,$option_name, $option);
+
+?>
+<script>
+document.formular1.form_action.value='display_option';
+document.formular1.submit();
+</script>
+<?
+
+} // ende if form_action = Option löschen
+
+
+if ($_VARS['form_action']=="edit_option") {
+
+	if($_VARS['idOption']) {
+		$query = "SELECT field_nr, name, display, value FROM customer_db_definition d, customer_db_values v WHERE d.id = v.definition_id AND v.id = '".$_VARS['idOption']."'";
+		$my_option = DB::getQueryRow($query);
+	} else {
+		$my_option = array();
+	}
+
+?>
+	<input type="hidden" name="field_id" value="<?=(int)$_VARS['field_id']?>" />
+	<input type="hidden" name="idOption" value="<?=(int)$_VARS['idOption']?>" />
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th><?=$LANGUAGE_DATA['data_base'] ?>:</th>
+			<td><?=$selected_table?></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['field_name'] ?></th>
+			<td><?=$my_option['name']?></td>
+		</tr>
+		<?=printFormText($LANGUAGE_DATA['name_option'],"selected_option",$my_option['display'])?>
+		<?=printFormText($LANGUAGE_DATA['value_option'],"selected_value",$my_option['value'])?>
+	</table>
+	<p align="right">
+	<input type=button value="<?=L10N::t('Option speichern')?>" class="btn btn-default" OnClick='document.formular1.form_action.value="save_option";document.formular1.submit();'>
+	</p>
+<?
+
+} // ende if $_VARS['form_action'] = edit_option
+
+
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////   EBENE DATENPFLEGE   /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+if ($_VARS['form_action'] == "display_data") {
+	$bolTranslate = 1;
+?>
+	<h2><?=$LANGUAGE_DATA['data_sets_of_db']?>"<?=$database_data['db_name']?>"</h2>
+<?
+
+    if (!$_VARS['anzahl']) {
+		if(isset($_COOKIE['customer_db_admin_anzahl'])) {
+			$_VARS['anzahl'] = (int)$_COOKIE['customer_db_admin_anzahl'];
+		} else {
+			$_VARS['anzahl'] = 50;
+		}
+	}
+    if (!$_VARS['start']) {
+		$_VARS['start'] = 1;
+	}
+	
+	if(!$_VARS['sOrderby']) {
+		$_VARS['sOrderby'] = "id";
+	}
+
+	// Auswahl speichern
+	setcookie('customer_db_admin_anzahl', (int)$_VARS['anzahl'], time()+60*60*24*30, '/');
+	
+	$aFields = CustomerDb\Helper\Functions::getCustomerFields($_VARS['idDatabase'], 'field_nr');
+
+	if($database_data['db_encode_pw']) {
+		unset($aFields['password']);
+	}
+
+	$aFields['id'] = 'ID';
+	$sSelect = "";
+	$sWhere = "";
+    foreach($aFields as $k=>$v) {
+		$my_field = getCustomerFieldData($k,$_VARS['idDatabase']);
+		$aFieldData[$k]['id'] = $my_field['id'];
+		$aFieldData[$k]['type'] = $my_field['type'];
+		$aFieldData[$k]['additional'] = unserialize($my_field['additional']);
+		$aFieldData[$k]['name'] = ((is_numeric($k))?"ext_".$k:$k);
+		if($aFieldData[$k]['type'] == "timestamp") {
+			$sSelect .= "UNIX_TIMESTAMP(`".$aFieldData[$k]['name']."`) as ".$aFieldData[$k]['name'].", ";
+		} elseif($aFieldData[$k]['type'] == "groups") {
+			$aFieldData[$k]['config'][2] = "<br>";
+			$sSelect .= "`".$aFieldData[$k]['name']."` as ".$aFieldData[$k]['name'].", ";
+		} else {
+			$sSelect .= "`".$aFieldData[$k]['name']."` as ".$aFieldData[$k]['name'].", ";
+		}
+		$sWhere .= "`".$aFieldData[$k]['name']."` LIKE '%".\DB::escapeQueryString($_VARS['search'])."%' OR ";
+	}
+
+	$aAnzahl = array(10,50,100,250,500,1000);
+
+	//$sQuery = "SELECT id, ".$sSelect." active FROM customer_db_".$_VARS['idDatabase']." WHERE (".$sWhere." 0) AND active = 1 ORDER BY ".$_VARS['sOrderby']." ASC";
+	$sQuery = "SELECT id, ".$sSelect." active FROM customer_db_".$_VARS['idDatabase']." WHERE (".$sWhere." 0) ORDER BY ".$_VARS['sOrderby']." ASC";
+	$rTotal = DB::getQueryRows($sQuery);
+	$iTotal = count($rTotal??[]);
+
+	if(($_VARS['start']+$_VARS['anzahl']-1) < $iTotal)
+		$iEnd = ($_VARS['start']+$_VARS['anzahl']-1);
+	else
+		$iEnd = $iTotal;
+
+    ?>
+
+	<input type="hidden" name="current_page" value="<?=$current_page?>">
+	<input type="hidden" name="sOrderby" value="<?=$_VARS['sOrderby']?>">
+	<input type="hidden" name="iEntry" value="<?=$_VARS['iEntry']?>">
+    <table cellpadding="4" cellspacing="0" width="600" class="table">
+		<tr>
+			<th><?=$LANGUAGE_DATA['show_data_sets']?></th>
+			<td>
+				<select class="form-control" name="anzahl" onChange="document.formular1.form_action.value='display_data';document.formular1.submit();">
+				<? foreach($aAnzahl as $i) { echo "<option value=\"".$i."\" ".(($i == $_VARS['anzahl'])?"selected":"").">".$i."</option>";} ?>
+				</select><?=$LANGUAGE_DATA['data_sets']?>
+			</td>
+		</tr>
+		<tr>
+			<th width="35%"><?=$LANGUAGE_DATA['keyword_search']?></th>
+			<td>
+				<input type="text" class="txt form-control" name="search" value="<?=$_VARS['search']?>" onClick="document.formular1.form_action.value='display_data';">
+				<input type="submit" class="btn btn-default" value="anzeigen" onClick="document.formular1.form_action.value='display_data';document.formular1.submit();">
+			</td>
+		</tr>
+	</table>
+	
+    <p>
+    <input type=button value="<?=$LANGUAGE_DATA['add_data_set']?>" class="btn btn-default" OnClick='document.formular1.form_action.value="add_data";document.formular1.submit();'>
+	</p>
+
+    <table cellpadding="4" cellspacing="0" width="600">
+		<tr>
+			<td width="20%">
+				<? if($_VARS['start'] > 1) { ?>
+				<a href="<?=$_SERVER['PHP_SELF']?>?form_action=display_data&idDatabase=<?=intval($_VARS['idDatabase'])?>&anzahl=<?=$_VARS['anzahl']?>&start=<?=(($_VARS['start'] - $_VARS['anzahl'] > 0)?($_VARS['start'] - $_VARS['anzahl']):0)?>">&laquo; zurück</a>
+				<? } ?>
+			</td>
+			<td width="60%" align="center">
+				<?=$LANGUAGE_DATA['data_sets_from']?> <?=intval($_VARS['start'])?> <?=$LANGUAGE_DATA['data_sets_to']?> <?=intval($iEnd)?> (<?=$iTotal?> <?=$LANGUAGE_DATA['data_sets_total']?>)
+			</td>
+			<td width="20%" align="right">
+				<? if($_VARS['start'] + $_VARS['anzahl'] <= $iTotal) { ?>
+				<a href="<?=$_SERVER['PHP_SELF']?>?form_action=display_data&idDatabase=<?=intval($_VARS['idDatabase'])?>&anzahl=<?=$_VARS['anzahl']?>&start=<?=($_VARS['start'] + $_VARS['anzahl'])?>"><?=$LANGUAGE_DATA['data_sets_next']?> &raquo;</a>
+				<? } ?>
+			</td>
+		</tr>
+	</table>
+	</p>
+	<?
+    // Daten anzeigen, auswählen, löschen, einfügen
+    // Filter einstellen
+    $limit_lower=((int) $current_page - 1) * (int) $_VARS['anzahl'];
+    $limit_upper= (int) $_VARS['anzahl'];
+
+	echo printTableStart();
+	?>
+		<tr>
+	<?
+	
+	$iFields = count($aFields);
+    foreach($aFields as $k=>$v) {
+	?>
+			<th width="<?=intval(100/$iFields)?>%" nowrap onClick="document.formular1.sOrderby.value='<?=((is_numeric($k))?"ext_".$k:$k)?>';document.formular1.form_action.value='display_data' ;document.formular1.submit();"><?=$v?></th>
+	<?
+	}
+	?>
+			<th><?=$LANGUAGE_DATA['active'] ?></th>
+			<th><?=$LANGUAGE_DATA['action'] ?></th>
+		</tr>
+	<?
+
+	$strSql = $sQuery." LIMIT ".intval($_VARS['start']-1).",".intval($_VARS['anzahl'])."";
+	$res_data = DB::getQueryRows($strSql);
+	foreach($res_data as $my_data) {
+
+	?>
+		<tr id="tr_<?=$my_data['id']?>" onmouseout="showRow(<?=$my_data['id']?>,0)" onmousemove="showRow(<?=$my_data['id']?>,1);" onDblClick="document.formular1.iEntry.value='<?=$my_data['id']?>';document.formular1.form_action.value='edit_data';document.formular1.submit();">
+		<?
+	    foreach($aFields as $k=>$v) {
+			if($aFieldData[$k]['type'] == "Select Field") $aFieldData[$k]['type'] = "select";
+		?>
+			<td>
+			<?
+			$sOutput = getFieldOutput($aFieldData[$k]['type'], $my_data[$aFieldData[$k]['name']], $aFieldData[$k]['id'], $aFieldData[$k]['config'], $aFieldData[$k]['additional']);
+
+			if($sOutput && ($aFieldData[$k]['type'] == "Datei" OR $aFieldData[$k]['type'] == "ProtectedDatei")) {
+				echo "<a href=\"".$sOutput."\" target=\"_blank\">Download</a>";
+			} else {
+				echo $sOutput;
+			}
+			?>
+			&nbsp;</td>
+		<?
+		}
+		?>
+			<td align="center">
+				<?
+				if($my_data['active'] == 1) {
+				?>
+					<a href="javascript:document.formular1.iEntry.value='<?=$my_data['id']?>';document.formular1.form_action.value='deactivate_data';document.formular1.submit();"><img src="/admin/media/sitemap_active.gif" title="Eintrag deaktivieren" border="0" align="absmiddle"></a>
+				<?
+				} else {
+				?>
+					<a href="javascript:document.formular1.iEntry.value='<?=$my_data['id']?>';document.formular1.form_action.value='activate_data';document.formular1.submit();"><img src="/admin/media/sitemap_inactive.gif" title="Eintrag aktivieren" border="0" align="absmiddle"></a>
+				<?
+				}
+				?>
+			</td>			
+			<td align="center">
+				<a href="javascript:document.formular1.iEntry.value='<?=$my_data['id']?>';document.formular1.form_action.value='edit_data';document.formular1.submit();"><img src="/admin/media/edit.png" title="Eintrag editieren" border="0" align="absmiddle"></a>&nbsp;
+				<a href="javascript:if(confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {document.formular1.iEntry.value='<?=$my_data['id']?>';document.formular1.form_action.value='delete_data';document.formular1.submit();}"><img src="/admin/media/sitemap_delete.png" title="Eintrag löschen" border="0" align="absmiddle"></a>
+			</td>
+		</tr>
+	<?
+	}
+
+	echo printTableEnd();
+	?>
+    <p>
+    <input type=button value="<?=$LANGUAGE_DATA['add_data_set'] ?>" class="btn btn-default" OnClick='document.formular1.form_action.value="add_data";document.formular1.submit();'>
+	</p>
+	<p>
+	<input type=button value="<?=$LANGUAGE_DATA['back'] ?>" class="btn btn-default" OnClick='document.formular1.form_action.value="";document.formular1.submit();'>
+	</p>
+	<?
+}  // ende if $_VARS['form_action'] = Datensätze pflegen
+
+if ($_VARS['form_action'] == "activate_data") {
+    // Daten löschen
+    DB::executeQuery("UPDATE customer_db_".$_VARS['idDatabase']." SET active = 1 WHERE id = '".$_VARS['iEntry']."'");
+?>
+	<input type="hidden" name="start" value="<?=$_VARS['start']?>">
+	<input type="hidden" name="anzahl" value="<?=$_VARS['anzahl']?>">
+    <script>
+        document.formular1.form_action.value='display_data';
+        document.formular1.submit();
+    </script>
+<?
+
+}  // ende if $_VARS['form_action'] = Gewählten Datensatz löschen
+
+if ($_VARS['form_action'] == "deactivate_data") {
+    // Daten löschen
+    DB::executeQuery("UPDATE customer_db_".$_VARS['idDatabase']." SET active = 0 WHERE id = '".$_VARS['iEntry']."'");
+?>
+	<input type="hidden" name="start" value="<?=$_VARS['start']?>">
+	<input type="hidden" name="anzahl" value="<?=$_VARS['anzahl']?>">
+    <script>
+        document.formular1.form_action.value='display_data';
+        document.formular1.submit();
+    </script>
+<?
+
+}  // ende if $_VARS['form_action'] = Gewählten Datensatz löschen
+
+if ($_VARS['form_action'] == "delete_data") {
+    // Daten löschen
+    DB::executeQuery("DELETE FROM customer_db_".$_VARS['idDatabase']." WHERE id = '".$_VARS['iEntry']."'");
+?>
+	<input type="hidden" name="start" value="<?=$_VARS['start']?>">
+	<input type="hidden" name="anzahl" value="<?=$_VARS['anzahl']?>">
+    <script>
+        document.formular1.form_action.value='display_data';
+        document.formular1.submit();
+    </script>
+<?
+
+}  // ende if $_VARS['form_action'] = Gewählten Datensatz löschen
+
+
+if (
+	$_VARS['form_action'] == "add_data" || 
+	$_VARS['form_action'] == "edit_data"
+) {
+	$bolTranslate = 1;
+
+?>
+	<h2><?=$LANGUAGE_DATA['db_records']/*Datensatz der Datenbank*/ ?> "<?=$database_data['db_name']?>" <?=$LANGUAGE_DATA['edit_db_records'] ?></h2>
+	<input type="hidden" name="iEntry" value="<?=$_VARS['iEntry']?>">
+	<input type="hidden" name="customer_db_id" value="<?=$_VARS['iEntry']?>">
+<?
+
+	$aCustomerValues = array();
+	if($_VARS['iEntry'] > 0) {
+		$aCustomerValues = load_customer_data($selected_table, $_VARS['iEntry']);
+	}
+
+	echo printTableStart();
+
+?>
+
+		<tr>
+			<th>ID</th>
+			<td><?=$aCustomerValues['customer_db_id']?></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['last_change'] ?></th>
+			<td><?=strftime("%x %X", $aCustomerValues['customer_db_changed'])?></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['changed_by'] ?></th>
+			<td><?=$aCustomerValues['customer_db_changed_by']?></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['date_of_creation']/*Erstellungszeitpunkt*/ ?></th>
+			<td><?=strftime("%x %X", $aCustomerValues['customer_db_created'])?></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['last_login']/*Letzer Login*/ ?></th>
+			<td><?=strftime("%x %X", $aCustomerValues['customer_db_last_login'])?></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['calls']/*Aufrufe*/ ?></th>
+			<td><?=$aCustomerValues['customer_db_views']?></td>
+		</tr>
+
+<?
+	$aFields = CustomerDb\Helper\Functions::getCustomerFields($_VARS['idDatabase'], "field_nr");
+
+	$iFields = count($aFields);
+	$sSelect = "";
+	
+	if(!isset($aConfig)) {
+		$aConfig = new stdClass;
+	}
+	
+	$aConfig->idDatabase = $_VARS['idDatabase'];
+  
+	echo printTableEnd();
+	echo "<br/>";
+ 	echo printTableStart();
+    
+    foreach($aFields as $strKey=>$v) {
+		if(
+			$strKey == "id" || 
+			$strKey == "created" || 
+			$strKey == "changed_by" || 
+			$strKey == "changed" || 
+			$strKey == "last_login" || 
+			$strKey == "views"
+		) {
+			continue;
+		}
+		$my_field = getCustomerFieldData($strKey,$_VARS['idDatabase']);
+		if($my_field['type'] != "Checkbox" && $my_field['type'] != "Radio-Button") {
+			$aConfig->default_class = 'class="txt"';
+		} else {
+			$aConfig->default_class = '';
+		}
+		$aConfig->additional = unserialize($my_field['additional']);
+		if(is_numeric($strKey)) {
+			$aConfig->textarea = 1;
+		}
+		$idField = $my_field['id'];
+		$sFieldName = $strKey;//(is_numeric($k))?"ext_".$k:$k;
+		$sValue = $aCustomerValues['customer_db_'.$sFieldName];
+?>
+		<tr>
+			<th><?=$v?></th>
+			<td><?=getFieldInput($my_field['type'], "1", $idElement, $idField, $sFieldName, $sValue, $aConfig, $my_field['type'])?></td>
+		</tr>
+<?
+	}
+	echo printTableEnd();
+?>
+	<p align="right">
+	<input type=button value="<?=$LANGUAGE_DATA['save']?>" class="btn btn-default" OnClick="document.formular1.form_action.value='save_data'; document.formular1.submit();">
+	&nbsp;
+	<input type=button value="<?=$LANGUAGE_DATA['cancel']?>" class="btn btn-default" OnClick="document.formular1.form_action.value='cancel'; document.formular1.submit();">
+	</p>
+<?
+}  // ende if $_VARS['form_action'] = Gewählten Datensatz bearbeiten
+
+
+if ($_VARS['form_action'] == "save_data") {
+
+	$temp_user_data = $user_data;
+	unset($user_data);
+	$user_data['id'] = $_VARS['iEntry'];
+	$user_data['table'] = $selected_table;
+	$user_data['idTable'] = $_VARS['idDatabase'];
+	$idTable = $_VARS['idDatabase'];
+
+	$db_config = DB::getQueryRow("SELECT db_name, db_encode_pw FROM customer_db_config WHERE id = '".(int)$idTable."'");
+	
+	// Die per POST übergebenen Variablen werden in das globale
+	// Array SESSION übertragen
+	$aCustomerValues = array();
+	
+	foreach((array)$_VARS['customer_db_fields'] as $key=>$val) {
+	
+        $my_field = getCustomerFieldData($key,$_VARS['idDatabase']);  
+        #var_dump($my_field['type']);
+        
+    	// Wenn Feld Upload
+		if($_FILES['customer_db_'.$val]) {
+			$key = 'customer_db_'.$val;
+			$val = $_FILES[$key];
+			if (is_file($val['tmp_name']))
+			{
+				if(!is_dir(\Util::getDocumentRoot()."system/extensions"))
+				{
+					@mkdir(\Util::getDocumentRoot()."system/extensions",$system_data['chmod_mode_dir']);
+					
+				}
+				else
+				{
+                    @chmod(\Util::getDocumentRoot()."system/extensions",$system_data['chmod_mode_dir']);
+                }
+
+				if(!is_dir(\Util::getDocumentRoot()."system/extensions/customer_db"))
+				{
+					@mkdir(\Util::getDocumentRoot()."system/extensions/customer_db",$system_data['chmod_mode_dir']);
+				}
+				else
+				{
+					@chmod(\Util::getDocumentRoot()."system/extensions/customer_db",$system_data['chmod_mode_dir']);
+				}
+
+				if(!is_dir(\Util::getDocumentRoot()."system/extensions/customer_db/secure"))
+				{
+					@mkdir(\Util::getDocumentRoot()."system/extensions/customer_db/secure",0770);
+				}
+
+
+				$number = substr($key,strrpos($key,"_")+1,strlen($key));
+
+				$my_field = DB::getQueryRow("SELECT `ext_".$number."` FROM ".$selected_table." WHERE id = '".(int)$user_data['id']."'");
+				
+				$aImages = explode("|",$my_field['ext_'.$number]);
+				$my_field['ext_'.$number] = $aImages[0];
+
+				$ext = strtolower(substr($val['name'],strrpos($val['name'],".")+1,3));
+
+				// TODO: Beschränkungen aus Definition Table auslesen
+				$my_info = DB::getQueryRow("SELECT additional FROM customer_db_definition WHERE field_nr = '".$number."' AND db_nr = '".(int)$user_data['idTable']."' LIMIT 1");
+				$aAdditional = unserialize($my_info['additional']);
+				$aExtensions 	= ($aAdditional['extensions'])?$aAdditional['extensions']:array("jpg","gif","png");
+				$aInfo['iSize'] = ($aAdditional['size'])?$aAdditional['size']:300;
+
+				// Abfrage auf Extension und Größe
+				if(in_array($ext,$aExtensions) && $val['size'] < ($aInfo['iSize']*1024)) {
+					$sValue = $user_data['idTable']."_".$user_data['id']."_".$number."_".time().".".$ext;
+					$aCustomerValues[$key] = $sValue;
+					$key = str_replace("customer_db_","customer_db_save_",$key);
+					$aCustomerValues[$key] = $my_field['ext_'.$number]."|".$sValue;
+
+					// Prüfung ob secure Verzeichnis notwendig
+					if("ProtectedDatei"==$my_field['type'])
+					{
+						$subfolder="secure/";
+					}
+					else
+					{
+						$subfolder="";
+					}
+
+
+					@copy($val['tmp_name'],\Util::getDocumentRoot()."system/extensions/customer_db/".$subfolder.$sValue);
+					//@chmod(\Util::getDocumentRoot()."system/extensions/customer_db/".$sValue,0 7 7 7); !!!
+				} else {
+					unset($aCustomerValues[$key]);
+					$key = str_replace("customer_db_","customer_db_save_",$key);
+					unset($aCustomerValues[$key]);
+					$session_data['error'] = "customer_db_file";
+				}
+				unset($_FILES[$key]);
+		    }
+		} else {
+			$aCustomerValues['customer_db_'.$val]		= ($_VARS['customer_db_'.$val]);
+			$aCustomerValues['customer_db_save_'.$val]	= ($_VARS['customer_db_'.$val]);
+		}
+	}
+
+	$i=0;
+	$aData = array();
+	if($aCustomerValues) {
+		foreach ($aCustomerValues as $key => $value) {
+		    // prüfen, ob variable zu dem Bereich customer_db_ gehören
+		    if(strpos($key,"customer_db_save_")===0) {
+		        if($key == "customer_db_save_email") {
+					$aData["email"]	= $value;
+		        } elseif($key == "customer_db_save_nickname") {
+					$aData["nickname"] = $value;
+		        } elseif($key == "customer_db_save_password") {
+					$sPlainPw = $value;
+					if($db_config['db_encode_pw'] && strlen(trim($value))>0) {
+			            $value = md5($value);
+					}
+					$aData["password"] = $value;
+		        } elseif($key == "customer_db_save_groups") {
+					$aData["groups"] = "|".implode("|",(array)$value)."|";
+	        	} else {
+		            $sFieldId = str_replace("customer_db_save_","",$key);
+					$sType = getCustomerFieldType($sFieldId,$idTable);
+					switch($sType) {
+						case "reference":
+							if(is_array($value)) {
+								$value = "|".implode("|", $value)."|";
+							}
+							break;
+						case "timestamp":
+							$value = strtotimestamp($value,1);
+							break;
+					}
+					if(is_numeric($sFieldId)) {
+						$aData["ext_".$sFieldId] = $value;
+					} else {
+						$aData[$sFieldId] = $value;
+					}
+		        }
+				unset($aCustomerValues[$key]);
+		        $i++;
+		    }
+		}
+	}
+	if($aCustomerValues && $user_data['id']) {
+
+		if(!$aData["password"]) {
+			unset($aData["password"]);
+		}
+
+	    // speichere alle Daten
+	    if($aData) {
+	        $bResult = save_customer_data($aData, 0, 1, $selected_table, $_VARS['iEntry']);
+	    }
+
+	} elseif($aCustomerValues) {
+
+	    // Erzeuge query auf nick
+	    $bEmailAllowed = check_unique($aData["email"],		"email",	$selected_table);
+	    // erzeuge query auf mail
+	    $bNickAllowed 	= check_unique($aData["nickname"],	"nickname",	$selected_table);
+
+	    if($bEmailAllowed && $bNickAllowed) {
+
+			if(!$aData["password"]) {
+				$sValue = \Util::generateRandomString(6);
+				$sPlainPw = $sValue;
+				if($db_config['db_encode_pw']) {
+					$aData["password"] = md5($sValue);
+				} else {
+					$aData["password"] = $sValue;
+				}
+			}
+			//speichere die Daten
+			$bResult = save_customer_data($aData, 1, 1, $selected_table);
+		} else {
+			$bResult = -1;
+		}
+	}
+
+$user_data = $temp_user_data;
+
+	if($bResult > 0) {
+?>
+    <script>
+		document.formular1.form_action.value='display_data';
+		document.formular1.submit();
+    </script>
+<?
+	} elseif($bResult == -1) {
+?>
+	<h2><?=$LANGUAGE_DATA['data_record_couldnt_be_saved_email'] /*Der Datensatz konnte nicht gespeichert werden. Es existiert bereits ein Datensatz mit dieser E-Mail-Adresse oder diesem Nickname.*/ ?></h2>
+	<p align="right">
+	<input type="submit" class="btn btn-default" onClick="document.formular1.form_action.value='display_data';" value="weiter">
+	</p>
+<?
+	} else {
+?>
+	<h2><?=$LANGUAGE_DATA['data_record_couldnt_be_saved'] /*Der Datensatz konnte nicht gespeichert werden.*/ ?></h2>
+	<p align="right">
+	<input type="submit" class="btn btn-default" onClick="document.formular1.form_action.value='display_data';" value="weiter">
+	</p>
+<?
+	}
+
+
+}  // ende if $_VARS['form_action'] = Datensatz speichern
+
+
+
+
+
+
+
+
+
+
+?>
+</form>
+
+<?
+
+///////////////////////////////////////////////////////////
+/////////////   Script Ende   /////////////////////////////
+///////////////////////////////////////////////////////////
+
+?>
+		</div>
+	</div>
+</section>
+
+<?
+
+$strBuffer = ob_get_contents();
+ob_end_clean();
+
+if($bolTranslate) {
+	$aLanguages = array_flip(System::d('allowed_languages'));
+	$strLanguageCode = $aLanguages[System::d('systemlanguage')];
+	// get translations
+	$objWebDynamicsDAO = new Cms\Helper\Data;
+	$_LANG = $objWebDynamicsDAO->getWebSiteTranslations($strLanguageCode);
+	$strBuffer = \Cms\Service\ReplaceVars::execute($strBuffer);
+}
+
+echo $strBuffer;
+
+?>
+
+<?=Admin_Html::loadAdminFooter()?>

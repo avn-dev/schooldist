@@ -1,0 +1,53 @@
+hash: fc062db334efa6c7338caa64a6ad82ca
+class:
+  wdbasic: Ext_Thebing_Insurance
+  data: Ext_Thebing_Insurances_Gui2_Insurance
+access: thebing_insurance_icon
+id:
+  column: id
+  alias: kins
+orderby:
+  - Ext_Thebing_Insurances_Gui2_Insurance
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: kins
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Insurances_Gui2_Insurance
+          - manipulateSearchFilter
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Insurances_Gui2_Insurance
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Insurances_Gui2_Insurance
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Nummer
+    alias: kins
+    column: number
+    width: name
+    resize: false 
+  - 
+    title: Bezeichnung	
+    column: name
+    i18n:
+      pass_language: true
+    width: name
+    resize: true
+  

@@ -1,0 +1,40 @@
+class:
+  wdbasic: Ext_TC_Gui2_Filterset_Bar_Element
+  date_format: Ext_TC_Gui2_Format_Date 
+sortable: true
+pagination: false
+i18n_languages: 
+    - Ext_TC_Util
+    - getBackendLanguages
+access:
+  - core_gui2_designer
+  - ""
+bars:
+    - 
+      position: top
+      type: ""
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Ext_TC_Gui2_Filterset_Bar_Element
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Ext_TC_Gui2_Filterset_Bar_Element
+            - getDialog
+        - 
+          element: icon_delete
+columns: 
+  -
+    title: Name
+    column: label
+    alias: tc_gfbe
+    width: name
+    resize: true
+    i18n:
+      jointable: i18n
+      show_flag: true
+      interface: backend
+      all: true

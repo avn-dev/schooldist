@@ -1,0 +1,9 @@
+parent: ts_document_release
+hash: 71a0e39a7b4b7313af05a6499ca2b6f5
+foreign_key: id
+default_columns: []
+pagination: false
+export: false
+load_admin_header: false
+multiple_selection: true
+limit : 10000

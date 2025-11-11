@@ -1,0 +1,770 @@
+
+.hint {
+	padding: 3px;
+	border: 1px solid #ccc;
+	position: absolute;
+	display: none;
+	background-color: #f7f7f7;
+	font-family: Arial;
+	font-size: 10px;	
+}
+
+.note,
+.note A {
+	font-size:		10px;
+	color: 			#666;
+	line-height: 	12px;
+}
+
+p.smallText {
+	font-size:10px;
+	margin-top:0px;
+}
+
+.tabOn {
+	height:20px;
+	color: #000000;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	font-weight: normal;
+	border-left:1px solid #eeeeee;
+	border-bottom: 1px solid #eeeeee;
+	border-right: 1px solid #cccccc;
+	border-top: 1px solid #cccccc;
+	background-color:#eeeeee;
+	margin:0px;
+	padding:0px;
+}
+
+.tabOff {
+	height:20px;
+	color: #000000;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	font-weight: normal;
+	border-left:1px solid #dddddd;
+	border-bottom: 1px solid #cccccc;
+	border-right: 1px solid #cccccc;
+	border-top: 1px solid #cccccc;
+	background-color:#dddddd;
+	margin:0px;
+	padding:0px;
+}
+
+.tabBtn {
+	height:19px;
+	color: #000000;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	font-weight: normal;
+	border-left:1px solid #dddddd;
+	border-bottom: 1px solid #dddddd;
+	border-right: 1px solid #cccccc;
+	border-top: 1px solid #cccccc;
+	background-color:#dddddd;
+}
+
+#toolbar td {
+	vertical-align:top;
+	text-align:center;
+	font-size:11px;
+}
+
+#toolbar img.toolbar {
+	margin-left:5px;
+	margin-right:5px;
+}
+
+#tdFooter {
+	font-size:10px;
+}
+
+.red,.error {
+	color:#FF3300;
+}
+
+.infoBoxContainer {
+	float:				left;
+	width:				49%;
+}
+
+.infoBox {
+	margin-top:			20px;
+	border:				1px solid #ccc;
+	position: 			relative;
+	overflow:			hidden;
+	background-color: #ffffff;
+}
+
+.infoBox h1 {
+	font-size:			11px;
+	font-weight:		bold;
+	vertical-align:		middle;
+	background-color:	#eeeeee;
+	padding:			5px;
+	margin:				0px;
+	border-bottom:		1px solid #ccc;
+}
+
+.infoBoxTabs h1 {
+	position: 			relative;
+	z-index:			3;
+	float:				left;
+	border-right:		1px solid #ccc;
+}
+
+.infoBoxTabs .infoBoxTabsNav {
+	padding:0px;
+	margin:0px;
+}
+
+.infoBoxTabs UL.infoBoxTabsNav  {
+	padding:			0px;
+	margin:				0px;
+	position: relative;
+	top: 0px;
+	left: 0px;
+}
+
+.infoBoxTabs UL.infoBoxTabsNav LI {
+	list-style:			none;
+	font-size:			11px;
+	font-weight:		bold;
+	vertical-align:		middle;
+	padding:			5px;
+	margin:				0px;
+	position: 			relative;
+	z-index:			3;
+	float:				left;
+/*	border-bottom:		1px solid #ccc;*/
+	border-right:		1px solid #ccc;
+}
+
+.infoBoxTabs .infoBoxTabsHead {
+/*	position:			absolute;
+	top:				0px;
+	left:				0px; */
+	z-index:			2;
+	width: 				100%;
+	font-size:			11px;
+	font-weight:		bold;
+	line-height:		15px;
+	vertical-align:		middle;
+	background-color:	#eeeeee;
+/*	padding:			5px;*/
+	margin:				0px;
+	border-bottom:		1px solid #ccc;
+}
+
+.infoBoxTabsHeadContent {
+	
+}
+
+.infoBoxTabs .infoBoxTabsHeadActive {
+	background-color:	#dedede;
+}
+
+.infoBoxTabs .divCanvas {
+	margin-top:			5px;
+}
+
+.infoBox .infoBoxAdditional {
+	position:			absolute;
+	top: 				5px;
+	right:				7px;
+	font-size:			11px;
+}
+
+.infoBox h2 {
+	font-size:			11px;
+	font-weight:		bold;
+	line-height:		18px;
+	color:				#000000;
+	border-bottom:		1px solid #CCCCCC;
+	margin:				0 0 3px;
+	padding:			4px 4px 0 0;
+}
+
+.infoBox th {
+	padding:			1px 3px;
+	margin:				0px;
+	margin-bottom:		1px solid white;
+	font-size:			11px;
+	font-weight:		bold;
+	text-align:			left;
+}
+	
+.infoBox td {
+	padding:			1px 3px;
+	margin:				0px;
+	margin-bottom:		1px solid white;
+	font-size:			11px;
+}
+
+.infoBox ul {
+	font-size:			11px;
+	list-style-type: 	square;
+	margin: 			5px 0 5px 20px;
+	padding: 			0 0 0 10px;
+}
+
+.infoBox li {
+	font-size:			11px;
+	line-height:		15px;
+	margin:				0px;
+	padding:			0px;
+}
+
+.infoBox table.tbl100 {
+	width:				100%;
+}
+
+.infoBox table.tbl100 .borderBottom TD,
+.infoBox table.tbl100 .borderBottom TH,
+.infoBox table.tbl100 .borderBottom {
+	border-bottom:		1px solid #ccc;
+}
+
+.infoBox table.tbl100 .borderTop TD,
+.infoBox table.tbl100 .borderTop TH,
+.infoBox table.tbl100 .borderTop {
+	border-top:			1px solid #ccc;
+}
+
+.infoBox table.tbl100 .borderRight TD,
+.infoBox table.tbl100 .borderRight TH,
+.infoBox table.tbl100 .borderRight {
+	border-right:		1px solid #ccc;
+}
+
+.infoBox table.tbl100 .borderLeft TD,
+.infoBox table.tbl100 .borderLeft TH,
+.infoBox table.tbl100 .borderLeft {
+	border-left:		1px solid #ccc;
+}
+
+.infoBox table.tbl100 .noBorder TD,
+.infoBox table.tbl100 .noBorder TH,
+.infoBox table.tbl100 .noBorder {
+	border:				0!important;
+}
+
+* html .infoBox table.tbl100 {
+	
+}
+
+.infoBox .infoBoxContent, .infoBox p {
+	padding:			4px;
+	font-size:			11px;
+	line-height:		15px;
+	margin:				0px;
+}
+
+.infoBox .infoBoxContent DIV {
+	width: 				100%;
+}
+
+.infoBox .infoBoxContent h3 {
+	color: #000000;
+    margin: 4px;
+	font-size: 11px;
+}
+
+.infoBox .infoBoxContent .note {
+	font-size: 10px;
+	padding: 0 4px;
+}
+
+.infoBox .infoBoxContent hr {
+	border-width: 1px 0 0;
+	border-style: solid;
+	border-color: #ccc;
+}
+
+.infoBox h1 img {
+    margin-right: 5px;
+    vertical-align: text-bottom;
+}
+
+.infoBox.highlight {
+	background: #fff;
+	border-color: #fed22f;
+}
+
+.infoBox.highlight h1 {
+	border-color: #fed22f;
+	background-color: #feefa1;
+	color: #b81900;
+}
+
+/* TABELLENSTILE */
+
+th, td {
+	empty-cells: show;
+}
+
+tr.title{
+	background-color : #eeeeee;
+	font-weight : bold;
+	font-size : 12px;
+}
+
+tr.head{
+	background-color : #cecece;
+	font-weight : bold;
+	font-size : 11px;
+}
+
+.first {
+	background-color : #eeeeee;
+	font-size : 11px;
+}
+
+.second {
+	background-color : #dddddd;
+	font-size : 11px;
+}
+
+.table td.tdActionImg {
+	text-align:        center;
+}
+
+.table td.tdActionImg IMG {
+	margin-right:      4px;
+}
+
+.table table {
+	border: 0px;
+}
+
+.table table td {
+	border: 0px;
+}
+
+.table table th {
+	border: 0px;
+	background-color: #FFF;
+}
+
+.table2 td {
+	border: 0px;
+}
+
+.tableList td {
+	font-size:11px;
+	border: 0px;
+}
+
+/* FORMULARSTILE */
+
+span.menue {
+	white-space:nowrap;
+}
+
+#statusbar {
+	font-size: 11px;
+	font-weight:bold;
+	color:#000000;
+}
+
+div#contextMenu
+{
+  position:   absolute;
+  border:     1px solid #ccc;
+  background-color: #ffffff;
+  display:    none;
+  z-index:100;
+}
+
+/*
+ * HELPER STYLES
+ */
+ 
+.w30 {
+	width: 30px;
+}
+
+.w50 {
+	width: 50px;
+}
+
+.w80 {
+	width: 80px;
+}
+
+.w100 {
+	width: 100px;
+}
+
+.w150 {
+	width: 150px;
+}
+
+.w200 {
+	width: 200px;
+}
+
+.w250 {
+	width: 250px;
+}
+
+.w300 {
+	width: 300px;
+}
+ 
+.h1 {
+	height: 1px;
+}
+
+.alignRight {
+	text-align: right;
+}
+
+DIV.divHelperHidden {
+	display: none;
+}
+ 
+DIV.divBoxContainer {
+
+}
+
+DIV.divBoxContainer DIV.divBoxHeader {
+	padding:				4px;
+	font-size: 				11px;
+	background-color: 		#eeeeee;
+	font-weight: 			bold;
+	border: 				solid 1px #ccc;
+	cursor:					pointer;
+}
+
+DIV.divBoxContainer DIV.divBoxContent {
+	font-size: 				11px;
+	border-left: 			solid 1px #ccc;
+	border-right: 			solid 1px #ccc;
+	border-bottom: 			solid 1px #ccc;
+}
+
+DIV.divBoxContainer DIV.divBoxContent DIV {
+	padding:				5px;
+}
+
+
+
+/* STILVERWALTUNG */
+
+
+/* TOOLBAR STYLE */
+
+#divToolbarWriting {
+	float:					left;
+	margin-top:				0px;
+	margin-left:			9px;
+	height: 22px;
+}
+
+#divToolbarContainer {
+	clear:					both;
+	padding:				0px 9px 9px 9px;
+}
+
+#divToolbarContainer #divToolbarIcons {
+	background:				#FFF;
+	border: 				1px solid #DDD;
+	background-position: 	right; 
+	background-repeat: 		no-repeat;
+}
+
+#divToolbarContainer #divToolbarIcons .divToolbarIcon {
+	float: 					left;
+	padding:				0px 1px 0px 1px;
+	text-align:				center;
+	margin-right:			2px;
+	overflow:				hidden;
+	line-height:			12px;
+}
+
+#divToolbarContainer #divToolbarIcons .divToolbarIcon IMG {
+	padding:				1px 5px 0px 5px;
+}
+
+DIV.highlight {
+	background-color:		#e4edf5;
+}
+
+DIV.normal {
+}
+
+#divToolbarTabs {
+	float: 					right;
+	margin-right: 			9px;
+}
+
+#divToolbarTabs A {
+	color:					#333;
+}
+
+.tab_div_left{
+	height:					17px;
+	width: 					4px;
+	empty-cells:			show;
+	background-image: 		url(/admin/media/tab_left.gif);
+	background-repeat:		no-repeat;
+	background-position:	top;
+	float:					left;
+}
+
+/* TAB STYLE */
+.tab_div_bg{
+	line-height:			12px;
+	height:					17px;
+	white-space: 			nowrap;
+	empty-cells:			show;
+	background-image: 		url(/admin/media/tab_bg.gif);
+	background-repeat:		repeat-x;
+	background-position:	top;
+	font-size:				11px;
+	line-height:			16px;
+	padding:				0px 4px;
+	vertical-align:			top;
+	float:					left;
+}
+
+/* TAB STYLE */
+.tab_div_nbsp{
+	height:					17px;
+	width: 					3px;
+	overflow: 				hidden;
+	font-size:				1px;
+	empty-cells:			show;
+	background-image: 		url(/admin/media/tab_nbsp.gif);
+	background-repeat:		no-repeat;
+	background-position: 	top;
+	float:					left;
+}
+
+/* TAB STYLE */
+.tab_div_right{
+	height:					17px;
+	width: 					4px;
+	empty-cells:			show;
+	background-image: 		url(/admin/media/tab_right.gif);
+	background-repeat:		no-repeat;
+	background-position:	top;
+	float:					left;
+}
+
+/* STYLE ADMIN */
+DIV#styles_list DIV {
+	padding:				1px;
+	margin-bottom: 			1px;
+	background-color:		#f7f7f7;
+}
+
+#myMessage {
+	position: 				absolute; 
+	top:					0px;
+	left:					0px;
+	width:					100%; 
+	height:					100%; 
+	text-align:				center; 
+	z-index: 				1000; 
+	background-image: 		url(/admin/media/bg_transparent.gif);
+}
+
+#myInnerMessage {
+	background-color: 		#FFF; 
+	border:1px solid 		#b0b0bc; 
+	color: 					#b0b0bc; 
+	font-weight: 			bold; 
+	font-size: 				12px; 
+	position:				absolute; 
+	left: 					50%; 
+	top: 					50%; 
+	width: 					350px; 
+	padding: 				10px; 
+	margin-left: 			-175px; 
+	margin-top: 			-80px;
+}
+
+#myBody {
+	position: 				relative;
+	/*z-index: 				1;*/ 
+	top:					0px;
+	left:					0px;
+	height:					100%;
+}
+
+.divCleaner {
+	clear:					both;
+}
+
+.ac_input {
+
+}
+.ac_results {
+	padding: 			0px;
+	border: 			1px solid #b2b2b2;
+	background-color:	#f7f7f7;
+	overflow: 			hidden;
+	width:				200px;
+	z-index:			9999999;
+}
+
+.ac_results ul {
+	width: 100%;
+	list-style-position: outside;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.ac_results iframe {
+	display:none;/*sorry for IE5*/
+	display/**/:block;/*sorry for IE5*/
+	position:absolute;
+	top:0;
+	left:0;
+	z-index:-1;
+	filter:mask();
+	width:3000px;
+	height:3000px;
+}
+
+.ac_results li {
+	margin: 0px;
+	padding: 2px 5px;
+	cursor: pointer;
+	display: block;
+	width: 100%;
+	font: menu;
+	font-size: 12px;
+	overflow: hidden;
+}
+.ac_loading {
+	background : url(/admin/media/indicator.gif) right center no-repeat;
+}
+.ac_over {
+	color: #FFFFFF;
+}
+
+#divLeftNavigationOverflow {
+	overflow-x:			scroll;
+	overflow-y:			scroll;
+	width:				100%;
+	position:			relative;
+}
+
+#divLeftNavigation {
+	clear:				both;
+	white-space:		nowrap;
+	padding:			5px 5px 5px 10px;
+}
+
+#divLeftNavigation .divBullet {
+	position:			absolute;
+	top:				0px;
+	left:				0px;
+	margin-right:		5px;
+}
+
+#divLeftNavigation H2 {
+	display:			block;
+	position:			relative;
+	margin:				7px 0px;
+	padding:			0px;
+	width:				100%;
+	font-size:			12px;
+	font-weight:		normal;
+	line-height:		16px;
+	position:			relative;
+	cursor:				pointer;
+	white-space:		nowrap;
+}
+
+#divLeftNavigation H2 A,
+#divLeftNavigation H2 SPAN {
+	display:			block;
+	line-height:		16px;
+	white-space:		nowrap;
+	margin-left:		20px;
+}
+
+#divLeftNavigation H3 {
+	clear:				both;
+	margin:				0px;
+	padding:			0px 0px 0px 25px;
+	font-size:			11px;
+	font-weight:		normal;
+	line-height:		16px;
+}
+
+#divLeftNavigation .divLeftNavigationAccordionContent {
+	overflow: 			hidden;
+}
+
+#divLeftNavigation H2 .divArrow {
+	position:			absolute;
+	top:				2px;
+	right:				0px;
+	height:				16px;
+}
+
+* html #divLeftNavigation H2 .divArrow {
+	right:				0px;
+}
+
+#divLeftNavigation H2 A,
+#divLeftNavigation H3 A {
+	text-decoration:	none;
+}
+
+.divHeader {
+    padding: 15px 15px 0;
+    position: relative;	
+}
+
+.divHeader H1 {
+	   font-size: 24px;
+    margin: 0;
+	 font-weight: 500;
+    line-height: 1.1;
+}
+
+div.login input[type=text],
+div.login input[type=password] {
+	width: 280px;
+}
+
+div.login .btn {
+	margin: 5px 5px 0 0;
+}
+
+div.login h1 {
+	font-size: 20px;
+	margin: 2px 0 2px 0;
+}
+
+tr.highlightRow {
+	background-color: #d4ddf0!important;
+}
+
+table.progressbar {
+	width: 100%;
+	height: 13px;
+	border: 1px solid #CDCDCD;
+	border-spacing:0;
+	border-collapse:collapse;
+}
+
+table.progressbar td.extant {
+	background: #F7F7F7;
+}
+
+.cm-s-default{
+	border: 1px solid #DDD;
+	height: 400px;
+}
+
+.fa.fa-inactive {
+	opacity:0.5;
+}

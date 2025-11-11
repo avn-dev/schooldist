@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_forms` ADD `email_attach_document` TINYINT NOT NULL DEFAULT '0' AFTER `acc_depending_on_course`;

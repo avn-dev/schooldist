@@ -1,0 +1,113 @@
+class:
+  wdbasic: Ext_Thebing_Transfer_Payment
+  data: Ext_Thebing_Gui2_Data
+  gui: Ext_Thebing_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+description: Thebing » Buchhaltung » Provider bezahlen » Bezahlte Lehrer
+#access: thebing_accounting_pickup_payments_groupings
+access: ""
+title: Positionen
+rows_clickable: false
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          filter_part: HAVING
+          column:
+            - customer_firstname
+            - customer_lastname
+            - customer_number
+            - document_number
+        -
+          element: selectfilter
+          id: inbox_filter
+          name: inbox_filter
+          column: 
+            - inbox
+          alias:
+            - ts_i
+          entries: 
+            - Ext_Thebing_System
+            - getInboxListForSelect
+            - true
+            - true
+        -
+          element: selectfilter
+          set: [ts_feedback_results, ta_feedback_results]
+          label: Gruppen
+          label_as_null_item: true
+          alias:
+            - ts_i
+          column:
+            - group_id
+          entries:
+            - Ext_TC_Util
+            - getYesNoArray
+            - false
+          filter_query:
+            no: "`group_id` = 0"
+            yes: "`group_id` != 0"
+columns:
+  -
+    title: Inbox
+    column: inbox
+    alias: ts_i 
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params: 
+      - [Ext_Thebing_System, getInboxListForSelect, true, false]
+  -
+    title: Transfer - Datum
+    column: transfer_date
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Transfer - Uhrzeit
+    column: transfer_time
+    width: time
+    format: Ext_Thebing_Gui2_Format_Time
+  -
+    title: Transfer - Art
+    column: transfer_type
+    width: name
+    format: Ext_Thebing_Gui2_Format_Transfer_Type
+  -
+    title: Kunde
+    column: customer
+    width: name
+    format: Ext_TC_Gui2_Format_Name
+    format_params: [customer_firstname, customer_lastname]
+    sortable_column: customer_lastname
+  -
+    title: Kundennummer
+    column: customer_number
+    width: name
+  -
+    title: Gehalt
+    column: amount
+    width: name
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: payment_currency_id
+  -
+    title: Kommentar der Position
+    column: payment_note
+    width: comment
+  -
+    title: Kommentar
+    column: comment
+    width: comment
+  -
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    column: inquiry_group_short
+    width: group_short
+  -
+    title: Gruppennummer
+    column: number
+    width: number
+    default: false
+default_columns: []

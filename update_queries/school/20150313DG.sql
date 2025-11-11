@@ -1,0 +1,2 @@
+ALTER TABLE `ts_inquiries_journeys_courses` ADD `flexible_allocation` TINYINT NOT NULL DEFAULT '0' AFTER `units`;
+ALTER TABLE `kolumbus_groups_courses` ADD `flexible_allocation` TINYINT NOT NULL DEFAULT '0' AFTER `units`;

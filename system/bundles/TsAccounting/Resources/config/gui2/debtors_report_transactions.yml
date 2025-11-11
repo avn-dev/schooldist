@@ -1,0 +1,47 @@
+class:
+  wdbasic: \TsAccounting\Entity\Transaction
+  data: \TsAccounting\Gui2\Data\Transactions
+  date_format: Ext_Thebing_Gui2_Format_Date
+id:
+  column: id
+  alias: ts_at
+orderby:
+  - \TsAccounting\Gui2\Data\Transactions
+  - getOrderby
+  - ""
+description: "Thebing » Accounting » Debtors report"
+view: transactions
+access: 
+    - ts_accounting_debtors_report
+    - ""
+bars:
+columns:
+  -
+    title: Art
+    column: type
+    width: name
+    resize: false
+    sortable: false
+    format: \TsAccounting\Gui2\Format\TransactionType
+  -
+    title: Details
+    column: details
+    width: comment
+    resize: true
+    sortable: false
+    format: \TsAccounting\Gui2\Format\TransactionDetails
+  -
+    title: Betrag
+    column: amount
+    width: amount
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: 
+      - currency_iso
+  -
+    title: Datum
+    column: due_date
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+    

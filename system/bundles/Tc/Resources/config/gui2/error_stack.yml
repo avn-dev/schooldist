@@ -1,0 +1,4 @@
+parent: Core_error_stack
+access: 
+  - core_admin_parallelprocessing_error_stack
+  - 

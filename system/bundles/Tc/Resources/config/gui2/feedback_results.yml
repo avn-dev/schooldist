@@ -1,0 +1,6 @@
+class:
+  wdbasic: Ext_TC_Marketing_Feedback_Questionary_Process
+  data: Ext_TC_Marketing_Feedback_Questionary_Process_Gui2_Data
+  date_format: Ext_TC_Gui2_Format_Date
+  icon_status: Ext_TC_Marketing_Feedback_Questionary_Process_Gui2_Icon_Active
+  row_style: Ext_TC_Marketing_Feedback_Questionary_Gui2_Style_Row

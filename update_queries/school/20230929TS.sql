@@ -1,0 +1,1 @@
+ALTER TABLE `ts_accounting_companies` ADD `debitor_by_invoice` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `automatic_account_setting`;

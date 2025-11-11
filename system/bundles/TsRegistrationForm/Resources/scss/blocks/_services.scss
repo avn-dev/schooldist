@@ -1,0 +1,132 @@
+@import "node_modules/bootstrap/scss/mixins";
+@import "../mixins";
+@import "../variables";
+
+.service-container-course,
+.service-container-accommodation {
+	@include clearfix();
+	@include block-margin;
+
+	div[component="block-service-container"] {
+		@include block-margin;
+	}
+}
+
+.service-container-course {
+	// Tabs
+	.nav-tabs {
+		margin-bottom: -1px;
+		position: relative;
+		z-index: 10;
+	}
+
+	// Buttons
+	.course-grouping-buttons {
+		div:last-child {
+			@include block-margin;
+		}
+
+		a {
+			margin-bottom: 0.5rem;
+		}
+	}
+
+	.no-results {
+		text-align: center;
+	}
+
+	.course-card {
+		@include block-margin;
+	}
+
+	.course-options label {
+		@include radio-options-padding;
+	}
+}
+
+.service-container-accommodation {
+
+	.accommodation-card {
+		@include block-margin;
+
+		display: flex;
+		flex-flow: column;
+
+		> img {
+			flex-basis: auto;
+			object-fit: cover;
+			object-position: center center;
+			filter: grayscale(100%);
+			max-height: $spacer * 15;
+			border-top-left-radius: calc(0.25rem - 1px);
+			border-top-right-radius: calc(0.25rem - 1px);
+		}
+
+		> .card-body {
+			flex-basis: auto;
+		}
+
+		> .card-footer {
+			width: 100%;
+		}
+
+		.accommodation-combinations {
+			display: flex;
+			flex-flow: column;
+
+			> .card-block {
+				flex: 0 0 50%;
+
+				&.active {
+					color: $primary;
+					color: var(--primary);
+				}
+			}
+		}
+
+		.accommodation-date {
+			label {
+				font-weight: bold;
+			}
+		}
+
+		&.active {
+			border-color: $primary;
+			border-color: var(--primary);
+
+			> img {
+				filter: none;
+				border-bottom-left-radius: 0;
+			}
+
+			> .card-body > .card-title {
+				color: $primary;
+				color: var(--primary);
+			}
+		}
+
+		// sm and up – show picture on left side
+		@include media-breakpoint-up(sm) {
+			flex-flow: row wrap;
+
+			> img {
+				width: 25%;
+				max-height: none !important;
+				border-bottom-left-radius: calc(0.25rem - 1px);
+				border-top-right-radius: 0;
+			}
+
+			> .card-body {
+				width: 75%;
+			}
+
+			.accommodation-combinations {
+				flex-flow: row wrap;
+			}
+		}
+	}
+}
+
+.service-container-transfer {
+	@include block-margin;
+}

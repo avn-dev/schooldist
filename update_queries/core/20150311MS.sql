@@ -1,0 +1,1 @@
+ALTER TABLE `tc_complaints` ADD `complaint_date` TIMESTAMP NULL DEFAULT NULL;

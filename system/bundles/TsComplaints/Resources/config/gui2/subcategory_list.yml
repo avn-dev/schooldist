@@ -1,0 +1,4 @@
+parent: TcComplaints_subcategory_list
+class:
+  date_format: Ext_Thebing_Gui2_Format_Date
+access: thebing_marketing_resources_complaints

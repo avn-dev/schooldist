@@ -1,0 +1,1204 @@
+<?php
+
+ob_start();
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker("thebing_marketing_prices");
+
+/**
+ * Erzeuge Das Schulobject
+ */
+$oSchool = Ext_Thebing_School::getSchoolFromSession();
+$sDefaultLang = $oSchool->getInterfaceLanguage();
+
+/**
+ *  Hole die Lister der Perioden/Saisons
+ */
+$aPeriods = $oSchool->getSaisonList(true);
+
+/**
+ *  Wenn keine Saison übergeben wurde hole die default Saison und setzte diese in die VARS
+ */
+if(!$_VARS['idPeriod']){
+	$aSaison = $oSchool->getCurrentSaison(false);
+	$_VARS['idPeriod'] = $aSaison['id'];
+}
+
+/**
+ * Erzeuge das Currency object der Schule
+ */
+$oCurrency = new Ext_Thebing_Currency_Util($oSchool);
+
+/**
+ * Hole die Currency Liste der Schule
+ */
+$aCurrency = $oCurrency->getCurrencyList(true);
+
+/**
+ * Erzeuge das Saison Object der Schule
+ */
+$oSaison = new Ext_Thebing_Saison($oSchool);
+
+$oPeriod = Ext_Thebing_Marketing_Saison::getInstance($_VARS['idPeriod']);
+$aCourses = $oPeriod->getCoursesBySchool($oSchool);
+$oCourseUtil = new Ext_Thebing_Course_Util();
+$dSeasonFrom = new DateTime($oPeriod->valid_from);
+
+/**
+ * Erzeuge Das Unterkunftsobject der Schule
+ */
+$oAccommodation = new Ext_Thebing_Accommodation_Util($oSchool);
+
+/**
+ * Hole die Unterkunftskategorien
+ */
+$aAccommodationCategories = $oAccommodation->getAccommodationCategorieList(false, false);
+
+$countryGroupId = null;
+$nationality = null;
+if(!empty($_VARS['nationality'])) {
+	$nationality = $_VARS['nationality'];
+	$_VARS['agency_category_id'] = null;
+	$_VARS['country_group_id'] = null;
+} else if (!empty($_VARS['country_group_id'])) {
+	$countryGroupId = $_VARS['country_group_id'];
+	$_VARS['agency_category_id'] = null;
+}
+
+$agencyCategory = null;
+if(!empty($_VARS['agency_category_id'])) {
+	$agencyCategory = Ext_Thebing_Agency_Category::getInstance($_VARS['agency_category_id']);
+}
+
+$countryGroupIds = $countryGroupId ? [$countryGroupId] : null;
+
+/**
+ * Erzeuge das Price Object der Schule
+ */
+$oPrice = new Ext_Thebing_Price($oSchool, $oSaison, $oCurrency, $sDefaultLang, $nationality, $agencyCategory, $countryGroupIds);
+$oPrice->useFallback = false;
+
+$aNationalities = \Ext_Thebing_Nationality::getNationalities(true, null);				
+$aNationalities = Ext_Thebing_Util::addEmptyItem($aNationalities, $oPrice->t('Alle'));
+
+$aAgencyCategories = \Ext_Thebing_Agency::getCategoryList();
+$aAgencyCategories = \Ext_Thebing_Util::addEmptyItem($aAgencyCategories, $oPrice->t('Alle'));
+
+$countryGroups = \Ext_TC_Countrygroup::getSelectOptions();
+$countryGroups = Ext_Thebing_Util::addEmptyItem($countryGroups, $oPrice->t('Alle'));
+
+
+// Closure für valid_until, da hier mit keinerlei Objekten gearbeitet wird
+// Analog zu Ext_Thebing_Marketing_Saison::getCoursesBySchool()
+$oFilterDeactivatedEntries = function($aObject) use($dSeasonFrom) {
+	if(!\Core\Helper\DateTime::isDate($aObject['valid_until'], 'Y-m-d')) {
+		return true;
+	}
+
+	$dValidUntil = new DateTime($aObject['valid_until']);
+	return $dValidUntil >= $dSeasonFrom;
+};
+
+/**
+ * Hole die Wochenliste der Schule
+ */
+$aWeeks = $oPrice->getWeekList();
+
+$aTyps = array(0=>$oPrice->t('Gerneral Prices'), 1=>$oPrice->t('Costs'));
+
+switch ($_VARS['func']) {
+		
+	case 'save' :
+
+		$_VARS['fee'] = $oPrice->convertPriceFloatInputs($_VARS['fee']);
+		$_VARS['price'] = $oPrice->convertPriceFloatInputs($_VARS['price']);
+
+	    $aNightPriceData = array();
+		$aNightPriceDataNightPart = array();
+		$i = 0;
+
+		/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+		foreach((array)$_VARS['nightprice'] as $iCategorie => $aNightData){
+			
+			$aNightPriceDataNightPart = $aNightData['price'];
+			unset($aNightData['price']);
+		
+			$aTemp = reset($aNightData);
+
+			foreach((array)$aTemp as $iKey => $aDataSub){
+				
+				// timestamp umrechen
+				foreach((array)$aNightData as $sKey => $aData){
+					if($sKey == 'from' || $sKey == 'until'){
+						$aData[$iKey] = Ext_Thebing_Format::ConvertDate($aData[$iKey], $oSchool->id);
+					}
+					$aNightPriceData[$i][$sKey] = $aData[$iKey];
+				}
+
+				foreach((array)$aNightPriceDataNightPart[$iCategorie] as $iRoomid => $aTemp1){
+					foreach($aTemp1 as $iMeal => $aTemp32){
+						$aNightPriceData[$i]['price'][$iCategorie][$iRoomid][$iMeal] = $aTemp32[$iKey];
+						// es müssen doch alle mahlzeiten durchgegangen werden!
+						// warum break...
+						//break;
+					}
+				}
+				
+				$i++;
+			}
+			
+			
+		}
+
+		foreach((array)$aNightPriceData as $aData){
+			$oPrice->saveAccommodationNightPeriod($aData, $oSaison);
+		}
+
+		// Registration/Placement Fee speichern		
+		foreach((array)$_VARS['fee'] as $iSaisonId => $aData){
+			foreach((array)$aData['accommodation'] as $iCategorieId => $aData2) {
+				foreach((array)$aData2 as $iFeeId => $fValue){
+					$oFee = new Ext_Thebing_Accommodation_Fee($iCategorieId, $iFeeId, $iSaisonId, $oCurrency->getCurrencyId(), $nationality, $agencyCategory, $countryGroupIds);
+					$oFee->saveFeeAmount($fValue);
+				}
+			}
+			foreach((array)$aData['course'] as $iCourseId => $aData2) {
+				foreach((array)$aData2 as $iFeeId => $fValue){
+					$oFee = new Ext_Thebing_Course_Fee($iCourseId, $iFeeId, $iSaisonId, $oCurrency->getCurrencyId(), $nationality, $agencyCategory, $countryGroupIds);
+					$oFee->saveFeeAmount($fValue);
+				}
+			}
+		}	
+		
+		$oPrice->savePriceArray($_VARS['price']);
+
+		// Speichern protokollieren
+		Ext_Thebing_Log::w('Prices', 0, 'saved');
+
+		break;	
+		
+	default :
+		
+		break;
+
+}
+$mixOptions = array();
+$mixOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/gui2/gui2.js"></script>';
+$mixOptions['additional'] .= '<script type="text/javascript" src="/admin/extensions/thebing/marketing/js/prices.js"></script>';
+
+Admin_Html::loadAdminHeader($mixOptions);
+
+$aAdditionalCourseCost 			= $oPrice->getAdditionalCourseCostList();
+$aAdditionalAccommodationCost 	= $oPrice->getAdditionalAccommodationCostList();
+$aAdditionalgeneralCost 		= $oPrice->getAdditionalGeneralCostList();
+$sInterfaceLanguage				= $oSchool->getInterfaceLanguage();
+
+	$oGuiTemp = new Ext_Thebing_Gui2(md5('thebing_price_list'));
+	$oGuiTemp->save();
+
+	$sGuiHash = $oGuiTemp->hash;
+	$sGuiInstanceHash = $oGuiTemp->instance_hash;
+?>
+
+<style>
+	.not-available,
+	.amount.not-available {
+		color: #999999;
+	}
+	.amount {
+		text-align: right;
+		width: 84px;
+	}
+	.table {
+		width: initial;
+	}
+	th.service_label,
+	td.service_label {
+		width: 300px;
+	}
+	th.service_label div,
+	td.service_label div {
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		width: 300px;
+	}
+</style>
+
+<script type="text/javascript">
+	var oGui = new Price('<?=$sGuiHash?>', 1, 1);
+	oGui.instance_hash = '<?=$sGuiInstanceHash?>';
+	oGui.request('&task=translations');
+</script>
+
+
+<section class="content-header">
+	<h1><?=Ext_TS_System_Navigation::t()?></h1>
+</section>
+
+<form method="post" name="prices" action="<?=$_SERVER['PHP_SELF']?>" onkeydown="if (event.keyCode == 13) return false;">
+
+	<section class="content">
+				
+<?php
+// Preise können nur gepflegt werden, wenn es Saisons gibt
+if(empty($aPeriods)) {
+	echo '<p class="error">'.L10N::t('Die Preise können nicht bearbeitet werden. Bitte legen Sie eine Saison an!').'</p>';
+	die();
+}
+
+
+
+?>
+
+		<div class="box">
+			<div class="box-body table-responsive">
+				
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="func" value="">
+			<table cellpadding="5" cellspacing="0" class="table">
+				<?=printFormSelect(L10N::t('Saison','Thebing » Marketing » Prices'), 'idPeriod', $aPeriods, $_VARS['idPeriod'], "onchange=\"document.prices.task.value=''; document.prices.submit();\" ")?>
+				<?=printFormSelect(L10N::t('Währung','Thebing » Marketing » Prices'), 'currency_id', $aCurrency, $_VARS['sCurrency'], "onchange=\"document.prices.task.value=''; document.prices.submit();\"")?>
+				<?php
+				    if (!$agencyCategory && !$countryGroupId) {
+						printFormSelect($oPrice->t('Nationalität'), 'nationality', $aNationalities, $_VARS['nationality'] ?? null, "onchange=\"document.prices.task.value=''; document.prices.submit();\"");
+					}
+                ?>
+                <?php
+                    if (!$nationality && !$agencyCategory) {
+						printFormSelect($oPrice->t('Ländergruppe'), 'country_group_id', $countryGroups, $_VARS['country_group_id'] ?? null, "onchange=\"document.prices.task.value=''; document.prices.submit();\"");
+                }
+                ?>
+				<?php
+                    if (!$nationality && !$countryGroupId) {
+						printFormSelect($oPrice->t('Agenturkategorie'), 'agency_category_id', $aAgencyCategories, $_VARS['agency_category_id'] ?? null, "onchange=\"document.prices.task.value=''; document.prices.submit();\"");
+                    }
+                ?>
+				<?=printFormCheckbox(L10N::t('Alle Unterkunftskombinationen anzeigen','Thebing » Marketing » Prices'), 'all_combinations', '1', $_VARS['all_combinations'], 1, 0, 30, "onchange=\"document.prices.task.value=''; document.prices.submit();\"")?>
+			</table>
+
+			</div>
+			
+		</div>
+		
+			<?php
+			if(!empty($_VARS['nationality']) || !empty($_VARS['country_group_id'])) {
+				$fakeDialog = new Ext_Gui2_Dialog();
+				$oNotification = $fakeDialog->createNotification(
+					$oPrice->t('Nationalitäten/Ländergruppen-Preisliste'),
+					$oPrice->t('Bitte tragen Sie hier nur abweichende Preise ein. Preise für die Nationalität haben Priorität vor Preisen für die Ländergruppe. Ist kein Preis für die Nationalität oder Ländergruppe vorhanden, wird der Preis aus der allgemeinen Preisliste verwendet.'),
+					'info'
+				);
+				echo $oNotification->generateHTML();
+			}
+			?>
+			
+<?
+
+if($_VARS['sTyp'] <= 0) {
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Unterkunftspreise
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if(Ext_Thebing_Access::hasLicenceRight('thebing_accommodation_icon')) {
+
+?>
+		
+		
+		<div class="box">
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=Ext_Thebing_L10N::t('Accommodation Prices','','Thebing » Marketing » Prices')?></h3>
+
+				<div class="box-tools pull-right">
+				  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+				  </button>
+				</div>
+            </div>
+			<div class="box-body table-responsive">
+			
+<?
+
+	$aPriceOptions = Ext_Thebing_Accommodation_Category_Gui2::getPriceOptions();
+
+	$aAccommodationCategories = array_filter($aAccommodationCategories, $oFilterDeactivatedEntries);
+
+	$bShowAll = false;
+	if(!empty($_VARS['all_combinations'])) {
+		$aAllRoomTypes = Ext_Thebing_Accommodation_Roomtype::getList(false, $sInterfaceLanguage);
+		$aAllRoomTypes = array_filter($aAllRoomTypes, $oFilterDeactivatedEntries);
+		$aAllMeals = Ext_Thebing_Accommodation_Meal::getList(false, $sInterfaceLanguage);
+		$aAllMeals = array_filter($aAllMeals, $oFilterDeactivatedEntries);
+		
+		$aAllRoomTypes = Ext_Thebing_Util::makeIdArrayIndex($aAllRoomTypes);
+		$aAllMeals = Ext_Thebing_Util::makeIdArrayIndex($aAllMeals);
+		
+		$bShowAll = true;
+	}
+
+		$aSkipMeals = array();
+		foreach((array)$aAccommodationCategories as $aAccommodationCategorie) {
+
+			$accommodationCategory = Ext_Thebing_Accommodation_Category::getInstance($aAccommodationCategorie['id']);
+			$accommodationCategorySetting = $accommodationCategory->getSetting($oSchool);
+			
+			$aCombinations = array();
+			
+			$iCount = 1;
+			$aRoomMealCombi = array();
+			$oAccommodation->setAccommodationCategorie($aAccommodationCategorie['id']);
+			$aRoomTypes = array_filter($oAccommodation->getRoomtypeListQueryData(), $oFilterDeactivatedEntries);
+			$aRoomTypes = Ext_Thebing_Util::makeIdArrayIndex($aRoomTypes);
+
+			if($bShowAll === true) {
+				$aLoopRoomTypes = $aAllRoomTypes;
+			} else {
+				$aLoopRoomTypes = $aRoomTypes;
+			}
+
+			$sTd = "";
+			foreach ((array)$aLoopRoomTypes as $iRoomTypeId=>$aRoom) {
+
+				$oAccommodation->setRoomtype($aRoom);
+
+				$aMeals = [];
+				if(isset($aRoomTypes[$iRoomTypeId])) {
+					$aMeals = explode(',', $aRoomTypes[$iRoomTypeId]['meal']);
+				}
+				
+				if($bShowAll === true) {
+					$aLoopMeals = array_keys($aAllMeals);
+				} else {
+					$aLoopMeals = $aMeals;
+				}
+
+				foreach ((array)$aLoopMeals as $iMeal) {
+					if($aRoomMealCombi[$aRoom['id']][$iMeal] == 1){
+						continue;
+					}
+					$aRoomMealCombi[$aRoom['id']][$iMeal] = 1;
+					$oAccommodation->setMealById($iMeal);
+					$aMeal = $oAccommodation->getMeal();
+
+					if(empty($aMeal)) {
+						$aSkipMeals[] = $iMeal;
+						continue;
+					}
+
+					$iCount ++;
+					
+					$sTitle = $oAccommodation->getRoomtypeName()." / ".$aMeal['short_'.$sDefaultLang];
+
+					$bAvailable = (isset($aRoomTypes[$iRoomTypeId]) && in_array($iMeal, $aMeals));
+
+					$aCombinations[] = array(
+						'accommodation_category' => $aAccommodationCategorie['id'],
+						'room' => $aRoom['id'],
+						'meal' => $iMeal,
+						'title' => $sTitle,
+						'available' => $bAvailable
+					);
+					
+					$sTd .= "<td ".($bAvailable?'':'class="not-available"').">".$sTitle.'&nbsp;'."</td>";
+				}
+			}
+
+		?>
+
+			<table style="table-layout:fixed;width: <?=(240+(($iCount-1)*95))?>px" class="table table-striped table-hover table-condensed">
+				<colgroup>
+					<col style="width:300px;">
+					<?
+					for($i=1;$i<$iCount;$i++) {
+						echo '<col style="width:100px;">';
+					}
+					?>
+				</colgroup>
+				<tr>
+					<th colspan="<?=$iCount?>"><?=$oAccommodation->getCategoryName()?> (<?=$aPriceOptions[$accommodationCategorySetting->price_night]?>)</th>
+				</tr>
+				<tr>
+				<td>&nbsp;</td><?=$sTd?>
+				</tr>
+		<?php
+			## Wenn die Unterkunftskategroie je Woche ist ##
+			if($accommodationCategorySetting->price_night != Ext_Thebing_Accommodation_Amount::PRICE_PER_NIGHT) {
+
+				$aWeeks = $oAccommodation->getAccommodationWeekList();
+				foreach ((array)$aWeeks as $aWeek) {
+					$oPrice -> setWeek($aWeek);
+			?>
+					<tr>
+						<td><?=$oPrice -> getWeekName()?></td>
+			<?php
+				foreach($aCombinations as $aCombination) {
+				
+			?>
+						<td nowrap style="text-align:center;"  align="right">
+							<?
+							$sValueName = "accommodation_".$aCombination['accommodation_category']."_".$aCombination['room']."_".$aCombination['meal']; 
+							?>
+							<input class="form-control amount input-sm<?=($aCombination['available']?'':' not-available')?>" type="text" name="price[<?=$aWeek['id']?>][<?=$sValueName?>]" value="<?=$oPrice->formatPrice( $oPrice->getAccommodationPrice($aCombination['accommodation_category'], $aCombination['room'], $aCombination['meal'], $aWeek['id'], false)) ?>"/>
+						</td>
+			<?
+				}
+			?>
+					
+					</tr>
+			<?
+				}
+				
+				if($aAccommodationCategorie['price_night'] == Ext_Thebing_Accommodation_Amount::PRICE_PER_WEEK) {
+			?>
+					
+				<tr>
+				<td><?=Ext_Thebing_L10N::t('Extra Night','','Thebing » Marketing » Prices')?></td>
+			<?
+			
+				foreach($aCombinations as $aCombination) {
+			?>
+							<td nowrap style="text-align:center;" align="right">
+								<input class="form-control amount input-sm<?=($aCombination['available']?'':' not-available')?>" type="text" name="price[0][extra_night_<?=$aCombination['accommodation_category']?>_<?=$aCombination['room']?>_<?=$aCombination['meal']?>]" value="<?=$oPrice->formatPrice($oPrice->getExtraNightPrice($aCombination['accommodation_category'], $aCombination['room'], $aCombination['meal'],0,false))?>"/>
+							</td>
+		<?
+			}
+		?>
+			</tr>
+		<?
+				}
+			} else {
+			
+				## Wenn die Unterkunftskategroie je Nacht ist ##
+				$aNightPeriods = $oPrice->getAccommodationNightPeriods($aAccommodationCategorie['id'], $oSaison->valid_from, $oSaison->valid_until);
+				$aNightPeriods[] = array(
+					'id' => 0,
+					'from' => 0,
+					'until' => 0
+				);
+
+				foreach($aNightPeriods as $aNight) {
+					/*
+					 * Die Periode liegt nicht innerhalb der Saison (z.B. wenn die aktuelle Saison die Hochsaison ist,
+					 * die Periode aber für die Hauptsaison eingegeben wurde) (#9666)
+					 */
+					if(
+						$aNight['id'] > 0 &&
+						(
+							$aNight['from'] < $oSaison->valid_from ||
+							$aNight['until'] > $oSaison->valid_until
+						)
+					) {
+						continue;
+					}
+					?>
+						<tr<?php if($aNight['id'] <= 0) { ?> id="copy_row_<?=$aAccommodationCategorie['id']?>"<?php } ?>>
+							<td>
+								<input type="hidden" name="nightprice[<?=$aAccommodationCategorie['id']?>][id][]" value="<?=$aNight['id']?>"/>
+								<input type="hidden" name="nightprice[<?=$aAccommodationCategorie['id']?>][categorie_id][]" value="<?=$aAccommodationCategorie['id']?>"/>
+								
+								<div class="row">
+									<div class="col-md-6">
+
+										<div class="input-group input-group-sm date">
+											<div class="input-group-addon">
+											  <i class="fa fa-calendar"></i>
+											</div>
+											<input type="text" placeholder="<?=L10N::t('Von')?>" value="<?=Ext_Thebing_Format::LocalDate($aNight['from'],$oSchool->id)?>" name="nightprice[<?=$aAccommodationCategorie['id']?>][from][]" class="form-control pull-right datepicker input-sm">
+										</div>
+								
+									</div>
+									<div class="col-md-6">
+
+										<div class="input-group input-group-sm date">
+											<div class="input-group-addon">
+											  <i class="fa fa-calendar"></i>
+											</div>
+											<input type="text" placeholder="<?=L10N::t('Bis')?>" value="<?=Ext_Thebing_Format::LocalDate($aNight['until'],$oSchool->id)?>" name="nightprice[<?=$aAccommodationCategorie['id']?>][until][]" class="form-control pull-right datepicker input-sm">
+										</div>
+								
+									</div>
+								</div>
+							</td>
+					<?
+
+					foreach($aCombinations as $aCombination) {
+
+						$iAmount = $oPrice->getAccommodationNightPeriodPrice($aNight['id'], $aCombination['accommodation_category'], $aCombination['room'], $aCombination['meal']);
+?>
+									<td nowrap style="text-align:center;" align="right">
+										<input <?php if (\Util::isDebugIP()) { echo 'style="color:darkred"'; } ?> class="form-control amount input-sm<?=($aCombination['available']?'':' not-available')?>" type="text" name="nightprice[<?=$aCombination['accommodation_category']?>][price][<?=$aCombination['accommodation_category']?>][<?=$aCombination['room']?>][<?=$aCombination['meal']?>][]" value="<?=$oPrice->formatPrice($iAmount)?>"/>
+									</td>
+<?
+					}
+?>
+						
+						</tr>
+<?
+				}
+?>
+					<tr>
+						<th colspan="<?=count((array)$aCombinations)+1?>"><i onclick="oGui.addNewPriceRow(<?=$aAccommodationCategorie['id']?>, false);return false;" class="fa fa-plus-circle" style="cursor:pointer;" title="<?=L10N::t('Zeitraum hinzufügen')?>"></i></th>
+					</tr>
+<?
+				
+			}
+
+			?>			
+			</table>
+			<br/>
+		<?
+		}
+		?>
+
+			</div>
+		</div>
+<?
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Kurse
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+?>
+
+		<div class="box">
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=Ext_Thebing_L10N::t('Course Prices','','Thebing » Marketing » Prices')?></h3>
+				<div class="box-tools pull-right">
+				  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+				  </button>
+				</div>
+            </div>
+			<div class="box-body table-responsive">
+		
+				<h3><?=Ext_Thebing_L10N::t('per week','','Thebing » Marketing » Prices')?></h3>
+
+<?php
+
+		// Pro Woche
+		foreach ($aCourses as $oCourse) {
+
+			if (
+				$oCourse->price_calculation === 'week' &&
+				$oCourse->only_for_combination_courses == 0
+			) {
+
+				$aSortedWeeks = array();
+				$aWeeks = $oCourse->weeks;
+
+				// Wochen sortieren (#5814)
+				$iWeekPositionDummy = -1;
+				foreach($aWeeks as $iWeek) {
+					$oWeek = Ext_Thebing_School_Week::getInstance($iWeek);
+					// Position ist leider nur befüllt, wenn in der GUI einmal die Reihenfolge
+					// verändert wurde
+					// TODO Das ist nicht mehr der Fall
+					if($oWeek->position == 0) {
+						$oWeek->position = $iWeekPositionDummy;
+						--$iWeekPositionDummy;
+					}
+
+					$aSortedWeeks[$oWeek->position] = $oWeek;
+				}
+
+				ksort($aSortedWeeks);
+
+?>
+				<table class="table table-striped table-hover table-condensed">
+					<tr>
+						<th style="vertical-align:top; min-width: 300px"><?=$oCourse->getName($sInterfaceLanguage)?></th>
+	<?php
+				# Preise für verschiedene Kurssprachen, wenn Checkbox angeklickt wurde
+					$courseLanguages = $oCourse->getCourseLanguages();
+					if($oCourse->different_price_per_language == 1) {
+						foreach ($courseLanguages as $courseLanguage) {
+	?>
+								<th style="vertical-align:top;"><?=$courseLanguage->getName($sInterfaceLanguage)?></th>
+	<?php
+						}
+					} else {
+	?>
+						<th style="vertical-align:top;"><?=Ext_Thebing_L10N::t('Alle Sprachen','','Thebing » Marketing » Prices')?></th>
+	<?php
+					}
+	?>
+					</tr>
+	<?php
+					foreach ((array)$aSortedWeeks as $oWeek) {
+	?>
+					<tr>
+						<td style="width:300px;" nowrap><?=$oWeek->title?></td>
+	<?php
+						if($oCourse->different_price_per_language == 1) {
+							foreach ($courseLanguages as $courseLanguage) {
+	?>
+							<td nowrap style="text-align:center;" align="right">
+								<input class="form-control amount input-sm" type="text" name="price[<?=$oWeek->id?>][course_<?=$oCourse->id?>_<?=$courseLanguage->id?>]" value="<?=$oPrice->formatPrice($oPrice -> getCoursePrice($oCourse->id, $oWeek->id, false, null, $courseLanguage->id))?>"/>
+							</td>
+	<?php
+							}
+						} else {
+	?>
+							<td nowrap style="text-align:center;" align="right">
+								<input class="form-control amount input-sm" type="text" name="price[<?=$oWeek->id?>][course_<?=$oCourse->id?>]" value="<?=$oPrice->formatPrice($oPrice -> getCoursePrice($oCourse->id, $oWeek->id, false))?>"/>
+							</td>
+	<?php
+						}
+	?>
+					</tr>
+	<?
+				}
+	?>
+				</table>
+<?
+				}
+
+			}
+
+
+?>
+			<br/>
+			<h3><?=Ext_Thebing_L10N::t('per course unit','','Thebing » Marketing » Prices')?></h3>
+<?
+		foreach ($aCourses as $oCourse) {
+			
+		    $oCourseUtil->setCourse($oCourse->id);
+			
+			$courseLanguages = $oCourse->getCourseLanguages();
+			
+		    if ($oCourse->price_calculation === 'unit' &&
+				$oCourse->only_for_combination_courses == 0
+			) {
+?>
+				<table class="table table-striped table-hover table-condensed">
+					<tr>
+						<th style="vertical-align:top; min-width: 300px"><?=$oCourse->getName($sInterfaceLanguage)?></th>
+<?php
+						if(
+							$oCourse->different_price_per_language == 1 &&
+							count($courseLanguages) > 1
+						) {
+							foreach ($courseLanguages as $courseLanguage) {
+?>
+								<th style="vertical-align:top;"><?=$courseLanguage->getName($sInterfaceLanguage)?></th>
+	<?php
+							}
+						} else {
+	?>
+							<th style="vertical-align:top;"><?=Ext_Thebing_L10N::t('Alle Sprachen','','Thebing » Marketing » Prices')?></th>
+	<?php
+						}
+	?>
+					</tr>
+		<?php
+					$aCourseUnits = $oCourseUtil->getCourseUnitList();
+					foreach ((array)$aCourseUnits as $aCourseUnit) {
+						$oPrice -> setCourseUnit($aCourseUnit);
+
+		?>
+					<tr>
+						<td nowrap><?=$oPrice -> getCourseUnitName()?></td>
+		<?php
+						if($oCourse->different_price_per_language == 1) {
+							foreach ($courseLanguages as $courseLanguage) {
+		?>
+								<td nowrap style="text-align:center;" align="right">
+									<input class="txt form-control input-sm" type="text" name="price[<?=$aCourseUnit['id']?>][course_<?=$oCourse->id?>_<?=$courseLanguage->id?>]" value="<?=$oPrice->formatPrice($oPrice -> getCoursePrice($oCourse->id, $aCourseUnit['id'], false, null, $courseLanguage->id))?>"/>
+								</td>
+		<?php
+							}
+						} else {
+		?>
+							<td nowrap style="text-align:center;" align="right">
+								<input class="txt form-control input-sm" type="text" name="price[<?=$aCourseUnit['id']?>][course_<?=$oCourse->id?>]" value="<?=$oPrice->formatPrice($oPrice -> getCoursePrice($oCourse->id, $aCourseUnit['id'], false))?>"/>
+							</td>
+		<?php
+						}
+		?>
+					</tr>
+	<?php
+				}
+
+				foreach($aAdditionalCourseCost as $aData) {
+
+					if(Ext_Thebing_Price::checkAdditionalCourseCost($oCourse->id, $aData['id'])) {
+
+						$oFee = new Ext_Thebing_Course_Fee($oCourse->id, $aData['id'], $_VARS['idPeriod'], $oCurrency->getCurrencyId(), $nationality, $agencyCategory, $countryGroupIds);
+						$fFee = $oFee->getFeeAmount(false);
+						?>
+						<tr>
+							<td>
+								<?=$aData['title']?>
+							</td>
+							<td>
+								<input <?php if (\Util::isDebugIP()) { echo 'style="color:green"'; } ?> class="txt form-control input-sm" type="text" name="fee[<?=$_VARS['idPeriod']?>][course][<?=$oCourse->id?>][<?=$aData['id']?>]" value="<?=$oPrice->formatPrice($fFee)?>" />
+							</td>
+		<?php
+							}
+		?>
+						</tr>
+	<?php
+						}
+					}
+				}
+		?>
+
+				</table>
+		<br/>
+		<h3><?=L10N::t('Preis pro Monat', 'Thebing » Marketing » Prices')?></h3>
+<?
+
+		// Pro Monat
+		foreach ($aCourses as $oCourse) {
+
+			$courseLanguages = $oCourse->getCourseLanguages();
+			
+			if ($oCourse->price_calculation === 'month' &&
+				$oCourse->only_for_combination_courses == 0
+			) {
+
+				?>
+				<table class="table table-striped table-hover table-condensed">
+					<tr>
+						<th style="vertical-align:top; width: 300px"><?=$oCourse->getName($sInterfaceLanguage)?></th>
+<?php
+						if(
+							$oCourse->different_price_per_language == 1 &&
+							count($courseLanguages) > 1
+						) {
+							foreach ($courseLanguages as $courseLanguage) {
+?>
+								<th style="vertical-align:top;"><?=$courseLanguage->getName($sInterfaceLanguage)?></th>
+	<?php
+							}
+						} else {
+	?>
+							<th style="vertical-align:top;"><?=Ext_Thebing_L10N::t('Alle Sprachen','','Thebing » Marketing » Prices')?></th>
+	<?php
+						}
+	?>
+						<?php
+						if(!empty($oCourse->prices_per_payment_condition)) {
+							foreach($oCourse->prices_per_payment_condition as $paymentConditionId) {
+								$paymentCondition = Ext_TS_Payment_Condition::getInstance($paymentConditionId);
+								echo '<th style="vertical-align:top; width: 150px;">'.$paymentCondition->getName().'</th>';
+							}
+						}
+						?>
+					</tr>
+					<tr>
+						<td style="width:300px;" nowrap><?=L10N::t('pro Monat', 'Thebing » Marketing » Prices')?></td>
+	<?php
+						if($oCourse->different_price_per_language == 1) {
+							foreach ($courseLanguages as $courseLanguage) {
+	?>
+								<td nowrap style="text-align:center;" align="right">
+									<input class="form-control amount input-sm" type="text" name="price[0][course_<?=$oCourse->id?>_<?=$courseLanguage->id?>]" value="<?=$oPrice->formatPrice($oPrice->getCoursePrice($oCourse->id, 0, false, null, $courseLanguage->id))?>"/>
+								</td>
+	<?php
+							}
+						} else {
+	?>
+							<td nowrap style="text-align:center;" align="right">
+								<input class="form-control amount input-sm" type="text" name="price[0][course_<?=$oCourse->id?>]" value="<?=$oPrice->formatPrice($oPrice->getCoursePrice($oCourse->id, 0, false))?>"/>
+							</td>
+	<?php
+						}
+
+						if(!empty($oCourse->prices_per_payment_condition)) {
+							foreach($oCourse->prices_per_payment_condition as $paymentConditionId) {
+								$paymentCondition = Ext_TS_Payment_Condition::getInstance($paymentConditionId);
+								echo '
+						<td nowrap style="width:150px;" align="right">
+							<input class="txt form-control input-sm" type="text" name="price[0][course_'.$oCourse->id.'#'.$paymentCondition->id.']" value="'.$oPrice->formatPrice($oPrice->getCoursePrice($oCourse->id, 0, false, $paymentCondition->id)).'"/>
+						</td>';
+							}
+						}
+						?>
+					</tr>
+<?php
+			}
+	?>
+				</table>
+	<?
+		}
+		
+		// Einmaliger Preis
+		?>		<br/>
+		<h3><?=L10N::t('Einmaliger Preis', 'Thebing » Marketing » Prices')?></h3>
+	<?php
+				foreach ($aCourses as $oCourse) {
+
+					$courseLanguages = $oCourse->getCourseLanguages();
+					
+					if (
+						$oCourse->price_calculation === 'fixed' &&
+						$oCourse->only_for_combination_courses == 0
+					) {
+		?>
+
+						<table class="table table-striped table-hover table-condensed">
+							<tr>
+								<th style="vertical-align:top; width: 300px"><?=$oCourse->getName($sInterfaceLanguage)?></th>
+	<?php
+						if(
+							$oCourse->different_price_per_language == 1 &&
+							count($courseLanguages) > 1
+						) {
+							foreach ($courseLanguages as $courseLanguage) {
+		?>
+								<th style="vertical-align:top;"><?=$courseLanguage->getName($sInterfaceLanguage)?></th>
+		<?php
+							}
+						} else {
+		?>
+							<th style="vertical-align:top;"><?=Ext_Thebing_L10N::t('Alle Sprachen','','Thebing » Marketing » Prices')?></th>
+		<?php
+						}
+		?>
+
+						<?php
+						if(!empty($oCourse->prices_per_payment_condition)) {
+							foreach($oCourse->prices_per_payment_condition as $paymentConditionId) {
+								$paymentCondition = Ext_TS_Payment_Condition::getInstance($paymentConditionId);
+								echo '<th style="vertical-align:top; width: 150px;">'.$paymentCondition->getName().'</th>';
+							}
+						}
+						?>
+					</tr>
+
+					<tr>
+						<td style="width:300px;" nowrap><?=Ext_Thebing_L10N::t('Preis','','Thebing » Marketing » Prices')?></td>
+		<?php
+						if($oCourse->different_price_per_language == 1) {
+							foreach ($courseLanguages as $courseLanguage) {
+		?>
+							<td nowrap style="text-align:center;" align="right">
+								<input class="form-control amount input-sm" type="text" name="price[0][course_<?=$oCourse->id?>_<?=$courseLanguage->id?>]" value="<?=$oPrice->formatPrice($oPrice->getCoursePrice($oCourse->id, 0, false, null, $courseLanguage->id))?>"/>
+							</td>
+		<?php
+							}
+						} else {
+	?>
+						<td nowrap style="text-align:center;" align="right">
+							<input class="form-control amount input-sm" type="text" name="price[0][course_<?=$oCourse->id?>]" value="<?=$oPrice->formatPrice($oPrice->getCoursePrice($oCourse->id, 0, false))?>"/>
+						</td>
+	<?php
+						}
+
+						if(!empty($oCourse->prices_per_payment_condition)) {
+							foreach($oCourse->prices_per_payment_condition as $paymentConditionId) {
+								$paymentCondition = Ext_TS_Payment_Condition::getInstance($paymentConditionId);
+								echo '
+									<td nowrap style="width:150px;" align="right">
+										<input class="txt form-control input-sm" type="text" name="price[0][course_'.$oCourse->id.'#'.$paymentCondition->id.']" value="'.$oPrice->formatPrice($oPrice->getCoursePrice($oCourse->id, 0, false, $paymentCondition->id)).'"/>
+									</td>
+								';
+							}
+						}
+
+	?>
+					</tr>
+				<?php
+			}
+		}
+		
+		// Weitere Preise ////////////////////////////////////////////////////////////////////////////////////////
+		?>
+				</table>
+			</div>
+		</div>
+
+		<div class="box">
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=Ext_Thebing_L10N::t('Additional Prices','','Thebing » Marketing » Prices');?></h3>
+				<div class="box-tools pull-right">
+				  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+				  </button>
+				</div>
+            </div>
+			<div class="box-body table-responsive">
+		
+		
+			<table class="table table-striped table-hover table-condensed">
+<?
+
+			foreach($aAdditionalCourseCost as $aData){
+			//$aData['type'] durch
+				if($aData['type'] != 2){
+					continue;
+				}
+
+	?>
+				<tr>
+					<th style="width:300px;"><?=$aData['name_'.$sDefaultLang]?> <br/> <? /*<input type="checkbox" name="paket[additional_<?=$aData['id']?>]" value="1" <?=$sChecked?>/>  ?> <?=Ext_Thebing_L10N::t('Paketpreis','','Thebing » Marketing » Prices')*/?> </th>
+					<td><input type="text" class="txt form-control input-sm" name="price[0][additionalcost_<?=$aData['id']?>]" value="<?=$oPrice->formatPrice($oPrice->getAdditionalCost($aData['id'],false))?>"/></td>
+				</tr>
+	<?
+			}
+		
+			foreach($aAdditionalAccommodationCost as $aData){
+				if($aData['type'] != 2){
+					continue;
+				}
+
+	?>
+				<tr>
+					<th style="width:300px;"><?=$aData['name_'.$sDefaultLang]?> <br/> <?/*<input type="checkbox" name="paket[additional_<?=$aData['id']?>]" value="1" <?=$sChecked?>/>?> <?=Ext_Thebing_L10N::t('Paketpreis','','Thebing » Marketing » Prices')*/?></th>
+					<td><input type="text" class="txt form-control input-sm" name="price[0][additionalcost_<?=$aData['id']?>]" value="<?=$oPrice->formatPrice($oPrice->getAdditionalCost($aData['id'],false))?>"/></td>
+				</tr>
+	<?
+			}
+			foreach($aAdditionalgeneralCost as $aData){
+				if($aData['type'] != 2){
+					continue;
+				}
+
+	?>
+				<tr>
+					<th style="width:300px;"><?=$aData['name_'.$sDefaultLang]?> <br/><? /*<input type="checkbox" name="paket[additional_<?=$aData['id']?>]" value="1"<?=$sChecked?>/> <?=Ext_Thebing_L10N::t('Paketpreis','','Thebing » Marketing » Prices')*/?>  </th>
+					<td><input type="text" class="txt form-control input-sm" name="price[0][additionalcost_<?=$aData['id']?>]" value="<?=$oPrice->formatPrice($oPrice->getAdditionalCost($aData['id'],false))?>"/></td>
+				</tr>
+	<?
+			}
+
+?>
+			</table>
+<?		
+	
+			// Zusätzliche Kurskosten ////////////////////////////////////////////////////////////////////////////////////////
+?>			
+			</div>
+		</div>
+		
+		
+		
+		
+		<div class="box">
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=Ext_Thebing_L10N::t('Zusätzliche Kurskosten','','Thebing » Marketing » Prices');?></h3>
+				<div class="box-tools pull-right">
+				  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+				  </button>
+				</div>
+            </div>
+			<div class="box-body table-responsive">
+		
+		
+			<table class="table table-striped table-hover table-condensed" style="table-layout:fixed; width: <?=(300+(count((array)$aCourses)*130))?>px;">
+			
+<?
+
+			for($i = 0; $i < count((array)$aAdditionalCourseCost) +1; $i++){
+				$iInput = 1;
+?>
+				<tr>
+<?					// Erste Zeile
+			    	if($i == 0) {
+?>
+			    		<th style="width: 300px;">&nbsp;</th>
+<?
+					} else {
+?>
+						<th class="service_label"><div><?=$aAdditionalCourseCost[$i-1]['name_'.$sInterfaceLanguage]?></div></th>
+<?
+					}
+
+					foreach ((array)$aCourses as $oCourse) {
+
+						if ($oCourse->only_for_combination_courses == 0)
+						{
+
+							$oCourseUtil->setCourse($oCourse->id);
+
+								// Erste Zeile
+								if($i == 0) {
+	?>
+									<th style="width: 130px;"><?=$oCourseUtil->getName()?></th>
+	<?
+								} else {
+									// Abfrage ob Kurs die Zusatzkosten haben darf
+									if(Ext_Thebing_Price::checkAdditionalCourseCost($oCourse->id, $aAdditionalCourseCost[$i-1]['id'])){
+										$oFee = new Ext_Thebing_Course_Fee($oCourse->id, $aAdditionalCourseCost[$i-1]['id'], $_VARS['idPeriod'], $oCurrency->getCurrencyId(), $nationality, $agencyCategory, $countryGroupIds);
+										$fFee = $oFee->getFeeAmount(false);
+	?>
+										<td>
+
+	<?
+									if($iInput == 1){
+	?>
+										<div class="input-group input-group-sm">
+											<input  <?php if (\Util::isDebugIP()) { echo 'style="color:green"'; } ?> class="txt form-control" name="fee[<?=$_VARS['idPeriod']?>][course][<?=$oCourse->id?>][<?=$aAdditionalCourseCost[$i-1]['id']?>]" value="<?=$oPrice->formatPrice($fFee)?>" type="text" />
+												<span class="input-group-btn">
+												  <button type="button" class="btn btn-default btn-flat" onclick="copyPricesToRow(this);" title="<?=L10N::t('für die ganze Zeile übernehmen','Thebing » Marketing » Prices')?>" alt="<?=L10N::t('für die ganze Zeile übernehmen','Thebing » Marketing » Prices')?>"><i class="fa fa-chevron-right"></i></button>
+												</span>
+										  </div>
+
+	<?
+									} else {
+										?>
+											<input  <?php if (\Util::isDebugIP()) { echo 'style="color:green"'; } ?> class="txt form-control input-sm" name="fee[<?=$_VARS['idPeriod']?>][course][<?=$oCourse->id?>][<?=$aAdditionalCourseCost[$i-1]['id']?>]" value="<?=$oPrice->formatPrice($fFee)?>" type="text" />
+										<?
+									}
+	?>
+										</td>
+	<?
+									$iInput++;
+									}else{
+	?>
+										<td>&nbsp;</td>
+	<?
+									}
+								}
+						}
+					}
+?>
+				</tr>
+<?
+			}
+?>
+			</table>
+			
+			</div>
+		</div>
+<?
+
+// Zusätzliche Unterkunftskosten ////////////////////////////////////////////////////////////////////////////////////////
+
+?>			
+					
+		<div class="box">
+			<div class="box-header with-border">
+				<h3 class="box-title"><?=Ext_Thebing_L10N::t('Zusätzliche Unterkunftskosten','','Thebing » Marketing » Prices');?></h3>
+				<div class="box-tools pull-right">
+				  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+				  </button>
+				</div>
+            </div>
+			<div class="box-body table-responsive">
+
+			<table class="table table-striped table-hover table-condensed" style="table-layout:fixed; width: <?=(300+(count((array)$aAccommodationCategories)*130))?>px;">
+			
+<?		
+			for($i = 0; $i < count((array)$aAdditionalAccommodationCost) +1; $i++){
+				$iInput = 1;
+?>	
+				<tr>
+<?					// Erste Zeile
+			    	if($i == 0){
+?>
+			    		<th style="width: 300px;">&nbsp;</th>
+<?
+					}else{
+?>
+						<th class="service_label"><div><?=$aAdditionalAccommodationCost[$i-1]['name_'.$sInterfaceLanguage]?></div></th>
+<?
+					}
+
+					foreach ((array)$aAccommodationCategories as $aAccommodationCategorie){
+						$oAccommodation->setAccommodationCategorie($aAccommodationCategorie['id']);
+						
+			    		// Erste Zeile
+			    		if($i == 0) {
+?>
+			    			<th style="width: 130px;"><?=$oAccommodation->getCategoryName()?></th>
+<?
+						} else {
+			    			// Abfrage ob Unterkunft die Zusatzkosten haben darf
+			    			if(Ext_Thebing_Price::checkAdditionalAccommodationCost($aAccommodationCategorie['id'], $aAdditionalAccommodationCost[$i-1]['id'])) {
+
+			    				$oFee = new Ext_Thebing_Accommodation_Fee($aAccommodationCategorie['id'], $aAdditionalAccommodationCost[$i-1]['id'], $_VARS['idPeriod'], $oCurrency->getCurrencyId(), $nationality, $agencyCategory, $countryGroupIds);
+								$fFee = $oFee->getFeeAmount(false);
+?>
+								<td>
+<?
+								if($iInput == 1){
+?>
+									<div class="input-group input-group-sm">
+										<input  <?php if (\Util::isDebugIP()) { echo 'style="color:blue"'; } ?> class="txt form-control" name="fee[<?=$_VARS['idPeriod']?>][accommodation][<?=$aAccommodationCategorie['id']?>][<?=$aAdditionalAccommodationCost[$i-1]['id']?>]" value="<?=$oPrice->formatPrice($fFee)?>" type="text" />
+											<span class="input-group-btn">
+											  <button type="button" class="btn btn-default btn-flat" onclick="copyPricesToRow(this);" title="<?=L10N::t('für die ganze Zeile übernehmen','Thebing » Marketing » Prices')?>" alt="<?=L10N::t('für die ganze Zeile übernehmen','Thebing » Marketing » Prices')?>"><i class="fa fa-chevron-right"></i></button>
+											</span>
+									  </div>
+
+<?
+								} else {
+									?>
+										<input <?php if (\Util::isDebugIP()) { echo 'style="color:blue"'; } ?> class="txt form-control input-sm" name="fee[<?=$_VARS['idPeriod']?>][accommodation][<?=$aAccommodationCategorie['id']?>][<?=$aAdditionalAccommodationCost[$i-1]['id']?>]" value="<?=$oPrice->formatPrice($fFee)?>" type="text" />
+									<?
+								}
+?>
+								</td>	
+<?							
+								$iInput++;
+							}else{
+?>
+			    				<td>&nbsp;</td>
+<?		
+							}
+						}
+					}
+?>
+				</tr>
+<?
+			}
+?>
+			</table>
+				
+			</div>
+		</div>
+				
+			<br/>
+			<button class="btn btn-primary pull-right" onclick="document.prices.func.value='save'; document.prices.submit();"><?=Ext_Thebing_L10N::t('Speichern','','Thebing » Marketing » Prices')?></button>
+			<br/><br/>
+
+<?
+}
+?>
+
+
+
+	</section>
+	
+
+</form>
+<script>
+	
+	function copyPricesToRow(oElement){
+
+		oTd = oElement.up('td');
+		oInput = oTd.down('input');
+		
+		
+		oTr = oElement.up('tr');
+		
+		aChilds = oTr.childElements();
+		
+		aChilds.each(function(oTd){
+			if(oTd.down('input')){
+				oTd.down('input').value = oInput.value
+			}
+			
+			
+		});
+		
+		
+	}
+	
+</script>
+
+<?php
+$sAdditional = "
+<script>
+	oGui.aCalenderConfig = {
+		autoclose: true,
+		language: '".System::getInterfaceLanguage()."',
+		startDate: '".Ext_Thebing_Format::LocalDate($oPeriod->valid_from)."',
+		endDate: '".Ext_Thebing_Format::LocalDate($oPeriod->valid_until)."',
+		format: '".\Ext_Thebing_Format::getDateFormat(null, 'backend_datepicker_format')."'
+	};
+	oGui.initCalendar();
+</script>";
+
+Admin_Html::loadAdminFooter($sAdditional);

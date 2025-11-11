@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` CHANGE `language` `language` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

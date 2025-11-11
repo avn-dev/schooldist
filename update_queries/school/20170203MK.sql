@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_reports` ADD `min_rows` TINYINT NOT NULL;

@@ -1,0 +1,87 @@
+<?php
+
+include("./includes/main.inc.php");
+
+addSystemRight('htaccess', 'Einstellungen & Funktionen &raquo; HTACCESS');
+
+Access_Backend::checkAccess("htaccess");
+
+Admin_Html::loadAdminHeader();
+
+$aProvider = array(
+	'plan-i'=>L10N::t('Fidelo Software GmbH'), 
+	'1und1'=>L10N::t('1&1 Internet AG'), 
+	'individual'=>L10N::t('Individuelle AddType Anweisung'),
+	'others'=>L10N::t('Andere')
+);
+
+if(isset($_VARS['provider'])) {
+	
+	$aFields = array(
+		'provider',
+		'individual_htaccess',
+		'htaccess_individual_addtype'
+	);
+	
+	foreach($aFields as $sField) {
+		if(isset($_VARS[$sField])) {
+			System::s($sField, $_VARS[$sField]);
+		}
+	}
+
+}
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('HTACCESS')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+
+		<form method="post" action="htaccess.html">
+			<?=printTableStart()?>
+				<?=printFormSelect(L10N::t('Provider'), 'provider', $aProvider, $system_data['provider'])?>
+				<? if($system_data['provider'] == 'individual') { ?>
+				<?=printFormTextarea(L10N::t('Individuelle HTACCESS AddType Anweisung'), 'htaccess_individual_addtype', $system_data['htaccess_individual_addtype'], 15, 'style="width: 500px;"')?>
+				<? } ?>
+				<?=printFormTextarea(L10N::t('Individuelle HTACCESS Anweisungen'), 'individual_htaccess', $system_data['individual_htaccess'], 15, 'style="width: 500px;"')?>
+			<?=printTableEnd()?>
+			<?=printSubmit(L10N::t('Speichern'))?>
+		</form>
+
+		<p><?=L10N::t('Klicken Sie hier, um die .htaccess-Datei neu zu generieren. Achtung, das System funktioniert eventuell nicht mehr einwanfrei, wenn Sie einen falschen Provider ausgewählt haben.')?></p>
+		
+		<p style="text-align: right;">
+			<button class="btn" onclick="go('?&task=generate');"><?=L10N::t('Generieren')?></button>
+		</p>
+		
+<?php 
+
+if($_VARS['task'] == 'generate') {
+
+	$oHtaccessGenerator = new \Core\Generator\Htaccess();
+	$mWrite = $oHtaccessGenerator->run();
+
+	if($mWrite === false) {
+		echo '<h2 class="error">'.L10N::t('Die .htaccess-Dateien konnte nicht geschrieben werden.').'</h2>';
+		$aErrors = $oHtaccessGenerator->getErrors();
+		echo '<p>'.L10N::t('Fehler').': '.implode(', ', $aErrors).'</p>';
+	} else {
+		echo '<h2>'.L10N::t('Die .htaccess-Dateien wurde erfolgreich geschrieben.').'</h2>';
+	}
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+	\Log::enterLog(0, 20401);
+
+}
+
+?>
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

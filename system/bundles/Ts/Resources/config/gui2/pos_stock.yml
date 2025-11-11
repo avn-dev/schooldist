@@ -1,0 +1,47 @@
+class:
+  wdbasic: \Ts\Entity\PointOfSale\Stock
+  data: \Ts\Gui2\Data\PointOfSale\Stock
+access: 
+    - ts_admin_pos
+    - ""
+id:
+  column: id
+  alias: ts_ps
+orderby:
+  - \Ts\Gui2\Data\PointOfSale\Stock
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\PointOfSale\Stock
+          - getDialog
+columns:
+  - visible: true
+    title: Bestandsänderung
+    column: change
+    width: name
+    format: Ext_Thebing_Gui2_Format_Int
+  - visible: true
+    title: Verkaufsstelle
+    column: pos_id
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [\Ts\Entity\PointOfSale, getSelectOptions]
+    width: name
+  - visible: true
+    title: Kommentar
+    column: comment
+    width: name
+    resize: true

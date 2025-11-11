@@ -1,0 +1,7 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker('thebing_management_reports_persessionrevenue');
+
+Ext_Thebing_Management_Statistic_Static_PerSessionRevenue::display();

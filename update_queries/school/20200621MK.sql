@@ -1,0 +1,4 @@
+ALTER TABLE `ts_inquiries` ADD `partial_invoices_terms` INT NULL DEFAULT NULL AFTER `checkout`;
+CREATE TABLE `ts_inquiries_partial_invoices` (`id` int(11) NOT NULL, `changed` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, `created` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', `creator_id` int(11) NOT NULL, `user_id` int(11) NOT NULL, `inquiry_id` int(11) NOT NULL, `payment_condition_id` int(11) NOT NULL, `from` date NOT NULL, `until` date NOT NULL, `date` date NOT NULL, `amount` decimal(16,5) NOT NULL, `converted` timestamp NULL DEFAULT NULL ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `ts_inquiries_partial_invoices` ADD PRIMARY KEY (`id`), ADD KEY `inquiry_id` (`inquiry_id`);
+ALTER TABLE `ts_inquiries_partial_invoices` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;

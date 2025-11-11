@@ -1,0 +1,50 @@
+<?php
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Einstellungen Frontend-Einbindung', 'Core')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+        
+<?php
+
+if ($_VARS['page_id'] && $_VARS['element_id'] && $_VARS['content_id']) {
+
+	if ($_POST['action'] == "config") {
+		$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$oConfig->combination_key = $_VARS['combination_key'];
+		$oConfig->template_key = $_VARS['template_key'];
+		$oConfig->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	}
+	$oConfig = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	?><form method="POST" action="tc_frontend.html">
+        <?=printFormHidden('action', 'config')?>
+        <?=printFormHidden('page_id', $_VARS['page_id'])?>
+        <?=printFormHidden('element_id', $_VARS['element_id'])?>
+        <?=printFormHidden('content_id', $_VARS['content_id'])?>
+        <?=printFormHidden('language', $_VARS['language'])?>
+        <?=printTableStart()?>
+        <?=printFormText(L10N::t("Kombinations-Schlüssel"), "combination_key", $oConfig->combination_key)?>
+        <?=printFormText(L10N::t("Vorlagen-Schlüssel"), "template_key", $oConfig->template_key)?>
+        <?=printTableEnd()?>
+        <?=printSubmit("Konfiguration speichern")?>
+    </form><?php
+
+}
+
+?>
+
+	</div>
+</section>
+
+<?=Admin_Html::loadAdminFooter()?>

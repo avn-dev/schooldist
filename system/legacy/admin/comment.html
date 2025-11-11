@@ -1,0 +1,411 @@
+<?
+
+include("./includes/main.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("comment");
+
+$img 	= "";
+$status = "";
+
+function coGetStatus($status,&$var1,&$var2) {
+	if($status == "noticed") {
+		$var1 = "<img src=\"/admin/media/comment_new.gif\" border=0 />";
+		$var2 = "bemerkt"; 
+	} elseif($status == "read") {
+		$var1 = "<img src=\"/admin/media/comment_read.gif\" border=0 />";
+		$var2 = "gelesen"; 
+	} elseif($status == "ok") {
+		$var1 = "<img src=\"/admin/media/comment_read.gif\" border=0 />";
+		$var2 = "erledigt"; 
+	} elseif($status == "new") {
+		$var1 = "<img src=\"/admin/media/comment_new.gif\" border=0 />";
+		$var2 = "neu"; 
+	} elseif($status == "reply") {
+		$var1 = "<img src=\"/admin/media/comment_replay.gif\" border=0 />";
+		$var2 = "beantwortet";
+	}
+}
+
+if($_VARS['task'] == "addPageComment") {
+?>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" height="100%" style="background-color:#f6f6f6; ">
+	<tr>
+		<td height="8" style="border-bottom:1px solid #dddddd;"><img src="media/spacer.gif" width="10" height="8"></td>
+	</tr>
+	<tr>
+		<td width="99%" bgcolor="#FFFFFF" style="border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;" valign="top">
+			<table cellpadding="10" cellspacing="0" border="0">
+				<tr>
+					<td>
+						<h1><?=L10N::t('Notiz', 'Framework')?></h1>
+						<?
+						if($_VARS['action'] == "comment") {
+							foreach($_VARS['receiver'] as $to) {
+								$resultb = db_query($db_data['system'],"INSERT INTO system_comments (user, page_id, comment,subject, status, receiver, send) VALUES ('".$user_data['id']."', '".$_VARS['idPage']."','".$_VARS['comment']."','".$_VARS['subject']."', 'new', '".$to."',".time().")");
+								if ($_VARS['sendmail'] == "yes") {
+					                $resultb=db_query($db_data['system'],"SELECT email FROM system_user WHERE id = '".$to."'");
+									$myrow = get_data($resultb);
+									wdmail($myrow['email'], "Kommentar von ".$system_data['project_name'].": ".$_VARS['subject'],$_VARS['comment']."\n\nvon Benutzer \"".$user_data['completename']."\" zu der Seite \"".getPageTrack($_VARS['idPage'], ' > ')."\"", "From: ".$system_data['project_name']." (".$user_data['completename'].") <".\System::d('admin_email').">");
+								}
+								$i++;
+							}
+						?>
+						<script>
+						self.location.href='about:blank';
+						parent.scroller_2.scrollframe();
+						</script>
+						<?
+						} else {
+							$classUser = new User();
+							$arrUser = $classUser->getArrayList(true);
+							foreach((array)$arrUser as $iUser=>$sUser) {
+								$bAccess = checkRightInPath("publish", (int)$_VARS['idPage'], (int)$iUser);
+								if($bAccess) {
+									$arrUser[$iUser] .= ' ('.L10N::t('Publish right', 'Framework').')'; 
+								}
+							}
+							
+						?>
+						<p><?=L10N::t('zu der Seite', 'Framework')?>:<br><?=getPageTrack($_VARS['idPage'])?></p>
+						<form method="post" action="comment.html">
+						<input type="hidden" name="idPage" value="<?=$_VARS['idPage']?>" />
+						<input type="hidden" name="task" value="addPageComment" />
+						<input type="hidden" name="action" value="comment" />
+						<?=printTableStart()?>
+						<?=printFormSelect(L10N::t('Empfänger', 'Framework'),"receiver[]", $arrUser, $_VARS['sendmail'],"multiple size=\"5\" style=\"width:200px;\"",0)?>
+						<?=printFormSelect(L10N::t('per E-Mail versenden?', 'Framework'),"sendmail",array("yes"=>"Ja","no"=>"Nein"),$_VARS['sendmail'],"style=\"width:140px;\"",0)?>
+						<?=printFormText(L10N::t('Betreff', 'Framework'),"subject",$_VARS['subject'],"style=\"width:140px;\"",0)?>
+						<?=printFormTextarea(L10N::t('Nachricht', 'Framework'),"comment",$_VARS['comment'],5,"style=\"width:140px;\"",0)?>
+						<?=printTableEnd()?>
+						<?=printSubmit(L10N::t('Notiz senden', 'Framework'))?>
+						</form>
+						<? } ?>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<td height="6"><img src="media/spacer.gif" width="1" height="6"></td>
+	</tr>
+</table>
+<?
+} else {
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Interne Nachrichten', 'Framework')?></h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+	<tr>
+		<td valign="top">
+			
+<form action="<?=$_SERVER['PHP_SELF']?>" method="post" name=formular>
+<input type="hidden" name="insert" value="comment" />
+<input type="hidden" name="username" value="<?=$_VARS['username']?>" />
+<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>" />
+<input type="hidden" name="complete_path" value="<?=$_VARS['complete_path']?>" />
+<table cellpadding=4 cellspacing=0 border=0 width=100% class="table">
+	<tr>
+		<td colspan=7 valign=middle>
+			<a href=comment.html?action=write&complete_path=<? echo $_VARS['complete_path']; ?>><img src="/admin/media/comment_write.gif" alt="<?=L10N::t('Nachricht senden', 'Framework')?>" border=0 align="absmiddle"></a>
+			<a href=comment.html?action=inbox&complete_path=<? echo $_VARS['complete_path']; ?>><img src="/admin/media/comment_in.gif" alt="<?=L10N::t('empfangene Nachrichten', 'Framework')?>" border=0 align="absmiddle"></a>
+			<a href=comment.html?action=outbox&complete_path=<? echo $_VARS['complete_path']; ?>><img src="/admin/media/comment_out.gif" alt="<?=L10N::t('versendete Nachrichten', 'Framework')?>" border=0 align="absmiddle"></a>
+			<a href=comment.html?action=trash&complete_path=<? echo $_VARS['complete_path']; ?>><img src="/admin/media/comment_trash.gif" alt="<?=L10N::t('Papierkorb', 'Framework')?>" border=0 align="absmiddle"></a>
+		</td>
+	</tr>
+</table>
+<br>
+<?
+if($_VARS['action'] == "delete") {
+
+db_query($db_data['system'],"UPDATE system_comments SET status = 'deleted' WHERE id = '".(int)$_VARS['id']."'");
+?>
+<script>
+document.location.href = "comment.html?action=inbox&complete_path=<? echo $_VARS['complete_path']; ?>";
+</script>
+<?
+} elseif($_VARS['action'] == "ok") {
+
+	db_query($db_data['system'],"UPDATE system_comments SET done = 'done' WHERE id = '".(int)$_VARS['id']."'");
+	
+	$arrComment = get_data(db_query($db_data['system'],"SELECT * FROM system_comments WHERE id = '".(int)$_VARS['id']."'"));
+
+	// Sender benachrichtigen
+	$resUser = db_query($db_data['system'],"SELECT * FROM system_user WHERE id = '".$arrComment['user']."'");
+	$arrUser = get_data($resUser);
+	wdmail($arrUser['email'], "Kommentar von ".$system_data['project_name']." wurde erledigt: ".$arrComment['subject'], $arrComment['comment']."\n\nwurde erledigt von Benutzer \"".$user_data['completename']."\"\n\nzu der Seite \"".getPageTrack($arrComment['page_id'], " > ")."\"");
+
+?>
+<script>
+document.location.href = "comment.html?action=inbox&complete_path=<? echo $_VARS['complete_path']; ?>";
+</script>
+<?
+} elseif($_VARS['action'] == "detail") {
+
+	$my_comment = get_data(db_query("SELECT c.id,c.send,c.status,c.done,c.subject,c.comment,c.page_id,c.receiver,u1.username as user1,u2.username as user2, c.user FROM system_comments c, system_user u1, system_user u2 WHERE c.receiver = u1.id AND c.user = u2.id AND c.id = ".(int)$_VARS['id'].""));
+
+	$mktime = $my_comment['send'];
+	$send = strftime("%x %X",$mktime);
+
+?>
+	<table cellpadding="4" cellspacing="0" border="0" class="table">
+<?
+echo "<tr><td colspan=6 valign=middle><a href=".$_SERVER['PHP_SELF']."?id=".$my_comment['id']."&action=delete><img src=/admin/media/comment_delete.gif align=absbottom border=0 alt=\"\"></a> löschen <a href=\"$PHP_SELF?complete_path=".idtopath($my_comment['page_id'])."&receiver=".$my_comment['user']."&subject=Aw: ".$my_comment['subject']."\"><img src=/admin/media/comment_reply.gif align=absbottom border=0 alt=\"\"></a> antworten <a href=$PHP_SELF?id=".$my_comment['id']."&action=ok><img src=/admin/media/comment_done.gif align=absbottom border=0 alt=\"\"></a> erledigt </td></tr>";
+
+echo "
+<tr><td width=150 nowrap>".L10N::t('Von', 'Framework').":</td><td colspan=4 width=100%><strong>".$my_comment['user2']."</strong></td></tr>
+<tr><td width=150 nowrap>".L10N::t('An', 'Framework').":</td><td colspan=4 width=100%><strong>".$my_comment['user1']."</strong></td></tr>
+<tr><td>".L10N::t('Gesendet', 'Framework').":</td><td colspan=4>".$send."</td></tr>
+<tr><td>".L10N::t('Seite', 'Framework').":</td><td colspan=4>";
+
+echo '<a href="#" onclick="parent.toolbar.openTask(\'edit\',\'?url='.idtopath($my_comment['page_id']).'\');">'.getPageTrack($my_comment['page_id']).'</a>';
+
+echo "&nbsp;</td></tr>";
+echo "<tr><td>".L10N::t('Betreff', 'Framework').":</td><td colspan=4><strong>".$my_comment['subject']."</strong></td></tr>
+<tr><td colspan=6><textarea style=\"width=100%\" name=\"comment\" rows=10 readonly>".$my_comment['comment']."</textarea></td></tr>
+";
+?>
+	</table>
+<?
+if($my_comment['receiver'] == $user_data['id']) {
+	db_query($db_data['system'],"UPDATE system_comments SET status = 'read' WHERE id = ".(int)$_VARS['id']."");
+}
+} elseif ($_VARS['insert'] == "comment") {
+
+	foreach($_VARS['receiver'] as $to) {
+		$sSql = "INSERT INTO system_comments (user, page_id, comment,subject, status, receiver, send) VALUES ('".$user_data['id']."', '".$_VARS['idPage']."','".$_VARS['comment']."','".$_VARS['subject']."', 'new', '".$to."',".time().")";
+		$resultb = db_query($sSql);
+		if ($_VARS['sendmail'] == "yes") {
+			$resultb=db_query($db_data['system'],"SELECT * FROM system_user WHERE id = '".$to."'");
+			$myrow = get_data($resultb);
+			wdmail($myrow['email'],"Kommentar von ".$system_data['project_name'].": ".$_VARS['subject'],$_VARS['comment']."\n\nvon Benutzer \"".$user_data['completename']."\" zu der Seite \"".getPageTrack($_VARS['idPage']," > ")."\"",$system_data['mail_from']);
+		}
+	}
+?>
+<script>
+document.location.href = "comment.html?action=outbox";
+</script>
+<?
+} elseif($_VARS['action'] == "inbox") {
+?>
+<h2><?=L10N::t('Nachrichten Eingang', 'Framework')?>:</h2>
+<table cellpadding=4 cellspacing=0 border=0 width=100% class="table">
+<?
+
+$result_message = db_query($db_data['system'],"SELECT c.id,c.send,c.status,c.done,c.subject,c.received,c.page_id,u.username FROM system_comments c, system_user u WHERE c.user = u.id AND receiver = '".$user_data['id']."' AND status != 'deleted' ORDER BY send DESC");
+
+$count_message = count_rows($result_message);
+
+if($count_message>0) {
+
+?>
+
+	<tr>
+		<th width="25">&nbsp;</th>
+		<th><?=L10N::t('Von', 'Framework')?></th>
+		<th><?=L10N::t('Betreff', 'Framework')?></th>
+		<th><?=L10N::t('Seite', 'Framework')?></th>
+		<th width=120><?=L10N::t('Gesendet', 'Framework')?></th>
+		<th width=35><?=L10N::t('Status', 'Framework')?></th>
+	</tr>
+
+<?
+
+while($my_message = get_data($result_message)) {
+	$mktime = $my_message['send'];
+
+	$erhalten = strftime("%x %X",$mktime);
+
+	coGetStatus($my_message['status'],$img,$status);
+
+	if($my_message['done'] == "done") {
+		$img_active = "<img src=\"media/sitemap_inactive.gif\" border=0 align=absmiddle>";
+	} else {
+		$img_active = "<a href=".$_SERVER['PHP_SELF']."?id=".$my_message['id']."&action=ok><img src=\"media/comment_done.gif\" border=0 align=absmiddle></a>";
+	}
+
+?>
+	<tr id="tr_<?=$my_message['id']?>">
+<?
+	echo "<td align=center>$img</td><td>".$my_message['username']."</td><td><a href=comment.html?action=detail&id=".$my_message['id'].">";
+	if($my_message['status'] == "new" || $my_message['status'] == "noticed") echo "<strong>";
+	echo "".$my_message['subject']."";
+	if($my_message['status'] == "new" || $my_message['status'] == "noticed") echo "</strong>";
+	echo "</a></td><td>";
+	echo '<a href="#" onclick="parent.toolbar.openTask(\'edit\',\'?url='.idtopath($my_message['page_id']).'\');">'.getPageTrack($my_message['page_id']).'</a>';
+	echo "&nbsp;</td><td>".$erhalten."</td><td align=center>$img_active <a href=".$_SERVER['PHP_SELF']."?id=".$my_message['id']."&action=delete><img src=/admin/media/comment_delete.gif align=absmiddle border=0 alt=\"\"></a></td></tr>\n";
+	if($my_message['received'] == "") {
+		db_query($db_data['system'],"UPDATE system_comments SET status = 'noticed', received = ".time()." WHERE id = '".$my_message['id']."'");
+	}
+}
+
+} else {
+
+echo "<tr class=first><td colspan=7>Es liegen keine Nachrichten vor!</td></tr>";
+
+}
+} elseif($_VARS['action'] == "outbox") {
+?>
+<h2><?=L10N::t('Nachrichten Ausgang', 'Framework')?>:</h2>
+<table cellpadding=4 cellspacing=0 border=0 width=100% class="table">
+<?
+$result_message = db_query($db_data['system'],"SELECT c.id,c.send,c.received,c.status,c.done,c.subject,c.page_id,u.username FROM system_comments c, system_user u WHERE c.receiver = u.id AND user = '".$user_data['id']."' AND status != 'deleted' ORDER BY send DESC");
+
+$count_message = count_rows($result_message);
+
+if($count_message>0) {
+
+?>
+
+	<tr>
+		<th>&nbsp;</th>
+		<th><?=L10N::t('An', 'Framework')?></th>
+		<th><?=L10N::t('Betreff', 'Framework')?></th>
+		<th><?=L10N::t('Seite', 'Framework')?></th>
+		<th width=120><?=L10N::t('Gesendet', 'Framework')?></th>
+		<th width=120><?=L10N::t('Erhalten', 'Framework')?></th>
+		<th width=50><?=L10N::t('Status', 'Framework')?></th>
+		<th width="20">&nbsp;</th>
+	</tr>
+
+<?
+
+while($my_message = get_data($result_message)) {
+	
+	if($my_message['done'] == "done") {
+		$img_active = '<img src="media/sitemap_inactive.gif" title="erledigt" border="0" align="absmiddle" />';
+	} else {
+		$img_active = '<a href="'.$_SERVER['PHP_SELF'].'?id='.$my_message['id'].'&amp;action=ok"><img src="media/comment_done.gif" title="offen" border="0" align="absmiddle" /></a>';
+	}
+
+	if($my_message['received']) {
+		$mktime = $my_message['received'];
+		$erhalten = strftime("%x %X",$mktime);
+	} else {
+		$erhalten = "noch nicht erhalten";
+	}
+
+	$mktime = $my_message['send'];
+	$send = strftime("%x %X",$mktime);
+
+	coGetStatus($my_message['status'],$img,$status);
+
+?>
+	<tr id="tr_<?=$my_message['id']?>">
+		<td align=center><?=$img?></td>
+		<td><?=$my_message['username']?></td>
+		<td><a href=comment.html?action=detail&id=<?=$my_message['id']?>><?=$my_message['subject']?></a></td>
+		<td><a href=# onClick="parent.toolbar.openTask('edit','?url=<?=idtopath($my_message['page_id'])?>');"><?=getPageTrack($my_message['page_id'])?>&nbsp;</a></td>
+		<td><?=$send?></td>
+		<td><?=$erhalten?></td>
+		<td><?=$status?></td>
+		<td align="center"><?=$img_active?></td>
+	</tr>
+<?
+
+}
+
+} else {
+
+	echo "<tr><td colspan=7>".L10N::t('Es liegen keine Nachrichten vor!', 'Framework')."</td></tr>";
+
+}
+} elseif($_VARS['action'] == "trash") {
+?>
+<h2><?=L10N::t('Nachrichten Papierkorb', 'Framework')?>:</h2>
+<table cellpadding=4 cellspacing=0 border=0 width=100% class="table">
+<?
+$result_message = db_query($db_data['system'],"SELECT c.id,c.send,c.received,c.status,c.done,c.subject,c.page_id,u.username FROM system_comments c, system_user u WHERE c.receiver = u.id AND user = '".$user_data['id']."' AND status = 'deleted' ORDER BY send DESC");
+
+$count_message = count_rows($result_message);
+
+if($count_message>0) {
+
+?>
+	<tr>
+		<th>&nbsp;</th>
+		<th><?=L10N::t('An', 'Framework')?></th>
+		<th><?=L10N::t('Betreff', 'Framework')?></th>
+		<th><?=L10N::t('Seite', 'Framework')?></th>
+		<th width=120><?=L10N::t('Gesendet', 'Framework')?></th>
+		<th width=120><?=L10N::t('Erhalten', 'Framework')?></th>
+	</tr>
+
+<?
+
+while($my_message = get_data($result_message)) {
+if($my_message['received']) {
+	$mktime = $my_message['received'];
+	$erhalten = strftime("%x %X",$mktime);
+} else {
+	$erhalten = "noch nicht erhalten";
+}
+$mktime = $my_message['send'];
+$send = strftime("%x %X",$mktime);
+
+coGetStatus($my_message['status'],$img,$status);
+
+?>
+	<tr id="tr_<?=$my_message['id']?>" onmouseout="showRow(<?=$my_message['id']?>,0)" onmousemove="showRow(<?=$my_message['id']?>,1);">
+<?
+	echo "<td align=center>&nbsp;</td><td>".$my_message['username']."</td><td>".$my_message['subject']."</td><td><a href=# onClick=\"opener.parent.main.location.href = '".idtopath($my_message['page_id'])."';\">".getPageTrack($my_message['page_id'])."</a></td><td>".$send."</td><td>".$erhalten."</td></tr>";
+}
+
+} else {
+
+	echo "<tr><td colspan=7>".L10N::t('Es liegen keine Nachrichten vor!', 'Framework')."</td></tr>";
+
+}
+} else {
+?>
+<script>
+function receiver() {
+
+if(document.formular.to.value.indexOf(document.formular.choose.options[document.formular.choose.selectedIndex].value) == -1) {
+document.formular.to.value = document.formular.to.value + document.formular.choose.options[document.formular.choose.selectedIndex].value + ';'
+}
+
+}
+</script>
+<?
+						$classUser = new User();
+						$arrUser = $classUser->getArrayList(true);
+?>
+
+<?=printTableStart()?>
+<?=printFormSelect(L10N::t('Empfänger', 'Framework'),"receiver[]", $arrUser, $_VARS['receiver'], "multiple size=\"5\"")?>
+<?=printFormPageSelect(L10N::t('zu Seite', 'Framework'), "idPage", $_VARS['idPage'], array('value_type'=>1))?>
+<?=printFormSelect(L10N::t('per E-Mail versenden?', 'Framework'), "sendmail", array("yes"=>"Ja","no"=>"Nein"), $_VARS['sendmail'],"")?>
+<?=printFormText(L10N::t('Betreff', 'Framework'), "subject", $_VARS['subject'], "")?>
+<?=printFormTextarea(L10N::t('Nachricht', 'Framework'), "comment", $_VARS['comment'], 5, "")?>
+<?=printTableEnd()?>
+<?=printSubmit(L10N::t('Notiz senden', 'Framework'))?>
+
+<script for="document" event="onkeydown()" language="JScript" type="text/jscript">
+<!--
+ {
+ if(window.event.altKey && window.event.keyCode == "83") {
+  document.formular.submit();
+  }
+ }
+//-->
+</script>
+
+<?
+}
+?>
+</table></td></tr>
+</table>
+</form>
+			
+		</td>
+	</tr>
+</table>
+<?
+}
+?>
+<?=Admin_Html::loadAdminFooter()?>

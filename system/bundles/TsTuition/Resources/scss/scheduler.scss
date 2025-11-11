@@ -1,0 +1,55 @@
+
+#divWeekDaySwitch {
+	@apply flex flex-row items-center gap-x-2 px-1.5 border-b border-gray-100/50;
+
+	.weekdays-nav {
+		@apply flex flex-row items-center gap-x-1;
+		.divButton {
+			@apply px-2 py-1 rounded hover:bg-gray-50;
+		}
+	}
+
+	.weekDayLabel {
+		@apply px-2 py-1
+	}
+
+	.divToolbarLabelGroup {
+		@apply font-bold;
+	}
+}
+
+#divPlanification, #divPlanificationOtherRooms {
+	table thead th {
+		@apply p-2 border-b-2 border-gray-100/50 text-left font-semibold;
+	}
+
+	table tbody td {
+		@apply border-r border-gray-50;
+	}
+
+	.room_container {
+
+		.room_content_inactive {
+			@apply opacity-60;
+		}
+
+		.room_content,
+		.room_content_inactive,
+		.room_content_readonly {
+			@apply box-border rounded-md border border-gray-100;
+			font-size: 11px;
+
+			.room_content_toolbar {
+				@apply flex flex-row-reverse items-center gap-x-1 mb-0.5;
+
+				div {
+					@apply p-0.5 opacity-50 hover:opacity-100;
+				}
+			}
+
+			.room_content_padding {
+				@apply rounded-md;
+			}
+		}
+	}
+}

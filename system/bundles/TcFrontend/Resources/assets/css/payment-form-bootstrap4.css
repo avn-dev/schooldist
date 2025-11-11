@@ -1,0 +1,2944 @@
+@charset "UTF-8";
+.fidelo-payment-form {
+  font-family: sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  text-align: left;
+  background-color: #fff;
+}
+.fidelo-payment-form *,
+.fidelo-payment-form *::before,
+.fidelo-payment-form *::after {
+  box-sizing: border-box;
+}
+.fidelo-payment-form html {
+  font-family: sans-serif;
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+.fidelo-payment-form article, .fidelo-payment-form aside, .fidelo-payment-form figcaption, .fidelo-payment-form figure, .fidelo-payment-form footer, .fidelo-payment-form header, .fidelo-payment-form hgroup, .fidelo-payment-form main, .fidelo-payment-form nav, .fidelo-payment-form section {
+  display: block;
+}
+.fidelo-payment-form body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  text-align: left;
+  background-color: #fff;
+}
+.fidelo-payment-form [tabindex="-1"]:focus:not(:focus-visible) {
+  outline: 0 !important;
+}
+.fidelo-payment-form hr {
+  box-sizing: content-box;
+  height: 0;
+  overflow: visible;
+}
+.fidelo-payment-form h1, .fidelo-payment-form h2, .fidelo-payment-form h3, .fidelo-payment-form h4, .fidelo-payment-form h5, .fidelo-payment-form h6 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+.fidelo-payment-form p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+.fidelo-payment-form abbr[title],
+.fidelo-payment-form abbr[data-original-title] {
+  text-decoration: underline;
+  text-decoration: underline;
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+  cursor: help;
+  border-bottom: 0;
+  -webkit-text-decoration-skip-ink: none;
+          text-decoration-skip-ink: none;
+}
+.fidelo-payment-form address {
+  margin-bottom: 1rem;
+  font-style: normal;
+  line-height: inherit;
+}
+.fidelo-payment-form ol,
+.fidelo-payment-form ul,
+.fidelo-payment-form dl {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+.fidelo-payment-form ol ol,
+.fidelo-payment-form ul ul,
+.fidelo-payment-form ol ul,
+.fidelo-payment-form ul ol {
+  margin-bottom: 0;
+}
+.fidelo-payment-form dt {
+  font-weight: 700;
+}
+.fidelo-payment-form dd {
+  margin-bottom: 0.5rem;
+  margin-left: 0;
+}
+.fidelo-payment-form blockquote {
+  margin: 0 0 1rem;
+}
+.fidelo-payment-form b,
+.fidelo-payment-form strong {
+  font-weight: bolder;
+}
+.fidelo-payment-form small {
+  font-size: 80%;
+}
+.fidelo-payment-form sub,
+.fidelo-payment-form sup {
+  position: relative;
+  font-size: 75%;
+  line-height: 0;
+  vertical-align: baseline;
+}
+.fidelo-payment-form sub {
+  bottom: -0.25em;
+}
+.fidelo-payment-form sup {
+  top: -0.5em;
+}
+.fidelo-payment-form a {
+  color: #007bff;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+}
+.fidelo-payment-form a:hover {
+  color: rgb(0, 86.1, 178.5);
+  -webkit-text-decoration: underline;
+  text-decoration: underline;
+}
+.fidelo-payment-form a:not([href]):not([class]) {
+  color: inherit;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+.fidelo-payment-form a:not([href]):not([class]):hover {
+  color: inherit;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+.fidelo-payment-form pre,
+.fidelo-payment-form code,
+.fidelo-payment-form kbd,
+.fidelo-payment-form samp {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1em;
+}
+.fidelo-payment-form pre {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  overflow: auto;
+  -ms-overflow-style: scrollbar;
+}
+.fidelo-payment-form figure {
+  margin: 0 0 1rem;
+}
+.fidelo-payment-form img {
+  vertical-align: middle;
+  border-style: none;
+}
+.fidelo-payment-form svg {
+  overflow: hidden;
+  vertical-align: middle;
+}
+.fidelo-payment-form table {
+  border-collapse: collapse;
+}
+.fidelo-payment-form caption {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  color: #6c757d;
+  text-align: left;
+  caption-side: bottom;
+}
+.fidelo-payment-form th {
+  text-align: inherit;
+  text-align: -webkit-match-parent;
+}
+.fidelo-payment-form label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+.fidelo-payment-form button {
+  border-radius: 0;
+}
+.fidelo-payment-form button:focus:not(:focus-visible) {
+  outline: 0;
+}
+.fidelo-payment-form input,
+.fidelo-payment-form button,
+.fidelo-payment-form select,
+.fidelo-payment-form optgroup,
+.fidelo-payment-form textarea {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.fidelo-payment-form button,
+.fidelo-payment-form input {
+  overflow: visible;
+}
+.fidelo-payment-form button,
+.fidelo-payment-form select {
+  text-transform: none;
+}
+.fidelo-payment-form [role=button] {
+  cursor: pointer;
+}
+.fidelo-payment-form select {
+  word-wrap: normal;
+}
+.fidelo-payment-form button,
+.fidelo-payment-form [type=button],
+.fidelo-payment-form [type=reset],
+.fidelo-payment-form [type=submit] {
+  -webkit-appearance: button;
+}
+.fidelo-payment-form button:not(:disabled),
+.fidelo-payment-form [type=button]:not(:disabled),
+.fidelo-payment-form [type=reset]:not(:disabled),
+.fidelo-payment-form [type=submit]:not(:disabled) {
+  cursor: pointer;
+}
+.fidelo-payment-form button::-moz-focus-inner,
+.fidelo-payment-form [type=button]::-moz-focus-inner,
+.fidelo-payment-form [type=reset]::-moz-focus-inner,
+.fidelo-payment-form [type=submit]::-moz-focus-inner {
+  padding: 0;
+  border-style: none;
+}
+.fidelo-payment-form input[type=radio],
+.fidelo-payment-form input[type=checkbox] {
+  box-sizing: border-box;
+  padding: 0;
+}
+.fidelo-payment-form textarea {
+  overflow: auto;
+  resize: vertical;
+}
+.fidelo-payment-form fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.fidelo-payment-form legend {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  line-height: inherit;
+  color: inherit;
+  white-space: normal;
+}
+.fidelo-payment-form progress {
+  vertical-align: baseline;
+}
+.fidelo-payment-form [type=number]::-webkit-inner-spin-button,
+.fidelo-payment-form [type=number]::-webkit-outer-spin-button {
+  height: auto;
+}
+.fidelo-payment-form [type=search] {
+  outline-offset: -2px;
+  -webkit-appearance: none;
+}
+.fidelo-payment-form [type=search]::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+.fidelo-payment-form ::-webkit-file-upload-button {
+  font: inherit;
+  -webkit-appearance: button;
+}
+.fidelo-payment-form output {
+  display: inline-block;
+}
+.fidelo-payment-form summary {
+  display: list-item;
+  cursor: pointer;
+}
+.fidelo-payment-form template {
+  display: none;
+}
+.fidelo-payment-form [hidden] {
+  display: none !important;
+}
+.fidelo-payment-form h1, .fidelo-payment-form h2, .fidelo-payment-form h3, .fidelo-payment-form h4, .fidelo-payment-form h5, .fidelo-payment-form h6,
+.fidelo-payment-form .h1, .fidelo-payment-form .h2, .fidelo-payment-form .h3, .fidelo-payment-form .h4, .fidelo-payment-form .h5, .fidelo-payment-form .h6 {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.fidelo-payment-form h1, .fidelo-payment-form .h1 {
+  font-size: 2.5rem;
+}
+.fidelo-payment-form h2, .fidelo-payment-form .h2 {
+  font-size: 2rem;
+}
+.fidelo-payment-form h3, .fidelo-payment-form .h3 {
+  font-size: 1.75rem;
+}
+.fidelo-payment-form h4, .fidelo-payment-form .h4 {
+  font-size: 1.5rem;
+}
+.fidelo-payment-form h5, .fidelo-payment-form .h5 {
+  font-size: 1.25rem;
+}
+.fidelo-payment-form h6, .fidelo-payment-form .h6 {
+  font-size: 1rem;
+}
+.fidelo-payment-form .lead {
+  font-size: 1.25rem;
+  font-weight: 300;
+}
+.fidelo-payment-form .display-1 {
+  font-size: 6rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+.fidelo-payment-form .display-2 {
+  font-size: 5.5rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+.fidelo-payment-form .display-3 {
+  font-size: 4.5rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+.fidelo-payment-form .display-4 {
+  font-size: 3.5rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+.fidelo-payment-form hr {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+.fidelo-payment-form small,
+.fidelo-payment-form .small {
+  font-size: 0.875em;
+  font-weight: 400;
+}
+.fidelo-payment-form mark,
+.fidelo-payment-form .mark {
+  padding: 0.2em;
+  background-color: #fcf8e3;
+}
+.fidelo-payment-form .list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+.fidelo-payment-form .list-inline {
+  padding-left: 0;
+  list-style: none;
+}
+.fidelo-payment-form .list-inline-item {
+  display: inline-block;
+}
+.fidelo-payment-form .list-inline-item:not(:last-child) {
+  margin-right: 0.5rem;
+}
+.fidelo-payment-form .initialism {
+  font-size: 90%;
+  text-transform: uppercase;
+}
+.fidelo-payment-form .blockquote {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+.fidelo-payment-form .blockquote-footer {
+  display: block;
+  font-size: 0.875em;
+  color: #6c757d;
+}
+.fidelo-payment-form .blockquote-footer::before {
+  content: "— ";
+}
+.fidelo-payment-form .container,
+.fidelo-payment-form .container-fluid,
+.fidelo-payment-form .container-xl,
+.fidelo-payment-form .container-lg,
+.fidelo-payment-form .container-md,
+.fidelo-payment-form .container-sm {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .container-sm, .fidelo-payment-form .container {
+    max-width: 540px;
+  }
+}
+@media (min-width: 768px) {
+  .fidelo-payment-form .container-md, .fidelo-payment-form .container-sm, .fidelo-payment-form .container {
+    max-width: 720px;
+  }
+}
+@media (min-width: 992px) {
+  .fidelo-payment-form .container-lg, .fidelo-payment-form .container-md, .fidelo-payment-form .container-sm, .fidelo-payment-form .container {
+    max-width: 960px;
+  }
+}
+@media (min-width: 1200px) {
+  .fidelo-payment-form .container-xl, .fidelo-payment-form .container-lg, .fidelo-payment-form .container-md, .fidelo-payment-form .container-sm, .fidelo-payment-form .container {
+    max-width: 1140px;
+  }
+}
+.fidelo-payment-form .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -15px;
+  margin-left: -15px;
+}
+.fidelo-payment-form .no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+}
+.fidelo-payment-form .no-gutters > .col,
+.fidelo-payment-form .no-gutters > [class*=col-] {
+  padding-right: 0;
+  padding-left: 0;
+}
+.fidelo-payment-form .col-xl,
+.fidelo-payment-form .col-xl-auto, .fidelo-payment-form .col-xl-12, .fidelo-payment-form .col-xl-11, .fidelo-payment-form .col-xl-10, .fidelo-payment-form .col-xl-9, .fidelo-payment-form .col-xl-8, .fidelo-payment-form .col-xl-7, .fidelo-payment-form .col-xl-6, .fidelo-payment-form .col-xl-5, .fidelo-payment-form .col-xl-4, .fidelo-payment-form .col-xl-3, .fidelo-payment-form .col-xl-2, .fidelo-payment-form .col-xl-1, .fidelo-payment-form .col-lg,
+.fidelo-payment-form .col-lg-auto, .fidelo-payment-form .col-lg-12, .fidelo-payment-form .col-lg-11, .fidelo-payment-form .col-lg-10, .fidelo-payment-form .col-lg-9, .fidelo-payment-form .col-lg-8, .fidelo-payment-form .col-lg-7, .fidelo-payment-form .col-lg-6, .fidelo-payment-form .col-lg-5, .fidelo-payment-form .col-lg-4, .fidelo-payment-form .col-lg-3, .fidelo-payment-form .col-lg-2, .fidelo-payment-form .col-lg-1, .fidelo-payment-form .col-md,
+.fidelo-payment-form .col-md-auto, .fidelo-payment-form .col-md-12, .fidelo-payment-form .col-md-11, .fidelo-payment-form .col-md-10, .fidelo-payment-form .col-md-9, .fidelo-payment-form .col-md-8, .fidelo-payment-form .col-md-7, .fidelo-payment-form .col-md-6, .fidelo-payment-form .col-md-5, .fidelo-payment-form .col-md-4, .fidelo-payment-form .col-md-3, .fidelo-payment-form .col-md-2, .fidelo-payment-form .col-md-1, .fidelo-payment-form .col-sm,
+.fidelo-payment-form .col-sm-auto, .fidelo-payment-form .col-sm-12, .fidelo-payment-form .col-sm-11, .fidelo-payment-form .col-sm-10, .fidelo-payment-form .col-sm-9, .fidelo-payment-form .col-sm-8, .fidelo-payment-form .col-sm-7, .fidelo-payment-form .col-sm-6, .fidelo-payment-form .col-sm-5, .fidelo-payment-form .col-sm-4, .fidelo-payment-form .col-sm-3, .fidelo-payment-form .col-sm-2, .fidelo-payment-form .col-sm-1, .fidelo-payment-form .col,
+.fidelo-payment-form .col-auto, .fidelo-payment-form .col-12, .fidelo-payment-form .col-11, .fidelo-payment-form .col-10, .fidelo-payment-form .col-9, .fidelo-payment-form .col-8, .fidelo-payment-form .col-7, .fidelo-payment-form .col-6, .fidelo-payment-form .col-5, .fidelo-payment-form .col-4, .fidelo-payment-form .col-3, .fidelo-payment-form .col-2, .fidelo-payment-form .col-1 {
+  position: relative;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+.fidelo-payment-form .col {
+  flex-basis: 0;
+  flex-grow: 1;
+  max-width: 100%;
+}
+.fidelo-payment-form .row-cols-1 > * {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+.fidelo-payment-form .row-cols-2 > * {
+  flex: 0 0 50%;
+  max-width: 50%;
+}
+.fidelo-payment-form .row-cols-3 > * {
+  flex: 0 0 33.3333333333%;
+  max-width: 33.3333333333%;
+}
+.fidelo-payment-form .row-cols-4 > * {
+  flex: 0 0 25%;
+  max-width: 25%;
+}
+.fidelo-payment-form .row-cols-5 > * {
+  flex: 0 0 20%;
+  max-width: 20%;
+}
+.fidelo-payment-form .row-cols-6 > * {
+  flex: 0 0 16.6666666667%;
+  max-width: 16.6666666667%;
+}
+.fidelo-payment-form .col-auto {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
+}
+.fidelo-payment-form .col-1 {
+  flex: 0 0 8.33333333%;
+  max-width: 8.33333333%;
+}
+.fidelo-payment-form .col-2 {
+  flex: 0 0 16.66666667%;
+  max-width: 16.66666667%;
+}
+.fidelo-payment-form .col-3 {
+  flex: 0 0 25%;
+  max-width: 25%;
+}
+.fidelo-payment-form .col-4 {
+  flex: 0 0 33.33333333%;
+  max-width: 33.33333333%;
+}
+.fidelo-payment-form .col-5 {
+  flex: 0 0 41.66666667%;
+  max-width: 41.66666667%;
+}
+.fidelo-payment-form .col-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+}
+.fidelo-payment-form .col-7 {
+  flex: 0 0 58.33333333%;
+  max-width: 58.33333333%;
+}
+.fidelo-payment-form .col-8 {
+  flex: 0 0 66.66666667%;
+  max-width: 66.66666667%;
+}
+.fidelo-payment-form .col-9 {
+  flex: 0 0 75%;
+  max-width: 75%;
+}
+.fidelo-payment-form .col-10 {
+  flex: 0 0 83.33333333%;
+  max-width: 83.33333333%;
+}
+.fidelo-payment-form .col-11 {
+  flex: 0 0 91.66666667%;
+  max-width: 91.66666667%;
+}
+.fidelo-payment-form .col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+.fidelo-payment-form .order-first {
+  order: -1;
+}
+.fidelo-payment-form .order-last {
+  order: 13;
+}
+.fidelo-payment-form .order-0 {
+  order: 0;
+}
+.fidelo-payment-form .order-1 {
+  order: 1;
+}
+.fidelo-payment-form .order-2 {
+  order: 2;
+}
+.fidelo-payment-form .order-3 {
+  order: 3;
+}
+.fidelo-payment-form .order-4 {
+  order: 4;
+}
+.fidelo-payment-form .order-5 {
+  order: 5;
+}
+.fidelo-payment-form .order-6 {
+  order: 6;
+}
+.fidelo-payment-form .order-7 {
+  order: 7;
+}
+.fidelo-payment-form .order-8 {
+  order: 8;
+}
+.fidelo-payment-form .order-9 {
+  order: 9;
+}
+.fidelo-payment-form .order-10 {
+  order: 10;
+}
+.fidelo-payment-form .order-11 {
+  order: 11;
+}
+.fidelo-payment-form .order-12 {
+  order: 12;
+}
+.fidelo-payment-form .offset-1 {
+  margin-left: 8.33333333%;
+}
+.fidelo-payment-form .offset-2 {
+  margin-left: 16.66666667%;
+}
+.fidelo-payment-form .offset-3 {
+  margin-left: 25%;
+}
+.fidelo-payment-form .offset-4 {
+  margin-left: 33.33333333%;
+}
+.fidelo-payment-form .offset-5 {
+  margin-left: 41.66666667%;
+}
+.fidelo-payment-form .offset-6 {
+  margin-left: 50%;
+}
+.fidelo-payment-form .offset-7 {
+  margin-left: 58.33333333%;
+}
+.fidelo-payment-form .offset-8 {
+  margin-left: 66.66666667%;
+}
+.fidelo-payment-form .offset-9 {
+  margin-left: 75%;
+}
+.fidelo-payment-form .offset-10 {
+  margin-left: 83.33333333%;
+}
+.fidelo-payment-form .offset-11 {
+  margin-left: 91.66666667%;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .col-sm {
+    flex-basis: 0;
+    flex-grow: 1;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-sm-1 > * {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-sm-2 > * {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .row-cols-sm-3 > * {
+    flex: 0 0 33.3333333333%;
+    max-width: 33.3333333333%;
+  }
+  .fidelo-payment-form .row-cols-sm-4 > * {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .row-cols-sm-5 > * {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+  .fidelo-payment-form .row-cols-sm-6 > * {
+    flex: 0 0 16.6666666667%;
+    max-width: 16.6666666667%;
+  }
+  .fidelo-payment-form .col-sm-auto {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .col-sm-1 {
+    flex: 0 0 8.33333333%;
+    max-width: 8.33333333%;
+  }
+  .fidelo-payment-form .col-sm-2 {
+    flex: 0 0 16.66666667%;
+    max-width: 16.66666667%;
+  }
+  .fidelo-payment-form .col-sm-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .col-sm-4 {
+    flex: 0 0 33.33333333%;
+    max-width: 33.33333333%;
+  }
+  .fidelo-payment-form .col-sm-5 {
+    flex: 0 0 41.66666667%;
+    max-width: 41.66666667%;
+  }
+  .fidelo-payment-form .col-sm-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .col-sm-7 {
+    flex: 0 0 58.33333333%;
+    max-width: 58.33333333%;
+  }
+  .fidelo-payment-form .col-sm-8 {
+    flex: 0 0 66.66666667%;
+    max-width: 66.66666667%;
+  }
+  .fidelo-payment-form .col-sm-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+  .fidelo-payment-form .col-sm-10 {
+    flex: 0 0 83.33333333%;
+    max-width: 83.33333333%;
+  }
+  .fidelo-payment-form .col-sm-11 {
+    flex: 0 0 91.66666667%;
+    max-width: 91.66666667%;
+  }
+  .fidelo-payment-form .col-sm-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .order-sm-first {
+    order: -1;
+  }
+  .fidelo-payment-form .order-sm-last {
+    order: 13;
+  }
+  .fidelo-payment-form .order-sm-0 {
+    order: 0;
+  }
+  .fidelo-payment-form .order-sm-1 {
+    order: 1;
+  }
+  .fidelo-payment-form .order-sm-2 {
+    order: 2;
+  }
+  .fidelo-payment-form .order-sm-3 {
+    order: 3;
+  }
+  .fidelo-payment-form .order-sm-4 {
+    order: 4;
+  }
+  .fidelo-payment-form .order-sm-5 {
+    order: 5;
+  }
+  .fidelo-payment-form .order-sm-6 {
+    order: 6;
+  }
+  .fidelo-payment-form .order-sm-7 {
+    order: 7;
+  }
+  .fidelo-payment-form .order-sm-8 {
+    order: 8;
+  }
+  .fidelo-payment-form .order-sm-9 {
+    order: 9;
+  }
+  .fidelo-payment-form .order-sm-10 {
+    order: 10;
+  }
+  .fidelo-payment-form .order-sm-11 {
+    order: 11;
+  }
+  .fidelo-payment-form .order-sm-12 {
+    order: 12;
+  }
+  .fidelo-payment-form .offset-sm-0 {
+    margin-left: 0;
+  }
+  .fidelo-payment-form .offset-sm-1 {
+    margin-left: 8.33333333%;
+  }
+  .fidelo-payment-form .offset-sm-2 {
+    margin-left: 16.66666667%;
+  }
+  .fidelo-payment-form .offset-sm-3 {
+    margin-left: 25%;
+  }
+  .fidelo-payment-form .offset-sm-4 {
+    margin-left: 33.33333333%;
+  }
+  .fidelo-payment-form .offset-sm-5 {
+    margin-left: 41.66666667%;
+  }
+  .fidelo-payment-form .offset-sm-6 {
+    margin-left: 50%;
+  }
+  .fidelo-payment-form .offset-sm-7 {
+    margin-left: 58.33333333%;
+  }
+  .fidelo-payment-form .offset-sm-8 {
+    margin-left: 66.66666667%;
+  }
+  .fidelo-payment-form .offset-sm-9 {
+    margin-left: 75%;
+  }
+  .fidelo-payment-form .offset-sm-10 {
+    margin-left: 83.33333333%;
+  }
+  .fidelo-payment-form .offset-sm-11 {
+    margin-left: 91.66666667%;
+  }
+}
+@media (min-width: 768px) {
+  .fidelo-payment-form .col-md {
+    flex-basis: 0;
+    flex-grow: 1;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-md-1 > * {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-md-2 > * {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .row-cols-md-3 > * {
+    flex: 0 0 33.3333333333%;
+    max-width: 33.3333333333%;
+  }
+  .fidelo-payment-form .row-cols-md-4 > * {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .row-cols-md-5 > * {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+  .fidelo-payment-form .row-cols-md-6 > * {
+    flex: 0 0 16.6666666667%;
+    max-width: 16.6666666667%;
+  }
+  .fidelo-payment-form .col-md-auto {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .col-md-1 {
+    flex: 0 0 8.33333333%;
+    max-width: 8.33333333%;
+  }
+  .fidelo-payment-form .col-md-2 {
+    flex: 0 0 16.66666667%;
+    max-width: 16.66666667%;
+  }
+  .fidelo-payment-form .col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .col-md-4 {
+    flex: 0 0 33.33333333%;
+    max-width: 33.33333333%;
+  }
+  .fidelo-payment-form .col-md-5 {
+    flex: 0 0 41.66666667%;
+    max-width: 41.66666667%;
+  }
+  .fidelo-payment-form .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .col-md-7 {
+    flex: 0 0 58.33333333%;
+    max-width: 58.33333333%;
+  }
+  .fidelo-payment-form .col-md-8 {
+    flex: 0 0 66.66666667%;
+    max-width: 66.66666667%;
+  }
+  .fidelo-payment-form .col-md-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+  .fidelo-payment-form .col-md-10 {
+    flex: 0 0 83.33333333%;
+    max-width: 83.33333333%;
+  }
+  .fidelo-payment-form .col-md-11 {
+    flex: 0 0 91.66666667%;
+    max-width: 91.66666667%;
+  }
+  .fidelo-payment-form .col-md-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .order-md-first {
+    order: -1;
+  }
+  .fidelo-payment-form .order-md-last {
+    order: 13;
+  }
+  .fidelo-payment-form .order-md-0 {
+    order: 0;
+  }
+  .fidelo-payment-form .order-md-1 {
+    order: 1;
+  }
+  .fidelo-payment-form .order-md-2 {
+    order: 2;
+  }
+  .fidelo-payment-form .order-md-3 {
+    order: 3;
+  }
+  .fidelo-payment-form .order-md-4 {
+    order: 4;
+  }
+  .fidelo-payment-form .order-md-5 {
+    order: 5;
+  }
+  .fidelo-payment-form .order-md-6 {
+    order: 6;
+  }
+  .fidelo-payment-form .order-md-7 {
+    order: 7;
+  }
+  .fidelo-payment-form .order-md-8 {
+    order: 8;
+  }
+  .fidelo-payment-form .order-md-9 {
+    order: 9;
+  }
+  .fidelo-payment-form .order-md-10 {
+    order: 10;
+  }
+  .fidelo-payment-form .order-md-11 {
+    order: 11;
+  }
+  .fidelo-payment-form .order-md-12 {
+    order: 12;
+  }
+  .fidelo-payment-form .offset-md-0 {
+    margin-left: 0;
+  }
+  .fidelo-payment-form .offset-md-1 {
+    margin-left: 8.33333333%;
+  }
+  .fidelo-payment-form .offset-md-2 {
+    margin-left: 16.66666667%;
+  }
+  .fidelo-payment-form .offset-md-3 {
+    margin-left: 25%;
+  }
+  .fidelo-payment-form .offset-md-4 {
+    margin-left: 33.33333333%;
+  }
+  .fidelo-payment-form .offset-md-5 {
+    margin-left: 41.66666667%;
+  }
+  .fidelo-payment-form .offset-md-6 {
+    margin-left: 50%;
+  }
+  .fidelo-payment-form .offset-md-7 {
+    margin-left: 58.33333333%;
+  }
+  .fidelo-payment-form .offset-md-8 {
+    margin-left: 66.66666667%;
+  }
+  .fidelo-payment-form .offset-md-9 {
+    margin-left: 75%;
+  }
+  .fidelo-payment-form .offset-md-10 {
+    margin-left: 83.33333333%;
+  }
+  .fidelo-payment-form .offset-md-11 {
+    margin-left: 91.66666667%;
+  }
+}
+@media (min-width: 992px) {
+  .fidelo-payment-form .col-lg {
+    flex-basis: 0;
+    flex-grow: 1;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-lg-1 > * {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-lg-2 > * {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .row-cols-lg-3 > * {
+    flex: 0 0 33.3333333333%;
+    max-width: 33.3333333333%;
+  }
+  .fidelo-payment-form .row-cols-lg-4 > * {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .row-cols-lg-5 > * {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+  .fidelo-payment-form .row-cols-lg-6 > * {
+    flex: 0 0 16.6666666667%;
+    max-width: 16.6666666667%;
+  }
+  .fidelo-payment-form .col-lg-auto {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .col-lg-1 {
+    flex: 0 0 8.33333333%;
+    max-width: 8.33333333%;
+  }
+  .fidelo-payment-form .col-lg-2 {
+    flex: 0 0 16.66666667%;
+    max-width: 16.66666667%;
+  }
+  .fidelo-payment-form .col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .col-lg-4 {
+    flex: 0 0 33.33333333%;
+    max-width: 33.33333333%;
+  }
+  .fidelo-payment-form .col-lg-5 {
+    flex: 0 0 41.66666667%;
+    max-width: 41.66666667%;
+  }
+  .fidelo-payment-form .col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .col-lg-7 {
+    flex: 0 0 58.33333333%;
+    max-width: 58.33333333%;
+  }
+  .fidelo-payment-form .col-lg-8 {
+    flex: 0 0 66.66666667%;
+    max-width: 66.66666667%;
+  }
+  .fidelo-payment-form .col-lg-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+  .fidelo-payment-form .col-lg-10 {
+    flex: 0 0 83.33333333%;
+    max-width: 83.33333333%;
+  }
+  .fidelo-payment-form .col-lg-11 {
+    flex: 0 0 91.66666667%;
+    max-width: 91.66666667%;
+  }
+  .fidelo-payment-form .col-lg-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .order-lg-first {
+    order: -1;
+  }
+  .fidelo-payment-form .order-lg-last {
+    order: 13;
+  }
+  .fidelo-payment-form .order-lg-0 {
+    order: 0;
+  }
+  .fidelo-payment-form .order-lg-1 {
+    order: 1;
+  }
+  .fidelo-payment-form .order-lg-2 {
+    order: 2;
+  }
+  .fidelo-payment-form .order-lg-3 {
+    order: 3;
+  }
+  .fidelo-payment-form .order-lg-4 {
+    order: 4;
+  }
+  .fidelo-payment-form .order-lg-5 {
+    order: 5;
+  }
+  .fidelo-payment-form .order-lg-6 {
+    order: 6;
+  }
+  .fidelo-payment-form .order-lg-7 {
+    order: 7;
+  }
+  .fidelo-payment-form .order-lg-8 {
+    order: 8;
+  }
+  .fidelo-payment-form .order-lg-9 {
+    order: 9;
+  }
+  .fidelo-payment-form .order-lg-10 {
+    order: 10;
+  }
+  .fidelo-payment-form .order-lg-11 {
+    order: 11;
+  }
+  .fidelo-payment-form .order-lg-12 {
+    order: 12;
+  }
+  .fidelo-payment-form .offset-lg-0 {
+    margin-left: 0;
+  }
+  .fidelo-payment-form .offset-lg-1 {
+    margin-left: 8.33333333%;
+  }
+  .fidelo-payment-form .offset-lg-2 {
+    margin-left: 16.66666667%;
+  }
+  .fidelo-payment-form .offset-lg-3 {
+    margin-left: 25%;
+  }
+  .fidelo-payment-form .offset-lg-4 {
+    margin-left: 33.33333333%;
+  }
+  .fidelo-payment-form .offset-lg-5 {
+    margin-left: 41.66666667%;
+  }
+  .fidelo-payment-form .offset-lg-6 {
+    margin-left: 50%;
+  }
+  .fidelo-payment-form .offset-lg-7 {
+    margin-left: 58.33333333%;
+  }
+  .fidelo-payment-form .offset-lg-8 {
+    margin-left: 66.66666667%;
+  }
+  .fidelo-payment-form .offset-lg-9 {
+    margin-left: 75%;
+  }
+  .fidelo-payment-form .offset-lg-10 {
+    margin-left: 83.33333333%;
+  }
+  .fidelo-payment-form .offset-lg-11 {
+    margin-left: 91.66666667%;
+  }
+}
+@media (min-width: 1200px) {
+  .fidelo-payment-form .col-xl {
+    flex-basis: 0;
+    flex-grow: 1;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-xl-1 > * {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .row-cols-xl-2 > * {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .row-cols-xl-3 > * {
+    flex: 0 0 33.3333333333%;
+    max-width: 33.3333333333%;
+  }
+  .fidelo-payment-form .row-cols-xl-4 > * {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .row-cols-xl-5 > * {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+  .fidelo-payment-form .row-cols-xl-6 > * {
+    flex: 0 0 16.6666666667%;
+    max-width: 16.6666666667%;
+  }
+  .fidelo-payment-form .col-xl-auto {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .col-xl-1 {
+    flex: 0 0 8.33333333%;
+    max-width: 8.33333333%;
+  }
+  .fidelo-payment-form .col-xl-2 {
+    flex: 0 0 16.66666667%;
+    max-width: 16.66666667%;
+  }
+  .fidelo-payment-form .col-xl-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .fidelo-payment-form .col-xl-4 {
+    flex: 0 0 33.33333333%;
+    max-width: 33.33333333%;
+  }
+  .fidelo-payment-form .col-xl-5 {
+    flex: 0 0 41.66666667%;
+    max-width: 41.66666667%;
+  }
+  .fidelo-payment-form .col-xl-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .fidelo-payment-form .col-xl-7 {
+    flex: 0 0 58.33333333%;
+    max-width: 58.33333333%;
+  }
+  .fidelo-payment-form .col-xl-8 {
+    flex: 0 0 66.66666667%;
+    max-width: 66.66666667%;
+  }
+  .fidelo-payment-form .col-xl-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+  .fidelo-payment-form .col-xl-10 {
+    flex: 0 0 83.33333333%;
+    max-width: 83.33333333%;
+  }
+  .fidelo-payment-form .col-xl-11 {
+    flex: 0 0 91.66666667%;
+    max-width: 91.66666667%;
+  }
+  .fidelo-payment-form .col-xl-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .fidelo-payment-form .order-xl-first {
+    order: -1;
+  }
+  .fidelo-payment-form .order-xl-last {
+    order: 13;
+  }
+  .fidelo-payment-form .order-xl-0 {
+    order: 0;
+  }
+  .fidelo-payment-form .order-xl-1 {
+    order: 1;
+  }
+  .fidelo-payment-form .order-xl-2 {
+    order: 2;
+  }
+  .fidelo-payment-form .order-xl-3 {
+    order: 3;
+  }
+  .fidelo-payment-form .order-xl-4 {
+    order: 4;
+  }
+  .fidelo-payment-form .order-xl-5 {
+    order: 5;
+  }
+  .fidelo-payment-form .order-xl-6 {
+    order: 6;
+  }
+  .fidelo-payment-form .order-xl-7 {
+    order: 7;
+  }
+  .fidelo-payment-form .order-xl-8 {
+    order: 8;
+  }
+  .fidelo-payment-form .order-xl-9 {
+    order: 9;
+  }
+  .fidelo-payment-form .order-xl-10 {
+    order: 10;
+  }
+  .fidelo-payment-form .order-xl-11 {
+    order: 11;
+  }
+  .fidelo-payment-form .order-xl-12 {
+    order: 12;
+  }
+  .fidelo-payment-form .offset-xl-0 {
+    margin-left: 0;
+  }
+  .fidelo-payment-form .offset-xl-1 {
+    margin-left: 8.33333333%;
+  }
+  .fidelo-payment-form .offset-xl-2 {
+    margin-left: 16.66666667%;
+  }
+  .fidelo-payment-form .offset-xl-3 {
+    margin-left: 25%;
+  }
+  .fidelo-payment-form .offset-xl-4 {
+    margin-left: 33.33333333%;
+  }
+  .fidelo-payment-form .offset-xl-5 {
+    margin-left: 41.66666667%;
+  }
+  .fidelo-payment-form .offset-xl-6 {
+    margin-left: 50%;
+  }
+  .fidelo-payment-form .offset-xl-7 {
+    margin-left: 58.33333333%;
+  }
+  .fidelo-payment-form .offset-xl-8 {
+    margin-left: 66.66666667%;
+  }
+  .fidelo-payment-form .offset-xl-9 {
+    margin-left: 75%;
+  }
+  .fidelo-payment-form .offset-xl-10 {
+    margin-left: 83.33333333%;
+  }
+  .fidelo-payment-form .offset-xl-11 {
+    margin-left: 91.66666667%;
+  }
+}
+.fidelo-payment-form .form-control {
+  display: block;
+  width: 100%;
+  height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .form-control {
+    transition: none;
+  }
+}
+.fidelo-payment-form .form-control::-ms-expand {
+  background-color: transparent;
+  border: 0;
+}
+.fidelo-payment-form .form-control:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: rgb(127.5, 189, 255);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .form-control::-moz-placeholder {
+  color: #6c757d;
+  opacity: 1;
+}
+.fidelo-payment-form .form-control::placeholder {
+  color: #6c757d;
+  opacity: 1;
+}
+.fidelo-payment-form .form-control:disabled, .fidelo-payment-form .form-control[readonly] {
+  background-color: #e9ecef;
+  opacity: 1;
+}
+.fidelo-payment-form input[type=date].form-control,
+.fidelo-payment-form input[type=time].form-control,
+.fidelo-payment-form input[type=datetime-local].form-control,
+.fidelo-payment-form input[type=month].form-control {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+.fidelo-payment-form select.form-control:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #495057;
+}
+.fidelo-payment-form select.form-control:focus::-ms-value {
+  color: #495057;
+  background-color: #fff;
+}
+.fidelo-payment-form .form-control-file,
+.fidelo-payment-form .form-control-range {
+  display: block;
+  width: 100%;
+}
+.fidelo-payment-form .col-form-label {
+  padding-top: calc(0.375rem + 1px);
+  padding-bottom: calc(0.375rem + 1px);
+  margin-bottom: 0;
+  font-size: inherit;
+  line-height: 1.5;
+}
+.fidelo-payment-form .col-form-label-lg {
+  padding-top: calc(0.5rem + 1px);
+  padding-bottom: calc(0.5rem + 1px);
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+.fidelo-payment-form .col-form-label-sm {
+  padding-top: calc(0.25rem + 1px);
+  padding-bottom: calc(0.25rem + 1px);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.fidelo-payment-form .form-control-plaintext {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0;
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #212529;
+  background-color: transparent;
+  border: solid transparent;
+  border-width: 1px 0;
+}
+.fidelo-payment-form .form-control-plaintext.form-control-sm, .fidelo-payment-form .form-control-plaintext.form-control-lg {
+  padding-right: 0;
+  padding-left: 0;
+}
+.fidelo-payment-form .form-control-sm {
+  height: calc(1.5em + 0.5rem + 2px);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+.fidelo-payment-form .form-control-lg {
+  height: calc(1.5em + 1rem + 2px);
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  border-radius: 0.3rem;
+}
+.fidelo-payment-form select.form-control[size], .fidelo-payment-form select.form-control[multiple] {
+  height: auto;
+}
+.fidelo-payment-form textarea.form-control {
+  height: auto;
+}
+.fidelo-payment-form .form-group {
+  margin-bottom: 1rem;
+}
+.fidelo-payment-form .form-text {
+  display: block;
+  margin-top: 0.25rem;
+}
+.fidelo-payment-form .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -5px;
+  margin-left: -5px;
+}
+.fidelo-payment-form .form-row > .col,
+.fidelo-payment-form .form-row > [class*=col-] {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+.fidelo-payment-form .form-check {
+  position: relative;
+  display: block;
+  padding-left: 1.25rem;
+}
+.fidelo-payment-form .form-check-input {
+  position: absolute;
+  margin-top: 0.3rem;
+  margin-left: -1.25rem;
+}
+.fidelo-payment-form .form-check-input[disabled] ~ .form-check-label, .fidelo-payment-form .form-check-input:disabled ~ .form-check-label {
+  color: #6c757d;
+}
+.fidelo-payment-form .form-check-label {
+  margin-bottom: 0;
+}
+.fidelo-payment-form .form-check-inline {
+  display: inline-flex;
+  align-items: center;
+  padding-left: 0;
+  margin-right: 0.75rem;
+}
+.fidelo-payment-form .form-check-inline .form-check-input {
+  position: static;
+  margin-top: 0;
+  margin-right: 0.3125rem;
+  margin-left: 0;
+}
+.fidelo-payment-form .valid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #28a745;
+}
+.fidelo-payment-form .valid-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  display: none;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  margin-top: 0.1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #fff;
+  background-color: rgba(40, 167, 69, 0.9);
+  border-radius: 0.25rem;
+}
+.form-row > .col > .fidelo-payment-form .valid-tooltip, .form-row > [class*=col-] > .fidelo-payment-form .valid-tooltip {
+  left: 5px;
+}
+.was-validated .fidelo-payment-form:valid ~ .valid-feedback,
+.was-validated .fidelo-payment-form:valid ~ .valid-tooltip, .fidelo-payment-form.is-valid ~ .valid-feedback,
+.fidelo-payment-form.is-valid ~ .valid-tooltip {
+  display: block;
+}
+.was-validated .fidelo-payment-form .form-control:valid, .fidelo-payment-form .form-control.is-valid {
+  border-color: #28a745;
+  padding-right: calc(1.5em + 0.75rem) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+.was-validated .fidelo-payment-form .form-control:valid:focus, .fidelo-payment-form .form-control.is-valid:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+.was-validated .fidelo-payment-form select.form-control:valid, .fidelo-payment-form select.form-control.is-valid {
+  padding-right: 3rem !important;
+  background-position: right 1.5rem center;
+}
+.was-validated .fidelo-payment-form textarea.form-control:valid, .fidelo-payment-form textarea.form-control.is-valid {
+  padding-right: calc(1.5em + 0.75rem);
+  background-position: top calc(0.375em + 0.1875rem) right calc(0.375em + 0.1875rem);
+}
+.was-validated .fidelo-payment-form .custom-select:valid, .fidelo-payment-form .custom-select.is-valid {
+  border-color: #28a745;
+  padding-right: calc(0.75em + 2.3125rem) !important;
+  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") right 0.75rem center/8px 10px no-repeat, #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e") center right 1.75rem/calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) no-repeat;
+}
+.was-validated .fidelo-payment-form .custom-select:valid:focus, .fidelo-payment-form .custom-select.is-valid:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+.was-validated .fidelo-payment-form .form-check-input:valid ~ .form-check-label, .fidelo-payment-form .form-check-input.is-valid ~ .form-check-label {
+  color: #28a745;
+}
+.was-validated .fidelo-payment-form .form-check-input:valid ~ .valid-feedback,
+.was-validated .fidelo-payment-form .form-check-input:valid ~ .valid-tooltip, .fidelo-payment-form .form-check-input.is-valid ~ .valid-feedback,
+.fidelo-payment-form .form-check-input.is-valid ~ .valid-tooltip {
+  display: block;
+}
+.was-validated .fidelo-payment-form .custom-control-input:valid ~ .custom-control-label, .fidelo-payment-form .custom-control-input.is-valid ~ .custom-control-label {
+  color: #28a745;
+}
+.was-validated .fidelo-payment-form .custom-control-input:valid ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-valid ~ .custom-control-label::before {
+  border-color: #28a745;
+}
+.was-validated .fidelo-payment-form .custom-control-input:valid:checked ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-valid:checked ~ .custom-control-label::before {
+  border-color: rgb(51.6956521739, 206.3043478261, 87);
+  background-color: rgb(51.6956521739, 206.3043478261, 87);
+}
+.was-validated .fidelo-payment-form .custom-control-input:valid:focus ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-valid:focus ~ .custom-control-label::before {
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+.was-validated .fidelo-payment-form .custom-control-input:valid:focus:not(:checked) ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-valid:focus:not(:checked) ~ .custom-control-label::before {
+  border-color: #28a745;
+}
+.was-validated .fidelo-payment-form .custom-file-input:valid ~ .custom-file-label, .fidelo-payment-form .custom-file-input.is-valid ~ .custom-file-label {
+  border-color: #28a745;
+}
+.was-validated .fidelo-payment-form .custom-file-input:valid:focus ~ .custom-file-label, .fidelo-payment-form .custom-file-input.is-valid:focus ~ .custom-file-label {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+.fidelo-payment-form .invalid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #dc3545;
+}
+.fidelo-payment-form .invalid-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  display: none;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  margin-top: 0.1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #fff;
+  background-color: rgba(220, 53, 69, 0.9);
+  border-radius: 0.25rem;
+}
+.form-row > .col > .fidelo-payment-form .invalid-tooltip, .form-row > [class*=col-] > .fidelo-payment-form .invalid-tooltip {
+  left: 5px;
+}
+.was-validated .fidelo-payment-form:invalid ~ .invalid-feedback,
+.was-validated .fidelo-payment-form:invalid ~ .invalid-tooltip, .fidelo-payment-form.is-invalid ~ .invalid-feedback,
+.fidelo-payment-form.is-invalid ~ .invalid-tooltip {
+  display: block;
+}
+.was-validated .fidelo-payment-form .form-control:invalid, .fidelo-payment-form .form-control.is-invalid {
+  border-color: #dc3545;
+  padding-right: calc(1.5em + 0.75rem) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+.was-validated .fidelo-payment-form .form-control:invalid:focus, .fidelo-payment-form .form-control.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+.was-validated .fidelo-payment-form select.form-control:invalid, .fidelo-payment-form select.form-control.is-invalid {
+  padding-right: 3rem !important;
+  background-position: right 1.5rem center;
+}
+.was-validated .fidelo-payment-form textarea.form-control:invalid, .fidelo-payment-form textarea.form-control.is-invalid {
+  padding-right: calc(1.5em + 0.75rem);
+  background-position: top calc(0.375em + 0.1875rem) right calc(0.375em + 0.1875rem);
+}
+.was-validated .fidelo-payment-form .custom-select:invalid, .fidelo-payment-form .custom-select.is-invalid {
+  border-color: #dc3545;
+  padding-right: calc(0.75em + 2.3125rem) !important;
+  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") right 0.75rem center/8px 10px no-repeat, #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e") center right 1.75rem/calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) no-repeat;
+}
+.was-validated .fidelo-payment-form .custom-select:invalid:focus, .fidelo-payment-form .custom-select.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+.was-validated .fidelo-payment-form .form-check-input:invalid ~ .form-check-label, .fidelo-payment-form .form-check-input.is-invalid ~ .form-check-label {
+  color: #dc3545;
+}
+.was-validated .fidelo-payment-form .form-check-input:invalid ~ .invalid-feedback,
+.was-validated .fidelo-payment-form .form-check-input:invalid ~ .invalid-tooltip, .fidelo-payment-form .form-check-input.is-invalid ~ .invalid-feedback,
+.fidelo-payment-form .form-check-input.is-invalid ~ .invalid-tooltip {
+  display: block;
+}
+.was-validated .fidelo-payment-form .custom-control-input:invalid ~ .custom-control-label, .fidelo-payment-form .custom-control-input.is-invalid ~ .custom-control-label {
+  color: #dc3545;
+}
+.was-validated .fidelo-payment-form .custom-control-input:invalid ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-invalid ~ .custom-control-label::before {
+  border-color: #dc3545;
+}
+.was-validated .fidelo-payment-form .custom-control-input:invalid:checked ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-invalid:checked ~ .custom-control-label::before {
+  border-color: rgb(227.5316455696, 96.4683544304, 109.0253164557);
+  background-color: rgb(227.5316455696, 96.4683544304, 109.0253164557);
+}
+.was-validated .fidelo-payment-form .custom-control-input:invalid:focus ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-invalid:focus ~ .custom-control-label::before {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+.was-validated .fidelo-payment-form .custom-control-input:invalid:focus:not(:checked) ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input.is-invalid:focus:not(:checked) ~ .custom-control-label::before {
+  border-color: #dc3545;
+}
+.was-validated .fidelo-payment-form .custom-file-input:invalid ~ .custom-file-label, .fidelo-payment-form .custom-file-input.is-invalid ~ .custom-file-label {
+  border-color: #dc3545;
+}
+.was-validated .fidelo-payment-form .custom-file-input:invalid:focus ~ .custom-file-label, .fidelo-payment-form .custom-file-input.is-invalid:focus ~ .custom-file-label {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+.fidelo-payment-form .form-inline {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+.fidelo-payment-form .form-inline .form-check {
+  width: 100%;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .form-inline label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
+  }
+  .fidelo-payment-form .form-inline .form-group {
+    display: flex;
+    flex: 0 0 auto;
+    flex-flow: row wrap;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  .fidelo-payment-form .form-inline .form-control {
+    display: inline-block;
+    width: auto;
+    vertical-align: middle;
+  }
+  .fidelo-payment-form .form-inline .form-control-plaintext {
+    display: inline-block;
+  }
+  .fidelo-payment-form .form-inline .input-group,
+  .fidelo-payment-form .form-inline .custom-select {
+    width: auto;
+  }
+  .fidelo-payment-form .form-inline .form-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    padding-left: 0;
+  }
+  .fidelo-payment-form .form-inline .form-check-input {
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 0;
+    margin-right: 0.25rem;
+    margin-left: 0;
+  }
+  .fidelo-payment-form .form-inline .custom-control {
+    align-items: center;
+    justify-content: center;
+  }
+  .fidelo-payment-form .form-inline .custom-control-label {
+    margin-bottom: 0;
+  }
+}
+.fidelo-payment-form .btn {
+  display: inline-block;
+  font-weight: 400;
+  color: #212529;
+  text-align: center;
+  vertical-align: middle;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .btn {
+    transition: none;
+  }
+}
+.fidelo-payment-form .btn:hover {
+  color: #212529;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+.fidelo-payment-form .btn:focus, .fidelo-payment-form .btn.focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .btn.disabled, .fidelo-payment-form .btn:disabled {
+  opacity: 0.65;
+}
+.fidelo-payment-form .btn:not(:disabled):not(.disabled) {
+  cursor: pointer;
+}
+.fidelo-payment-form a.btn.disabled,
+.fidelo-payment-form fieldset:disabled a.btn {
+  pointer-events: none;
+}
+.fidelo-payment-form .btn-primary {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.fidelo-payment-form .btn-primary:hover {
+  color: #fff;
+  background-color: rgb(0, 104.55, 216.75);
+  border-color: rgb(0, 98.4, 204);
+}
+.fidelo-payment-form .btn-primary:focus, .fidelo-payment-form .btn-primary.focus {
+  color: #fff;
+  background-color: rgb(0, 104.55, 216.75);
+  border-color: rgb(0, 98.4, 204);
+  box-shadow: 0 0 0 0.2rem rgba(38.25, 142.8, 255, 0.5);
+}
+.fidelo-payment-form .btn-primary.disabled, .fidelo-payment-form .btn-primary:disabled {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.fidelo-payment-form .btn-primary:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-primary:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(0, 98.4, 204);
+  border-color: rgb(0, 92.25, 191.25);
+}
+.fidelo-payment-form .btn-primary:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-primary:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(38.25, 142.8, 255, 0.5);
+}
+.fidelo-payment-form .btn-secondary {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+.fidelo-payment-form .btn-secondary:hover {
+  color: #fff;
+  background-color: rgb(90.2703862661, 97.7929184549, 104.4796137339);
+  border-color: rgb(84.3605150215, 91.3905579399, 97.6394849785);
+}
+.fidelo-payment-form .btn-secondary:focus, .fidelo-payment-form .btn-secondary.focus {
+  color: #fff;
+  background-color: rgb(90.2703862661, 97.7929184549, 104.4796137339);
+  border-color: rgb(84.3605150215, 91.3905579399, 97.6394849785);
+  box-shadow: 0 0 0 0.2rem rgba(130.05, 137.7, 144.5, 0.5);
+}
+.fidelo-payment-form .btn-secondary.disabled, .fidelo-payment-form .btn-secondary:disabled {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+.fidelo-payment-form .btn-secondary:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-secondary:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-secondary.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(84.3605150215, 91.3905579399, 97.6394849785);
+  border-color: rgb(78.4506437768, 84.9881974249, 90.7993562232);
+}
+.fidelo-payment-form .btn-secondary:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-secondary:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-secondary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(130.05, 137.7, 144.5, 0.5);
+}
+.fidelo-payment-form .btn-success {
+  color: #fff;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+.fidelo-payment-form .btn-success:hover {
+  color: #fff;
+  background-color: rgb(32.6086956522, 136.1413043478, 56.25);
+  border-color: rgb(30.1449275362, 125.8550724638, 52);
+}
+.fidelo-payment-form .btn-success:focus, .fidelo-payment-form .btn-success.focus {
+  color: #fff;
+  background-color: rgb(32.6086956522, 136.1413043478, 56.25);
+  border-color: rgb(30.1449275362, 125.8550724638, 52);
+  box-shadow: 0 0 0 0.2rem rgba(72.25, 180.2, 96.9, 0.5);
+}
+.fidelo-payment-form .btn-success.disabled, .fidelo-payment-form .btn-success:disabled {
+  color: #fff;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+.fidelo-payment-form .btn-success:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-success:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-success.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(30.1449275362, 125.8550724638, 52);
+  border-color: rgb(27.6811594203, 115.5688405797, 47.75);
+}
+.fidelo-payment-form .btn-success:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-success:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-success.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(72.25, 180.2, 96.9, 0.5);
+}
+.fidelo-payment-form .btn-info {
+  color: #fff;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+.fidelo-payment-form .btn-info:hover {
+  color: #fff;
+  background-color: rgb(18.75, 132.0652173913, 150);
+  border-color: rgb(17.3333333333, 122.0869565217, 138.6666666667);
+}
+.fidelo-payment-form .btn-info:focus, .fidelo-payment-form .btn-info.focus {
+  color: #fff;
+  background-color: rgb(18.75, 132.0652173913, 150);
+  border-color: rgb(17.3333333333, 122.0869565217, 138.6666666667);
+  box-shadow: 0 0 0 0.2rem rgba(57.8, 175.95, 194.65, 0.5);
+}
+.fidelo-payment-form .btn-info.disabled, .fidelo-payment-form .btn-info:disabled {
+  color: #fff;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+.fidelo-payment-form .btn-info:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-info:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-info.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(17.3333333333, 122.0869565217, 138.6666666667);
+  border-color: rgb(15.9166666667, 112.1086956522, 127.3333333333);
+}
+.fidelo-payment-form .btn-info:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-info:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-info.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(57.8, 175.95, 194.65, 0.5);
+}
+.fidelo-payment-form .btn-warning {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+.fidelo-payment-form .btn-warning:hover {
+  color: #212529;
+  background-color: rgb(223.75, 167.8125, 0);
+  border-color: rgb(211, 158.25, 0);
+}
+.fidelo-payment-form .btn-warning:focus, .fidelo-payment-form .btn-warning.focus {
+  color: #212529;
+  background-color: rgb(223.75, 167.8125, 0);
+  border-color: rgb(211, 158.25, 0);
+  box-shadow: 0 0 0 0.2rem rgba(221.7, 169.6, 12.1, 0.5);
+}
+.fidelo-payment-form .btn-warning.disabled, .fidelo-payment-form .btn-warning:disabled {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+.fidelo-payment-form .btn-warning:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-warning:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-warning.dropdown-toggle {
+  color: #212529;
+  background-color: rgb(211, 158.25, 0);
+  border-color: rgb(198.25, 148.6875, 0);
+}
+.fidelo-payment-form .btn-warning:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-warning:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-warning.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(221.7, 169.6, 12.1, 0.5);
+}
+.fidelo-payment-form .btn-danger {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+.fidelo-payment-form .btn-danger:hover {
+  color: #fff;
+  background-color: rgb(200.082278481, 34.667721519, 50.5158227848);
+  border-color: rgb(189.2151898734, 32.7848101266, 47.7721518987);
+}
+.fidelo-payment-form .btn-danger:focus, .fidelo-payment-form .btn-danger.focus {
+  color: #fff;
+  background-color: rgb(200.082278481, 34.667721519, 50.5158227848);
+  border-color: rgb(189.2151898734, 32.7848101266, 47.7721518987);
+  box-shadow: 0 0 0 0.2rem rgba(225.25, 83.3, 96.9, 0.5);
+}
+.fidelo-payment-form .btn-danger.disabled, .fidelo-payment-form .btn-danger:disabled {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+.fidelo-payment-form .btn-danger:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-danger:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-danger.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(189.2151898734, 32.7848101266, 47.7721518987);
+  border-color: rgb(178.3481012658, 30.9018987342, 45.0284810127);
+}
+.fidelo-payment-form .btn-danger:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-danger:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-danger.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(225.25, 83.3, 96.9, 0.5);
+}
+.fidelo-payment-form .btn-light {
+  color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+.fidelo-payment-form .btn-light:hover {
+  color: #212529;
+  background-color: rgb(225.6875, 229.875, 234.0625);
+  border-color: rgb(218.25, 223.5, 228.75);
+}
+.fidelo-payment-form .btn-light:focus, .fidelo-payment-form .btn-light.focus {
+  color: #212529;
+  background-color: rgb(225.6875, 229.875, 234.0625);
+  border-color: rgb(218.25, 223.5, 228.75);
+  box-shadow: 0 0 0 0.2rem rgba(215.75, 217.2, 218.65, 0.5);
+}
+.fidelo-payment-form .btn-light.disabled, .fidelo-payment-form .btn-light:disabled {
+  color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+.fidelo-payment-form .btn-light:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-light:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-light.dropdown-toggle {
+  color: #212529;
+  background-color: rgb(218.25, 223.5, 228.75);
+  border-color: rgb(210.8125, 217.125, 223.4375);
+}
+.fidelo-payment-form .btn-light:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-light:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-light.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(215.75, 217.2, 218.65, 0.5);
+}
+.fidelo-payment-form .btn-dark {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+}
+.fidelo-payment-form .btn-dark:hover {
+  color: #fff;
+  background-color: rgb(34.8534482759, 38.875, 42.8965517241);
+  border-color: rgb(29.1379310345, 32.5, 35.8620689655);
+}
+.fidelo-payment-form .btn-dark:focus, .fidelo-payment-form .btn-dark.focus {
+  color: #fff;
+  background-color: rgb(34.8534482759, 38.875, 42.8965517241);
+  border-color: rgb(29.1379310345, 32.5, 35.8620689655);
+  box-shadow: 0 0 0 0.2rem rgba(82.45, 87.55, 92.65, 0.5);
+}
+.fidelo-payment-form .btn-dark.disabled, .fidelo-payment-form .btn-dark:disabled {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+}
+.fidelo-payment-form .btn-dark:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-dark:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-dark.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(29.1379310345, 32.5, 35.8620689655);
+  border-color: rgb(23.4224137931, 26.125, 28.8275862069);
+}
+.fidelo-payment-form .btn-dark:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-dark:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-dark.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(82.45, 87.55, 92.65, 0.5);
+}
+.fidelo-payment-form .btn-outline-primary {
+  color: #007bff;
+  border-color: #007bff;
+}
+.fidelo-payment-form .btn-outline-primary:hover {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.fidelo-payment-form .btn-outline-primary:focus, .fidelo-payment-form .btn-outline-primary.focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+}
+.fidelo-payment-form .btn-outline-primary.disabled, .fidelo-payment-form .btn-outline-primary:disabled {
+  color: #007bff;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-primary:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-primary:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-primary.dropdown-toggle {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.fidelo-payment-form .btn-outline-primary:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-primary:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+}
+.fidelo-payment-form .btn-outline-secondary {
+  color: #6c757d;
+  border-color: #6c757d;
+}
+.fidelo-payment-form .btn-outline-secondary:hover {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+.fidelo-payment-form .btn-outline-secondary:focus, .fidelo-payment-form .btn-outline-secondary.focus {
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
+}
+.fidelo-payment-form .btn-outline-secondary.disabled, .fidelo-payment-form .btn-outline-secondary:disabled {
+  color: #6c757d;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-secondary:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-secondary:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-secondary.dropdown-toggle {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+.fidelo-payment-form .btn-outline-secondary:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-secondary:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-secondary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
+}
+.fidelo-payment-form .btn-outline-success {
+  color: #28a745;
+  border-color: #28a745;
+}
+.fidelo-payment-form .btn-outline-success:hover {
+  color: #fff;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+.fidelo-payment-form .btn-outline-success:focus, .fidelo-payment-form .btn-outline-success.focus {
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5);
+}
+.fidelo-payment-form .btn-outline-success.disabled, .fidelo-payment-form .btn-outline-success:disabled {
+  color: #28a745;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-success:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-success:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-success.dropdown-toggle {
+  color: #fff;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+.fidelo-payment-form .btn-outline-success:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-success:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-success.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5);
+}
+.fidelo-payment-form .btn-outline-info {
+  color: #17a2b8;
+  border-color: #17a2b8;
+}
+.fidelo-payment-form .btn-outline-info:hover {
+  color: #fff;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+.fidelo-payment-form .btn-outline-info:focus, .fidelo-payment-form .btn-outline-info.focus {
+  box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.5);
+}
+.fidelo-payment-form .btn-outline-info.disabled, .fidelo-payment-form .btn-outline-info:disabled {
+  color: #17a2b8;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-info:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-info:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-info.dropdown-toggle {
+  color: #fff;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+.fidelo-payment-form .btn-outline-info:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-info:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-info.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.5);
+}
+.fidelo-payment-form .btn-outline-warning {
+  color: #ffc107;
+  border-color: #ffc107;
+}
+.fidelo-payment-form .btn-outline-warning:hover {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+.fidelo-payment-form .btn-outline-warning:focus, .fidelo-payment-form .btn-outline-warning.focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.5);
+}
+.fidelo-payment-form .btn-outline-warning.disabled, .fidelo-payment-form .btn-outline-warning:disabled {
+  color: #ffc107;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-warning:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-warning:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-warning.dropdown-toggle {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+.fidelo-payment-form .btn-outline-warning:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-warning:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-warning.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.5);
+}
+.fidelo-payment-form .btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+.fidelo-payment-form .btn-outline-danger:hover {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+.fidelo-payment-form .btn-outline-danger:focus, .fidelo-payment-form .btn-outline-danger.focus {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+}
+.fidelo-payment-form .btn-outline-danger.disabled, .fidelo-payment-form .btn-outline-danger:disabled {
+  color: #dc3545;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-danger:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-danger:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-danger.dropdown-toggle {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+.fidelo-payment-form .btn-outline-danger:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-danger:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-danger.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+}
+.fidelo-payment-form .btn-outline-light {
+  color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+.fidelo-payment-form .btn-outline-light:hover {
+  color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+.fidelo-payment-form .btn-outline-light:focus, .fidelo-payment-form .btn-outline-light.focus {
+  box-shadow: 0 0 0 0.2rem rgba(248, 249, 250, 0.5);
+}
+.fidelo-payment-form .btn-outline-light.disabled, .fidelo-payment-form .btn-outline-light:disabled {
+  color: #f8f9fa;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-light:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-light:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-light.dropdown-toggle {
+  color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+.fidelo-payment-form .btn-outline-light:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-light:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-light.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(248, 249, 250, 0.5);
+}
+.fidelo-payment-form .btn-outline-dark {
+  color: #343a40;
+  border-color: #343a40;
+}
+.fidelo-payment-form .btn-outline-dark:hover {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+}
+.fidelo-payment-form .btn-outline-dark:focus, .fidelo-payment-form .btn-outline-dark.focus {
+  box-shadow: 0 0 0 0.2rem rgba(52, 58, 64, 0.5);
+}
+.fidelo-payment-form .btn-outline-dark.disabled, .fidelo-payment-form .btn-outline-dark:disabled {
+  color: #343a40;
+  background-color: transparent;
+}
+.fidelo-payment-form .btn-outline-dark:not(:disabled):not(.disabled):active, .fidelo-payment-form .btn-outline-dark:not(:disabled):not(.disabled).active, .show > .fidelo-payment-form .btn-outline-dark.dropdown-toggle {
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+}
+.fidelo-payment-form .btn-outline-dark:not(:disabled):not(.disabled):active:focus, .fidelo-payment-form .btn-outline-dark:not(:disabled):not(.disabled).active:focus, .show > .fidelo-payment-form .btn-outline-dark.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(52, 58, 64, 0.5);
+}
+.fidelo-payment-form .btn-link {
+  font-weight: 400;
+  color: #007bff;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+.fidelo-payment-form .btn-link:hover {
+  color: rgb(0, 86.1, 178.5);
+  -webkit-text-decoration: underline;
+  text-decoration: underline;
+}
+.fidelo-payment-form .btn-link:focus, .fidelo-payment-form .btn-link.focus {
+  -webkit-text-decoration: underline;
+  text-decoration: underline;
+}
+.fidelo-payment-form .btn-link:disabled, .fidelo-payment-form .btn-link.disabled {
+  color: #6c757d;
+  pointer-events: none;
+}
+.fidelo-payment-form .btn-lg {
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  border-radius: 0.3rem;
+}
+.fidelo-payment-form .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+.fidelo-payment-form .btn-block {
+  display: block;
+  width: 100%;
+}
+.fidelo-payment-form .btn-block + .btn-block {
+  margin-top: 0.5rem;
+}
+.fidelo-payment-form input[type=submit].btn-block,
+.fidelo-payment-form input[type=reset].btn-block,
+.fidelo-payment-form input[type=button].btn-block {
+  width: 100%;
+}
+.fidelo-payment-form .custom-control {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.5rem;
+  -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+}
+.fidelo-payment-form .custom-control-inline {
+  display: inline-flex;
+  margin-right: 1rem;
+}
+.fidelo-payment-form .custom-control-input {
+  position: absolute;
+  left: 0;
+  z-index: -1;
+  width: 1rem;
+  height: 1.25rem;
+  opacity: 0;
+}
+.fidelo-payment-form .custom-control-input:checked ~ .custom-control-label::before {
+  color: #fff;
+  border-color: #007bff;
+  background-color: #007bff;
+}
+.fidelo-payment-form .custom-control-input:focus ~ .custom-control-label::before {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .custom-control-input:focus:not(:checked) ~ .custom-control-label::before {
+  border-color: rgb(127.5, 189, 255);
+}
+.fidelo-payment-form .custom-control-input:not(:disabled):active ~ .custom-control-label::before {
+  color: #fff;
+  background-color: rgb(178.5, 215.4, 255);
+  border-color: rgb(178.5, 215.4, 255);
+}
+.fidelo-payment-form .custom-control-input[disabled] ~ .custom-control-label, .fidelo-payment-form .custom-control-input:disabled ~ .custom-control-label {
+  color: #6c757d;
+}
+.fidelo-payment-form .custom-control-input[disabled] ~ .custom-control-label::before, .fidelo-payment-form .custom-control-input:disabled ~ .custom-control-label::before {
+  background-color: #e9ecef;
+}
+.fidelo-payment-form .custom-control-label {
+  position: relative;
+  margin-bottom: 0;
+  vertical-align: top;
+}
+.fidelo-payment-form .custom-control-label::before {
+  position: absolute;
+  top: 0.25rem;
+  left: -1.5rem;
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  content: "";
+  background-color: #fff;
+  border: 1px solid #adb5bd;
+}
+.fidelo-payment-form .custom-control-label::after {
+  position: absolute;
+  top: 0.25rem;
+  left: -1.5rem;
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  content: "";
+  background: 50%/50% 50% no-repeat;
+}
+.fidelo-payment-form .custom-checkbox .custom-control-label::before {
+  border-radius: 0.25rem;
+}
+.fidelo-payment-form .custom-checkbox .custom-control-input:checked ~ .custom-control-label::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%23fff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z'/%3e%3c/svg%3e");
+}
+.fidelo-payment-form .custom-checkbox .custom-control-input:indeterminate ~ .custom-control-label::before {
+  border-color: #007bff;
+  background-color: #007bff;
+}
+.fidelo-payment-form .custom-checkbox .custom-control-input:indeterminate ~ .custom-control-label::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3e%3cpath stroke='%23fff' d='M0 2h4'/%3e%3c/svg%3e");
+}
+.fidelo-payment-form .custom-checkbox .custom-control-input:disabled:checked ~ .custom-control-label::before {
+  background-color: rgba(0, 123, 255, 0.5);
+}
+.fidelo-payment-form .custom-checkbox .custom-control-input:disabled:indeterminate ~ .custom-control-label::before {
+  background-color: rgba(0, 123, 255, 0.5);
+}
+.fidelo-payment-form .custom-radio .custom-control-label::before {
+  border-radius: 50%;
+}
+.fidelo-payment-form .custom-radio .custom-control-input:checked ~ .custom-control-label::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+.fidelo-payment-form .custom-radio .custom-control-input:disabled:checked ~ .custom-control-label::before {
+  background-color: rgba(0, 123, 255, 0.5);
+}
+.fidelo-payment-form .custom-switch {
+  padding-left: 2.25rem;
+}
+.fidelo-payment-form .custom-switch .custom-control-label::before {
+  left: -2.25rem;
+  width: 1.75rem;
+  pointer-events: all;
+  border-radius: 0.5rem;
+}
+.fidelo-payment-form .custom-switch .custom-control-label::after {
+  top: calc(0.25rem + 2px);
+  left: calc(-2.25rem + 2px);
+  width: calc(1rem - 4px);
+  height: calc(1rem - 4px);
+  background-color: #adb5bd;
+  border-radius: 0.5rem;
+  transition: transform 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .custom-switch .custom-control-label::after {
+    transition: none;
+  }
+}
+.fidelo-payment-form .custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+  background-color: #fff;
+  transform: translateX(0.75rem);
+}
+.fidelo-payment-form .custom-switch .custom-control-input:disabled:checked ~ .custom-control-label::before {
+  background-color: rgba(0, 123, 255, 0.5);
+}
+.fidelo-payment-form .custom-select {
+  display: inline-block;
+  width: 100%;
+  height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  vertical-align: middle;
+  background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") right 0.75rem center/8px 10px no-repeat;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+.fidelo-payment-form .custom-select:focus {
+  border-color: rgb(127.5, 189, 255);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .custom-select:focus::-ms-value {
+  color: #495057;
+  background-color: #fff;
+}
+.fidelo-payment-form .custom-select[multiple], .fidelo-payment-form .custom-select[size]:not([size="1"]) {
+  height: auto;
+  padding-right: 0.75rem;
+  background-image: none;
+}
+.fidelo-payment-form .custom-select:disabled {
+  color: #6c757d;
+  background-color: #e9ecef;
+}
+.fidelo-payment-form .custom-select::-ms-expand {
+  display: none;
+}
+.fidelo-payment-form .custom-select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #495057;
+}
+.fidelo-payment-form .custom-select-sm {
+  height: calc(1.5em + 0.5rem + 2px);
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+  font-size: 0.875rem;
+}
+.fidelo-payment-form .custom-select-lg {
+  height: calc(1.5em + 1rem + 2px);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  font-size: 1.25rem;
+}
+.fidelo-payment-form .custom-file {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: calc(1.5em + 0.75rem + 2px);
+  margin-bottom: 0;
+}
+.fidelo-payment-form .custom-file-input {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: calc(1.5em + 0.75rem + 2px);
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+.fidelo-payment-form .custom-file-input:focus ~ .custom-file-label {
+  border-color: rgb(127.5, 189, 255);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .custom-file-input[disabled] ~ .custom-file-label, .fidelo-payment-form .custom-file-input:disabled ~ .custom-file-label {
+  background-color: #e9ecef;
+}
+.fidelo-payment-form .custom-file-input:lang(en) ~ .custom-file-label::after {
+  content: "Browse";
+}
+.fidelo-payment-form .custom-file-input ~ .custom-file-label[data-browse]::after {
+  content: attr(data-browse);
+}
+.fidelo-payment-form .custom-file-label {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+  overflow: hidden;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+.fidelo-payment-form .custom-file-label::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: block;
+  height: calc(1.5em + 0.75rem);
+  padding: 0.375rem 0.75rem;
+  line-height: 1.5;
+  color: #495057;
+  content: "Browse";
+  background-color: #e9ecef;
+  border-left: inherit;
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+.fidelo-payment-form .custom-range {
+  width: 100%;
+  height: 1.4rem;
+  padding: 0;
+  background-color: transparent;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+.fidelo-payment-form .custom-range:focus {
+  outline: 0;
+}
+.fidelo-payment-form .custom-range:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .custom-range:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .custom-range:focus::-ms-thumb {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.fidelo-payment-form .custom-range::-moz-focus-outer {
+  border: 0;
+}
+.fidelo-payment-form .custom-range::-webkit-slider-thumb {
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.25rem;
+  background-color: #007bff;
+  border: 0;
+  border-radius: 1rem;
+  -webkit-transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .custom-range::-webkit-slider-thumb {
+    -webkit-transition: none;
+    transition: none;
+  }
+}
+.fidelo-payment-form .custom-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+          appearance: none;
+}
+.fidelo-payment-form .custom-range::-webkit-slider-thumb:active {
+  background-color: rgb(178.5, 215.4, 255);
+}
+.fidelo-payment-form .custom-range::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 0.5rem;
+  color: transparent;
+  cursor: pointer;
+  background-color: #dee2e6;
+  border-color: transparent;
+  border-radius: 1rem;
+}
+.fidelo-payment-form .custom-range::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  background-color: #007bff;
+  border: 0;
+  border-radius: 1rem;
+  -moz-transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .custom-range::-moz-range-thumb {
+    -moz-transition: none;
+    transition: none;
+  }
+}
+.fidelo-payment-form .custom-range::-moz-range-thumb {
+  -moz-appearance: none;
+       appearance: none;
+}
+.fidelo-payment-form .custom-range::-moz-range-thumb:active {
+  background-color: rgb(178.5, 215.4, 255);
+}
+.fidelo-payment-form .custom-range::-moz-range-track {
+  width: 100%;
+  height: 0.5rem;
+  color: transparent;
+  cursor: pointer;
+  background-color: #dee2e6;
+  border-color: transparent;
+  border-radius: 1rem;
+}
+.fidelo-payment-form .custom-range::-ms-thumb {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0;
+  margin-right: 0.2rem;
+  margin-left: 0.2rem;
+  background-color: #007bff;
+  border: 0;
+  border-radius: 1rem;
+  -ms-transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .custom-range::-ms-thumb {
+    -ms-transition: none;
+    transition: none;
+  }
+}
+.fidelo-payment-form .custom-range::-ms-thumb {
+  appearance: none;
+}
+.fidelo-payment-form .custom-range::-ms-thumb:active {
+  background-color: rgb(178.5, 215.4, 255);
+}
+.fidelo-payment-form .custom-range::-ms-track {
+  width: 100%;
+  height: 0.5rem;
+  color: transparent;
+  cursor: pointer;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 0.5rem;
+}
+.fidelo-payment-form .custom-range::-ms-fill-lower {
+  background-color: #dee2e6;
+  border-radius: 1rem;
+}
+.fidelo-payment-form .custom-range::-ms-fill-upper {
+  margin-right: 15px;
+  background-color: #dee2e6;
+  border-radius: 1rem;
+}
+.fidelo-payment-form .custom-range:disabled::-webkit-slider-thumb {
+  background-color: #adb5bd;
+}
+.fidelo-payment-form .custom-range:disabled::-webkit-slider-runnable-track {
+  cursor: default;
+}
+.fidelo-payment-form .custom-range:disabled::-moz-range-thumb {
+  background-color: #adb5bd;
+}
+.fidelo-payment-form .custom-range:disabled::-moz-range-track {
+  cursor: default;
+}
+.fidelo-payment-form .custom-range:disabled::-ms-thumb {
+  background-color: #adb5bd;
+}
+.fidelo-payment-form .custom-control-label::before,
+.fidelo-payment-form .custom-file-label,
+.fidelo-payment-form .custom-select {
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .custom-control-label::before,
+  .fidelo-payment-form .custom-file-label,
+  .fidelo-payment-form .custom-select {
+    transition: none;
+  }
+}
+.fidelo-payment-form .card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.25rem;
+}
+.fidelo-payment-form .card > hr {
+  margin-right: 0;
+  margin-left: 0;
+}
+.fidelo-payment-form .card > .list-group {
+  border-top: inherit;
+  border-bottom: inherit;
+}
+.fidelo-payment-form .card > .list-group:first-child {
+  border-top-width: 0;
+  border-top-left-radius: calc(0.25rem - 1px);
+  border-top-right-radius: calc(0.25rem - 1px);
+}
+.fidelo-payment-form .card > .list-group:last-child {
+  border-bottom-width: 0;
+  border-bottom-right-radius: calc(0.25rem - 1px);
+  border-bottom-left-radius: calc(0.25rem - 1px);
+}
+.fidelo-payment-form .card > .card-header + .list-group,
+.fidelo-payment-form .card > .list-group + .card-footer {
+  border-top: 0;
+}
+.fidelo-payment-form .card-body {
+  flex: 1 1 auto;
+  min-height: 1px;
+  padding: 1.25rem;
+}
+.fidelo-payment-form .card-title {
+  margin-bottom: 0.75rem;
+}
+.fidelo-payment-form .card-subtitle {
+  margin-top: -0.375rem;
+  margin-bottom: 0;
+}
+.fidelo-payment-form .card-text:last-child {
+  margin-bottom: 0;
+}
+.fidelo-payment-form .card-link:hover {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+.fidelo-payment-form .card-link + .card-link {
+  margin-left: 1.25rem;
+}
+.fidelo-payment-form .card-header {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+.fidelo-payment-form .card-header:first-child {
+  border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+}
+.fidelo-payment-form .card-footer {
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+.fidelo-payment-form .card-footer:last-child {
+  border-radius: 0 0 calc(0.25rem - 1px) calc(0.25rem - 1px);
+}
+.fidelo-payment-form .card-header-tabs {
+  margin-right: -0.625rem;
+  margin-bottom: -0.75rem;
+  margin-left: -0.625rem;
+  border-bottom: 0;
+}
+.fidelo-payment-form .card-header-pills {
+  margin-right: -0.625rem;
+  margin-left: -0.625rem;
+}
+.fidelo-payment-form .card-img-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1.25rem;
+  border-radius: calc(0.25rem - 1px);
+}
+.fidelo-payment-form .card-img,
+.fidelo-payment-form .card-img-top,
+.fidelo-payment-form .card-img-bottom {
+  flex-shrink: 0;
+  width: 100%;
+}
+.fidelo-payment-form .card-img,
+.fidelo-payment-form .card-img-top {
+  border-top-left-radius: calc(0.25rem - 1px);
+  border-top-right-radius: calc(0.25rem - 1px);
+}
+.fidelo-payment-form .card-img,
+.fidelo-payment-form .card-img-bottom {
+  border-bottom-right-radius: calc(0.25rem - 1px);
+  border-bottom-left-radius: calc(0.25rem - 1px);
+}
+.fidelo-payment-form .card-deck .card {
+  margin-bottom: 15px;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .card-deck {
+    display: flex;
+    flex-flow: row wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+  }
+  .fidelo-payment-form .card-deck .card {
+    flex: 1 0 0%;
+    margin-right: 15px;
+    margin-bottom: 0;
+    margin-left: 15px;
+  }
+}
+.fidelo-payment-form .card-group > .card {
+  margin-bottom: 15px;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .card-group {
+    display: flex;
+    flex-flow: row wrap;
+  }
+  .fidelo-payment-form .card-group > .card {
+    flex: 1 0 0%;
+    margin-bottom: 0;
+  }
+  .fidelo-payment-form .card-group > .card + .card {
+    margin-left: 0;
+    border-left: 0;
+  }
+  .fidelo-payment-form .card-group > .card:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .fidelo-payment-form .card-group > .card:not(:last-child) .card-img-top,
+  .fidelo-payment-form .card-group > .card:not(:last-child) .card-header {
+    border-top-right-radius: 0;
+  }
+  .fidelo-payment-form .card-group > .card:not(:last-child) .card-img-bottom,
+  .fidelo-payment-form .card-group > .card:not(:last-child) .card-footer {
+    border-bottom-right-radius: 0;
+  }
+  .fidelo-payment-form .card-group > .card:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  .fidelo-payment-form .card-group > .card:not(:first-child) .card-img-top,
+  .fidelo-payment-form .card-group > .card:not(:first-child) .card-header {
+    border-top-left-radius: 0;
+  }
+  .fidelo-payment-form .card-group > .card:not(:first-child) .card-img-bottom,
+  .fidelo-payment-form .card-group > .card:not(:first-child) .card-footer {
+    border-bottom-left-radius: 0;
+  }
+}
+.fidelo-payment-form .card-columns .card {
+  margin-bottom: 0.75rem;
+}
+@media (min-width: 576px) {
+  .fidelo-payment-form .card-columns {
+    -moz-column-count: 3;
+         column-count: 3;
+    -moz-column-gap: 1.25rem;
+         column-gap: 1.25rem;
+    orphans: 1;
+    widows: 1;
+  }
+  .fidelo-payment-form .card-columns .card {
+    display: inline-block;
+    width: 100%;
+  }
+}
+.fidelo-payment-form .accordion {
+  overflow-anchor: none;
+}
+.fidelo-payment-form .accordion > .card {
+  overflow: hidden;
+}
+.fidelo-payment-form .accordion > .card:not(:last-of-type) {
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.fidelo-payment-form .accordion > .card:not(:first-of-type) {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.fidelo-payment-form .accordion > .card > .card-header {
+  border-radius: 0;
+  margin-bottom: -1px;
+}
+.fidelo-payment-form .alert {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+.fidelo-payment-form .alert-heading {
+  color: inherit;
+}
+.fidelo-payment-form .alert-link {
+  font-weight: 700;
+}
+.fidelo-payment-form .alert-dismissible {
+  padding-right: 4rem;
+}
+.fidelo-payment-form .alert-dismissible .close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  padding: 0.75rem 1.25rem;
+  color: inherit;
+}
+.fidelo-payment-form .alert-primary {
+  color: rgb(0, 63.96, 132.6);
+  background-color: rgb(204, 228.6, 255);
+  border-color: rgb(183.6, 218.04, 255);
+}
+.fidelo-payment-form .alert-primary hr {
+  border-top-color: rgb(158.1, 204.84, 255);
+}
+.fidelo-payment-form .alert-primary .alert-link {
+  color: rgb(0, 39.36, 81.6);
+}
+.fidelo-payment-form .alert-secondary {
+  color: rgb(56.16, 60.84, 65);
+  background-color: rgb(225.6, 227.4, 229);
+  border-color: rgb(213.84, 216.36, 218.6);
+}
+.fidelo-payment-form .alert-secondary hr {
+  border-top-color: rgb(200.3075090253, 203.6560288809, 206.6324909747);
+}
+.fidelo-payment-form .alert-secondary .alert-link {
+  color: rgb(32.5205150215, 35.2305579399, 37.6394849785);
+}
+.fidelo-payment-form .alert-success {
+  color: rgb(20.8, 86.84, 35.88);
+  background-color: rgb(212, 237.4, 217.8);
+  border-color: rgb(194.8, 230.36, 202.92);
+}
+.fidelo-payment-form .alert-success hr {
+  border-top-color: rgb(176.7059405941, 222.9540594059, 187.2665346535);
+}
+.fidelo-payment-form .alert-success .alert-link {
+  color: rgb(10.9449275362, 45.6950724638, 18.88);
+}
+.fidelo-payment-form .alert-info {
+  color: rgb(11.96, 84.24, 95.68);
+  background-color: rgb(208.6, 236.4, 240.8);
+  border-color: rgb(190.04, 228.96, 235.12);
+}
+.fidelo-payment-form .alert-info hr {
+  border-top-color: rgb(170.5152475248, 221.1332673267, 229.1447524752);
+}
+.fidelo-payment-form .alert-info .alert-link {
+  color: rgb(6.2933333333, 44.3269565217, 50.3466666667);
+}
+.fidelo-payment-form .alert-warning {
+  color: rgb(132.6, 100.36, 3.64);
+  background-color: rgb(255, 242.6, 205.4);
+  border-color: rgb(255, 237.64, 185.56);
+}
+.fidelo-payment-form .alert-warning hr {
+  border-top-color: rgb(255, 231.265, 160.06);
+}
+.fidelo-payment-form .alert-warning .alert-link {
+  color: rgb(82.9625954198, 62.7912977099, 2.2774045802);
+}
+.fidelo-payment-form .alert-danger {
+  color: rgb(114.4, 27.56, 35.88);
+  background-color: rgb(248, 214.6, 217.8);
+  border-color: rgb(245.2, 198.44, 202.92);
+}
+.fidelo-payment-form .alert-danger hr {
+  border-top-color: rgb(241.4341772152, 176.7058227848, 182.9073417722);
+}
+.fidelo-payment-form .alert-danger .alert-link {
+  color: rgb(73.3010989011, 17.6589010989, 22.9898901099);
+}
+.fidelo-payment-form .alert-light {
+  color: rgb(128.96, 129.48, 130);
+  background-color: rgb(253.6, 253.8, 254);
+  border-color: rgb(253.04, 253.32, 253.6);
+}
+.fidelo-payment-form .alert-light hr {
+  border-top-color: rgb(238.165, 240.57, 242.975);
+}
+.fidelo-payment-form .alert-light .alert-link {
+  color: rgb(103.5492351816, 103.98, 104.4107648184);
+}
+.fidelo-payment-form .alert-dark {
+  color: rgb(27.04, 30.16, 33.28);
+  background-color: rgb(214.4, 215.6, 216.8);
+  border-color: rgb(198.16, 199.84, 201.52);
+}
+.fidelo-payment-form .alert-dark hr {
+  border-top-color: rgb(185.0216751269, 187.09, 189.1583248731);
+}
+.fidelo-payment-form .alert-dark .alert-link {
+  color: rgb(4.1779310345, 4.66, 5.1420689655);
+}
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.fidelo-payment-form .spinner-border {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: -0.125em;
+  border: 0.25em solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: 0.75s linear infinite spinner-border;
+}
+.fidelo-payment-form .spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.2em;
+}
+@keyframes spinner-grow {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fidelo-payment-form .spinner-grow {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: -0.125em;
+  background-color: currentcolor;
+  border-radius: 50%;
+  opacity: 0;
+  animation: 0.75s linear infinite spinner-grow;
+}
+.fidelo-payment-form .spinner-grow-sm {
+  width: 1rem;
+  height: 1rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fidelo-payment-form .spinner-border,
+  .fidelo-payment-form .spinner-grow {
+    animation-duration: 1.5s;
+  }
+}
+.fidelo-payment-form .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.fidelo-payment-form .sr-only-focusable:active, .fidelo-payment-form .sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}

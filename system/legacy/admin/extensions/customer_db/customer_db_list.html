@@ -1,0 +1,123 @@
+<?
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+
+if($_POST['action'] == "config") {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->idTable = $_VARS['idTable'];
+	$config->iEntries = $_VARS['iEntries'];
+	$config->iSort = $_VARS['iSort'];
+	$config->sSortDir = $_VARS['sSortDir'];
+	$config->defaulttask = $_VARS['defaulttask'];
+	$config->logViews = $_VARS['logViews'];
+	$config->bShowUser = $_VARS['bShowUser'];
+	$config->bShowMyVisits = $_VARS['bShowMyVisits'];
+
+	$i=0;
+	$config->aFilter = array();
+	foreach((array)$_VARS['iFilter'] as $k=>$v) {
+		if($_VARS['iDeleteFilter'] != $i) {
+			$config->aFilter[$i] = array($_VARS['iFilter'][$k],$_VARS['sFilter'][$k],$_VARS['iMode'][$k]);
+			$i++;
+		} else {
+			unset($config->aFilter[$i]);
+		}
+	}
+
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Kundendatenmodul &raquo; Liste</h1>
+			<p>
+<?
+
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if($_VARS['task'] == "addFilter") {
+	$config->aFilter[] = array(0,0,0);
+}
+
+if($_VARS['page_id'] && $_VARS['element_id'] && $_VARS['content_id']) {
+?>
+			<form method="POST" name="f1" action="customer_db_list.html">
+			<input type="hidden" name="task" value="">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<input type="hidden" name="iDeleteFilter" value="-1">
+			<?=printTableStart()?>
+			<?=printFormSelect("Kundendatenbank", "idTable",CustomerDb\Helper\Functions::getCustomerTables(),$config->idTable)?>
+			<?=printFormSelect("Ansicht", "defaulttask",array("list"=>"Liste","search"=>"Suche","detail"=>"Detail","logs"=>"letzte Besucher"),$config->defaulttask)?>
+			<?
+			if($config->defaulttask == "list" || $config->defaulttask == "logs") {
+				echo printFormText("Einträge pro Seite", "iEntries",$config->iEntries);
+			}
+			if($config->defaulttask == "logs") {
+				echo printFormCheckbox("Nur dem eingeloggten User zeigen", "bShowUser", "1", $config->bShowUser);
+				echo printFormCheckbox("Besucher des eingeloggten Users zeigen", "bShowMyVisits", "1", $config->bShowMyVisits);
+			}
+			if($config->defaulttask == "list") {
+				echo printFormSelect("Sortieren nach", "iSort",CustomerDb\Helper\Functions::getCustomerFields($config->idTable),$config->iSort);
+				echo printFormSelect("Sortierung", "sSortDir",array("ASC"=>"aufsteigend","DESC"=>"absteigend"),$config->sSortDir);
+			}
+			if($config->defaulttask == "detail") {
+				echo printFormSelect("Zugriffe protokollieren", "logViews", array("1"=>"Ja","0"=>"Nein"),$config->logViews);
+			}
+			?>
+			<?=printTableEnd()?>
+			<br>
+			<?
+			if($config->defaulttask == "list") {
+			?>
+			<?=printTableStart()?>
+			<tr>
+				<th colspan="2">Filterkriterien:&nbsp;<button onClick="document.f1.task.value='addFilter';document.f1.submit();" class="btn">Filter hinzufügen</button></th>
+			</tr>
+			<?
+				foreach($config->aFilter as $i=>$elem) {
+					echo printFormSelect("<a href=\"javascript:document.f1.iDeleteFilter.value='".$i."';document.f1.submit();\"><img src=\"/admin/media/delete.png\" border=0 align=absmiddle></a>&nbsp;Feld ".($i+1), "iFilter[]",CustomerDb\Helper\Functions::getCustomerFields($config->idTable),$elem[0]);
+					$aValues = array();
+					if($elem[0]) {
+						$my_field = get_data(db_query($db_data['module'],"SELECT id,type FROM customer_db_definition WHERE field_nr = '".$elem[0]."' AND db_nr = '".$config->idTable."' AND active = 1"));
+						if($my_field['type'] == "Select Field") {
+							$res_val = db_query($db_data['module'],"SELECT display, value  FROM customer_db_values WHERE definition_id = '".$my_field['id']."' AND active = 1 ORDER BY display");
+							while($my_val = get_data($res_val)) {
+								$aValues[$my_val['value']] = $my_val['display'];
+							}
+							echo printFormSelect("Wert ".($i+1), "sFilter[]",$aValues,$elem[1]);
+						} elseif($my_field['type'] == "image") {
+							echo printFormCheckbox("Wert ".($i+1), "sFilter[]", 1,$elem[1]);
+						} else {
+							echo printFormText("Wert ".($i+1), "sFilter[]",$elem[1]);
+						}
+					}
+					echo printFormSelect("Vergleich ".($i+1), "iMode[]",array("1"=>"Volltext","8"=>"nicht leer","10"=>"innerhalb der letzten x Tage"),$elem[2]);
+				}
+			?>
+			<?=printTableEnd()?>
+			<?
+			}
+			?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+<?
+}
+?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

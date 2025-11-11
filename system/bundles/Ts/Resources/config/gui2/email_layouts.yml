@@ -1,0 +1,50 @@
+hash: 45c8d748d0b50ab9e1c89fe0abcf35fb
+class:
+  wdbasic: Ext_Thebing_Email_Layout
+  data: Ext_Thebing_Email_Layout_Gui2
+  js: EmailLayouts
+js:
+  - [gui2/util.js, thebing]
+  - [admin/js/emaillayouts.js, thebing]
+access: thebing_admin_email_layouts
+id:
+  column: id
+where:
+  - Ext_Thebing_Email_Layout_Gui2
+  - getWhere
+limit: 30
+limit_selection: false
+multiple_selection: 0
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        column:
+          - id
+          - name
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Email_Layout_Gui2
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Email_Layout_Gui2
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Name
+    column: name
+    alias: ''
+    width: 200
+    resize: true

@@ -1,0 +1,167 @@
+class:
+  wdbasic: Ext_TS_Accounting_Provider_Grouping_Transfer
+  data: Ext_Thebing_Gui2_Data
+  gui: Ext_TS_Accounting_Provider_Grouping_Gui2
+  date_format: Ext_Thebing_Gui2_Format_Date
+  icon_status: Ext_TS_Accounting_Provider_Grouping_Gui2_View_Icon_Active
+id:
+  column: id
+  alias: ts_tpg
+orderby:
+  - Ext_TS_Accounting_Provider_Grouping_Transfer
+  - getOrderby
+  - ""
+description: Thebing » Buchhaltung » Provider bezahlen » Bezahlte Transfers
+multiple_selection: true
+#access: thebing_accounting_pickup_payments_groupings
+access: ""
+title:
+  - Ext_TS_System_Navigation
+  - t
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          filter_part: HAVING
+          column:
+            - customer_firstname
+            - customer_lastname
+            - customer_number
+            - document_number
+        -
+          element: timefilter
+          format: Ext_Thebing_Gui2_Format_Date
+          from:
+            alias:
+              - ts_tpg
+            column:
+              - date
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterFrom
+              - true
+          until:
+            alias:
+              - ts_tpg
+            column:
+              - date
+            default:
+              - Ext_Gui2_Factory_Default
+              - getDefaultFilterUntil
+              - true
+          searchtype: between
+          text_after: basierend auf Bezahldatum
+        -
+          element: seperator
+        -
+          element: selectfilter
+          label: Zahlungsmethode
+          label_as_item: true
+          value:
+            - Ext_Gui2_Factory_Default
+            - getValue
+          column:
+            - payment_method_id
+          entries:
+            - Ext_Thebing_Teacher_Payment
+            - getMatchingPaymentMethods
+            - true
+            - false
+    -
+      position: top
+      elements:
+        -
+          element: icon_delete
+        -
+          element: icon_communication
+          application: accounting_transfer
+        -
+          element: icon
+          label: Massen-PDF öffnen
+          task: openMultiplePdf
+          img:
+            - Util
+            - getIcon
+            - pdf
+columns:
+  -
+    title: Anbieter
+    column: provider_name
+    width: name
+    resize: true
+    format: Ext_TS_Accounting_Provider_Grouping_Transfer_Gui2_Format_Provider
+    sortable: false
+  -
+    title: Gehalt
+    column: amount
+    width: name
+    format: Ext_Thebing_Gui2_Format_Amount
+    format_params: amount_currency_id
+#  -
+#    title: Kategorie
+#    column: provider_category
+#    width: name
+  -
+    title: Kontoinhaber
+    column: provider_bank_account_holder
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Transfer_Gui2_Format_Provider
+    sortable: false
+  -
+    title: Kontonummer
+    column: provider_bank_account_number
+    width: number
+    format: Ext_TS_Accounting_Provider_Grouping_Transfer_Gui2_Format_Provider
+    sortable: false
+  -
+    title: BLZ
+    column: provider_bank_account_code
+    width: number
+    format: Ext_TS_Accounting_Provider_Grouping_Transfer_Gui2_Format_Provider
+    sortable: false
+  -
+    title: Name der Bank
+    column: provider_bank_name
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Transfer_Gui2_Format_Provider
+    sortable: false
+  -
+    title: Bankadresse
+    column: provider_bank_address
+    width: name
+    format: Ext_TS_Accounting_Provider_Grouping_Transfer_Gui2_Format_Provider
+    sortable: false
+  -
+    title: Zahlungsmethode
+    column: payment_method_id
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Admin_Payment, getPaymentMethods, true]
+  -
+    title: Datum der Zahlung
+    column: date
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: PDF
+    column: file
+    format: Ext_Thebing_Gui2_Format_Pdf
+    format_params: file
+    width: id
+default_columns:
+  -
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    width: user_name
+  -
+    title: Erstellt
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    column: created
+    width: date

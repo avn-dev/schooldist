@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_forms_languages` CHANGE `language` `language` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL;

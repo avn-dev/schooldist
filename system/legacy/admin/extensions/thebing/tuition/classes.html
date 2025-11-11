@@ -1,0 +1,553 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui					= new Ext_Thebing_Gui2(md5('thebing_tuition_classes'), 'Ext_Thebing_Tuition_Class_Gui2');
+$oGui->sView			= 'classes';
+$oGui->access = ['thebing_tuition_classes', ''];
+$oGui->row_icon_status_active = new TsTuition\Gui2\Icon\ClassActive();
+$oGui->row_icon_status_visible = new TsTuition\Gui2\Icon\ClassVisible();
+
+// WDBasic
+$oGui->setWDBasic('Ext_Thebing_Tuition_Class');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('name' => 'ASC'));
+
+// Daten
+
+/* @var $oData Ext_Thebing_Tuition_Class_Gui2 */
+$oData					= $oGui->getDataObject();
+// Daten vorbereiten
+$oData->prepareDialogData();
+
+if(Ext_Thebing_System::isAllSchools()) {
+
+	$aSchoolObjects = \Ext_Thebing_Client::getStaticSchoolListByAccess(false, false, true);
+
+	$aSchools = $aCourseCategories = $aTeachers = $aRooms = $aCourses = [];
+	foreach ($aSchoolObjects as $oSchool) {
+		$aSchools[$oSchool->id] = $oSchool->ext_1;
+		$aCourseCategories += $oSchool->getCourseCategoriesList('select');
+		$aTeachers += $oSchool->getTeacherList(true);
+		$aRooms += $oSchool->getClassRooms(true);
+		$aCourses += $oSchool->getCourseList();
+	}
+
+	$oGui->setTableData('where', array(
+		'ktcl.school_id' => ['IN', array_keys($aSchools)],
+		'ktcl.active'	=> 1,
+		'ktb.active'	=> 1,
+	));
+
+	$aCourseLanguages = \Ext_Thebing_Tuition_LevelGroup::getSelectOptions($oGui, null, $aSchoolObjects);
+
+} else {
+
+	$oSchool = Ext_Thebing_School::getSchoolFromSession();
+
+	$aSchools = [$oSchool->id => $oSchool->ext_1];
+	$aCourseCategories = $oSchool->getCourseCategoriesList('select');
+	$aTeachers = $oSchool->getTeacherList(true);
+	$aRooms = $oSchool->getClassRooms(true);
+	$aCourses = $oSchool->getCourseList();
+	
+	$oGui->setTableData('where', array(
+		'ktcl.school_id' => $oSchool->id,
+		'ktcl.active'	=> 1,
+		'ktb.active'	=> 1,
+	));
+
+	$aCourseLanguages = \Ext_Thebing_Tuition_LevelGroup::getSelectOptions($oGui, null, [$oSchool]);
+}
+
+$aWeeks					= $oData->getWeeks();
+$iCurrentWeekStart		= $oData->getCurrentWeekStart();
+
+
+
+/*
+ * Eigentlich sind hier keine Queries notwendig, weil es eine Lehrerspalte gibt, 
+ * in der "0" steht, aber ich hab das so umgesetzt weil die Verknüpfung sicher 
+ * mal flexibler wird.
+ */
+$aTeacherFilterQueries = [
+	-1 => '`ktb`.`teacher_id` = 0'	
+];
+foreach($aTeachers as $iTeacherId=>$sTeacher) {
+	$aTeacherFilterQueries[$iTeacherId] = '`ktb`.`teacher_id` = '.(int)$iTeacherId;
+}
+
+$aCourseCategories		= Ext_Gui2_Util::addLabelItem($aCourseCategories);
+
+$aTeachers = Ext_Thebing_Util::addEmptyItem($aTeachers, $oGui->t('Kein Lehrer'), -1);
+$aTeachers = Ext_Gui2_Util::addLabelItem($aTeachers, $oGui->t('Lehrer'));
+
+$aCourses = Ext_Gui2_Util::addLabelItem($aCourses, $oGui->t('Kurs'));
+
+$aRooms = Ext_Thebing_Util::addEmptyItem($aRooms,$oGui->t('Virtueller Raum'),-1);
+$aRooms = Ext_Thebing_Util::addEmptyItem($aRooms,$oGui->t('Kein Raum'),0);
+
+$aStatusOptions = [
+	Ext_Thebing_School_Tuition_Block::STATE_TEACHER_ABSENCE => $oGui->t('Lehrer mit Abwesenheit'),
+	Ext_Thebing_School_Tuition_Block::STATE_INVALID_TEACHER_AVAILABILITY => $oGui->t('Lehrer außerhalb der Verfügbarkeit'),
+	Ext_Thebing_School_Tuition_Block::STATE_INVALID_TEACHER_QUALIFICATION => $oGui->t('Lehrer außerhalb der Qualifikation')
+];
+$aStatusOptions = Ext_Gui2_Util::addLabelItem($aStatusOptions, $oGui->t('Status'));
+
+// Listenoptionen
+
+$oGui->column_sortable		= 1;
+$oGui->row_sortable			= 0;
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'ktcl';
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+$oGui->class_js				= 'Classes';
+$oGui->sidebar = true;
+
+$oDialogNew					= $oData->getDialogNew();
+$oDialogEdit				= $oData->getDialogEdit();
+
+// Toggle
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+
+// Suche
+$oFilter					= $oBar->createFilter();
+$oFilter->db_column			= array('id', 'name','lastname','firstname', 'firstname', 'lastname', 'firstname', 'lastname', 'number');
+$oFilter->db_alias			= array('ktcl', 'ktcl','cdb1','cdb1', 'kt', 'kt', 'kt_substitute', 'kt_substitute', 'tc_c_n');
+$oFilter->db_operator		= 'LIKE';
+$oFilter->id				= 'search';
+$oFilter->placeholder		= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+
+// Wochenfilter
+$oFilter					= $oBar->createFilter();
+$oFilter->filter_type		= 'select';
+$oFilter->select_options	= $aWeeks;
+$oFilter->value				= $iCurrentWeekStart;
+$oFilter->id				= 'week_filter';
+$oFilter->name				= 'week_filter';
+$oFilter->label				= $oGui->t('Kurswoche');
+$oFilter->required			= true;
+$oFilter->db_column			= 'week';
+$oFilter->db_alias			= 'ktb';
+$oFilter->db_operator		= '=';
+$oFilter->query_value_key	= 'filter_week';
+$oFilter->show_in_bar = true;
+$oFilter->simple = true;
+$oFilter->initial_value = (string)$iCurrentWeekStart; // Bei Reset nicht erste Woche
+
+// TODO Scheinbar wurde das mit select_navigation generell eingebaut, aber das wird in der Schulsoftware nirgends benutzt?
+$oFilter->additional_html = <<<additional_html
+<div class="select-navigation">
+	<a class="btn btn-sm btn-default last_week_icon">
+		<i class="fa fa-backward" title="{$oGui->t('Eine Woche zurück')}"></i>
+	</a>
+	<a class="btn btn-sm btn-default current_week_icon">
+		<i class="fa fa-stop" title="{$oGui->t('Aktuelle Woche')}"></i>
+	</a>
+	<a class="btn btn-sm btn-default next_week_icon">
+		<i class="fa fa-forward" title="{$oGui->t('Eine Woche vor')}"></i>
+	</a>
+</div>
+additional_html;
+
+$oBar->setElement($oFilter);
+
+if(Ext_Thebing_System::isAllSchools()) {
+	$oFilter = $oBar->createFilter();
+	$oFilter->label = $oGui->t('Schule');
+	$oFilter->db_column = 'school_id';
+	$oFilter->db_alias = 'ktcl';
+	$oFilter->db_operator = '=';
+	$oFilter->filter_type = 'select';
+	$oFilter->select_options = Ext_Gui2_Util::addLabelItem($aSchools, $oGui->t('Schule'));
+	$oFilter->value = null;
+	$oBar->setElement($oFilter);
+}
+
+// Kurskategoriefilter
+$oFilter					= $oBar->createFilter();
+$oFilter->label = $oGui->t('Kurskategorie');
+$oFilter->db_column			= 'category_id';
+$oFilter->db_alias			= "ktc";
+$oFilter->db_operator = '=';
+$oFilter->filter_type		= 'select';
+$oFilter->select_options	= $aCourseCategories;
+$oFilter->id				= 'course_category';
+$oFilter->value = null;
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column	 = 'teacher_id';
+$oFilter->db_alias = 'ktb';
+$oFilter->db_operator = '=';
+$oFilter->filter_type = 'select';
+$oFilter->filter_query = $aTeacherFilterQueries;
+$oFilter->select_options = $aTeachers;
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column	 = 'course_id';
+$oFilter->db_alias = 'ktclc_filter';
+$oFilter->db_operator = '=';
+$oFilter->filter_type = 'select';
+$oFilter->select_options = $aCourses;
+$oFilter->filter_join = " INNER JOIN
+	`kolumbus_tuition_classes_courses` `ktclc_filter` ON
+		`ktclc_filter`.`class_id` = `ktcl`.`id`
+";
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+//$oFilter->db_alias = 'ts_tctc_filter';
+$oFilter->db_alias = 'ktcl';
+$oFilter->db_column	 = 'courselanguage_id';
+$oFilter->db_operator = '=';
+$oFilter->select_options = Ext_Gui2_Util::addLabelItem($aCourseLanguages, $oGui->t('Kurssprache'));
+/*$oFilter->filter_join = " INNER JOIN
+	`ts_tuition_courses_to_courselanguages` `ts_tctc_filter` ON
+		`ts_tctc_filter`.`course_id` = `ktc`.`id`
+";*/
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_alias = 'ktb_filter';
+$oFilter->db_column	 = 'state';
+$oFilter->db_operator = '&';
+$oFilter->filter_join = " INNER JOIN
+	`kolumbus_tuition_blocks` `ktb_filter` ON
+		`ktb_filter`.`class_id` = `ktcl`.`id` AND
+		`ktb_filter`.`week` = `ktb`.`week` AND
+		`ktb_filter`.`active` = 1
+";
+$oFilter->select_options = $aStatusOptions;
+$oBar->setElement($oFilter);
+
+$oFilter = $oBar->createFilter('select');
+$oFilter->db_column = 'online_bookable_as_course';
+$oFilter->select_options = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Util::getYesNoArray(false), $oGui->t('Online buchbar'));
+$oFilter->filter_query = [
+	'no' => " `online_bookable_as_course` IS NULL ",
+	'yes' => " `online_bookable_as_course` IS NOT NULL "
+];
+$oBar->setElement($oFilter);
+
+$filter = $oBar->createFilter();
+$filter->label = $oGui->t('Bestätigt');
+$filter->db_column = 'confirmed';
+$filter->db_alias = 'ktcl';
+$filter->db_operator = '=';
+$filter->filter_type = 'select';
+$filter->select_options = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Util::getYesNoArray(), $oGui->t('Bestätigt'));
+$filter->filter_query = [
+	'0' => " `ktcl`.`confirmed` IS NULL ",
+	'1' => " `ktcl`.`confirmed` IS NOT NULL "
+];
+$oBar->setElement($filter);
+
+$filter = $oBar->createFilter();
+$filter->label = $oGui->t('Überbucht');
+$filter->db_column = 'overbooked';
+$filter->filter_type = 'select';
+$filter->filter_part = 'having';
+$filter->select_options = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Util::getYesNoArray(false), $oGui->t('Überbucht'));
+$filter->filter_query = [
+	'no' => " `overbooked` = 0 ",
+	'yes' => " `overbooked` = 1 "
+];
+$oBar->setElement($filter);
+
+$filter = $oBar->createFilter();
+$filter->label = $oGui->t('Ausgebucht');
+$filter->db_column = 'fully_booked';
+$filter->filter_type = 'select';
+$filter->filter_part = 'having';
+$filter->select_options = Ext_Gui2_Util::addLabelItem(Ext_Thebing_Util::getYesNoArray(false), $oGui->t('Ausgebucht'));
+$filter->filter_query = [
+	'no' => " `fully_booked` = 0 ",
+	'yes' => " `fully_booked` = 1 "
+];
+$oBar->setElement($filter);
+
+$oGui->setBar($oBar);
+
+// Buttons
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+
+if(Ext_Thebing_System::isAllSchools()) {
+	$oIcon = $oBar->createShowIcon($oGui->t('Anzeigen'), $oDialogEdit);
+	$oBar->setElement($oIcon);
+} else {
+	$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialogNew, $oGui->t('Neuer Eintrag'));
+	$oBar->setElement($oIcon);
+	$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialogEdit, $oGui->t('Editieren'));
+	$oBar->setElement($oIcon);
+	$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+	$oBar->setElement($oIcon);
+	$oIcon = $oBar->createFileManagerIcon();
+	$oBar->setElement($oIcon);
+
+	$oDialogDailyComments = $oData->getDialogDailyComments();
+	
+	$oIcon = $oBar->createIcon('fa-comment', 'openDialog', $oGui->t('Tägliche Kommentare'));
+	$oIcon->action = 'daily_comments';
+	$oIcon->dialog_data = $oDialogDailyComments;
+	$oIcon->label = $oGui->t('Tägliche Kommentare');
+	$oBar->setElement($oIcon);
+
+    $icon = $oBar->createIcon('fa-file-excel', 'requestAsUrl', $oGui->t('Anwesenheitsbericht'));
+    $icon->label = $oGui->t('Anwesenheitsbericht');
+    $icon->multipleId = 1;
+    $icon->visible = 1;
+    $icon->active = 0;
+    $icon->action = 'report_class';
+    $oBar->setElement($icon);
+
+    $icon = $oBar->createIcon(\Ext_TC_Util::getIcon('confirm'), 'request', $oGui->t('Bestätigen'));
+    $icon->label = $oGui->t('Bestätigen');
+    $icon->multipleId = 1;
+	$icon->visible = 1;
+	$icon->active = 0;
+    $icon->action = 'confirm_class';
+    $oBar->setElement($icon);
+}
+
+$oGui->setBar($oBar);
+
+// Paginator
+$oBar						= $oGui->createBar();
+$oBar->width				= '100%';
+$oBar->position				= 'top';
+$oPagination				= $oBar->createPagination();
+$oBar->setElement($oPagination);
+
+$oLabelGroup = $oBar->createLabelGroup($oGui->t('Export'));
+$oBar->setElement($oLabelGroup);
+$oIcon = $oBar->createCSVExport($oGui->t('CSV'));
+$oIcon->label = $oGui->t('CSV');
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createExcelExport();
+$oBar->setElement($oIcon);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+// Legende
+/** @var Ext_Gui2_Bar_Legend $oBarLegend */
+$oBarLegend = $oGui->createBar('legend');
+$oBarLegend->addTitle($oGui->t('Legende'));
+$oBarLegend->addInfo($oGui->t('Lehrer mit Abwesenheit'), Ext_Thebing_Util::getColor('red_font'), true);
+$oBarLegend->addInfo($oGui->t('Lehrer außerhalb der Verfügbarkeit (zum Zeitpunkt der Zuweisung)'), Ext_Thebing_Util::getColor('soft_purple'), true);
+$oBarLegend->addInfo($oGui->t('Lehrer außerhalb der Qualifikation (zum Zeitpunkt der Zuweisung)'),  Ext_Thebing_Util::getColor('substitute_part'), true);
+$oBarLegend->addInfo($oGui->t('Vertretungslehrer'),  '333', true, true);
+$oGui->setBar($oBarLegend);
+
+//Spalten
+
+if(Ext_Thebing_System::isAllSchools()) {
+	$oColumn				= $oGui->createColumn();
+	$oColumn->db_column		= 'school_id';
+	$oColumn->db_alias		= 'ktcl';
+	$oColumn->title			= $oGui->t('Schule');
+	$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+	$oColumn->width_resize	= true;
+	$oColumn->format		= new Ext_Gui2_View_Format_Selection($aSchools);
+	$oGui->setColumn($oColumn);
+}
+
+$oColumn							= $oGui->createColumn();
+$oColumn->db_column					= 'customerNumber';
+$oColumn->db_alias					= '';
+$oColumn->title						= $oGui->t('K.Nr.');
+$oColumn->width						= Ext_Thebing_Util::getTableColumnWidth('customer_number');
+$oColumn->width_resize				= false;
+$oColumn->mouseover_title			= $oGui->t('Kundennummer');
+$oColumn->default = false;
+$oFormat					= new Ext_Thebing_Gui2_Format_Concat();
+$oFormat->bUseIdFields		= false;
+$oColumn->format			= $oFormat;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'ktcl';
+$oColumn->title			= $oGui->t('Name der Klasse');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column			= 'days';
+$oColumn->title				= $oGui->t('Tage');
+$oColumn->width				= Ext_Thebing_Util::getTableColumnWidth('customer_name');
+$oColumn->width_resize		= false;
+$oColumn->format			= new Ext_Thebing_Gui2_Format_School_Tuition_DaysWithTime();
+$oGui->setColumn($oColumn);
+
+$oColumn					= $oGui->createColumn();
+$oColumn->db_column			= 'students';
+$oColumn->title				= $oGui->t('Schüler');
+$oColumn->width				= Ext_Thebing_Util::getTableColumnWidth('customer_name');
+$oColumn->width_resize		= false;
+$oFormat					= new Ext_Thebing_Gui2_Format_Concat();
+$oFormat->bUseIdFields		= false;
+$oFormat->sDelimiter		= '#';
+$oColumn->format			= $oFormat;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'weeks_count';
+$oColumn->db_alias		= '';
+$oColumn->title			= $oGui->t('Laufzeit');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('courseweek_from_until');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_Thebing_Gui2_Format_FromUntil('weeks_count', 'weeks_all');
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'count_students';
+$oColumn->db_alias		= '';
+$oColumn->title			= $oGui->t('Anzahl der zugewiesenen Schüler');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('number');
+$oColumn->width_resize	= false;
+$oColumn->small			= true;
+$oGui->setColumn($oColumn);
+
+$column = $oGui->createColumn();
+$column->db_column = 'maximum_students';
+$column->select_column = 'maximum_students';
+$column->title = $oGui->t('Maximale Anzahl an Schülern');
+$column->width = Ext_Thebing_Util::getTableColumnWidth('number');
+$column->width_resize = false;
+$oColumn->sortable = false;
+$oColumn->default = false;
+$oGui->setColumn($column);
+
+$column = $oGui->createColumn();
+$column->db_column = 'minimum_students';
+$column->select_column = 'minimum_students';
+$column->title = $oGui->t('Minimale Anzahl an Schülern');
+$column->width = Ext_Thebing_Util::getTableColumnWidth('number');
+$column->width_resize = false;
+$oColumn->sortable = true;
+$oColumn->default = false;
+$oGui->setColumn($column);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'start_week';
+$oColumn->db_alias		= 'ktcl';
+$oColumn->title			= $oGui->t('Startkalenderwoche');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_Thebing_Gui2_Format_Date();
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'end_week';
+$oColumn->title			= $oGui->t('Endkalenderwoche');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_Thebing_Gui2_Format_Date();
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'block_content';
+$oColumn->title			= $oGui->t('Inhalt');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->format		= new Ext_Gui2_View_Format_StringParts(',');
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'start_level';
+$oColumn->title			= $oGui->t('Startlevel');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('short_name');
+$oColumn->width_resize	= false;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'current_level';
+$oColumn->title			= $oGui->t('Aktuelles Level');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('short_name');
+$oColumn->width_resize	= false;
+$oColumn->small			= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'teachers';
+$oColumn->db_alias		= '';
+$oColumn->title			= $oGui->t('Lehrer');
+$oColumn->width			= 240;
+$oColumn->format		= new Ext_Thebing_Gui2_Format_School_Tuition_Teachers();
+$oColumn->css_overflow = 'ellipsis';
+$oColumn->width_resize	= false;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'rooms';
+$oColumn->db_alias		= '';
+$oColumn->title			= $oGui->t('Räume');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->format		= new \TsTuition\Gui2\Format\ClassesRooms($aRooms);
+$oColumn->css_overflow = 'ellipsis';
+$oColumn->width_resize	= false;
+$oColumn->sortable		= 0;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'color_name';
+$oColumn->title			= $oGui->t('Farbe');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->style			= new Ext_Gui2_View_Style_Color('color_code');
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'ktcl';
+$oColumn->db_column		= 'courselanguage_id';
+$oColumn->title			= $oGui->t('Kurssprache');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_TC_Gui2_Format_Multiselect($aCourseLanguages);
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column = 'category_id';
+$oColumn->db_alias = 'ktc';
+$oColumn->select_column = 'course_category_ids';
+$oColumn->title			= $oGui->t('Kurskategorie');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_TC_Gui2_Format_Multiselect($aCourseCategories);
+$oColumn->default = false;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column = 'id';
+$oColumn->db_alias = 'ktc';
+$oColumn->select_column = 'course_ids';
+$oColumn->title			= $oGui->t('Kurse');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_TC_Gui2_Format_Multiselect($aCourses);
+$oColumn->default = false;
+$oGui->setColumn($oColumn);
+
+$column = $oGui->createColumn();
+$column->db_alias = 'ktcl';
+$column->db_column = 'confirmed';
+$column->title = $oGui->t('Bestätigt am');
+$column->width = Ext_Thebing_Util::getTableColumnWidth('date');
+$column->width_resize = false;
+$column->format = new Ext_Thebing_Gui2_Format_Date();
+$oGui->setColumn($column);
+
+$oGui->addJs('tuition/js/classes.js');
+
+$oGui->display();

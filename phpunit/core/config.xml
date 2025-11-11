@@ -1,0 +1,12 @@
+<phpunit bootstrap="bootstrap.php"
+         colors="true"
+         convertErrorsToExceptions="false"
+         convertNoticesToExceptions="false"
+         convertWarningsToExceptions="false"
+         stopOnFailure="true"
+		 strict="false"
+         verbose="true"
+		 backupGlobals="false"
+		 backupStaticAttributes="false">
+  <!-- configure other elements -->
+</phpunit>

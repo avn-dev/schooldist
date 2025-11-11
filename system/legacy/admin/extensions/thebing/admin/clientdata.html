@@ -1,0 +1,608 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Ext_Thebing_Access::accesschecker('thebing_admin_clientdata');
+
+$oConfig = Ext_TS_Config::getInstance();
+$oClient = Ext_Thebing_Client::getInstance();
+$sGuiDescription = 'Thebing » Admin » Einstellungen';
+$bIsEmptyTimeZone = false;
+$bCannotSetTimeZone = false;
+
+$oLocaleService = new Core\Service\LocaleService;
+$aLocales = $oLocaleService->getInstalledLocales(null, true);
+
+$sError = null;
+
+if($_VARS['task'] == 'activate_new_accommodation_provider_payments') {
+
+	// Erst aktivieren, wenn die Bereinigung aktiv ist
+	$oActivateProviderPaymentsCheck = new Ext_TS_System_Checks_Accommodation_ActivateProviderPayments;
+	$oActivateProviderPaymentsCheck->executeCheck();
+
+	// Vorhandene Bezahlungen nochmal checken
+	$oProviderPaymentsToAllocationsCheck = new Ext_TS_System_Checks_Accommodation_ProviderPaymentsToAllocations;
+	$oProviderPaymentsToAllocationsCheck->executeCheck();
+
+} elseif($_VARS['task'] == 'save'){
+
+	$aOldFrontendLanguages = (array)$oConfig->frontend_languages;
+	
+    if (empty($_VARS['save']['show_customer_without_invoice'])) {
+        $_VARS['save']['show_customer_without_invoice'] = 0;
+    }
+	if(empty($_VARS['save']['timezone'])) {
+		$bIsEmptyTimeZone = true;
+	} else {
+		$bTimeZoneSet = Ext_TC_Util::setTimezone($_VARS['save']['timezone']);
+		if(!$bTimeZoneSet) {
+			$bCannotSetTimeZone = true;
+		}
+	}
+
+	if(
+		$bIsEmptyTimeZone === true ||
+		$bCannotSetTimeZone === true
+	) {
+		unset($_VARS['save']['timezone']);
+	}
+
+	foreach ((array)$_VARS['save'] as $sField => $mValue) {
+		$oClient->$sField = $mValue;
+	}
+	$oClient->save();
+
+	foreach ((array)$_VARS['config'] as $sField => $mValue) {
+
+		$bSave = true;
+		if($sField === 'frontend_languages') {
+			// Es dürfen keine Sprachen gelöscht werden, die noch einer Schule zugewiesen sind
+			$aSchoolsLanguages = Ext_Thebing_Client::getLangList();
+
+			$aSchoolLanguagesDiff = array_diff($aSchoolsLanguages, $mValue);
+
+			if(!empty($aSchoolLanguagesDiff)) {
+
+				$aMissingLanguages = array_intersect_key($aLocales, $aSchoolLanguagesDiff);
+				$sMissingLanguages = implode(', ', $aMissingLanguages);
+
+				$sError = sprintf(L10N::t('Die Sprache/n "%s" dürfen nicht entfernt werden, da sie Schulen zugewiesen sind.', 'Thebing » Admin » Einstellungen'), $sMissingLanguages);
+				$bSave = false;
+
+			}
+
+		} elseif($sField === 'backend_languages') {
+			// Wenn Backend-Sprachen geändert werden, muss der Cache geleert werden
+			WDCache::deleteGroup('System::getBackendLanguages');
+		}
+
+		if($bSave === true) {
+			$oConfig->$sField = $mValue;
+		}
+
+	}
+
+	// Sind Frontendsprachen dazu gekommen?
+	$aFrontendLanguages = (array)$oConfig->frontend_languages;
+	$aFrontendLanguagesDiff = array_diff($aFrontendLanguages, $aOldFrontendLanguages);
+
+	if(!empty($aFrontendLanguagesDiff)) {
+		Ext_Thebing_Util::updateLanguageFields();
+	}
+
+	if(is_file($_FILES['logo']['tmp_name'])) {
+
+		$sTempDir = \Util::getDocumentRoot().'storage/tmp/';
+		Util::checkDir($sTempDir);
+		
+		$sFile = \Util::getCleanFileName($_FILES['logo']['name']);
+		$sTemp = $sTempDir.$sFile;
+
+		$bMove = move_uploaded_file($_FILES['logo']['tmp_name'], $sTemp);
+
+		$sLogo = Ext_Thebing_Util::formatLogo($sFile, '/storage/tmp/');
+
+		$sTarget = $oClient->getFilePath().'logo.png';
+
+		rename(\Util::getDocumentRoot(false).$sLogo, $sTarget);
+		Util::changeFileMode($sTarget);
+
+	}
+
+}
+
+$aReceiptOptions = array();
+$aReceiptOptions[0] = L10N::t('Keinen', 'Thebing » Admin » Einstellungen');
+$aReceiptOptions[1] = L10N::t('Entsprechend Zahlungsart (Kunden- oder Agenturbeleg)', 'Thebing » Admin » Einstellungen');
+$aReceiptOptions[2] = L10N::t('Beide (Kunden- und Agenturbeleg)', 'Thebing » Admin » Einstellungen');
+
+$aCreditNoteReceiptOptions = array();
+$aCreditNoteReceiptOptions[0] = L10N::t('Nein', 'Thebing » Admin » Einstellungen');
+$aCreditNoteReceiptOptions[1] = L10N::t('Ja', 'Thebing » Admin » Einstellungen');
+
+$aDepurationLogs = array(
+	1 => '1 '.L10N::t('Monat',$sGuiDescription),
+	3 => '3 '.L10N::t('Monate',$sGuiDescription),
+	6 => '6 '.L10N::t('Monate',$sGuiDescription),
+	9 => '9 '.L10N::t('Monate',$sGuiDescription),
+	12 => '12 '.L10N::t('Monate',$sGuiDescription),
+	24 => '24 '.L10N::t('Monate',$sGuiDescription),
+	0 => L10N::t('Nie',$sGuiDescription)
+);
+$aDepurationBackupTables = $aDepurationLogs;
+
+$aPrivacyActions = [
+	'' => L10N::t('Keine Aktion',$sGuiDescription),
+	'anonymize' => L10N::t('Anonymisieren',$sGuiDescription),
+	'delete' => L10N::t('Löschen',$sGuiDescription)
+];
+$aPrivacyUnits = [
+	'weeks' => L10N::t('Wochen',$sGuiDescription),
+	'months' => L10N::t('Monate',$sGuiDescription),
+	'years' => L10N::t('Jahre',$sGuiDescription)
+];
+$aPrivacyBasedOn = [
+	'document_date' => L10N::t('Dokumentendatum',$sGuiDescription),
+	'created_date' => L10N::t('Erstellungsdatum',$sGuiDescription),
+	'service_until_date' => L10N::t('Leistungsende',$sGuiDescription)
+];
+
+$aAdditional = array(
+	'additional' => '<script type="text/javascript" src="/admin/extensions/gui2/jquery/jquery-1.11.2.min.js?v=3.893"></script>
+<script type="text/javascript" src="/admin/extensions/gui2/jquery/ui/jquery-ui.min.js?v=3.893"></script>
+<script type="text/javascript" src="/admin/extensions/gui2/jquery/ui/ui.multiselect.js?v=3.893"></script>
+<script type="text/javascript">
+var $j = jQuery.noConflict();
+</script><link rel="stylesheet" href="/admin/extensions/gui2/simple-dialog.css?v=3.893" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/jquery-ui.min.css?v=3.893" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/jquery-ui.structure.min.css?v=3.893" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/jquery-ui.theme.min.css?v=3.893" />
+<link rel="stylesheet" href="/admin/extensions/gui2/jquery/css/ui.multiselect.css?v=3.893" />'
+);
+Admin_Html::loadAdminHeader($aAdditional);
+
+// Ist ein Logo da?
+$sLogo = '';
+$sLogoPath = '';
+$sTarget = $oClient->getFilePath().'logo.png';
+if(is_file($sTarget)) {
+	$sLogo = 'logo.png';
+	$sLogoPath = $oClient->getFilePath(false).'logo.png';
+}
+
+?>
+
+<section class="content-header">
+	<h1><?=Ext_TS_System_Navigation::t()?></h1>
+</section>
+
+<form action="" method="post" enctype="multipart/form-data">
+					
+<section class="content">
+	
+	<div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title"><?=L10N::t('Allgemeine Einstellungen', 'Thebing » Admin » Einstellungen')?></h3>
+            </div>
+              <div class="box-body">
+               
+
+					<input type="hidden" name="task" value="save">
+					
+					<?php
+					if(!empty($sError)) {
+						echo '<p class="error">'.$sError.'</p>';
+					}
+					?>
+					
+					<table class="table" cellpadding="3" cellspacing="0" style="width:100%;">
+						<tr>
+							<th style="width:40%;">
+								<label for="save[name]"><?=L10N::t('Mandant', 'Thebing » Admin » Einstellungen')?></label>
+							</th>
+							<td>
+								<input type="text" class="txt form-control" name="save[name]" style="width:250px;" value="<?=$oClient->name?>" />
+							</td>
+						</tr>
+						
+						<tr>
+							<th>
+								<label for="save[show_customer_without_invoice]"><?=L10N::t('Kunden ohne Rechnung in Matching und Planung anzeigen', 'Thebing » Admin » Einstellungen')?></label>
+							</th>
+							<td>
+								<?
+								$sChecked = ' ';
+								#if($oClient->show_customer_without_invoice == 1){
+									#$sChecked = ' checked=true ';
+								#}
+								$sSelected1 = "";
+								$sSelected0 = "";
+								$sSelected2 = "";
+
+								$sVarKey = "sSelected".$oClient->show_customer_without_invoice;
+								$$sVarKey = 'selected="selected"';
+								?>
+								<!--<input type="checkbox" <?//$sChecked?> name="save[show_customer_without_invoice]" value="1" />-->
+								<select class="txt form-control" name="save[show_customer_without_invoice]">
+									<option value="1" <?=$sSelected1?>><?=L10N::t('Bestätigte Schüler ohne Proforma / Rechnung anzeigen', 'Thebing » Admin » Einstellungen')?></option>
+									<option value="0" <?=$sSelected0?>><?=L10N::t('Bestätigte Schüler ab Proforma anzeigen', 'Thebing » Admin » Einstellungen')?></option>
+									<option value="2" <?=$sSelected2?>><?=L10N::t('Bestätigte Schüler ab Rechnung anzeigen', 'Thebing » Admin » Einstellungen')?></option>
+								</select>
+							</td>
+						</tr>
+						<?php
+						$autoConfirmOptions = [
+							Ext_Thebing_Client::BOOKING_AUTO_CONFIRM_NO => L10N::t('Nein', 'Thebing » Admin » Einstellungen'),
+							Ext_Thebing_Client::BOOKING_AUTO_CONFIRM_ALL => L10N::t('Alle', 'Thebing » Admin » Einstellungen'),
+							Ext_Thebing_Client::BOOKING_AUTO_CONFIRM_ONLY_SYSTEM => L10N::t('Nur im System erstellte Buchungen', 'Thebing » Admin » Einstellungen')
+						];
+						printFormSelect(L10N::t('Buchungen automatisch bestätigen', 'Thebing » Admin » Einstellungen'), 'config[booking_auto_confirm]', $autoConfirmOptions, $oConfig->booking_auto_confirm);
+						?>
+
+						<? if(Ext_Thebing_Access::hasRight("thebing_insurance_icon")) { ?>
+							<? $aMethods = array(L10N::t("Normale Preisstruktur", 'Thebing » Admin » Schools'), L10N::t('Preis pro Woche', 'Thebing » Admin » Schools')); ?>
+							<tr>
+								<th>
+									<label for="save[insurance_price_method]"><?=L10N::t('Preisstruktur - Versicherungen', 'Thebing » Admin » Einstellungen')?></label>
+								</th>
+								<td>
+									<select class="txt form-control" name="save[insurance_price_method]">
+										<? foreach((array)$aMethods as $iKey => $sValue) { ?>
+											<option value="<?=$iKey?>" <? if($oClient->insurance_price_method) { ?>selected="selected"<? } ?>><?=$sValue?></option>
+										<? } ?>
+									</select>
+								</td>
+							</tr>
+						<? }
+
+                        $layouts = \Ext_TC_Communication_Template_Email_Layout::query()->pluck('name', 'id')
+                                ->prepend('', 0);
+                        $classConfirmOptions = [
+                                0 => L10N::t('Alle', 'Thebing » Admin » Einstellungen'),
+                                1 => L10N::t('Nein', 'Thebing » Admin » Einstellungen'),
+							    2 => L10N::t('Beim Erreichen der Mindestteilnehmeranzahl', 'Thebing » Admin » Einstellungen')
+                        ];
+                        ?>
+ 						<?=printFormCheckbox(L10N::t('Flexiblität der Listen benutzerbezogen speichern', 'Thebing » Admin » Einstellungen'), 'save[flex_user_based]', 1, $oClient->flex_user_based)?>
+						<?=printFormCheckbox(L10N::t('Telefonnummern automatisch formatieren', 'Thebing » Admin » Einstellungen'), 'config[auto_format_phone_numbers]', 1, \System::d('auto_format_phone_numbers', 1))?>
+						<?=printFormCheckbox(L10N::t('Nachnamen der Buchungskontakte in Großbuchstaben schreiben', 'Thebing » Admin » Einstellungen'), 'config[lastname_capital_letters_inquiry]', 1, \System::d('lastname_capital_letters_inquiry'))?>
+						<?=printFormCheckbox(L10N::t('Weitere Kontaktdaten automatisch formatieren (Erster Buchstabe groß, Rest klein)', 'Thebing » Admin » Einstellungen'), 'config[format_additional_contactdata]', 1, \System::d('format_additional_contactdata'))?>
+						<?=printFormCheckbox(L10N::t('Nachnamen der Unterkunftskontakte in Großbuchstaben schreiben', 'Thebing » Admin » Einstellungen'), 'config[lastname_capital_letters_accommodation]', 1, \System::d('lastname_capital_letters_accommodation'))?>
+						<?php printFormCheckbox(L10N::t('Zahlungen bei erfolgten Gutschriften automatisch verrechnen', 'Thebing » Admin » Einstellungen'), 'config[ts_auto_document_payment_clearing]', 1, \System::d('ts_auto_document_payment_clearing', 1))?>
+						<?php printFormCheckbox(L10N::t('Zahlungen ohne Rechnungen ermöglichen (Akonto)', 'Thebing » Admin » Einstellungen'), 'config[ts_payments_without_invoice]', 1, \System::d('ts_payments_without_invoice'))?>
+						<?php printFormSelect(L10N::t('Klassen automatisch bestätigen', 'Thebing » Admin » Einstellungen'), 'config[ts_tuition_class_confirm]', $classConfirmOptions, \System::d('ts_tuition_class_confirm'))?>
+						<?php printFormSelect(L10N::t('Standardlayout für E-Mail-Kommunikation', 'Thebing » Admin » Einstellungen'), 'config[admin.communication.message.default_layout]', $layouts->toArray(), \System::d('admin.communication.message.default_layout'))?>
+						<?=printFormFile(L10N::t('Logo', 'Thebing » Admin » Einstellungen'), 'logo')?>
+<?
+						if(!empty($sLogoPath)) {
+?>
+						<tr>
+							<th>
+								<?=L10N::t('Aktuelles Logo', 'Thebing » Admin » Einstellungen')?>
+							</th>
+							<td>
+								<img src="<?=$sLogoPath?>?r=<?=time()?>" alt="" />
+							</td>
+						</tr>					
+<?
+	}
+						$aTimeZones	= Ext_TC_Util::getTimeZones();
+						$aTimeZones = Ext_Thebing_Util::addEmptyItem($aTimeZones);
+
+?>
+						<tr>
+							<th>
+								<?=L10N::t('Zeitzone', 'Thebing » Admin » Einstellungen')?>
+							</th>
+							<td>
+								<select name="save[timezone]" class="txt form-control">
+<?
+									foreach($aTimeZones as $sKey => $sValue){
+?>
+										<option value="<?=$sKey?>" <? if($sKey == $oClient->timezone) { ?>selected="selected"<? } ?>><?=$sValue?></option>
+<?
+									}
+?>
+								</select>
+<?
+									if($bIsEmptyTimeZone === true) {
+?>
+										<span style="color:red"><?=L10N::t('Fehler: Die Zeitzone darf nicht leer sein!', 'Thebing » Admin » Einstellungen');?></span>
+<?
+									}
+									if($bCannotSetTimeZone === true) {
+?>
+										<span style="color:red"><?=L10N::t('Fehler: Die Zeitzone konnte nicht gesetzt werden.', 'Thebing » Admin » Einstellungen');?></span>
+<?
+									}
+?>
+							</td>
+						</tr>						
+<?
+						$aExecutionTimeOptions = Ext_TC_Util::getHours();
+?>			
+						<? //printFormSelect(L10N::t('Ausführungszeit Index-Aktualisierung', 'Thebing » Admin » Einstellungen'), 'save[execution_time_index_refreshing]', $aExecutionTimeOptions, $oClient->execution_time_index_refreshing)?>
+						<?=printFormSelect(L10N::t('Ausführungszeit Unterkunftsanbieterbezahlung', 'Thebing » Admin » Einstellungen'), 'save[execution_time_accommodation_provider_payments]', $aExecutionTimeOptions, $oClient->execution_time_accommodation_provider_payments)?>
+						<?=printFormSelect(L10N::t('Ausführungszeit Statistik-Aktualisierung', 'Thebing » Admin » Einstellungen'), 'save[execution_time_statistics_update]', $aExecutionTimeOptions, $oClient->execution_time_statistics_update)?>
+
+						<tr>
+							<th style="width:40%;">
+								<label for="save[system_color]"><?=L10N::t('Systemfarbe', 'Thebing » Admin » Einstellungen')?></label>
+							</th>
+							<td>
+								<div class="input-group my-colorpicker2 colorpicker-element">
+									<input type="text" class="form-control" name="save[system_color]" value="<?=$oClient->system_color?>">
+									<div class="input-group-addon">
+										<i></i>
+									</div>
+							  </div>
+								
+							</td>
+						</tr>
+
+						<tr>
+							<th style="width:40%;">
+								<label for="config_password_strength"><?=L10N::t('Passwortstärke', 'Thebing » Admin » Einstellungen')?></label>
+							</th>
+							<td>
+								<!--<input type="dropdown" class="txt form-control" name="save[password_strength]" style="width:250px;" value="/*=\System::d('password_strength')*/">-->
+								<select id="config_password_strength" name="config[password_strength]" class="txt form-control">
+									<?
+									$aPasswordStrengths = [
+										0 =>  L10N::t('Ganz schwach','Thebing » Admin » Einstellungen'),
+										1 =>  L10N::t('Schwach','Thebing » Admin » Einstellungen'),
+										2 =>  L10N::t('Ausreichend','Thebing » Admin » Einstellungen'),
+										3 =>  L10N::t('Gut','Thebing » Admin » Einstellungen'),
+										4 =>  L10N::t('Sehr gut','Thebing » Admin » Einstellungen'),
+									];
+									foreach($aPasswordStrengths as $sKey => $sValue){
+										?>
+										<option value="<?=$sKey?>" <? if($sKey == \System::getMinPasswordStrength()) { ?>selected="selected"<? } ?>><?=$sValue?></option>
+										<?
+									}
+									?>
+								</select>
+							</td>
+						</tr>
+						<?php
+						printFormMultiSelect(L10N::t('Verfügbare Frontend-Sprachen', 'Thebing » Admin » Einstellungen'), 'config[frontend_languages][]', $aLocales, (array)$oConfig->frontend_languages, 'style="width:660px;" size="10" id="frontend_languages"');
+						
+						// Kein Zugriff auf getBackendLanguages, damit hier wirklich alle möglichen Sprachen erscheinen
+						$aBackendLanguages = [];
+						$aItems = System::d('allowed_languages');
+						$aAllLanguages = Ext_TC_Language::getSelectOptions();
+						foreach($aItems as $sIso=>$sLabel) {
+							$aBackendLanguages[$sIso] = $aAllLanguages[$sIso];
+						}
+						printFormMultiSelect(L10N::t('Verfügbare Backend-Sprachen', 'Thebing » Admin » Einstellungen'), 'config[backend_languages][]', $aBackendLanguages, (array)$oConfig->backend_languages, 'style="width:660px;" size="6" id="backend_languages"');
+						?>
+					</table>
+					
+              </div>
+          </div>
+	
+		<div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title"><?=L10N::t('Einstellungen für Zahlungsbelege', 'Thebing » Admin » Einstellungen')?></h3>
+            </div>
+              <div class="box-body">
+               
+					<p><?=L10N::t('Bitte wählen Sie hier aus, welche Belege beim Eintragen einer Zahlung generiert werden sollen.', 'Thebing » Admin » Einstellungen')?></p>
+					<?=printTableStart()?>
+						<?=printFormSelect(L10N::t('Beleg pro Zahlung generieren', 'Thebing » Admin » Einstellungen'), 'save[inquiry_payments_receipt]', $aReceiptOptions, $oClient->inquiry_payments_receipt)?>
+						<?=printFormSelect(L10N::t('Beleg für Zahlungen einer Rechnung generieren', 'Thebing » Admin » Einstellungen'), 'save[inquiry_payments_invoice]', $aReceiptOptions, $oClient->inquiry_payments_invoice)?>
+						<?=printFormSelect(L10N::t('Beleg für Zahlungen aller Rechnungen generieren', 'Thebing » Admin » Einstellungen'), 'save[inquiry_payments_overview]', $aReceiptOptions, $oClient->inquiry_payments_overview)?>
+						<?=printFormSelect(L10N::t('Beleg pro Agenturzahlung generieren', 'Thebing » Admin » Einstellungen'), 'save[inquiry_payments_creditnote_receipt]', $aCreditNoteReceiptOptions, $oClient->inquiry_payments_creditnote_receipt)?>
+						<?=printFormSelect(L10N::t('Beleg für Zahlungen einer Agenturgutschrift generieren', 'Thebing » Admin » Einstellungen'), 'save[inquiry_payments_creditnote]', $aCreditNoteReceiptOptions, $oClient->inquiry_payments_creditnote)?>
+						<?=printFormSelect(L10N::t('Beleg für Zahlungen aller Agenturgutschriften generieren', 'Thebing » Admin » Einstellungen'), 'save[inquiry_payments_creditnote_overview]', $aCreditNoteReceiptOptions, $oClient->inquiry_payments_creditnote_overview)?>
+					<?=printTableEnd()?>
+<?php
+					$aChecks = array();
+					$aChecks['inquiry_payments_receipt'] = array('document_invoice_customer_receipt', 'document_invoice_agency_receipt');
+					$aChecks['inquiry_payments_invoice'] = array('document_customer_document_payment', 'document_agency_document_payment');
+					$aChecks['inquiry_payments_overview'] = array('document_customer_document_payment_overview', 'document_agency_document_payment_overview');
+					$aChecks['inquiry_payments_creditnote_receipt'] = array('document_creditnote_receipt');
+					$aChecks['inquiry_payments_creditnote'] = array('document_creditnote_document_payment');
+					$aChecks['inquiry_payments_creditnote_overview'] = array('document_creditnote_document_payment_overview');
+
+					$aSchools = $oClient->getSchools(true);
+					
+					foreach((array)$aSchools as $iSchoolId=>$sSchool) {
+						foreach((array)$aChecks as $sKey=>$aCheck) {
+							if($oClient->$sKey > 0) {
+								foreach((array)$aCheck as $sCheck) {
+									$aTemplate = Ext_Thebing_Pdf_Template_Search::s($sCheck, false, $iSchoolId);
+									if(empty($aTemplate)) {
+										$sApplication = Ext_Thebing_Pdf_Template::getApplications($sCheck);
+										$aErrors[] = sprintf(L10N::t('Für die Schule "%s" fehlt die PDF Vorlage "%s".', 'Thebing » Admin » Einstellungen'), $sSchool, $sApplication);
+									}
+								}
+							}
+						}
+					}
+
+					if(!empty($aErrors)) {
+						echo '<h3>'.L10N::t('Die folgenden PDF Vorlagen fehlen', 'Thebing » Admin » Einstellungen').'</h3>';
+						echo '<p class="error">';
+						foreach((array)$aErrors as $sError) {
+							echo $sError.'<br/>';
+						}
+						echo '</p>';
+					}
+
+?>
+					
+		
+              </div>
+          </div>
+	
+		<div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title"><?=L10N::t('Bereinigungseinstellungen', 'Thebing » Admin » Einstellungen')?></h3>
+            </div>
+              <div class="box-body">
+               
+					<?=printTableStart()?>
+						<? //printFormSelect(L10N::t('Bereinigungszeitraum der Logs', 'Thebing » Admin » Einstellungen'), 'save[depuration_logs]', $aDepurationLogs, $oClient->depuration_logs)?>
+						<?=printFormSelect(L10N::t('Bereinigungszeitraum der Datenbank Backup-Tabellen', 'Thebing » Admin » Einstellungen'), 'save[depuration_backuptables]', $aDepurationBackupTables, $oClient->depuration_backuptables)?>
+						<?=printFormSelect(L10N::t('Ausführungszeit Bereinigung', 'Thebing » Admin » Einstellungen'), 'save[execution_time_depuration]', $aExecutionTimeOptions, $oClient->execution_time_depuration)?>
+					<?=printTableEnd()?>
+					
+              </div>
+          </div>
+
+	<?php
+	$cPrintSecondPrivacyRow = function($sType) use($oClient, $aPrivacyUnits, $aPrivacyBasedOn) {
+		$sKeyQuantity = 'privacy_'.$sType.'_quantity';
+		$sValueQuantity = empty($oClient->$sKeyQuantity) ? '' : $oClient->$sKeyQuantity;
+		$sKeyUnit = 'privacy_'.$sType.'_unit';
+		$sKeyBasedOn = 'privacy_'.$sType.'_basedon';
+		?>
+		<tr>
+			<th><?= L10N::t('Zeitpunkt', 'Thebing » Admin » Einstellungen') ?></th>
+			<td>
+				<input name="save[<?=$sKeyQuantity?>]" type="text" maxlength="3" class="form-control" style="display: inline-block; width: 50px;" value="<?= $sValueQuantity ?>">
+				<select name="save[<?=$sKeyUnit?>]" class="form-control" style="display: inline-block; width: 100px;">
+					<? foreach($aPrivacyUnits as $sKey => $sValue) {
+						echo '<option value="'.$sKey.'" '.($oClient->$sKeyUnit === $sKey ? 'selected' : '').'>'.$sValue.'</option>';
+					} ?>
+				</select>
+				<span style="padding: 0 5px;"><?= L10N::t('nach', 'Thebing » Admin » Einstellungen') ?></span>
+				<? if($sType === 'provider') {
+					echo L10N::t('Datum der Deaktivierung', 'Thebing » Admin » Einstellungen');
+				} else {
+					if($sType === 'enquiry') {
+						// Wegen dem Konstrukt Offer vs. Combination funktioniert das nicht
+						unset($aPrivacyBasedOn['service_until_date']);
+					} ?>
+					<select name="save[<?=$sKeyBasedOn?>]" class="form-control" style="display: inline-block; width: 200px;">
+						<? foreach($aPrivacyBasedOn as $sKey => $sValue) {
+							echo '<option value="'.$sKey.'" '.($oClient->$sKeyBasedOn === $sKey ? 'selected' : '').'>'.$sValue.'</option>';
+						} ?>
+					</select>
+				<? } ?>
+			</td>
+		</tr>
+		<?php
+	}
+
+	?>
+
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title"><?=L10N::t('Datenschutz', 'Thebing » Admin » Einstellungen')?></h3>
+		</div>
+		<div class="box-body">
+			<? printTableStart() ?>
+			<tr>
+				<td><? printFormCheckbox(L10N::t('IPs bei Frontend-Kombinationen speichern', 'Thebing » Admin » Einstellungen'), 'config[frontend_store_ips]', 1, $oConfig->frontend_store_ips)?></td>
+			</tr>
+			<!--<tr>
+				<td colspan="2">
+					<h4><?= L10N::t('Anfragen', 'Thebing » Admin » Einstellungen') ?></h4>
+					<div class="alert alert-info">
+						<h4><i class="icon fa fa-info"></i> <?=L10N::t('Hinweis', 'Thebing » Admin » Einstellungen')?></h4>
+						<?= L10N::t('Anonymisieren:
+						<ul>
+							<li>Es werden folgende Felder verändert: Nachname, Vorname</li>
+							<li>Folgende Felder werden geleert: Adresse, Adresszusatz, Telefon, Telefon Büro, Fax, Handy, E-Mail, Sozialversicherungsnummer, Rechnungsadresse – Firma, Adresse</li>
+							<li>Es werden alle Dokumente, Angebote und gesendete E-Mails gelöscht.</li>
+							<li>Statistische Informationen und Zuweisungsdetails bleiben dadurch erhalten.</li>
+						</ul>
+						Löschen:
+						<ul>
+							<li>Der komplette Datensatz mit allen Abhängigkeiten, Dokumenten und E-Mails wird gelöscht. </li>
+							<li>Statistische Informationen und Zuweisungsdetails gehen verloren.</li>
+						</ul>
+						', 'Thebing » Admin » Einstellungen') ?>
+					</div>
+				</td>
+			</tr>-->
+			<? // printFormSelect(L10N::t('Aktion', 'Thebing » Admin » Einstellungen'), 'save[privacy_enquiry_action]', $aPrivacyActions, $oClient->privacy_enquiry_action) ?>
+			<? // $cPrintSecondPrivacyRow('enquiry') ?>
+			<tr>
+				<td colspan="2">
+					<h4><?= L10N::t('Buchungen', 'Thebing » Admin » Einstellungen') ?></h4>
+					<div class="alert alert-info">
+						<h4><i class="icon fa fa-info"></i> <?=L10N::t('Hinweis', 'Thebing » Admin » Einstellungen')?></h4>
+						<?= L10N::t('Anonymisieren:
+						<ul>
+							<li>Es werden folgende Felder verändert: Nachname, Vorname</li>
+							<li>Folgende Felder werden geleert: Adresse, Adresszusatz, Telefon, Telefon Büro, Fax, Handy, E-Mail, Sozialversicherungsnummer, Rechnungsadresse – Firma, Adresse, Notfallkontakt – Ansprechpartner, Telefon und E-Mail, Visa - Visa ID, Sendungscode, Ausweisnummer</li>
+							<li>Es werden alle Dokumente, Uploads und gesendete E-Mails gelöscht.</li>
+							<li>Rechnungen, statistische Informationen und Zuweisungsdetails bleiben dadurch erhalten.</li>
+						</ul>
+						Löschen:
+						<ul>
+							<li>Der komplette Datensatz mit allen Abhängigkeiten, Dokumenten, Rechnungen, Zahlungen und E-Mails wird gelöscht. </li>
+							<li>Statistische Informationen und Zuweisungsdetails gehen verloren.</li>
+						</ul>
+						', 'Thebing » Admin » Einstellungen') ?>
+					</div>
+				</td>
+			</tr>
+			<? printFormSelect(L10N::t('Aktion', 'Thebing » Admin » Einstellungen'), 'save[privacy_inquiry_action]', $aPrivacyActions, $oClient->privacy_inquiry_action) ?>
+			<? $cPrintSecondPrivacyRow('inquiry') ?>
+			<tr>
+				<td colspan="2">
+					<h4><?= L10N::t('Anbieter', 'Thebing » Admin » Einstellungen') ?></h4>
+					<div class="alert alert-info">
+						<h4><i class="icon fa fa-info"></i> <?=L10N::t('Hinweis', 'Thebing » Admin » Einstellungen')?></h4>
+						<?= L10N::t('Anonymisieren:
+						<ul>
+							<li>Es werden folgende Felder verändert: Nachname, Vorname</li>
+							<li>Folgende Felder werden geleert: Adresse, Adresszusatz, Telefon, Telefon Büro, Fax, Handy, E-Mail, Skype, Sozialversicherungsnummer (nur Lehrer), Alle Bankdaten, Fahrer (nur Transfer), Mitglieder (nur Unterkunft)</li>
+							<li>Es werden alle Uploads, Bilder und gesendete E-Mails gelöscht.</li>
+							<li>Statistische Informationen und Zuweisungsdetails bleiben dadurch erhalten.</li>
+						</ul>
+						Löschen:
+						<ul>
+							<li>Der komplette Datensatz mit allen Abhängigkeiten, Dokumenten, Zahlungen und E-Mails wird gelöscht.</li>
+							<li>Statistische Informationen und Zuweisungsdetails gehen verloren.</li>
+						</ul>
+						', 'Thebing » Admin » Einstellungen') ?>
+					</div>
+				</td>
+			</tr>
+			<? printFormSelect(L10N::t('Aktion', 'Thebing » Admin » Einstellungen'), 'save[privacy_provider_action]', $aPrivacyActions, $oClient->privacy_provider_action) ?>
+			<? $cPrintSecondPrivacyRow('provider') ?>
+			<? printTableEnd() ?>
+		</div>
+	</div>
+
+		</form>
+	
+					<?
+					if(!System::d('new_accommodation_provider_payments_activated')) {
+					?>
+					<form action="" method="post" enctype="multipart/form-data">
+					<h2><?=L10N::t('Unterkunftsanbieterbezahlung', 'Thebing » Admin » Einstellungen')?></h2>
+					<input type="hidden" name="task" value="activate_new_accommodation_provider_payments">
+					<p><?=L10N::t('Durch Klick auf den unten stehenden Button können Sie die neue Unterkunftsanbieterbezahlung aktivieren. Nach dem Klick ist die alte Liste nicht mehr verfügbar und die automatische Aktualisierung der Einträge wird aktiviert. Der Vorgang kann nicht rückgängig gemacht werden!', 'Thebing » Admin » Einstellungen')?></p>
+					<?printSubmit(L10N::t('Neue Unterkunftsanbieterbezahlung jetzt aktivieren', 'Thebing » Admin » Einstellungen'), 'onclick="if(!confirm(\''.  \Util::getEscapedString(L10N::t('Ja, ich möchte die neue Version aktivieren. Der Vorgang kann nicht rückgängig gemacht werden!', 'Thebing » Admin » Einstellungen'), 'javascript').'\')) {return false;}"')?>
+					</form>
+					<?
+					}
+					?>
+
+<br>
+<input type="submit" class="btn btn-primary pull-right" value="<?=L10N::t('Speichern', 'Thebing » Admin » Einstellungen')?>"/>
+<br>
+<br>
+
+</section>
+
+<script>
+var ojQLocale = {
+	addAll: '<?=L10N::t('Alle +', Ext_Gui2::$sAllGuiListL10N)?>',
+	removeAll: '<?=L10N::t('Alle -', Ext_Gui2::$sAllGuiListL10N)?>',
+	itemsCount: '<?=L10N::t('ausgewählt', Ext_Gui2::$sAllGuiListL10N)?>'
+};
+
+$j('#frontend_languages,#backend_languages').multiselect({sortable: false, searchable: true, locale: ojQLocale});
+</script>
+
+<?
+$sAdditional = "<script>\$j('.my-colorpicker2').colorpicker({format: 'hex'});</script>";
+Admin_Html::loadAdminFooter($sAdditional);

@@ -1,0 +1,74 @@
+hash: cbb1400344d7793ef15f59ed22c6c40e
+class:
+  wdbasic: Ext_Thebing_School_TeachingUnit
+  data: Ext_Thebing_School_TeachingUnit_Gui2_Data
+access: thebing_marketing_lektionen
+id:
+  alias: kcou
+  column: id
+sortable: true
+limit: PHP_INT_MAX
+only_pagecount: true
+orderby:
+  - Ext_Thebing_School_TeachingUnit_Gui2_Data
+  - getOrderby
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+            - id
+            - title
+        alias: 
+            - kcou
+            - kcou
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog: 
+          - Ext_Thebing_School_TeachingUnit_Gui2_Data  
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_School_TeachingUnit_Gui2_Data
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Bezeichnung
+    alias: kcou
+    column: title
+    width: name
+    resize: true   
+  - 
+    title: Schulen	
+    column: schools
+    width: name
+    format: Ext_Thebing_Gui2_Format_Multiselect
+    format_params:
+        - [Ext_Thebing_Client, getSchoolList, true]
+  - 
+    title: Zusatzlektion	
+    column: extra
+    alias: kcou
+    width: name
+    format: Ext_Thebing_Gui2_Format_YesNo
+  - 
+    title: Startlektion	
+    column: start_unit
+    alias: kcou
+    width: name
+  - 
+    title: Anzahl Lektione	
+    column: unit_count
+    alias: kcou
+    width: name
+    

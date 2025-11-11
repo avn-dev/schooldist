@@ -1,0 +1,59 @@
+hash: e89b1589c7ca50abe1f5780794ad46bc
+class:
+  wdbasic: Ext_Thebing_Marketing_Studentstatus
+  data: \Ts\Gui2\Data\StudentStatusList
+access: thebing_marketing_status
+orderby:
+  - \Ts\Gui2\Data\StudentStatusList
+  - getOrderby
+sortable: true
+only_pagecount: true
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+            - id
+            - text
+        searchtype: LIKE
+     -
+       element: seperator
+     -
+        element: validfilter
+        label: Gültigkeit    
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\StudentStatusList
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\StudentStatusList
+          - getDialog
+     -
+        element: icon_delete
+        dialog:
+          - \Ts\Gui2\Data\StudentStatusList
+          - getDialog    
+     -
+        element: icon_deactivate
+columns:
+  - 
+    title: Bezeichnung
+    column: text
+    width: name
+    resize: true
+  - 
+    title: Schulen
+    column: schools
+    width: name
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+        - [Ext_Thebing_Client, getSchoolList, true]

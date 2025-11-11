@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_inquiries_payments` CHANGE `created` `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;

@@ -1,0 +1,107 @@
+{
+    "//": "This file has been generated automatically.",
+    "name": "fidelo/framework",
+    "description": "Fidelo Framework",
+    "homepage": "https://fidelo.com",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Fidelo Software GmbH",
+            "email": "support@fidelo.com"
+        }
+    ],
+    "require": {
+        "fidelo-bundle/core": "*",
+        "fidelo-bundle/admin": "*",
+        "fidelo-bundle/adminlte": "*",
+        "fidelo-bundle/api": "*",
+        "fidelo-bundle/cms": "*",
+        "fidelo-bundle/communication": "*",
+        "fidelo-bundle/elastica-adapter": "*",
+        "fidelo-bundle/file-manager": "*",
+        "fidelo-bundle/form": "*",
+        "fidelo-bundle/office": "*",
+        "fidelo-bundle/pdf": "*",
+        "fidelo-bundle/sso": "*",
+        "fidelo-bundle/tc": "*",
+        "fidelo-bundle/tc-api": "*",
+        "fidelo-bundle/tinymce": "*",
+        "fidelo-bundle/ts": "*",
+        "fidelo-bundle/tsaccounting": "*",
+        "fidelo-bundle/ts-canvas": "*",
+        "fidelo-bundle/ts-flywire": "*",
+        "fidelo-bundle/ts-frontend": "*",
+        "fidelo-bundle/ts-hubspot": "*",
+        "fidelo-bundle/ts-moodle": "*",
+        "fidelo-bundle/ts-rdstation": "*",
+        "fidelo-bundle/ts-student-app": "*",
+        "fidelo-bundle/ts-student-sso": "*"
+    },
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "system/bundles/*"
+        },
+        {
+            "type": "composer",
+            "url": "https://accounting%40fidelo.com:L86EMQi2ae7jtkwe2eHM@www.setasign.com/downloads/"
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "trippo/responsivefilemanager",
+                "version": "9.14.0",
+                "dist": {
+                    "url": "https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.14.0/responsive_filemanager.zip",
+                    "type": "zip"
+                }
+            }
+        },
+        {
+            "type": "git",
+            "url": "https://github.com/fidelo-software/moodle-php-sdk.git"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "pestphp/pest-plugin": false,
+            "php-http/discovery": true
+        },
+        "discard-changes": true,
+        "lock": false
+    },
+    "scripts": {
+        "post-update-cmd": [
+            "mkdir -p ./storage/smarty3/templates || true",
+            "mkdir -p ./storage/smarty3/templates_c || true",
+            "mkdir -p ./storage/smarty3/configs || true",
+            "mkdir -p ./storage/smarty3/cache || true",
+            "chmod -R 0777 ./storage/smarty3 || true",
+            "@php console core:key:generate --if-needed",
+            "cp -fR ./vendor/tecnickcom/tcpdf/fonts/* ./system/bundles/Pdf/Resources/fonts",
+            "chmod -R 0777 ./system/bundles/Pdf/Resources/fonts || true",
+            "cp -fR ./vendor/trippo/responsivefilemanager/tinymce/plugins/responsivefilemanager/ ./vendor/tinymce/tinymce/plugins/ || true",
+            "cp -f ./vendor/trippo/responsivefilemanager/tinymce/plugins/responsivefilemanager/plugin.min.js ./vendor/tinymce/tinymce/plugins/responsivefilemanager/plugin.js || true",
+            "cp -fR ./vendor/trippo/responsivefilemanager/responsive_filemanager/tinymce/plugins/responsivefilemanager/ ./vendor/tinymce/tinymce/plugins/ || true",
+            "cp -f ./vendor/trippo/responsivefilemanager/responsive_filemanager/tinymce/plugins/responsivefilemanager/plugin.min.js ./vendor/tinymce/tinymce/plugins/responsivefilemanager/plugin.js || true",
+            "cp ./system/bundles/Tinymce/Resources/public/filemanager/include.commercial.js ./vendor/trippo/responsivefilemanager/filemanager/js/include.js || true",
+            "cp ./system/bundles/Tinymce/Resources/public/filemanager/config.php ./vendor/trippo/responsivefilemanager/filemanager/config/config.php || true",
+            "cp ./system/bundles/Tinymce/Resources/public/filemanager/include.commercial.js ./vendor/trippo/responsivefilemanager/responsive_filemanager/filemanager/js/include.js || true",
+            "cp ./system/bundles/Tinymce/Resources/public/filemanager/config.php ./vendor/trippo/responsivefilemanager/responsive_filemanager/filemanager/config/config.php || true",
+            "mkdir -p ./storage/public/filemanager || true",
+            "mkdir -p ./storage/public/filemanager || true",
+            "mkdir -p ./storage/public/filemanager/source || true",
+            "mkdir -p ./storage/public/filemanager/thumbs || true",
+            "chmod -R 0777 ./storage/public/filemanager || true",
+            "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/trans/t_rf_rans/g' {} + # The laravel helpers and the filemanager have both a function named trans()",
+            "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/iframe-t_rf_ransport.js/iframe-transport.js/g' {} + # The laravel helpers and the filemanager have both a function named trans()",
+            "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/! is_resource($this->imageResized)/!is_resource($this->imageResized) \\&\\& !is_object($this->imageResized)/g' {} + # PHP8 Bugfix",
+            "find ./vendor/trippo/responsivefilemanager/ -type f -name \"*.php\" -exec sed -i 's/mb_http_input('UTF-8');/#mb_http_input('UTF-8');/g' {} + # PHP8 Bugfix"
+        ]
+    },
+    "require-dev": {
+        "pestphp/pest": "4.1.*"
+    }
+}

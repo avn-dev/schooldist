@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * Befehl: Keine Änderungen an dieser Datei ausführen ohne Rücksprache mit MK!
+ * @author Mark Koopmann
+ */
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess('admin');
+
+$sSql = "TRUNCATE TABLE `gui2_dialog_lock`";
+DB::executeQuery($sSql);
+
+$_SESSION['gui2_dialog_lock_break'] = true;
+
+echo "Alle Sperren wurden entfernt! Es werden keine weiteren Dialoge für den Benutzer »".$user_data['name']."« in dieser Sitzung mehr als gesperrt erscheinen!";

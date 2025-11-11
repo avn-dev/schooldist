@@ -1,0 +1,1988 @@
+<?php
+
+include_once("../includes/main.inc.php");
+
+if(!isset($_SESSION['elearning']['table_structure_update_13'])) {
+
+	try {
+
+		addSystemRight('elearning', 'E-Learning', 'elearning');
+		addSystemRight('elearning_exam', 'E-Learning » Prüfungen', 'elearning');
+		addSystemRight('elearning_exam_admin', 'E-Learning » Prüfungen » Administrator', 'elearning');
+		addSystemRight('elearning_exam_reports', 'E-Learning » Prüfungen » Ergebnisse', 'elearning');
+		addSystemRight('elearning_exam_participants', 'E-Learning » Prüfungen » Teilnehmer', 'elearning');
+		addSystemRight('elearning_exam_contents', 'E-Learning » Prüfungen » Inhalte', 'elearning');
+		addSystemRight('elearning_exam_settings', 'E-Learning » Prüfungen » Einstellungen', 'elearning');
+		addSystemRight('elearning_exam_invitations', 'E-Learning » Prüfungen » Einladungen', 'elearning');
+		
+		DB::executeQuery("CREATE TABLE IF NOT EXISTS `elearning_exams_participants` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,`changed` TIMESTAMP NOT NULL ,`created` TIMESTAMP NOT NULL ,`active` TINYINT( 1 ) NOT NULL DEFAULT '1',`state` VARCHAR( 255 ) NOT NULL ,`attempts` INT NOT NULL) ");
+		DB::executeQuery("CREATE TABLE IF NOT EXISTS `elearning_exams_emails` (  `id` int(11) NOT NULL auto_increment,  `changed` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,  `created` timestamp NOT NULL default '0000-00-00 00:00:00',  `active` tinyint(1) NOT NULL default '1',  `exam_id` int(11) NOT NULL,  `language` varchar(2) NOT NULL,  `item` varchar(255) NOT NULL,  `subject` text NOT NULL,  `body` text NOT NULL,  PRIMARY KEY  (`id`),  UNIQUE KEY `language_2` (`exam_id`,`language`,`item`),  KEY `language` (`language`),  KEY `item` (`item`),  KEY `exam_id` (`exam_id`))");
+		DB::executeQuery("CREATE TABLE IF NOT EXISTS `elearning_exams_comments` (  `id` int(11) NOT NULL auto_increment,  `changed` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,  `created` timestamp NOT NULL default '0000-00-00 00:00:00',  `active` tinyint(1) NOT NULL default '1',  `exam_id` int(11) NOT NULL default '0',  `comment` text NOT NULL,  PRIMARY KEY  (`id`),  KEY `exam_id` (`exam_id`)) ENGINE=MyISAM  DEFAULT CHARSET=utf8;");
+
+		DB::addField('elearning_exams', 'email_result', 'varchar(255) NOT NULL', 'random_positions');
+		DB::addField('elearning_exams', 'customer_db', 'int(11) NOT NULL ', 'email_result');
+		DB::addField('elearning_exams', 'customer_db_id', 'varchar(255) NOT NULL', 'customer_db');
+		DB::addField('elearning_exams', 'customer_db_firstname', 'varchar(255) NOT NULL', 'customer_db');
+		DB::addField('elearning_exams', 'customer_db_lastname', 'varchar(255) NOT NULL', 'customer_db');
+		DB::addField('elearning_exams', 'customer_db_email', 'varchar(255) NOT NULL', 'customer_db');
+		DB::addField('elearning_exams', 'customer_db_group', 'varchar(255) NOT NULL', 'customer_db');
+		DB::addField('elearning_exams', 'customer_db_level', 'varchar(255) NOT NULL', 'customer_db_group');
+		DB::addField('elearning_exams', 'customer_db_language', 'varchar(255) NOT NULL', 'customer_db_level');
+		DB::addField('elearning_exams', 'pdf_logo', 'varchar(255) NOT NULL', 'email_result');
+		DB::addField('elearning_exams', 'pdf_color', 'varchar(255) NOT NULL', 'pdf_logo');
+		DB::addField('elearning_exams', 'reminder_weeks', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'send_second_after_failed', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'send_email_after_success', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'second_reminder_email_text', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'show_error_in_question', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'show_success_in_question', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'comment_result', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'show_result_pdf', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'group_email_texts', 'tinyint(4) NOT NULL');
+		DB::addField('elearning_exams', 'email_comment', 'varchar(255) NOT NULL');
+	
+		DB::addField('elearning_exams_results', 'state', 'varchar(255) NOT NULL', 'score');
+		DB::addField('elearning_exams_results', 'language', 'varchar(2) NOT NULL', 'state');
+		DB::addField('elearning_exams_results_data', 'result_id', 'int(11) NOT NULL', 'active');
+		DB::addField('elearning_exams_questions', 'weighting', 'tinyint(4) NOT NULL default 1', 'random_positions');
+		DB::addField('elearning_exams_participants', 'exam_id', 'int(11) NOT NULL default 1', 'active');
+		DB::addField('elearning_exams_participants', 'invited', 'timestamp NULL');
+		DB::addField('elearning_exams_participants', 'last_email', 'varchar(255) NOT NULL');
+
+		DB::addField('elearning_exams_emails', 'user_group', 'varchar(255) NOT NULL');
+
+		DB::executeQuery("ALTER TABLE `elearning_exams_participants` DROP PRIMARY KEY , ADD PRIMARY KEY ( `id` , `exam_id` )");
+
+		DB::executeQuery("CREATE TABLE IF NOT EXISTS `elearning_exams_logs` (  `changed` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,  `exam_id` int(11) NOT NULL default '1',  `user_id` int(11) NOT NULL,  `state` varchar(255) NOT NULL, `info` TEXT NOT NULL,  KEY `user_id` (`user_id`)) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+		DB::executeQuery("ALTER TABLE `elearning_exams_emails` ADD INDEX `user_group` ( `user_group` )");
+		DB::executeQuery("ALTER TABLE `elearning_exams_emails` CHANGE `item` `item` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ");
+		DB::executeQuery("ALTER TABLE `elearning_exams_emails` CHANGE `user_group` `user_group` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ");
+		DB::executeQuery("ALTER TABLE `elearning_exams_emails` DROP INDEX `language_2` , ADD UNIQUE `language_2` ( `exam_id` , `language` , `item` , `user_group` )");
+
+	} catch(Exception $e) {
+
+	}
+
+	WDCache::flush();
+	
+	$_SESSION['elearning']['table_structure_update_13'] = true;
+
+}
+
+Access_Backend::checkAccess("elearning_exam");
+
+/**
+ * Frontend configuration
+ */
+
+if ($_VARS['page_id'] && $_VARS['element_id'] && $_VARS['content_id']) {
+
+	if ($_POST['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$config->exam_id = $_VARS['exam_id'];
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	}
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$aExams = array();
+	$aData = Ext_Elearning_Exam::getList();
+	foreach((array)$aData as $aExam) {
+		$aExams[$aExam['id']] = $aExam['name'];
+	}
+
+	Admin_Html::loadAdminHeader();
+	
+?>
+
+<div class="divHeader">
+	<h1>E-Learning</h1>
+</div>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+    <tr>
+        <td valign="top">
+
+			<form method="POST" action="elearning.html">
+			<?=printFormHidden('action', 'config')?>
+			<?=printFormHidden('page_id', $_VARS['page_id'])?>
+			<?=printFormHidden('element_id', $_VARS['element_id'])?>
+			<?=printFormHidden('content_id', $_VARS['content_id'])?>
+			<?=printFormHidden('language', $_VARS['language'])?>
+			<?=printTableStart()?>
+			<?=printFormSelect(L10N::t('Prüfung'), "exam_id", $aExams, $config->exam_id)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>
+
+<?
+	die();
+
+}
+
+/**
+ * Sicherheitsabfrage 
+ */
+if(isset($_VARS['exam_id'])) {
+	
+	if(
+		!hasRight('elearning_exam_admin') &&
+		!hasRight('elearning_exam_'.$_VARS['exam_id'])
+	) {
+		die('No access');
+	}
+	
+}
+
+$oPurifier = new HTMLPurifierWrapper('all');
+
+function elearning_purify(&$mValue, $mKey) {
+	global $oPurifier;
+	$mValue = $oPurifier->purify($mValue);
+}
+
+array_walk_recursive($_VARS, 'elearning_purify');
+
+$aDisplayOptions = array();
+$aDisplayOptions['all'] = L10N::t('Alle Fragen auf einer Seite');
+$aDisplayOptions['one'] = L10N::t('Pro Frage eine Seite');
+$aDisplayOptions['group'] = L10N::t('Pro Fragengruppe eine Seite');
+
+$aAttemptsOptions = array();
+$aAttemptsOptions['0'] = L10N::t('unbegrenzt');
+$aAttemptsOptions['1'] = '1';
+$aAttemptsOptions['2'] = '2';
+$aAttemptsOptions['3'] = '3';
+$aAttemptsOptions['4'] = '4';
+$aAttemptsOptions['5'] = '5';
+
+$aTypes = array();
+$aTypes['choice_unique'] = L10N::t('Multiple Choice (unique)');
+$aTypes['choice_multiple'] = L10N::t('Multiple Choice (multiple)');
+$aTypes['choice_multiple_dragndrop'] = L10N::t('Multiple Choice (Drag\'n\'Drop)');
+//$aTypes['true_false'] = L10N::t('True / False');
+$aTypes['only_text'] = L10N::t('Nur Text');
+
+$aScoreModeOptions = array();
+$aScoreModeOptions['exam_score'] = L10N::t('Punkte pro Prüfung');
+$aScoreModeOptions['group_score'] = L10N::t('Punkte pro Gruppe');
+$aScoreModeOptions['both_score'] = L10N::t('Punkte pro Prüfung und Gruppe');
+
+if($_VARS['task'] == 'save_exam') {
+	
+	Access_Backend::checkAccess('elearning_exam_settings');
+	
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+
+	if(is_file($_FILES['pdf_logo']['tmp_name'])) {
+		$oExam->updateLogo($_FILES['pdf_logo']);
+	}
+
+	$oExam->name = $_VARS['name'];
+	$oExam->date_start = $_VARS['date_start'];
+	$oExam->date_end = $_VARS['date_end'];
+	$oExam->closed = $_VARS['closed'];
+	$oExam->customer_db = $_VARS['customer_db'];
+	$oExam->customer_db_id = $_VARS['customer_db_id'];
+	$oExam->customer_db_firstname = $_VARS['customer_db_firstname'];
+	$oExam->customer_db_lastname = $_VARS['customer_db_lastname'];
+	$oExam->customer_db_email = $_VARS['customer_db_email'];
+	$oExam->customer_db_group = $_VARS['customer_db_group'];
+	$oExam->customer_db_level = $_VARS['customer_db_level'];
+	$oExam->customer_db_location = $_VARS['customer_db_location'];
+	$oExam->customer_db_language = $_VARS['customer_db_language'];
+	$oExam->display = $_VARS['display'];
+	$oExam->score_mode = $_VARS['score_mode'];
+	$oExam->minimum_score = $_VARS['minimum_score'];
+	$oExam->maximum_time = $_VARS['maximum_time'];
+	$oExam->attempts = $_VARS['attempts'];
+	$oExam->show_error_in_question = $_VARS['show_error_in_question'];
+	$oExam->show_success_in_question = $_VARS['show_success_in_question'];
+	$oExam->show_result = $_VARS['show_result'];
+	$oExam->show_answers = $_VARS['show_answers'];
+	$oExam->comment_result = $_VARS['comment_result'];
+	$oExam->show_result_pdf = $_VARS['show_result_pdf'];
+	$oExam->group_email_texts = $_VARS['group_email_texts'];
+	$oExam->random_positions = $_VARS['random_positions'];
+	$oExam->email_result = $_VARS['email_result'];
+	$oExam->email_comment = $_VARS['email_comment'];
+	$oExam->pdf_color = $_VARS['pdf_color'];
+	$oExam->reminder_weeks = $_VARS['reminder_weeks'];
+	$oExam->send_second_after_failed = $_VARS['send_second_after_failed'];
+	$oExam->send_email_after_success = $_VARS['send_email_after_success'];
+	$oExam->second_reminder_email_text = $_VARS['second_reminder_email_text'];
+
+	$oExam->save();
+
+	$oExam->setLanguages($_VARS['languages']);
+
+	addSystemRight('elearning_exam_'.$oExam->id, 'E-Learning » Prüfungen » '.$oExam->name, 'elearning');
+
+	$_VARS['task'] = "";
+
+} elseif($_VARS['task'] == 'save_group') {
+
+	Access_Backend::checkAccess('elearning_exam_contents');
+
+	$oGroup = new Ext_Elearning_Exam_Group((int)$_VARS['group_id']);
+	$oGroup->exam_id = (int)$_VARS['exam_id'];
+	$oGroup->name = (string)$_VARS['name'];
+	$oGroup->minimum_score = (int)$_VARS['minimum_score'];
+	$oGroup->random_positions = (bool)$_VARS['random_positions'];
+	$oGroup->save();
+
+	$oGroup->setTranslations($_VARS['l10n']);
+
+	$_VARS['task'] = "edit_groups";
+
+} elseif($_VARS['task'] == 'delete_group') {
+
+	Access_Backend::checkAccess('elearning_exam_contents');
+	
+	$oGroup = new Ext_Elearning_Exam_Group((int)$_VARS['group_id']);
+	$oGroup->delete();
+
+	$_VARS['task'] = "edit_groups";
+
+} elseif($_VARS['task'] == 'copy_exam') {
+
+	Access_Backend::checkAccess('elearning_exam_admin');
+	
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+	$oExam->createCopy();
+
+	$_VARS['task'] = "";
+
+} elseif($_VARS['task'] == 'save_question') {
+	
+	Access_Backend::checkAccess('elearning_exam_contents');
+	
+	$oQuestion = new Ext_Elearning_Exam_Question((int)$_VARS['question_id']);
+	$oQuestion->group_id = (int)$_VARS['group_id'];
+	$oQuestion->name = (string)$_VARS['name'];
+	$oQuestion->type = (string)$_VARS['type'];
+	$oQuestion->file = (string)$_VARS['file'];
+	$oQuestion->score = (int)$_VARS['score'];
+	$oQuestion->weighting = (int)$_VARS['weighting'];
+	$oQuestion->random_positions = (bool)$_VARS['random_positions'];
+	$oQuestion->save();
+	
+	$oQuestion->setTranslations($_VARS['l10n']);
+
+	$_VARS['task'] = "edit_questions";
+
+} elseif($_VARS['task'] == 'save_answer') {
+	
+	Access_Backend::checkAccess('elearning_exam_contents');
+	
+	$oAnswer = new Ext_Elearning_Exam_Answer((int)$_VARS['answer_id']);
+	$oAnswer->question_id = (int)$_VARS['question_id'];
+	$oAnswer->name = $_VARS['name'];
+	$oAnswer->correct = $_VARS['correct'];
+	$oAnswer->weighting = $_VARS['weighting'];
+	$oAnswer->save();
+	
+	$oAnswer->setTranslations($_VARS['l10n']);
+
+	$_VARS['task'] = "edit_answers";
+
+}
+
+$aLanguages = array();
+$aTemp = $objWebDynamicsDAO->getWebSiteLanguages(0);
+foreach((array)$aTemp as $aLanguage) {
+	$aLanguages[$aLanguage['code']] = $aLanguage['name'];
+}
+
+$aOptions = array();
+$aOptions['additional'] = '<script type="text/javascript" src="/admin/extensions/elearning/tablednd.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/elearning/elearning.css" />';
+if(
+	$_VARS['task'] == "participants"
+) {
+	$aOptions['body'] = ' scroll="no"';
+}
+Admin_Html::loadAdminHeader($aOptions);
+
+?>
+
+<div class="divHeader">
+	<h1>E-Learning</h1>
+</div>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			
+<?
+if($_VARS['task'] == 'edit_groups') {
+
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+	$oExam->setLanguage($system_data['systemlanguage']);
+?>
+
+			<h2><?=L10N::t('Prüfung')?> "<?=$oExam->name?>" &raquo; <?=L10N::t('Gruppen bearbeiten')?></h2>
+			<table id="tbl_groups" cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<thead>
+					<tr>
+						<th style="width: 70%;"><?=L10N::t('Gruppe')?></th>
+						<th style="width: 20%;"><?=L10N::t('Minimale Punktzahl')?></th>
+						<th style="width: 10%;"><?=L10N::t('Aktionen')?></th>
+					</tr>
+				</thead>
+				<tbody>
+<?
+	$aGroups = $oExam->getGroups(1);
+	foreach((array)$aGroups as $aGroup) {
+?>
+				<tr id="group_<?=$aGroup['id']?>">
+					<td><?=$aGroup['name']?></td>
+					<td style="text-align: right;"><?=$aGroup['minimum_score']?> %</td>
+					<td style="text-align: center;">
+						<a href="javascript:" onclick="if(confirm('<?=L10N::t('Möchten Sie diese Gruppe wirklich löschen?')?>')) go('<?=$_SERVER['PHP_SELF']?>?task=delete_group&amp;exam_id=<?=(int)$_VARS['exam_id']?>&amp;group_id=<?=$aGroup['id']?>');"><img src="/admin/extensions/elearning/delete.png" alt="<?=L10N::t('Gruppe löschen')?>" title="<?=L10N::t('Gruppe löschen')?>" /></a>&nbsp;
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_group&amp;exam_id=<?=(int)$_VARS['exam_id']?>&amp;group_id=<?=$aGroup['id']?>"><img src="/admin/extensions/elearning/edit.png" alt="<?=L10N::t('Gruppe bearbeiten')?>" title="<?=L10N::t('Gruppe bearbeiten')?>" /></a>&nbsp;
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_questions&amp;exam_id=<?=(int)$_VARS['exam_id']?>&amp;group_id=<?=$aGroup['id']?>"><img src="/admin/extensions/elearning/questions_edit.png" alt="<?=L10N::t('Fragen bearbeiten')?>" title="<?=L10N::t('Fragen bearbeiten')?>" /></a>
+					</td>
+				</tr>
+<?
+	}
+?>
+				</tbody>
+			</table>
+			
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_group&amp;exam_id=<?=(int)$_VARS['exam_id']?>'); return false;"><?=L10N::t('Neue Gruppe anlegen')?></button>&nbsp;
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+			
+			<script language="JavaScript" type="text/javascript">
+		  		// Sorting of positions with drop & drag
+				var oTable = document.getElementById('tbl_groups');
+				var oTableDnD = new TableDnD();
+				oTableDnD.init(oTable);
+
+				var aRowIDs = [];
+				oTableDnD.onDrop = function(oTable, oDroppedRow)
+				{
+					oDroppedRow.className = '';
+					aRowIDs = [];
+					var aRows = this.table.tBodies[0].rows;
+		
+					if(bMovingFlag == true)
+					{
+						// Filter the position IDs
+						for (i = 0; i < aRows.length; i++)
+						{
+							aRowIDs.push(aRows[i].id.substr(6));
+							aRows[i].className = '';
+						}
+		
+						// Only if the position was realy moved
+						// do AJAX request for updating of article positions
+						bMovingFlag = false;
+						managePosition(aRowIDs.toJSON());
+					}
+				};
+				
+				function managePosition(sSort) {
+					
+					var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+					var strParameters = 'task=positions&item=groups&exam_id=<?=(int)$_VARS['exam_id']?>&sort='+sSort;
+
+					var objAjax = new Ajax.Request(
+								strRequestUrl,
+								{
+									method		: 'post',
+									parameters	: strParameters,
+									onComplete	: managePositionCallback
+								}
+						);
+		
+				}
+
+				function managePositionCallback(oResponse) {
+					
+				}
+				
+			</script>
+  
+			
+			
+
+<?
+
+} elseif($_VARS['task'] == 'edit_group') {
+
+	if($_VARS['group_id']) {
+		$oGroup = new Ext_Elearning_Exam_Group((int)$_VARS['group_id']);
+		$oExam = $oGroup->getExam();
+	} else {
+		$oGroup = new Ext_Elearning_Exam_Group();
+		$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+	}
+
+?>
+
+			<h2><?=L10N::t('Gruppe bearbeiten')?></h2>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+				<input type="hidden" name="task" value="save_group" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				<input type="hidden" name="group_id" value="<?=(int)$_VARS['group_id']?>" />
+				<?=printTableStart()?>
+					<?=printFormText(L10N::t('Name'), 'name', $oGroup->name)?>
+					<?=printFormText(L10N::t('Minimale Punktzahl (in %)'), 'minimum_score', $oGroup->minimum_score)?>
+					<?=printFormCheckbox(L10N::t('Fragen zufällig anordnen'), 'random_positions', 1, $oGroup->random_positions)?>
+				<?=printTableEnd()?>
+
+<?
+	$aL10N = $oGroup->l10n;
+	$aExamLanguages = $oExam->getLanguages();
+	foreach((array)$aExamLanguages as $sCode) {
+?>
+				<br/>
+				<h3><?=$aLanguages[$sCode]?></h3>
+				<?=printTableStart()?>
+					<?=printFormText(L10N::t('Title'), 'l10n['.$sCode.'][name]', $aL10N[$sCode]['name'])?>
+					<?=printFormHTMLArea(L10N::t('Beschreibung'), 'l10n['.$sCode.'][description]', $aL10N[$sCode]['description'])?>
+				<?=printTableEnd()?>
+<?
+	}
+?>
+				<?=printSubmit(L10N::t('Speichern'))?>
+			</form>
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_questions&amp;group_id=<?=(int)$_VARS['group_id']?>'); return false;"><?=L10N::t('Fragen bearbeiten')?></button>&nbsp;
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_groups&amp;exam_id=<?=(int)$_VARS['exam_id']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+<?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+} elseif($_VARS['task'] == 'edit_questions') {
+
+	$oGroup = new Ext_Elearning_Exam_Group((int)$_VARS['group_id']);
+	$oGroup->setLanguage($system_data['systemlanguage']);
+	$oExam = $oGroup->getExam();
+	$oExam->setLanguage($system_data['systemlanguage']);
+
+?>
+
+			<h2><?=L10N::t('Prüfung')?> "<?=$oExam->name?>" &raquo; <?=L10N::t('Gruppe')?> "<?=$oGroup->name?>" &raquo; <?=L10N::t('Fragen bearbeiten')?></h2>
+			<table id="tbl_questions" cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<thead>
+					<tr>
+						<th style="width: 70%;"><?=L10N::t('Frage')?></th>
+						<th style="width: 20%;"><?=L10N::t('Typ')?></th>
+						<th style="width: 10%;"><?=L10N::t('Aktionen')?></th>
+					</tr>
+				</thead>
+				<tbody>
+<?
+	$aQuestions = $oGroup->getQuestions(1);
+	foreach((array)$aQuestions as $aQuestion) {
+?>
+				<tr id="questions_<?=$aQuestion['id']?>">
+					<td><?=$aQuestion['name']?></td>
+					<td><?=$aTypes[$aQuestion['type']]?></td>
+					<td style="text-align: center;">
+						<a href="javascript:" onclick="if(confirm('<?=L10N::t('Möchten Sie diese Gruppe wirklich löschen?')?>')) go('<?=$_SERVER['PHP_SELF']?>?task=delete_question&amp;group_id=<?=$oGroup->id?>&amp;exam_id=<?=$oExam->id?>&amp;question_id=<?=$aQuestion['id']?>');"><img src="/admin/extensions/elearning/delete.png" alt="<?=L10N::t('Frage löschen')?>" title="<?=L10N::t('Frage löschen')?>" /></a>&nbsp;
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_question&amp;exam_id=<?=(int)$_VARS['exam_id']?>&amp;group_id=<?=$oGroup->id?>&amp;question_id=<?=$aQuestion['id']?>"><img src="/admin/extensions/elearning/edit.png" alt="<?=L10N::t('Frage bearbeiten')?>" title="<?=L10N::t('Frage bearbeiten')?>" /></a>&nbsp;
+<?
+		if(
+			$aQuestion['type'] != 'true_false' &&
+			$aQuestion['type'] != 'only_text'
+		) {
+?>						
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_answers&amp;exam_id=<?=(int)$_VARS['exam_id']?>&amp;group_id=<?=$oGroup->id?>&amp;question_id=<?=$aQuestion['id']?>"><img src="/admin/extensions/elearning/answers_edit.png" alt="<?=L10N::t('Antworten bearbeiten')?>" title="<?=L10N::t('Antworten bearbeiten')?>" /></a>
+<?
+		}
+?>
+					</td>
+				</tr>
+<?
+	}
+?>
+				</tbody>
+			</table>
+
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_question&amp;exam_id=<?=$oExam->id?>&amp;group_id=<?=$oGroup->id?>'); return false;"><?=L10N::t('Neue Frage anlegen')?></button>
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_groups&amp;exam_id=<?=$oExam->id?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+			
+			<script language="JavaScript" type="text/javascript">
+		  		// Sorting of positions with drop & drag
+				var oTable = document.getElementById('tbl_questions');
+				var oTableDnD = new TableDnD();
+				oTableDnD.init(oTable);
+
+				var aRowIDs = [];
+				oTableDnD.onDrop = function(oTable, oDroppedRow)
+				{
+					oDroppedRow.className = '';
+					aRowIDs = [];
+					var aRows = this.table.tBodies[0].rows;
+		
+					if(bMovingFlag == true)
+					{
+						// Filter the position IDs
+						for (i = 0; i < aRows.length; i++)
+						{
+							aRowIDs.push(aRows[i].id.substr(10));
+							aRows[i].className = '';
+						}
+		
+						// Only if the position was realy moved
+						// do AJAX request for updating of article positions
+						bMovingFlag = false;
+						managePosition(aRowIDs.toJSON());
+					}
+				};
+				
+				function managePosition(sSort) {
+					
+					var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+					var strParameters = 'task=positions&item=questions&exam_id=<?=(int)$_VARS['exam_id']?>&group_id=<?=(int)$_VARS['group_id']?>&sort='+sSort;
+
+					var objAjax = new Ajax.Request(
+								strRequestUrl,
+								{
+									method		: 'post',
+									parameters	: strParameters,
+									onComplete	: managePositionCallback
+								}
+						);
+		
+				}
+
+				function managePositionCallback(oResponse) {
+					
+				}
+				
+			</script>
+  
+			
+			
+
+<?
+
+} elseif($_VARS['task'] == 'edit_question') {
+
+	if($_VARS['question_id']) {
+		$oQuestion = new Ext_Elearning_Exam_Question((int)$_VARS['question_id']);
+		$oGroup = $oQuestion->getGroup();
+	} else {
+		$oQuestion = new Ext_Elearning_Exam_Question();
+		$oGroup = new Ext_Elearning_Exam_Group((int)$_VARS['group_id']);
+	}
+
+	$oExam = $oGroup->getExam();
+
+?>
+
+			<h2><?=L10N::t('Prüfung')?> "<?=$oExam->name?>" &raquo; <?=L10N::t('Gruppe')?> "<?=$oGroup->name?>" &raquo; <?=L10N::t('Frage bearbeiten')?></h2>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+				<input type="hidden" name="task" value="save_question" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				<input type="hidden" name="group_id" value="<?=(int)$_VARS['group_id']?>" />
+				<input type="hidden" name="question_id" value="<?=(int)$_VARS['question_id']?>" />
+				<?=printTableStart()?>
+					<?=printFormText(L10N::t('Name'), 'name', $oQuestion->name)?>
+					<?=printFormSelect(L10N::t('Typ'), 'type', $aTypes, $oQuestion->type)?>
+					<?=printFormText(L10N::t('Punkte'), 'score', $oQuestion->score)?>
+					<?=printFormText(L10N::t('Gewichtung'), 'weighting', $oQuestion->weighting)?>
+					<?=printFormCheckbox(L10N::t('Antworten zufällig anordnen'), 'random_positions', 1, $oQuestion->random_positions)?>
+				<?=printTableEnd()?>
+<?
+	$aL10N = $oQuestion->l10n;
+	$aExamLanguages = $oExam->getLanguages();
+	foreach((array)$aExamLanguages as $sCode) {
+?>
+				<br/>
+				<h3><?=$aLanguages[$sCode]?></h3>
+				<?=printTableStart()?>
+					<?=printFormTextarea(L10N::t('Frage'), 'l10n['.$sCode.'][question]', $aL10N[$sCode]['question'])?>
+					<?=printFormHTMLArea(L10N::t('Beschreibung'), 'l10n['.$sCode.'][description]', $aL10N[$sCode]['description'])?>
+				<?=printTableEnd()?>
+<?
+	}
+?>
+				<?=printSubmit(L10N::t('Speichern'))?>
+			</form>
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_questions&amp;exam_id=<?=(int)$_VARS['exam_id']?>&amp;group_id=<?=(int)$_VARS['group_id']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+<?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+} elseif($_VARS['task'] == 'edit_answers') {
+
+	$oQuestion = new Ext_Elearning_Exam_Question((int)$_VARS['question_id']);
+	$oQuestion->setLanguage($system_data['systemlanguage']);
+	$oGroup = $oQuestion->getGroup();
+	$oGroup->setLanguage($system_data['systemlanguage']);
+	$oExam = $oGroup->getExam();
+	$oExam->setLanguage($system_data['systemlanguage']);
+
+?>
+
+			<h2><?=L10N::t('Prüfung')?> "<?=$oExam->name?>" &raquo; <?=L10N::t('Gruppe')?> "<?=$oGroup->name?>" &raquo; <?=L10N::t('Frage')?> "<?=$oQuestion->name?>" &raquo; <?=L10N::t('Antworten bearbeiten')?></h2>
+			<table id="tbl_answers" cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<thead>
+					<tr>
+						<th style="width: 70%;"><?=L10N::t('Antwort')?></th>
+						<th style="width: 10%;"><?=L10N::t('Korrekt')?></th>
+						<th style="width: 10%;"><?=L10N::t('Gewichtung')?></th>
+						<th style="width: 10%;"><?=L10N::t('Aktionen')?></th>
+					</tr>
+				</thead>
+				<tbody>
+<?
+	$aAnswers = $oQuestion->getAnswers(1);
+	foreach((array)$aAnswers as $aAnswer) {
+?>
+				<tr id="answers_<?=$aAnswer['id']?>">
+					<td><?=$aAnswer['name']?></td>
+					<td><?=(($aAnswer['correct'])?L10N::t('Ja'):L10N::t('Nein'))?></td>
+					<td style="text-align: right;"><?=$aAnswer['weighting']?></td>
+					<td style="text-align: center;">
+						<a href="javascript:" onclick="if(confirm('<?=L10N::t('Möchten Sie diese Gruppe wirklich löschen?')?>')) go('<?=$_SERVER['PHP_SELF']?>?task=delete_answer&amp;exam_id=<?=$oExam->id?>&amp;group_id=<?=$oGroup->id?>&amp;question_id=<?=$oQuestion->id?>&amp;answer_id=<?=$aAnswer['id']?>');"><img src="/admin/extensions/elearning/delete.png" alt="<?=L10N::t('Antwort löschen')?>" title="<?=L10N::t('Antwort löschen')?>" /></a>&nbsp;
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_answer&amp;exam_id=<?=$oExam->id?>&amp;group_id=<?=$oGroup->id?>&amp;question_id=<?=$oQuestion->id?>&amp;answer_id=<?=$aAnswer['id']?>"><img src="/admin/extensions/elearning/edit.png" alt="<?=L10N::t('Antwort bearbeiten')?>" title="<?=L10N::t('Antwort bearbeiten')?>" /></a>&nbsp;
+					</td>
+				</tr>
+<?
+	}
+?>
+				</tbody>
+			</table>
+			
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_answer&amp;exam_id=<?=$oExam->id?>&amp;group_id=<?=$oGroup->id?>&amp;question_id=<?=$oQuestion->id?>'); return false;"><?=L10N::t('Neue Antwort anlegen')?></button>
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_questions&amp;exam_id=<?=$oExam->id?>&amp;group_id=<?=$oGroup->id?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+			
+			<script language="JavaScript" type="text/javascript">
+		  		// Sorting of positions with drop & drag
+				var oTable = document.getElementById('tbl_answers');
+				var oTableDnD = new TableDnD();
+				oTableDnD.init(oTable);
+
+				var aRowIDs = [];
+				oTableDnD.onDrop = function(oTable, oDroppedRow)
+				{
+					oDroppedRow.className = '';
+					aRowIDs = [];
+					var aRows = this.table.tBodies[0].rows;
+		
+					if(bMovingFlag == true)
+					{
+						// Filter the position IDs
+						for (i = 0; i < aRows.length; i++)
+						{
+							aRowIDs.push(aRows[i].id.substr(8));
+							aRows[i].className = '';
+						}
+		
+						// Only if the position was realy moved
+						// do AJAX request for updating of article positions
+						bMovingFlag = false;
+						managePosition(aRowIDs.toJSON());
+					}
+				};
+				
+				function managePosition(sSort) {
+					
+					var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+					var strParameters = 'task=positions&item=answers&exam_id=<?=(int)$_VARS['exam_id']?>&group_id=<?=(int)$_VARS['group_id']?>&question_id=<?=(int)$_VARS['question_id']?>&sort='+sSort;
+
+					var objAjax = new Ajax.Request(
+								strRequestUrl,
+								{
+									method		: 'post',
+									parameters	: strParameters,
+									onComplete	: managePositionCallback
+								}
+						);
+		
+				}
+
+				function managePositionCallback(oResponse) {
+					
+				}
+				
+			</script>
+  
+			
+			
+
+<?
+
+} elseif($_VARS['task'] == 'edit_answer') {
+
+	if($_VARS['answer_id']) {
+		$oAnswer = new Ext_Elearning_Exam_Answer((int)$_VARS['answer_id']);
+		$oQuestion = $oAnswer->getQuestion();
+	} else {
+		$oAnswer = new Ext_Elearning_Exam_Answer();
+		$oQuestion = new Ext_Elearning_Exam_Question((int)$_VARS['question_id']);
+	}
+
+	$oGroup = $oQuestion->getGroup();
+	$oExam = $oGroup->getExam();
+
+?>
+
+			<h2><?=L10N::t('Prüfung')?> "<?=$oExam->name?>" &raquo; <?=L10N::t('Gruppe')?> "<?=$oGroup->name?>" &raquo; <?=L10N::t('Frage')?> "<?=$oQuestion->name?>" &raquo; <?=L10N::t('Antwort bearbeiten')?></h2>
+			
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+				<input type="hidden" name="task" value="save_answer" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				<input type="hidden" name="group_id" value="<?=(int)$_VARS['group_id']?>" />
+				<input type="hidden" name="question_id" value="<?=(int)$_VARS['question_id']?>" />
+				<input type="hidden" name="answer_id" value="<?=(int)$_VARS['answer_id']?>" />
+				<?=printTableStart()?>
+					<?=printFormText(L10N::t('Name'), 'name', $oAnswer->name)?>
+					<?=printFormCheckbox(L10N::t('Korrekt'), 'correct', 1, $oAnswer->correct)?>
+					<?/*=printFormText(L10N::t('Gewichtung'), 'weighting', $oAnswer->weighting)*/?>
+				<?=printTableEnd()?>
+<?
+	$aL10N = $oAnswer->l10n;
+	$aExamLanguages = $oExam->getLanguages();
+	foreach((array)$aExamLanguages as $sCode) {
+?>
+				<br/>
+				<h3><?=$aLanguages[$sCode]?></h3>
+				<?=printTableStart()?>
+					<?=printFormTextarea(L10N::t('Antwort'), 'l10n['.$sCode.'][answer]', $aL10N[$sCode]['answer'])?>
+					<?/*=printFormHTMLArea(L10N::t('Kommentar'), 'l10n['.$sCode.'][comment]', $aL10N[$sCode]['comment'])*/?>
+				<?=printTableEnd()?>
+<?
+	}
+?>
+				<?=printSubmit(L10N::t('Speichern'))?>
+			</form>
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_answers&amp;exam_id=<?=$oExam->id?>&amp;group_id=<?=$oGroup->id?>&amp;question_id=<?=$oQuestion->id?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?
+} elseif($_VARS['task'] == 'reports') {
+
+	Access_Backend::checkAccess('elearning_exam_reports');
+	
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+	$aGroups = $oExam->getParticipantGroups();
+
+	$aResults = $oExam->getResultSummary();
+
+?>
+
+			<h2><?=L10N::t('Ergebnisübersicht')?></h2>
+
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table highlightRows">
+				<colgroup>
+					<col style="width: auto;" />
+					<col style="width: 90px;" />
+					<col style="width: 90px;" />
+					<col style="width: 90px;" />
+					<col style="width: 90px;" />
+					<col style="width: 90px;" />
+					<col style="width: 90px;" />
+				</colgroup>
+				<tr>
+					<th><?=L10N::t('Teilnehmergruppe / Abteilung')?></th>
+					<th><?=L10N::t('Angelegt')?></th>
+					<th><?=L10N::t('Eingeladen')?></th>
+					<th><?=L10N::t('Angefangen')?></th>
+					<th><?=L10N::t('Bestanden')?></th>
+					<th><?=L10N::t('Durchgefallen')?></th>
+					<th><?=L10N::t('Insgesamt')?></th>
+				</tr>
+<?
+				$iMax = 0;
+				foreach((array)$aGroups as $iGroup=>$sGroup) {
+					if(empty($sGroup) || $sGroup == 'no_group') {
+						$sGroupTitle = L10N::t('ohne Zuordnung');
+						$sGroup = 0;
+					} else {
+						$sGroupTitle = $sGroup;
+					}
+?>
+				<tr>
+					<td><?=$sGroupTitle?>&nbsp;</td>
+					<td style="text-align: right;"><?=(int)$aResults[$sGroup]['new']?></td>
+					<td style="text-align: right;"><?=(int)$aResults[$sGroup]['invited']?></td>
+					<td style="text-align: right;"><?=(int)$aResults[$sGroup]['started']?></td>
+					<td style="text-align: right;"><?=(int)$aResults[$sGroup]['succeeded']?></td>
+					<td style="text-align: right;"><?=(int)$aResults[$sGroup]['failed']?></td>
+					<td style="text-align: right;"><?=(int)$aResults[$sGroup]['total']?></td>
+				</tr>
+<?
+					$iMax = max($iMax, $aResults[$iGroup]['total']);
+				}
+?>
+				<tr>
+					<th><?=L10N::t('Gesamt')?></th>
+					<th style="text-align: right;"><?=(int)$aResults['total']['new']?></th>
+					<th style="text-align: right;"><?=(int)$aResults['total']['invited']?></th>
+					<th style="text-align: right;"><?=(int)$aResults['total']['started']?></th>
+					<th style="text-align: right;"><?=(int)$aResults['total']['succeeded']?></th>
+					<th style="text-align: right;"><?=(int)$aResults['total']['failed']?></th>
+					<th style="text-align: right;"><?=(int)$aResults['total']['total']?></th>
+				</tr>
+			</table>
+			<br/>
+<?
+
+			$iMax = $aResults['total']['total'];
+			foreach((array)$aGroups as $iGroup=>$sGroup) {
+				$iMax = $aResults[$sGroup]['total'];
+				if(empty($sGroup)) {
+					$sGroupTitle = L10N::t('ohne Zuordnung');
+					$sGroup = 0;
+				} else {
+					$sGroupTitle = $sGroup;
+				}
+				echo '<img src="http://chart.apis.google.com/chart?'.
+						'cht=bvg&'.
+						'chs=320x200&'.
+						'chd=t:'.
+						($aResults[$sGroup][0]/$iMax*100).','.
+						($aResults[$sGroup]['invited']/$iMax*100).','.
+						($aResults[$sGroup]['started']/$iMax*100).','.
+						($aResults[$sGroup]['succeeded']/$iMax*100).','.
+						($aResults[$sGroup]['failed']/$iMax*100).','.
+						($aResults[$sGroup]['total']/$iMax*100).'&'.
+						'chxt=y&'.
+						'chxr=0,0,'.$iMax.'&'.
+						'chdl=Angelegt|Eingeladen|Gestartet|Bestanden|Durchgefallen|Insgesamt&'.
+						'chco=dddddd|cccccc|bbbbbb|aaaaaa|999999|888888&'.
+						'chtt='.urlencode($sGroupTitle).'&chbh=25&chts=333333,14" alt="" />';
+				echo "<br/>";
+			}
+
+			$iMax = $aResults['total']['total'];
+			echo '<img src="http://chart.apis.google.com/chart?'.
+					'cht=bvg&'.
+					'chs=320x200&'.
+					'chd=t:'.
+					($aResults['total'][0]/$iMax*100).','.
+					($aResults['total']['invited']/$iMax*100).','.
+					($aResults['total']['started']/$iMax*100).','.
+					($aResults['total']['succeeded']/$iMax*100).','.
+					($aResults['total']['failed']/$iMax*100).','.
+					($aResults['total']['total']/$iMax*100).'&'.
+					'chxt=y&'.
+					'chxr=0,0,'.$iMax.'&'.
+					'chdl=Angelegt|Eingeladen|Gestartet|Bestanden|Durchgefallen|Insgesamt&'.
+					'chco=dddddd|cccccc|bbbbbb|aaaaaa|999999|888888&'.
+					'chtt='.urlencode(L10N::t('Gesamt')).'&chbh=25&chts=333333,14" alt="" />';
+
+?>
+
+			<p align="right">
+				<button class="btn" onclick="window.open('./elearning/pdf.php?exam_id=<?=$oExam->id?>');"><?=L10N::t('PDF-Auswertung')?></button>
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+	
+
+<?
+} elseif($_VARS['task'] == 'participants') {
+
+	Access_Backend::checkAccess('elearning_exam_participants');
+
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+
+	$aParticipantGroups = $oExam->getParticipantGroups(); 
+
+	$aTmpParticipantGroups = array_merge(array(''=>'Alle'), $aParticipantGroups);
+
+	$arrConfig = array();
+	$arrConfig['css'] 		= "txt";
+	$arrConfig['onChange']	= "prepareLoadList(this);";
+	
+	$arrConfig['name']		= "group";
+	$arrConfig['id'] 		= "group";
+	$arrConfig['options']	= (array)$aTmpParticipantGroups;
+	$arrConfig['selected']	= $_SESSION['group'];
+	$objSelect = new GUI_FormSelect($arrConfig);
+	
+	$strGroup = $objSelect->generateHTML();
+	
+	unset($arrConfig['options']);
+	unset($arrConfig['selected']);
+	
+	$arrConfig['onKeyUp']	= "prepareLoadList(this);";
+	
+	$arrConfig['name']		= "search";
+	$arrConfig['id'] 		= "search";
+	$arrConfig['value']		= $_SESSION['search'];
+	$objSelect = new GUI_FormText($arrConfig);
+	
+	$strSearch = $objSelect->generateHTML();
+	
+?>
+
+			<h2><?=L10N::t('Ergebisse einsehen')?></h2>
+			
+			<div class="divHeader">
+				<div class="divToolbar">
+					<div class="divToolbarLabel">Filter:</div>
+					<div class="divToolbarFormItem">
+						Teilnehmergruppe / Abteilung: <?=$strGroup?>
+					</div>
+					<div class="divToolbarFormItem">
+						Suche: <?=$strSearch?>
+					</div>
+		
+					<div class="divToolbarIcon">
+						<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+					</div>
+					<div class="divToolbarIcon">
+						<img src="/admin/media/spacer.gif" height="16" width="1" alt="" />
+					</div>
+					
+					<div class="divCleaner"></div>
+		
+				</div>
+		
+				<div class="divToolbar divTopLine">
+					<div style="display: none;"> 
+					<div class="divToolbarLabel">Anlegen:</div>
+					<div class="divToolbarIcon" id="toolbar_new">
+						<img src="/admin/media/page_new.gif" onclick="executeAction(0, 'new');" alt="anlegen" title="anlegen" />
+					</div>
+		
+					<div class="divToolbarSeparator">::</div>
+					</div>			
+					<div class="divToolbarLabel">Bearbeitung:</div>
+					<div style="display: none;">
+					<div class="divToolbarIcon" id="toolbar_edit">
+						<img src="/admin/media/pencil.png" onclick="executeAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+					</div>
+					</div>
+					<div class="divToolbarIcon" id="toolbar_delete">
+						<img src="/admin/media/cross.png" onclick="executeAction(0, 'delete');" alt="löschen" title="löschen" />
+					</div>
+					<div class="divToolbarIcon" id="toolbar_invite">
+						<img src="/admin/extensions/elearning/user_go.png" onclick="executeAction(0, 'invite');" alt="Einladung versenden" title="Einladung versenden" />
+					</div> 
+
+					<div class="divToolbarSeparator">::</div>
+			 		
+					<div class="divToolbarLabel">Ergebnis:</div>
+					<div class="divToolbarIcon" id="toolbar_report">
+						<img src="/admin/extensions/elearning/reports.png" onclick="executeAction(0, 'report');" alt="Ergebnis" title="Ergebnis" />
+					</div>
+		
+					<div class="divCleaner"></div>
+		
+				</div>
+
+			</div>
+	
+			<table id="tableParticipants" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+				<colgroup>
+					<col style="width: 50px;"/>
+					<col style="width: 60px;"/>
+					<col style="width: 150px;"/>
+					<col style="width: 150px;"/>
+					<col style="width: 300px;"/>
+					<col style="width: auto;"/>
+				</colgroup>
+				<thead>
+					<tr>
+						<th>Status</th>
+						<th>ID</th>
+						<th>Nachname</th>
+						<th>Vorname</th>
+						<th>E-Mail</th>
+						<th>Teilnehmergruppe / Abteilung</th>
+					</tr>
+				</thead>
+				<tbody id="tbl_participants">
+				</tbody>
+			</table>
+
+			<div style="overflow: hidden; margin-top: 5px; width:100%;">
+				<div style="height: 20px; overflow: hidden; text-align:center; border-top: 1px solid #ccc; font-size: 10px;">
+					<img src="/admin/media/bullet_white.png" align="absmiddle" alt="Eingeladen" /> = Eingeladen&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<img src="/admin/media/bullet_orange.png" align="absmiddle" alt="Angefangen" /> = Angefangen&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<img src="/admin/media/bullet_green.png" align="absmiddle" alt="Bestanden" /> = Bestanden&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<img src="/admin/media/bullet_red.png" align="absmiddle" alt="Durchgefallen" /> = Durchgefallen
+				</div>
+			</div>
+			<p align="right">
+				<!--<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=import_participants&amp;exam_id=<?=(int)$_VARS['exam_id']?>');"><?=L10N::t('Teilnehmer importieren')?></button>&nbsp;
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=import_participants&amp;exam_id=<?=(int)$_VARS['exam_id']?>');"><?=L10N::t('Teilnehmer importieren')?></button>&nbsp;-->
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+
+			<script type="text/javascript">
+				
+				var arrIcons = [
+							'toolbar_edit',
+							'toolbar_delete',
+							'toolbar_report',
+							'toolbar_invite'];
+				var arrIconState = [];
+				var bCheckToolbarInProgress = 0;
+				var selectedRow = 0;
+				var objLitBox;
+
+				function sendInvitation(intId) {
+					var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+					var strParameters = 'task=participant_invite&exam_id=<?=(int)$_VARS['exam_id']?>&participant_id='+encodeURIComponent(intId);
+
+					var objAjax = new Ajax.Request(
+											strRequestUrl,
+											{
+												method : 'post',
+												parameters : strParameters,
+												onComplete : sendInvitationCallback
+											}
+					); 
+				}
+
+				function sendInvitationCallback(oResponse) {
+					var objData = oResponse.responseText.evalJSON();
+
+					alert(objData);
+					
+				}
+				
+				function prepareReportDialog(intId, iResultId)
+				{
+				
+					var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+					var strParameters = 'task=participant_result&exam_id=<?=(int)$_VARS['exam_id']?>&participant_id='+encodeURIComponent(intId);
+				
+					if(iResultId) {
+						strParameters += '&last_result_id='+encodeURIComponent(iResultId);
+					}
+				
+					var objAjax = new Ajax.Request(
+											strRequestUrl,
+											{
+												method : 'post',
+												parameters : strParameters,
+												onComplete : openReportDialog
+											}
+					); 
+				}
+				
+				function openReportDialog(objResponse)
+				{
+					var objData = objResponse.responseText.evalJSON();
+				
+					var objGUI = new GUI;
+				
+					var HTML = '<div style="margin: 20px;">';
+					HTML += objGUI.printHeadline('Ergebnis:');
+					var arrList 	= objData['report'];
+					var arrResultIds	= objData['result_ids'];
+
+					HTML += 'Vorhandene Ergebnisse: ';
+					arrResultIds.each(function(iResultId) {
+						HTML += '<a href="javascript:;" onclick="prepareReportDialog('+objData['data']['id']+', '+iResultId+');">'+iResultId+'</a> ';
+					});
+
+					HTML += '<br/>';
+					HTML += '<br/>';
+
+					HTML += 'Zeitpunkt: ';
+					HTML += objData['date'];
+
+					HTML += '<br/>';
+
+					HTML += 'Status: ';
+					if(objData['state'] == 1) {
+						HTML += 'Erfolgreich';
+					} else {
+						HTML += 'Nicht erfolgreich';
+					}
+
+					HTML += '<br/>';
+					HTML += '<br/>';
+
+					var rowCnt 		= arrList.length;
+								        
+				    for(var i = 0; i < rowCnt; i++) {
+				        if(!arrList[i]['correct']) {
+				        	 HTML	+= '<div style="color: red;">';
+				        } else {
+				        	 HTML	+= '<div style="color: green;">';
+				        }
+				        HTML	+= '<strong>Frage:</strong> '+arrList[i]['name']+', '+arrList[i]['question']+'<br/>';
+			        	HTML	+= '</div>';
+				        if(arrList[i]['correct_answers']) {
+							for (s in arrList[i]['correct_answers']) {
+								if( arrList[i]['correct_answers'].hasOwnProperty( s ) ) {
+									HTML += '<strong>Richtige Antwort:</strong> '+arrList[i]['correct_answers'][s]['answer']+'<br/>';
+								}
+							}
+				        }
+						if(!arrList[i]['correct']) {
+							if(arrList[i]['wrong_answers']) {
+								for (s in arrList[i]['wrong_answers']) {
+									if( arrList[i]['wrong_answers'].hasOwnProperty( s ) ) {
+										HTML += '<strong>Falsche Antwort:</strong> '+arrList[i]['wrong_answers'][s]['answer']+'<br/>';
+									}
+								}
+							}
+						}
+				        HTML	+= '<br/>';
+					}
+				        
+					HTML	+= '</div>';
+
+					if($('LB_content')) {
+						$('LB_content').update(HTML);
+					} else {
+						objLitBox = new LITBox(HTML, {type:'alert', overlay:true, height:500, width:790, resizable:false, opacity:.9});	
+					}
+				
+				}
+
+				function checkRow(e, strId) {
+
+					if(loadListObserver) clearTimeout(loadListObserver);
+
+					var objRow = $(strId);
+					
+					if(
+						selectedRow && 
+						$(selectedRow)
+					) {
+						$(selectedRow).className = "";
+					}
+					
+					if(!objRow.hasClassName('selectedRow')) {
+						objRow.className = "selectedRow";
+					} else {
+						objRow.className = "";
+					}
+					selectedRow = strId;
+				
+					checkToolbar();
+				
+				}
+				
+				function executeAction(strId, strAction) {
+				
+					if(bCheckToolbarInProgress) {
+						window.setTimeout("executeAction('"+strId+"', '"+strAction+"')", 100);
+						return false;
+					}
+				
+					if(
+						strAction != 'new' &&
+						!arrIconState['toolbar_'+strAction]
+					) {
+						alert("Diese Aktion ist nicht zulässig!");
+						return false;
+					}
+				
+					var intId;
+				
+					if(
+						strAction != 'new' && 
+						selectedRow
+					) {
+						intId = selectedRow.replace(/tr_/, '');
+					}
+				
+					switch(strAction) {
+						case "delete":
+							if(confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
+								
+								var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+								var strParameters = 'task=delete_participants&exam_id=<?=(int)$_VARS['exam_id']?>&participant_id='+encodeURIComponent(intId);
+									
+								var objAjax = new Ajax.Request(
+														strRequestUrl,
+														{
+															method : 'post',
+															parameters : strParameters,
+															onComplete : loadList
+														}
+								);
+				
+							}
+							break;
+						case "edit":
+							openDialog(intId);
+							break;
+						case "new":
+							openDialog();
+							break;
+						case "report":
+							prepareReportDialog(intId);
+							break;
+						case "invite":
+							sendInvitation(intId);
+							break;
+						default:
+							alert("Diese Aktion ist nicht zulässig!");
+							break;
+					}
+				
+				}
+				
+				function checkToolbar() {
+				
+					if(!bCheckToolbarInProgress) {
+				
+						bCheckToolbarInProgress = 1;
+				
+						if(selectedRow) {
+				
+							switchToolbarIcon('toolbar_edit', 1); 
+							switchToolbarIcon('toolbar_delete', 1); 
+							switchToolbarIcon('toolbar_report', 1);  
+							switchToolbarIcon('toolbar_invite', 1); 
+				
+							bCheckToolbarInProgress = 0;
+				
+						} else {
+							arrIcons.each(function(strIcon) {
+								switchToolbarIcon(strIcon, 0);
+							});
+						
+							bCheckToolbarInProgress = 0;
+				
+						}
+				
+					}
+				
+				}
+				
+				function switchToolbarIcon(strIcon, bolShow) {
+					var objIcon = $(strIcon);
+					
+					if(bolShow) {
+						if(
+							arrIconState[strIcon] == undefined ||
+							arrIconState[strIcon] == 0
+						) {
+							new Effect.Opacity(objIcon, {duration:0.2, from:0.2, to:1.0} );
+						}
+						arrIconState[strIcon] = 1;
+					} else {
+						if(
+							arrIconState[strIcon] == undefined ||
+							arrIconState[strIcon] == 1
+						) {
+							new Effect.Opacity(objIcon, {duration:0.2, from:1.0, to:0.2} );
+						}
+						arrIconState[strIcon] = 0;
+					}
+					
+				}
+				
+				var loadListObserver;
+				var loadListEventElement;
+				
+				function prepareLoadList(objEvent, o) {
+				
+					if(objEvent) {
+						loadListEventElement = objEvent;
+					}
+				
+					if(loadListObserver) clearTimeout(loadListObserver);
+					loadListObserver = setTimeout(loadList.bind(), 500);
+				
+				}
+				
+				function loadList() {
+
+					$('toolbar_loading').show();
+
+					var strRequestUrl = '/admin/extensions/elearning/ajax.php';
+					var strParameters = 'task=get_participants&group='+encodeURIComponent($('group').value)+'&exam_id=<?=(int)$_VARS['exam_id']?>&search='+encodeURIComponent($('search').value);
+					
+					var objAjax = new Ajax.Request(
+											strRequestUrl,
+											{
+												method : 'post',
+												parameters : strParameters,
+												onComplete : loadListCallback
+											}
+					); 
+
+				}
+				
+				function loadListCallback(objResponse) {
+				
+					var objData 	= objResponse.responseText.evalJSON();
+				
+					var arrList 	= objData['data'];
+				
+					var rowCnt 		= arrList.length;
+				
+					var tbody 		= document.getElementById("tbl_participants");
+					 
+					while(tbody.hasChildNodes()) {
+						tbody.removeChild(tbody.firstChild);
+					}
+					
+				    var floTotal 	= 0;
+				    
+					var c 			= 0;
+					
+					var tr    		= document.createElement("tr");
+					
+				    var objTr   	= tr.cloneNode(true);
+				
+				    var td0,td1,td2,td3,td4,td5;
+				        
+				    for(var i = 0; i < rowCnt; i++) {
+				        objTr = tr.cloneNode(false);
+				        tbody.appendChild(objTr);
+				        var strId = "tr_"+arrList[i]['id'];
+				        objTr.id = strId;
+				        Event.observe(objTr, 'click', checkRow.bindAsEventListener(c, strId));
+						Event.observe(objTr, 'dblclick', executeAction.bindAsEventListener(c, 'edit'));
+						Event.observe(objTr, 'mouseout', resetHighlightRow); 
+						Event.observe(objTr, 'mousemove', setHighlightRow);
+						addCells(objTr, i,arrList[i]);
+						c++;
+				    }
+				    tbody = null;
+
+					selectedRow = 0;
+					checkToolbar();
+				
+					$('toolbar_loading').hide();
+				
+				}
+			
+				function addCells(tr, cnt, arrList) {
+			   
+			        var td0 = document.createElement("td");
+			        tr.appendChild(td0);
+			        var stringTd0 = null;
+			        if(arrList['state'] == 'succeeded')
+					{
+						stringTd0 = '<img src="/admin/media/bullet_green.png" alt="Bestanden" />';
+					}
+					else if(arrList['state'] == 'failed')
+					{
+						stringTd0 = '<img src="/admin/media/bullet_red.png" alt="Durchgefallen" />';
+					}
+					else if(arrList['state'] == 'started')
+					{
+						stringTd0 = '<img src="/admin/media/bullet_orange.png" alt="Angefangen" />';
+					}
+					else if(arrList['state'] == 'invited')
+					{
+						stringTd0 = '<img src="/admin/media/bullet_white.png" alt="Eingeladen" />';
+					}
+					else
+					{
+						stringTd0 = '<img src="/admin/media/spacer.gif" alt="Angelegt" />';
+					}
+			        td0.innerHTML = stringTd0;
+			        td0.style.textAlign = 'center';
+					
+			        var td1 = document.createElement("td");
+			        tr.appendChild(td1);
+					td1.appendChild(document.createTextNode(arrList['id']));
+					td1.style.textAlign = 'right';
+					
+			        var td2 = document.createElement("td");
+			        tr.appendChild(td2);
+					td2.appendChild(document.createTextNode(arrList['lastname'] + ' '));
+			        
+			        var td3 = document.createElement("td");
+			        tr.appendChild(td3);
+					td3.appendChild(document.createTextNode(arrList['firstname'] + ' '));
+			        
+			        var td4 = document.createElement("td");
+			        tr.appendChild(td4);
+					td4.appendChild(document.createTextNode(arrList['email'] + ' '));
+			        
+			       	var td5 = document.createElement("td");
+			        tr.appendChild(td5);
+					td5.appendChild(document.createTextNode(arrList['group'] + ' '));
+			
+			        td0 = td1 = td2 = td3 = td4 = td5 = null;
+			        
+				}
+
+				function checkListHeight() {
+					var intHeight = 0;
+					intHeight = window.innerHeight;
+					if(!intHeight) {
+						intHeight = document.body.clientHeight;
+					}
+					if(!intHeight) {
+						intHeight = document.documentElement.clientHeight;
+					}
+					intHeight = intHeight - 280;
+		
+					var objTable = $('tableParticipants-body');
+		
+					if(objTable) {
+						objTable.style.height = intHeight+'px';	
+					} else {
+						document.write('<style>.scroll-table-body { height: '+intHeight+'px; }</style>');
+					}
+				}
+				checkListHeight();
+		
+				Event.observe(window, 'load', ScrollableTable.load);
+				Event.observe(window, 'load', loadList);
+				Event.observe(window, 'resize', checkListHeight);
+			
+				document.body.style.overflow="hidden";
+				
+			</script>
+
+<?
+} elseif($_VARS['task'] == 'edit_exam') {
+
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+
+	$aCustomerDBs = CustomerDb\Helper\Functions::getCustomerTables();
+	$aCustomerFields = CustomerDb\Helper\Functions::getCustomerFields($oExam->customer_db, "name", true);
+	$aCustomerFields = array_merge(array(''=>''), $aCustomerFields);
+
+?>
+
+			<h2><?=L10N::t('Einstellungen bearbeiten')?></h2>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+				<input type="hidden" name="task" value="save_exam" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				<?=printTableStart()?>
+					<?=printFormText(L10N::t('Title'), 'name', $oExam->name)?>
+				<?=printTableEnd()?>
+				<h3><?=L10N::t('Allgemeines')?></h3>
+				<?=printTableStart()?>
+					<?=printFormDate(L10N::t('Start Zeitpunkt'), 'date_start', $oExam->date_start)?>
+					<?=printFormDate(L10N::t('End Zeitpunkt'), 'date_end', $oExam->date_end)?>
+					<?=printFormCheckbox(L10N::t('Geschlossene Prüfung'), 'closed', 1, $oExam->closed)?>
+					<?=printFormSelect(L10N::t('Anzeige'), 'display', $aDisplayOptions, $oExam->display)?>
+					<?=printFormSelect(L10N::t('Punkte Modus'), 'score_mode', $aScoreModeOptions, $oExam->score_mode)?>
+					<?=printFormText(L10N::t('Minimale Punktzahl (in %)'), 'minimum_score', $oExam->minimum_score)?>
+					<?=printFormText(L10N::t('Maximale Bearbeitungsdauer (in Minuten)'), 'maximum_time', $oExam->maximum_time)?>
+					<?=printFormSelect(L10N::t('Erlaubte Versuche'), 'attempts', $aAttemptsOptions, $oExam->attempts)?>
+					<?=printFormCheckbox(L10N::t('Fehler direkt in der Frage anzeigen'), 'show_error_in_question', 1, $oExam->show_error_in_question)?>
+					<?=printFormCheckbox(L10N::t('Erfolg direkt in der Frage anzeigen'), 'show_success_in_question', 1, $oExam->show_success_in_question)?>
+					<?=printFormCheckbox(L10N::t('Gruppen zufällig anordnen'), 'random_positions', 1, $oExam->random_positions)?>
+					<?=printFormText(L10N::t('Ergebnisse per E-Mail versenden (E-Mail-Adresse angeben)'), 'email_result', $oExam->email_result)?>
+					<?=printFormText(L10N::t('Kommentare per E-Mail versenden (E-Mail-Adresse angeben)'), 'email_comment', $oExam->email_comment)?>
+				<?=printTableEnd()?>
+				<h3><?=L10N::t('Einladungen und Erinnerungen')?></h3>
+				<?=printTableStart()?>
+					<?=printFormCheckbox(L10N::t('E-Mail-Texte pro Gruppe'), 'group_email_texts', 1, $oExam->group_email_texts)?>			
+					<?=printFormCheckbox(L10N::t('Zweiteinladung direkt nach Durchfallen versenden'), 'send_second_after_failed', 1, $oExam->send_second_after_failed)?>
+					<?=printFormCheckbox(L10N::t('Erfolgreichmeldung nach Erfolg versenden'), 'send_email_after_success', 1, $oExam->send_email_after_success)?>
+					<?=printFormCheckbox(L10N::t('Andere E-Mail-Texte für Erinnerung im zweiten Durchlauf'), 'second_reminder_email_text', 1, $oExam->second_reminder_email_text)?>			
+					<?=printFormText(L10N::t('Anzahl von Wochen bis eine Erinnerung verschickt wird'), 'reminder_weeks', $oExam->reminder_weeks)?>
+				<?=printTableEnd()?>
+				<h3><?=L10N::t('Ergebnisseite')?></h3>
+				<?=printTableStart()?>
+					<?=printFormCheckbox(L10N::t('Ergebnis anzeigen'), 'show_result', 1, $oExam->show_result)?>
+					<?=printFormSelect(L10N::t('Antworten anzeigen'), 'show_answers', array(0=>L10N::t('Nein'), 1=>L10N::t('Nur falsche'), 2=>L10N::t('Alle')), $oExam->show_answers)?>
+					<?=printFormCheckbox(L10N::t('Auf der Ergebnisseite Kommentare ermöglichen'), 'comment_result', 1, $oExam->comment_result)?>
+					<?=printFormCheckbox(L10N::t('PDF mit falsch beantworteten Fragen anzeigen'), 'show_result_pdf', 1, $oExam->show_result_pdf)?>
+
+				<?=printTableEnd()?>
+				<br/>
+				<?=printTableStart()?>
+					<?=printFormMultiSelect(L10N::t('Sprachen'), 'languages[]', $aLanguages, $oExam->getLanguages(), 'size="5"')?>
+				<?=printTableEnd()?>
+<?
+				if($oExam->closed) {
+?>
+				<h3>Teilnehmer</h3>
+				<?=printTableStart()?>
+					<?=printFormSelect(L10N::t('Datenbank'), 'customer_db', $aCustomerDBs, $oExam->customer_db)?>
+					<?=printFormSelect(L10N::t('Feld: ID'), 'customer_db_id', $aCustomerFields, $oExam->customer_db_id)?>
+					<?=printFormSelect(L10N::t('Feld: Vorname'), 'customer_db_firstname', $aCustomerFields, $oExam->customer_db_firstname)?>
+					<?=printFormSelect(L10N::t('Feld: Nachname'), 'customer_db_lastname', $aCustomerFields, $oExam->customer_db_lastname)?>
+					<?=printFormSelect(L10N::t('Feld: E-Mail'), 'customer_db_email', $aCustomerFields, $oExam->customer_db_email)?>
+					<?=printFormSelect(L10N::t('Feld: Teilnehmergruppe / Abteilung'), 'customer_db_group', $aCustomerFields, $oExam->customer_db_group)?>
+					<?=printFormSelect(L10N::t('Feld: Führungsebene'), 'customer_db_level', $aCustomerFields, $oExam->customer_db_level)?>
+					<?=printFormSelect(L10N::t('Feld: Standort'), 'customer_db_location', $aCustomerFields, $oExam->customer_db_location)?>
+					<?=printFormSelect(L10N::t('Feld: Korrespondenzsprache'), 'customer_db_language', $aCustomerFields, $oExam->customer_db_language)?>
+				<?=printTableEnd()?>
+<?
+				}
+?>
+				<h3>PDF Einstellungen</h3>
+				<?=printTableStart()?>
+					<?=printFormFile(L10N::t('Logo für PDF-Auswertung'), 'pdf_logo', $oExam->pdf_logo)?>
+					<?=printFormText(L10N::t('Schriftfarbe für PDF'), 'pdf_color', $oExam->pdf_color)?>
+				<?=printTableEnd()?>
+
+				<?=printSubmit(L10N::t('Speichern'))?>
+			</form>
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_groups&amp;exam_id=<?=(int)$_VARS['exam_id']?>'); return false;"><?=L10N::t('Gruppen bearbeiten')?></button>
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+<?
+} elseif($_VARS['task'] == 'invite_participants') {
+
+	ignore_user_abort(true);
+	set_time_limit(7200);
+
+	if(!isset($_VARS['trial_run'])) {
+		$_VARS['trial_run'] = true;
+	}
+
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+
+	unset($aResult);
+	if(!empty($_VARS['item'])) {
+		$aResult = $oExam->sendInvitaitions($_VARS['item'], $_VARS['trial_run']);
+	}
+	
+?>
+			<h2><?=L10N::t('E-Mails versenden')?></h2>
+<?
+	if(isset($aResult)) {
+?>
+			<h3><?=(int)$aResult['success']?> von <?=(int)$aResult['total']?> E-Mails wurden versendet.</h3>
+<?	
+	}
+?>
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+				<input type="hidden" name="task" value="invite_participants" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				<?=printTableStart()?>
+					<?=printFormSelect("Einladungsrunde", "item", array('firstemail'=>'Ersteinladung', 'reminderemail'=>'Erinnerung (Bei fehlender Teilnahme nach eingestelltem Zeitraum)', 'reminderemail_force'=>'Erinnerung (An alle die noch nicht bestanden haben)', 'reminderemail_notparticipated'=>'Erinnerung (An alle die noch nicht teilgenommen haben)', 'secondemail'=>'Zweiteinladung'), $_VARS['item']); ?>
+					<?=printFormCheckbox("Probelauf? (Maximal 20 E-Mails werden versendet)", "trial_run", 1, $_VARS['trial_run'])?>
+				<?=printTableEnd()?>
+
+				<?=printSubmit(L10N::t('E-Mails absenden'))?>
+			</form>
+
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+<?
+} elseif($_VARS['task'] == 'import_participants') {
+
+	Access_Backend::checkAccess('elearning_exam_participants');
+	
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+	
+	unset($iResult);
+	if(is_file($_FILES['csv']['tmp_name'])) {
+		$iResult = $oExam->importParticipants($_FILES['csv']['tmp_name'], (bool)$_VARS['utf-8']);
+	}
+	
+?>
+
+			<h2><?=L10N::t('Teilnehmer importieren')?></h2>
+<?
+	if(isset($iResult)) {
+?>
+			<h3><?=(int)$iResult?> Datensätze wurden importiert.</h3>
+<?	
+	}
+?>
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+				<input type="hidden" name="task" value="import_participants" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				<?=printTableStart()?>
+					<?=printFormFile("CSV-Datei (Nachname, Vorname, E-Mail, Sprache, Teilnehmergruppe, Führungsebene, Standort)", "csv"); ?>
+					<?=printFormCheckbox("UTF-8", "utf-8", 1)?>
+				<?=printTableEnd()?>
+
+				<?=printSubmit(L10N::t('Speichern'))?>
+			</form>
+
+	
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+<?
+} elseif($_VARS['task'] == 'edit_mail') {
+
+	$oExam = new Ext_Elearning_Exam((int)$_VARS['exam_id']);
+	$aExamLanguages = $oExam->getLanguages();
+
+	$aEmailTypes = array('firstemail', 'reminderemail', 'secondemail', 'secondreminderemail', 'successemail');
+	
+	foreach((array)$aEmailTypes as $sEmailType) {
+
+		if(
+			!empty($_VARS[$sEmailType])
+		) {
+
+			foreach($aExamLanguages as $sLanguage) {
+			
+				$aItems = $_VARS[$sEmailType][$sLanguage];
+
+				$sFile = $_FILES[$sEmailType]['tmp_name'][$sLanguage]['attachment'];
+				$sFileName = $_FILES[$sEmailType]['name'][$sLanguage]['attachment'];
+				
+				$sFileName = \Util::getCleanFileName($sFileName);
+				
+				$sSql = "
+						REPLACE
+							elearning_exams_emails
+						SET
+							`exam_id` = :exam_id,
+							`language` = :language,
+							`item` = :item,
+							`subject` = :subject,
+							`body` = :body,
+							`attachment` = :attachment
+						";
+				$aSql = array();
+				$aSql['item'] = $sEmailType;
+				$aSql['exam_id'] = $oExam->id;
+				$aSql['language'] = $sLanguage;
+				$aSql['subject'] = html_entity_decode($aItems['subject'], ENT_QUOTES, 'UTF-8');
+				$aSql['body'] = html_entity_decode($aItems['body'], ENT_QUOTES, 'UTF-8');
+				
+				// Anhang nur setzen, wenn Datei vorhanden
+				if(is_file($sFile)) {
+					$aSql['attachment'] = (string)$sFileName;
+				} else {
+					$aSql['attachment'] = (string)$aItems['attachment'];
+				}
+
+				if(isset($_VARS['user_group'])) {
+					$sSql .= ", `user_group` = :user_group ";
+					$aSql['user_group'] = $_VARS['user_group'];
+				}
+
+				DB::executePreparedQuery($sSql, $aSql);
+
+				if(is_file($sFile)) {
+					$oExam->saveEmailAttachment($sFile, $sFileName, $sEmailType, $sLanguage);
+				}
+
+			}
+
+		}
+
+	}
+
+	$aEmails = $oExam->getEmails();
+
+	$aExamLanguages = $oExam->getLanguages();
+
+	if($oExam->group_email_texts) {
+		$aParticipantGroups = $oExam->getParticipantGroups();
+
+		$aEmails = $aEmails[$_VARS['user_group']];
+
+	}
+
+	if($oExam->group_email_texts) {
+?>
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+				<input type="hidden" name="task" value="edit_mail" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+			<?=printTableStart()?>
+				<?=printFormSelect(L10N::t('Teilnehmergruppe'), 'user_group', $aParticipantGroups, $_VARS['user_group'])?>
+			<?=printTableEnd()?>
+			<?=printSubmit(L10N::t('Gruppe wechseln'))?>
+			</form>
+<?
+	}
+?>
+			<h2><?=L10N::t('E-Mail-Texte bearbeiten')?></h2>
+
+			<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data">
+				<input type="hidden" name="task" value="edit_mail" />
+				<input type="hidden" name="exam_id" value="<?=(int)$_VARS['exam_id']?>" />
+				
+<?
+	if($oExam->group_email_texts) {
+?>
+				<input type="hidden" name="user_group" value="<?=  \Util::convertHtmlEntities($_VARS['user_group'])?>" />
+<?
+	}
+?>
+			<h3><?=L10N::t('Ersteinladungstexte', 'E-Learning')?></h3>
+			<?=printTableStart(200)?>
+<?
+	foreach((array)$aExamLanguages as $sLanguage) {
+		$sKeySubject = 'firstemail['.$sLanguage.'][subject]';
+		$sKeyBody = 'firstemail['.$sLanguage.'][body]';
+		$sKeyAttachment = 'firstemail['.$sLanguage.'][attachment]';
+?>
+					<?=printFormText(L10N::t('Betreff')." ".$aLanguages[$sLanguage], $sKeySubject, $aEmails[$sLanguage]['firstemail']['subject'])?>
+					<?=printFormTextarea(L10N::t('Text')." ".$aLanguages[$sLanguage], $sKeyBody, $aEmails[$sLanguage]['firstemail']['body'], 20, 'style="width: 700px; heigth: 200px;"')?>
+					<?=printFormHidden($sKeyAttachment, $aEmails[$sLanguage]['firstemail']['attachment'])?>
+					<?=printFormFile(L10N::t('Anhang')." ".$aLanguages[$sLanguage], $sKeyAttachment, $aEmails[$sLanguage]['firstemail']['attachment'])?>
+<?
+	}
+?>
+				<?=printTableEnd()?>
+				<br/>
+				<h3><?=L10N::t('Erinnerungstexte', 'E-Learning')?></h3>
+				<?=printTableStart(200)?>
+<?
+	foreach((array)$aExamLanguages as $sLanguage) {
+		$sKeySubject = 'reminderemail['.$sLanguage.'][subject]';
+		$sKeyBody = 'reminderemail['.$sLanguage.'][body]';
+		$sKeyAttachment = 'reminderemail['.$sLanguage.'][attachment]';
+?>
+					<?=printFormText(L10N::t('Betreff')." ".$aLanguages[$sLanguage], $sKeySubject, $aEmails[$sLanguage]['reminderemail']['subject'])?>
+					<?=printFormTextarea(L10N::t('Text')." ".$aLanguages[$sLanguage], $sKeyBody, $aEmails[$sLanguage]['reminderemail']['body'], 20, 'style="width: 700px; heigth: 200px;"')?>
+					<?=printFormHidden($sKeyAttachment, $aEmails[$sLanguage]['reminderemail']['attachment'])?>
+					<?=printFormFile(L10N::t('Anhang')." ".$aLanguages[$sLanguage], $sKeyAttachment, $aEmails[$sLanguage]['reminderemail']['attachment'])?>
+<?
+	}
+?>
+				<?=printTableEnd()?>
+				<br/>
+				<h3><?=L10N::t('Zweiteinladungstexte', 'E-Learning')?></h3>
+				<?=printTableStart(200)?>
+<?
+	foreach((array)$aExamLanguages as $sLanguage) {
+		$sKeySubject = 'secondemail['.$sLanguage.'][subject]';
+		$sKeyBody = 'secondemail['.$sLanguage.'][body]';
+		$sKeyAttachment = 'secondemail['.$sLanguage.'][attachment]';
+?>
+					<?=printFormText(L10N::t('Betreff')." ".$aLanguages[$sLanguage], $sKeySubject, $aEmails[$sLanguage]['secondemail']['subject'])?>
+					<?=printFormTextarea(L10N::t('Text')." ".$aLanguages[$sLanguage], $sKeyBody, $aEmails[$sLanguage]['secondemail']['body'], 20, 'style="width: 700px; heigth: 200px;"')?>
+					<?=printFormHidden($sKeyAttachment, $aEmails[$sLanguage]['secondemail']['attachment'])?>
+					<?=printFormFile(L10N::t('Anhang')." ".$aLanguages[$sLanguage], $sKeyAttachment, $aEmails[$sLanguage]['secondemail']['attachment'])?>
+<?
+	}
+?>
+				<?=printTableEnd()?>
+	
+<?
+	if($oExam->second_reminder_email_text) {
+?>
+				<br/>
+				<h3><?=L10N::t('Erinnerungstexte im zweiten Durchlauf', 'E-Learning')?></h3>
+				<?=printTableStart(200)?>
+<?
+	foreach((array)$aExamLanguages as $sLanguage) {
+		$sKeySubject = 'secondreminderemail['.$sLanguage.'][subject]';
+		$sKeyBody = 'secondreminderemail['.$sLanguage.'][body]';
+		$sKeyAttachment = 'secondreminderemail['.$sLanguage.'][attachment]';
+?>
+					<?=printFormText(L10N::t('Betreff')." ".$aLanguages[$sLanguage], $sKeySubject, $aEmails[$sLanguage]['secondreminderemail']['subject'])?>
+					<?=printFormTextarea(L10N::t('Text')." ".$aLanguages[$sLanguage], $sKeyBody, $aEmails[$sLanguage]['secondreminderemail']['body'], 20, 'style="width: 700px; heigth: 200px;"')?>
+					<?=printFormHidden($sKeyAttachment, $aEmails[$sLanguage]['secondreminderemail']['attachment'])?>
+					<?=printFormFile(L10N::t('Anhang')." ".$aLanguages[$sLanguage], $sKeyAttachment, $aEmails[$sLanguage]['secondreminderemail']['attachment'])?>
+<?
+	}
+?>
+				<?=printTableEnd()?>
+
+<?
+	}
+
+	if($oExam->send_email_after_success) {
+?>
+				<br/>
+				<h3><?=L10N::t('Erfolgreichmeldung', 'E-Learning')?></h3>
+				<?=printTableStart(200)?>
+<?
+	foreach((array)$aExamLanguages as $sLanguage) {
+		$sKeySubject = 'successemail['.$sLanguage.'][subject]';
+		$sKeyBody = 'successemail['.$sLanguage.'][body]';
+		$sKeyAttachment = 'successemail['.$sLanguage.'][attachment]';
+?>
+					<?=printFormText(L10N::t('Betreff')." ".$aLanguages[$sLanguage], $sKeySubject, $aEmails[$sLanguage]['successemail']['subject'])?>
+					<?=printFormTextarea(L10N::t('Text')." ".$aLanguages[$sLanguage], $sKeyBody, $aEmails[$sLanguage]['successemail']['body'], 20, 'style="width: 700px; heigth: 200px;"')?>
+					<?=printFormHidden($sKeyAttachment, $aEmails[$sLanguage]['successemail']['attachment'])?>
+					<?=printFormFile(L10N::t('Anhang')." ".$aLanguages[$sLanguage], $sKeyAttachment, $aEmails[$sLanguage]['successemail']['attachment'])?>
+<?
+	}
+?>
+				<?=printTableEnd()?>
+
+<?
+	}
+?>				
+					
+				<br/>
+
+				<?=printSubmit(L10N::t('Speichern'))?>
+			</form>
+
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>'); return false;"><?=L10N::t('zurück')?></button>
+			</p>
+
+			<div class="divBoxContainer">
+				<div class="divBoxHeader" onClick="switchBox('divPlaceHolders');">Verfügbare Platzhalter &raquo;</div> 
+				<div class="divBoxContent" id="divPlaceHolders">
+					<div>
+						Vorname: {firstname}<br/>
+						Nachname: {lastname}<br/>
+						E-Mail: {email}<br/>
+						Benutzername: {nickname}<br/>
+						Passwort: {password}<br/>
+						Access-Code: {access_code}
+					</div>
+				</div>
+			</div>
+			<script language="JavaScript" type="text/javascript">
+	  			Element.hide('divPlaceHolders');
+			</script>
+<?
+} else {
+?>
+			<h2><?=L10N::t('Prüfungen')?></h2>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" style="table-layout: fixed;" class="table highlightRows">
+				<tr>
+					<th style="width: auto;"><?=L10N::t('Name')?></th>
+					<th style="width: 140px;"><?=L10N::t('Start Zeitpunkt')?></th>
+					<th style="width: 140px;"><?=L10N::t('End Zeitpunkt')?></th>
+					<th style="width: 240px;"><?=L10N::t('Aktionen')?></th>
+				</tr>
+<?
+	$aExams = Ext_Elearning_Exam::getList();
+	foreach((array)$aExams as $aExam) {
+		
+		$oExam = new Ext_Elearning_Exam($aExam['id']);
+		
+		$bIsActive = $oExam->isActiveAndRunning();
+		
+		if(
+			hasRight('elearning_exam_admin') ||
+			hasRight('elearning_exam_'.$aExam['id'])
+		) {
+?>
+				<tr <?=(($bIsActive)?'style="background-color: lightgreen;"':'')?>>
+					<td><?=$aExam['name']?></td>
+					<td><?=strftime("%x %X", $aExam['date_start'])?></td>
+					<td><?=strftime("%x %X", $aExam['date_end'])?></td>
+					<td style="text-align: center;">
+<?
+		if(hasRight('elearning_exam_admin')) {
+?>
+						<a href="javascript:" onclick="if(confirm('<?=L10N::t('Möchten Sie diese Prüfung wirklich löschen?')?>')) go('<?=$_SERVER['PHP_SELF']?>?task=delete_exam&amp;exam_id=<?=$aExam['id']?>');"><img src="/admin/extensions/elearning/delete.png" alt="<?=L10N::t('Prüfung löschen')?>" title="<?=L10N::t('Prüfung löschen')?>" /></a>&nbsp;
+						<a href="javascript:" onclick="if(confirm('<?=L10N::t('Möchten Sie diese Prüfung wirklich kopieren?')?>')) go('<?=$_SERVER['PHP_SELF']?>?task=copy_exam&amp;exam_id=<?=$aExam['id']?>');"><img src="/admin/extensions/elearning/copy.png" alt="<?=L10N::t('Prüfung kopieren')?>" title="<?=L10N::t('Prüfung kopieren')?>" /></a>&nbsp;
+<?
+		}
+		if(hasRight('elearning_exam_settings')) {
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_exam&amp;exam_id=<?=$aExam['id']?>"><img src="/admin/extensions/elearning/edit.png" alt="<?=L10N::t('Einstellungen bearbeiten')?>" title="<?=L10N::t('Einstellungen bearbeiten')?>" /></a>&nbsp;
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_mail&amp;exam_id=<?=$aExam['id']?>"><img src="/admin/extensions/elearning/email_edit.png" alt="<?=L10N::t('E-Mail-Texte bearbeiten')?>" title="<?=L10N::t('E-Mail-Texte bearbeiten')?>" /></a>&nbsp;
+<?
+		}
+		if(hasRight('elearning_exam_contents')) {
+?>
+						<a href="<?=$_SERVER['PHP_SELF']?>?task=edit_groups&amp;exam_id=<?=$aExam['id']?>"><img src="/admin/extensions/elearning/groups_edit.png" alt="<?=L10N::t('Gruppen bearbeiten')?>" title="<?=L10N::t('Gruppen bearbeiten')?>" /></a>&nbsp;
+<?
+		}
+		if(hasRight('elearning_exam_reports')) {
+?>
+						<a href="./elearning/export.php?exam_id=<?=$aExam['id']?>" onclick="window.open(this.href);return false;"><img src="/admin/extensions/elearning/page_excel.png" alt="<?=L10N::t('Teilnehmerliste')?>" title="<?=L10N::t('Teilnehmerliste')?>" /></a>
+						<a href="./elearning/pdf.php?exam_id=<?=$aExam['id']?>" onclick="window.open(this.href);return false;"><img src="/admin/extensions/elearning/reports.png" alt="<?=L10N::t('Auswertungen')?>" title="<?=L10N::t('Auswertungen')?>" /></a>
+<?
+		}
+		if(
+			$aExam['closed'] &&
+			hasRight('elearning_exam_participants')
+		) {
+?>
+						&nbsp;<a href="<?=$_SERVER['PHP_SELF']?>?task=participants&amp;exam_id=<?=$aExam['id']?>"><img src="/admin/extensions/elearning/participants.png" alt="<?=L10N::t('Ergebisse einsehen')?>" title="<?=L10N::t('Ergebisse einsehen')?>" /></a>
+<?
+			if(hasRight('elearning_exam_invitations')) {
+?>
+						&nbsp;<a href="<?=$_SERVER['PHP_SELF']?>?task=import_participants&amp;exam_id=<?=$aExam['id']?>"><img src="/admin/extensions/elearning/user_add.png" alt="<?=L10N::t('Teilnehmer importieren')?>" title="<?=L10N::t('Teilnehmer importieren')?>" /></a>
+						&nbsp;<a href="<?=$_SERVER['PHP_SELF']?>?task=invite_participants&amp;exam_id=<?=$aExam['id']?>"><img src="/admin/extensions/elearning/user_go.png" alt="<?=L10N::t('Einladungen versenden')?>" title="<?=L10N::t('Einladungen versenden')?>" /></a>
+<?
+			}
+		}
+?>
+					</td>
+				</tr>
+<?
+		}
+	}
+?>
+			</table>
+<?
+	if(hasRight('elearning_exam_admin')) {
+?>
+			<p align="right">
+				<button class="btn" onclick="go('<?=$_SERVER['PHP_SELF']?>?task=edit_exam'); return false;"><?=L10N::t('Neue Prüfung anlegen')?></button>
+			</p>
+
+<?
+	}
+}
+?>
+
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

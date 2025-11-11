@@ -1,0 +1,226 @@
+hash: c71b08f09be2cac54110c236709c2aaa
+class:
+  wdbasic: Ext_Thebing_Accounting_Transfer_Payment_List
+  data: Ext_Thebing_Accounting_Gui2_Transfer_Payment
+  js: UtilGui
+  row_style: Ext_Thebing_Gui2_Style_Accounting_Transfer_Payment
+  icon_status: Ext_Thebing_Gui2_Icon_Accounting_Transfer_Payment
+access: thebing_accounting_pickup_payments
+js:
+  - [gui2/util.js, thebing]
+  - [gui2/accounting/transfer/payment.js, thebing]
+css: 
+  - /assets/ts/css/gui2.css
+id:
+  alias: ts_i_j_t
+  column: id
+limit_selection: false
+multiple_selection: true
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          alias:
+            - ts_i_j_t
+          column:
+            - transfer_date
+          default:
+            - Ext_Thebing_Accounting_Gui2_Transfer_Payment
+            - getFromDate
+        until:
+          alias:
+            - 
+          column:
+            - 
+          default:
+            - Ext_Thebing_Accounting_Gui2_Transfer_Payment
+            - getUntilDate
+        text_after: basierend auf Leistungszeitraum
+        search_type: between
+     -
+        element: seperator
+     -
+        element: selectfilter
+        id: payment_provider
+        column: provider_id
+        alias: ts_i_j_t
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Transfer_Payment
+          - getProviders
+        label: Transferanbieter
+        label_as_item: true
+     -
+        element: selectfilter
+        id: inbox_filter
+        column: inbox
+        alias: ts_i
+        entries:
+          - Ext_Thebing_Accounting_Gui2_Transfer_Payment
+          - getInbox
+        label: Inbox
+        label_as_item: true
+     -
+        element: selectfilter
+        id: group_filter
+        value: xNullx
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: '`ts_i`.`group_id` != 0'
+          no: '`ts_i`.`group_id` = 0'    
+        label: Gruppe
+        label_as_item: true
+  -
+    position: top
+    elements: 
+     -
+        element: icon
+        label: Zahlung eintragen
+        task: openDialog
+        action: transfer_payment
+        active: 0
+        img:
+          - Ext_Thebing_Util
+          - getIcon
+          - payment
+  -
+    position: bottom
+    type: legend
+    elements:
+     -
+        element: legend_label
+        label: Status
+     -
+        element: legend_info
+        label: Transfer geändert
+        info:
+          color: changed  
+columns:
+  - 
+    title: Name
+    alias: tc_c
+    column: lastname
+    data: lastname
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_CustomerName
+  - 
+    title: Re.Nr.	
+    column: last_document_number
+    width: document_number
+  - 
+    title: K.Nr. 	
+    column: customerNumber
+    data: customerNumber
+    width: customer_number
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - customerNumber
+      - true
+  - 
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    alias: kg
+    filterset:
+      type: varchar
+    column: short
+    data: group_short
+    width: group_short
+  -
+    title: Gruppennummer
+    column: number
+    alias: kg
+    width: number
+    default: false
+  - 
+    title: Transfer - Art	
+    column: transfer_type
+    data: transfer_type
+    width: name
+    format: Ext_Thebing_Gui2_Format_Transfer_Type
+  - 
+    title: Transfer - Unternehmen
+    alias: ts_i_j_t
+    column: provider_id
+    data: provider_id
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Transfer_ProviderName
+  - 
+    title: Transfer - Fahrer
+    column: driver_id
+    data: driver_id
+    width: name
+    small: true
+    format: Ext_Thebing_Gui2_Format_Transfer_Driver
+  - 
+    title: Transfer - Datum
+    column: transfer_date
+    data: transfer_date
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Transfer - Uhrzeit
+    column: transfer_time
+    data: transfer_time
+    width: time
+    small: true
+    format: Ext_Thebing_Gui2_Format_Time
+  - 
+    title: Kosten
+    alias: ktrpa
+    column: amount
+    data: payment_amount
+    width: amount
+    sortable: false
+    format: Ext_Thebing_Gui2_Format_Accounting_Transfer_Payment_Amount
+  - 
+    title: Kontoinhaber
+    alias: kc
+    column: bank_account_holder
+    data: bank_account_holder
+    width: name
+  - 
+    title: Kontonummer
+    alias: kc
+    column: bank_account_number
+    data: bank_account_number
+    width: name
+  - 
+    title: BLZ
+    alias: kc
+    column: bank_code
+    data: bank_code
+    width: name
+  - 
+    title: Name der Bank
+    alias: kc
+    column: bank_code
+    data: bank_code
+    width: name
+  - 
+    title: Adresse der Bank
+    alias: kc
+    column: bank_address
+    data: bank_address
+    width: name
+  - 
+    title: BIC
+    column: bank_account_iban
+    sortable: false
+    width: number
+  - 
+    title: Inbox
+    column: inbox
+    width: name
+    small: true
+    default: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_System, getClient, getInboxList, true, true]

@@ -1,0 +1,40 @@
+class:
+  wdbasic: Ext_TC_Exchangerate_Table_Source
+  data: Ext_TC_Exchangerate_Table_Source_Gui2_Data
+  js: ExchangeRate
+id:
+  column: id
+  alias: tc_ets
+access: 
+  - core_admin_exchangerate
+  - ""
+title: "Quellen"
+sortable: true
+bars:
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Exchangerate_Table_Source_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Exchangerate_Table_Source_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+
+columns:
+  -
+    visible: true
+    sortable: false
+    title: Name
+    column: name
+    alias: tc_ets
+    width: name
+    resize: true
+

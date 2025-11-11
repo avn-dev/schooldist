@@ -1,0 +1,82 @@
+class:
+  wdbasic: TcApi\Entity\ApiToken
+  data: TcApi\Gui2\Data\ApiTokenData
+id:
+  column: id
+  alias: 
+access: 
+  - core_frontend_token
+  - ""
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - TcApi\Gui2\Data\ApiTokenData
+          - getDialog
+      - 
+        element: icon_edit
+        dialog:
+          - TcApi\Gui2\Data\ApiTokenData
+          - getDialog
+      - 
+        element: icon_delete
+columns:
+  -
+    title: Token
+    column: token
+    alias: tc_wt
+    width: name
+    resize: true
+  -
+    title: Bereich
+    column: application
+    alias: applications
+    width: name
+  -
+    title: IPs
+    column: ip
+    alias: ips
+    width: name
+
+default_columns:
+  -
+    visible: true
+    set: []
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: tc_wt
+    width: user_name
+  -
+    visible: true
+    set: []
+    title: Erstellt
+    format: Ext_TC_Gui2_Format_Date
+    column: created
+    alias: tc_wt
+    width: date
+    filterset: 
+      type: date
+  -
+    visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: tc_wt
+    width: user_name
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_TC_Gui2_Format_Date
+    column: changed
+    alias: tc_wt
+    width: date
+    filterset: 
+      type: date

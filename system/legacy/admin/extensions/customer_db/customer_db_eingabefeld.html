@@ -1,0 +1,518 @@
+<?
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+/////////////////////////////////////////////////////
+//// Moduladministration customer_db-Eingabefeld ////
+/////////////////////////////////////////////////////
+
+// Dieses Script administriert das Eingabefeld Modul
+// Hier kann man festlegen, zu welchem
+// Datenbankfeld es gehÃ¶rt, wie es benannt werden soll,
+// etc
+
+///////////////////////////////////////////////
+
+// Anzeigen, welche Felder es in der DB gibt
+// Feld auswÃ¤hlen
+// Vorgabewert setzen ( optional )
+// Falls Textfeld o.ï¿½.:
+// GrÃ¶ÃŸe / Zeilenanzahl setzen
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+global $db_data;
+
+$identifier = 		"customer_db_";
+$definition_table =	$identifier."definition";
+$value_table =		$identifier."values";
+$SQL_handler = 		new customer_db;
+$tree_table =		"tree_db_1";
+
+$my_parent = get_data(db_query($db_data['system'],"SELECT * FROM cms_content WHERE page_id = '".$_VARS['page_id']."' AND content LIKE '%<#content".(str_pad($_VARS['element_id'], 3, "0", STR_PAD_LEFT))."#>%'"));
+
+$aParent = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+// Initialisieren der Klasseninstanz
+
+
+// Abspeichern der eingegebenen Daten
+if ( $_VARS['form_action'] =="save" && $_VARS['page_id'] > 0 && $_VARS['element_id'] > 0) {
+
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->field_name 		    = $_VARS['field_name'];
+	$config->default_value          = stripslashes($_VARS['default_value']);
+	$config->height 			    = $_VARS['height'];
+	$config->width 			        = $_VARS['width'];
+	$config->sImageFormat		    = $_VARS['sImageFormat'];
+	$config->selected_option        = $_VARS['selected_option'];
+	$config->default_class          = stripslashes($_VARS['default_class']);
+	$config->check_passwd		    = $_VARS['check_passwd'];
+	$config->textarea		       	= $_VARS['textarea'];
+	$config->timeformat	       		= $_VARS['timeformat'];
+
+	$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+}
+
+// Laden der vorhandenen Daten
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+$default_value = $config->default_value;
+
+////////////////////////////////////////////////
+
+function show_tables($db_module,$SQL_handler,$identifier,$table_name)
+{
+  global $db_data;
+  $SQL_handler->SQL_get_table_names($db_data['module'],$identifier);
+  $result=$SQL_handler->result[1];
+  echo "<select name=\"table_name\">";
+
+
+    for ($i=0;$i<count($result);$i++)
+    {
+	   if ($table_name==$result[$i])
+	   {
+	       $pre_select="SELECTED";
+	   }
+ 	   else
+	   {
+	       $pre_select="";
+	   }
+
+	 
+	   echo "<option $pre_select >";
+	   echo $result[$i];
+	   echo "</option>";
+    }
+
+    echo"</select>";
+
+    return $result;
+} // ende function show_tables
+
+////////////////////////////////////////////////
+
+
+
+function show_fields($db_module,$SQL_handler,$definition_table, $table_name,$field_name,$identifier,$field_type) {
+	global $db_data;
+  
+	if($table_name=="") {
+		$SQL_handler->SQL_get_table_names($db_module,$identifier);
+		$result = $SQL_handler->result[1];
+		$table_name = $result[0];
+	}
+
+  $option_name="db_nr";
+  $position=strrpos($table_name,"_")+1;
+  $option=substr($table_name,$position);
+
+$res = db_query($db_data['module'],"SELECT field_nr, name FROM customer_db_definition WHERE db_nr = '".$option."' ORDER BY field_nr");
+
+while($my = get_data($res)) {
+
+    if($my["name"]!="changed" AND $my["name"]!="changed_by" )
+    {
+        if(strstr($my["name"],"SYSTEM_") && $my["field_nr"]==0)
+        {
+			$sIndex = str_replace("SYSTEM_","",$my["name"]);
+			$current_fields[$sIndex]= $my["name"];
+        }
+        else
+        {
+			$current_fields[$my["field_nr"]]= $my["name"];
+        }
+    }
+  }
+  printFormSelect("Bitte zugehÃ¶riges Datenbank-Feld auswählen","field_name",$current_fields,$config->field_name);
+}
+
+
+
+function sub_show_fields($db_module,$SQL_handler,$definition_table, $table_name,$field_name,$identifier,$field_type,$default_value)
+{
+    if ($table_name=="")
+    {
+        $SQL_handler->SQL_get_table_names($db_module,$identifier);
+        $result=$SQL_handler->result[1];
+        $table_name=$result[0];
+    }
+
+	$option = array();
+	$option_name = array();
+
+    $option_name[]="db_nr";
+    $option_name[]="field_nr";
+    $position=strrpos($table_name,"_")+1;
+    $option[]=substr($table_name,$position);
+    $option[]=$field_name;
+    $SQL_handler->SQL_get_row_by_option($db_module, "customer_db_definition", $table_name, $option_name, $option);
+    $my_result=$SQL_handler->result[1];
+
+    $option = $my_result[0]["id"];
+    $option_name = "definition_id";
+
+    $SQL_handler->SQL_get_row_by_option($db_module, "customer_db_values", $table_name, $option_name, $option);
+    $result=$SQL_handler->result[1];
+
+    echo "<select name=\"default_value\">";
+    for ($i=0;$i<count($result);$i++)
+    {
+
+        if ($result[$i][value]==$default_value)
+        {
+            $pre_select="SELECTED";
+        }
+        else
+        {
+            $pre_select="";
+        }
+        echo "<option $pre_select value=\"".$result[$i][value]."\" >";
+        echo $result[$i][display];
+        echo "</option>";
+    } // Ende for $i
+    echo "</select>";
+    
+} // ende function sub_show_fields
+
+function get_text_of_radio($db_module,$SQL_handler,$definition_table,$value_table,$table_name, $selected_field, $default_value)
+{
+
+    if ($table_name=="")
+    {
+        $SQL_handler->SQL_get_table_names($db_module,"customer_db_");
+        $result=$SQL_handler->result[1];
+        $table_name=$result[0];
+    }
+
+    $SQL_handler->SQL_get_id_by_field_nr($db_module,$definition_table,$table_name,$selected_field);
+    $option_name="definition_id";
+    $option=$SQL_handler->result[1];
+
+    $SQL_handler->SQL_get_row_by_option($db_module, $value_table, $table_name, $option_name, $option);
+
+    $result=$SQL_handler->result[1];
+
+    for ($i=0;$i<count($result);$i++)
+    {
+        $current_display[$i]= $result[$i]["display"];
+        $current_value[$i]= $result[$i]["value"];
+    }
+
+
+    // Eigentliche Anzeige:
+    echo "<select name=\"default_value\">";
+    for ($i=0;$i<count($current_display);$i++)
+    {
+        if ($default_value==$current_value[$i])
+        {
+            $pre_select="SELECTED";
+        }
+        else
+	    {
+	       $pre_select="";
+	    }
+	    echo "<option value=".$current_value[$i]." $pre_select>".$current_display[$i]."</option>";
+    } // Ende for $i
+    echo "</select>";
+
+}
+
+
+function show_categories($db_name,$SQL_handler, $treetable, $tree_number, $default_value)
+{
+  if(!$tree_number) $tree_number=1;
+  $SQL_handler->SQL_get_row_by_option($db_name, $treetable, "", "tree_number", $tree_number);
+  $result=$SQL_handler->result[1];
+
+
+
+   // Eigentliche Anzeige:
+   echo "<select name=\"default_value\">";
+   for ($i=0;$i<count($result);$i++)
+   {
+     if ($result[$i][name]!="Wurzel")
+     {
+       if ($default_value==$result[$i][ID])
+	     {
+        $pre_select="SELECTED";
+	     }
+ 	     else
+	     {
+	       $pre_select="";
+	     }
+	     echo "<option value=".$result[$i][ID]." $pre_select>".$result[$i][name]."</option>";
+	   }// Ende if Wurzel
+	   
+   } // Ende for $i
+   echo "</select>";
+
+
+
+}
+
+
+function standart_size($config,$choose = FALSE)
+{
+
+?>
+<tr>
+<td>
+Welche GrÃ¶ÃŸe soll das Feld haben ?
+</td>
+<td>
+&nbsp
+</td>
+</tr>
+<?=printFormText("Breite des Eingabefeldes","width",$config->width)?>
+<tr>
+<?
+
+} // Ende function Standart_size
+
+function printFormImageSize($config) {
+	echo printFormText("Maximale Breite","iMaxWidth",$config->iMaxWidth);
+	echo printFormText("Maximale Höhe","iMaxHeight",$config->iMaxHeight);
+}
+
+function printFormImageFormat($config) {
+	echo printFormText("Erlaubte Dateiformate","sImageFormat",$config->sImageFormat);
+}
+
+
+function show_trees($db_module,$tree_table, $default_value)
+{
+    $query="SELECT tree_number FROM $tree_table WHERE active=1 GROUP BY tree_number ASC";
+    $result=db_query($db_module,$query);
+
+    echo "<select name=\"default_value\">";
+
+    while($data=get_data($result))
+    {
+        // Eigentliche Anzeige:
+        if ($default_value==$data['tree_number'])
+        {
+            $pre_select="SELECTED";
+        }
+        else
+        {
+            $pre_select="";
+        }
+        echo "<option value=".$data['tree_number']." $pre_select>Baum ".$data['tree_number']."</option>";
+
+    }
+
+    echo "</select>";
+
+}
+////////////////////////////////////////////////
+
+$table_name = $aParent->table_name;
+
+$tmp=substr($table_name,strrpos($table_name,"_")+1);
+if(!$tmp) $tmp=1;
+
+$option[]=$config->field_name;
+$option[]=$tmp;
+$option_name[]="field_nr";
+$option_name[]="db_nr";
+
+if(is_numeric($config->field_name)) {
+	$query = "SELECT id,type,required FROM customer_db_definition WHERE field_nr = '".$config->field_name."' AND db_nr = '".$aParent->idDatabase."' AND active = 1";
+} else {
+	$query = "SELECT id,type,required FROM customer_db_definition WHERE name = '".$config->field_name."' AND db_nr = '".$aParent->idDatabase."' AND active = 1";
+}
+$result=get_data(db_query($db_module, $query));
+
+$field_type = $result["type"];
+
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+<tr>
+<td valign="top">
+<h1>Konfiguration Eingabefeld</h1>
+
+
+<form name="formular1" method=get enctype="multipart/form-data" action="<?=$PHP_SELF?>?form_action='Speichern'">
+<input type='hidden' name="form_action" value="">
+
+<?=printFormHidden('page_id', $_VARS['page_id'])?>
+<?=printFormHidden('element_id', $_VARS['element_id'])?>
+<?=printFormHidden('content_id', $_VARS['content_id'])?>
+<?=printFormHidden('language', $_VARS['language'])?>
+
+<table class=table border=0 cellpadding="4" cellspacing=0 >
+
+<?
+	printFormSelect("Bitte zugehöriges Datenbank-Feld auswählen","field_name",CustomerDb\Helper\Functions::getCustomerFields($aParent->idDatabase),$config->field_name);
+?>
+
+<?
+// Hier grossen SWITCH - CASE aufbauen, und nach field_type differenzieren
+
+switch ($field_type)
+{
+  case "TEXT" :
+  {
+  	echo printFormCheckbox("Mehrzeiliges Eingabefeld","textarea","1",$config->textarea);
+    //standart_size($config);
+    echo "<th>Vorgabe : </th>";
+    echo "<td><input type=\"text\" name=\"default_value\" value=\"".htmlspecialchars($config->default_value)."\"</td>";
+    break;
+  }
+
+  case "timestamp" :
+	echo printFormText("Format der Ausgabe (strftime)","timeformat",$config->timeformat);
+	echo printFormText("Vorgabe","default_value",htmlspecialchars($config->default_value));
+    break;
+
+  case "INTEGER" :
+  {
+    //standart_size($config);
+    echo "<th>Vorgabe : </th>";
+    echo "<td><input type=\"text\" name=\"default_value\" value=\"".htmlspecialchars($config->default_value)."\"</td>";
+    break;
+  }
+
+  case "PASSWORD":
+  {
+		echo printFormCheckbox("Prüfeingabe","check_passwd","1",$config->check_passwd);
+		break;
+  }
+
+  case "Select Field" :
+  {
+    echo "<th>Vorauswahl : </th>";
+    echo "<td>";
+
+    sub_show_fields($db_data['module'],$SQL_handler,$value_table, $table_name,$config->field_name,$identifier,$field_type,$config->default_value);
+    echo "</td>";
+    break;
+  }
+  
+  case "image" :
+  {
+  	if(!$config->sImageFormat) $config->sImageFormat = "jpg,gif,png";
+	printFormImageFormat($config);
+    //standart_size($config,true);
+    break;
+  }  
+  
+  case "Datei" :
+  {
+    //standart_size($config,true);
+    break;
+  }
+  
+  case "Radio-Button" :
+  {
+
+    if ($config->selected_option=="on")
+    {
+      $selected="CHECKED";
+    }
+
+    echo "<th>Radiobutton auswählen: </th>";
+    echo "<td>";
+    get_text_of_radio($db_data['module'],$SQL_handler,$definition_table,$value_table,$table_name, $config->field_name, $default_value);
+    echo "</td>";
+    echo "<tr><th>Soll vorausgewählt sein :</th>";
+    echo "<td><input type=checkbox name=selected_option $selected></td>";
+    echo "</tr>";
+    break;
+  }
+
+  case "Checkbox" :
+  {
+    if ($config->default_value)
+    {
+      $yes_selected="SELECTED";
+    }
+    else
+    {
+      $no_selected="SELECTED";
+    }
+
+    echo "<th>Vorgabe : </th>";
+    echo "<td>";
+    echo "<select name=default_value>";
+    echo "<option value=1 $yes_selected>angeklickt</option>";
+    echo "<option value=0 $no_selected>nicht angeklickt</option>";
+    echo "</select>";
+    echo "</td>";
+    break;
+  }
+
+    case "Kategoriefeld" :
+    {
+        echo "<th>Bitte Baum auswählen : </th>";
+        echo "<td>";
+        show_trees($db_data['module'],$tree_table, $default_value);
+        echo "</td>";
+
+
+        /*///////////////////ALT!//////////////////////
+        echo "<th>Vorauswahl : </th>";
+        echo "<td>";
+        show_categories($db_data['module'],$SQL_handler,$tree_table,$tree_number,$default_value);
+        echo "</td>";
+        /////////////////////////////////////////////*/
+
+        break;
+    }
+
+	case "groups":
+			
+		break;
+	default:
+		echo "Unbekannter Feldtyp in Datenbank : $field_type !";
+		break;
+
+} // Ende switch field_type
+
+?>
+</tr>
+<tr>
+    <th>
+        Bitte geben sie zus&auml;tzliche Parameter ein :
+    </th>
+<?
+    if(!$config->default_class) $config->default_class='class="txt"';
+?>
+    <td>
+        <input type="text" name="default_class" value="<?=htmlspecialchars($config->default_class)?>" class="txt">
+    </td>
+
+</tr>
+
+</table>
+<p align="right">
+<?
+
+
+
+
+
+// sspeichern
+echo "<input type=button value=\"speichern\" class=\"btn\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"save\";document.formular1.submit();'>&nbsp;&nbsp;&nbsp;";
+//ec
+
+?>
+<input class=btn type=button value="Fenster schliessen" style="width:150" OnClick='top.close();'>
+</p>
+
+</td>
+</tr>
+</table>
+
+</td>
+</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

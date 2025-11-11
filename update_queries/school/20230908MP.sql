@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_validity` CHANGE `active` `active` TINYINT(1) NOT NULL DEFAULT '1';

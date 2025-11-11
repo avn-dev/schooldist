@@ -1,0 +1,1 @@
+ALTER TABLE `ts_enquiries_combinations` CHANGE `changed` `changed` TIMESTAMP on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;

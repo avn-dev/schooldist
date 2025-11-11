@@ -1,0 +1,60 @@
+parent: ts_inquiry
+access: thebing_accounting_agency_payments
+hash: 1c9c67a8f44c769562c9955880d5f1aa
+leftframe: true
+#multiple_selection: true
+title: ""
+description: ""
+export: true
+pagination: true
+class:
+  js: AgencyPayments
+  icon_status: Ext_Thebing_Inquiry_Payment_Gui2_Icon_Active
+  data: Ext_Thebing_Agency_Payment_Gui2_Data
+where:
+  - Ext_TS_Inquiry_Index_Gui2_Data
+  - getAgencyPaymentWhere
+index:
+  registry:
+    generate: false
+designer:
+  dialog: ""
+  filter: ts_students_agency_payments
+  flex: student_record
+  flex_format:
+    checkbox:
+      format: Ext_TC_Gui2_Format_YesNo
+bars:
+  -
+    position: top
+    type: ''
+    set: [agency_payment]
+    elements:
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TS_Inquiry_Index_Gui2_Data
+          - getDialog
+          - students
+      -
+        element: icon
+        label: Bezahlen
+        action: payment
+        additional: agency_payment
+        task: openDialog
+        active: 0
+        access:
+          - thebing_invoice_enter_payments
+          - thebing_invoice_enter_payments_history
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - money
+      -
+        element: icon_communication
+        label: Kommunikation
+        application: booking
+filter_values:
+  document_date_original:
+    from: -P1M
+    until: P1D

@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_insurance_weeks` ADD `position` SMALLINT UNSIGNED NOT NULL DEFAULT '0' AFTER `user_id`;

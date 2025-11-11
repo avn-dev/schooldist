@@ -1,0 +1,7 @@
+{
+  "name": "fidelo-bundle/sso",
+  "version": "1.0.0",
+  "require": {
+    "onelogin/php-saml": "4.*"
+  }
+}

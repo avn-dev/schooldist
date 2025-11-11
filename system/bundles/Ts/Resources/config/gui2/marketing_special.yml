@@ -1,0 +1,198 @@
+hash: 7da7b36a6af5770f7519c4b06aa0fbe6
+class:
+  wdbasic: Ext_Thebing_School_Special
+  data: Ext_Thebing_Special_Gui2
+  icon_status: \Ts\Gui2\Icon\Status\Special
+  js: SpecialGui
+access: thebing_marketing_special
+js:
+   - [gui2/util.js, thebing]
+   - [marketing/js/special.js, thebing]
+sortable: true
+only_pagecount: true
+where:
+  - Ext_Thebing_Special_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        id: search
+        column:
+            - id
+            - name
+        searchtype: LIKE
+     -
+        element: seperator
+     -
+        element: selectfilter
+        id: special_validity_filter
+        value: active
+        entries:
+            - Ext_Thebing_Special_Gui2
+            - getValidityStatus
+        filter_query:
+          active: '`visible` = 1'
+          inactive: '`visible` = 0'
+        label: Gültigkeit
+        label_as_item: true
+     -
+        element: selectfilter
+        entries:
+            - Ext_Thebing_Special_Gui2
+            - getBasedOn
+        filter_query:
+          booker_date: ' (`ts_sp`.`created_from` IS NOT NULL OR `ts_sp`.`created_until` IS NOT NULL) '
+          obligation_data: ' (`ts_sp`.`service_from` IS NOT NULL OR `ts_sp`.`service_until` IS NOT NULL) '
+        label: Ausgehend von
+        label_as_item: true
+     -
+        element: selectfilter
+        entries:
+            - Ext_Thebing_Special_Gui2
+            - getAvailability
+        filter_query:
+          limited: '`ts_sp`.`limit_type` = 2'
+          unlimited: '`ts_sp`.`limit_type` = 1'
+        label: Verfügbarkeit
+        label_as_item: true
+     -
+        element: selectfilter
+        entries:
+            - Ext_TS_Document_Release_Gui2_Data
+            - getBookingTypes
+        filter_query:
+          agency: '`ts_sp`.`agency_bookings` = 1'
+          customer: '`ts_sp`.`direct_bookings` = 1'
+        label: Buchungstyp
+        label_as_item: true
+     -
+        element: selectfilter
+        alias: join_countries
+        column: country_id
+        entries:
+            - Ext_Thebing_Data
+            - getCountryList
+        label: Länder
+        label_as_item: true
+     -
+        element: selectfilter
+        column: agency_id
+        alias: join_agencies
+        entries:
+            - Ext_Thebing_Gui2_Data
+            - getAgencies
+        label: Agentur
+        label_as_item: true
+     -
+        element: selectfilter
+        column: agency_group_id
+        alias: join_agency_groups
+        entries:
+            - Ext_Thebing_Special_Gui2
+            - getAgencyGroups
+        label: Agenturgruppe
+        label_as_item: true
+     -
+        element: selectfilter
+        access: [ core_admin_countrygroups, '' ]
+        label: Ländergruppe
+        label_as_item: true
+        filter_query: # schaut nicht nur nach Ländergruppen, sondern auch nach den Ländern innerhalb der Ländergruppen
+            - Ext_Thebing_Special_Gui2
+            - getFilterQueryCountryGroupsFilter
+        entries:
+            - Ext_TC_Countrygroup
+            - getSelectOptions
+     -
+        element: selectfilter
+        column: agency_category_id
+        alias: join_agency_categories
+        entries:
+            - Ext_Thebing_Agency
+            - getCategoryList
+        label: Agenturkategorie
+        label_as_item: true
+     -
+        element: selectfilter
+        entries:
+            - Ext_Thebing_Special_Gui2
+            - getDiscountType
+        filter_query:
+          percent: '`ts_sp`.`amount_type` = 1'
+          absolut: '`ts_sp`.`amount_type` = 2'
+          free_weeks: '`ts_sp`.`amount_type` = 3'
+        label: Rabattart
+        label_as_item: true
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Special_Gui2
+          - getAdditionalDialogData
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Special_Gui2
+          - getAdditionalDialogData
+     -
+        element: icon_delete     
+columns:
+  - 
+    title: Bezeichnung
+    column: name
+    width: name
+    resize: true  
+  - 
+    title: Aktiv	
+    column: visible
+    width: yes_no  
+    format: Ext_Thebing_Gui2_Format_YesNo
+  - 
+    title: Erstellt von	
+    column: created_from
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Erstellt bis	
+    column: created_until
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Leistung von	
+    column: service_from
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Leistung bis	
+    column: service_until
+    width: date
+    small: true
+    format: Ext_Thebing_Gui2_Format_Date
+  - 
+    title: Limit	
+    column: limit_type
+    width: amount
+    format: Ext_Thebing_Gui2_Format_Special_Limit
+  - 
+    title: Verwendet	
+    column: used
+    width: amount
+    format: Ext_Thebing_Gui2_Format_Special_Used
+  - 
+    title: Gültig für	
+    column: direct_booking
+    width: name
+    format: Ext_Thebing_Gui2_Format_Special_Directbooking
+  - 
+    title: Ausgehend von	
+    column: amount_type
+    width: name
+    format: Ext_Thebing_Gui2_Format_Special_Amounttype

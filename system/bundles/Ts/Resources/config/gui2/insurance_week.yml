@@ -1,0 +1,62 @@
+hash: 5b71f3df5ce9d98ec18a6716dabe6cda
+class:
+  wdbasic: Ext_Thebing_Insurances_Week
+  data: \Ts\Gui2\Data\InsuranceWeek
+access: thebing_insurance_icon
+id:
+  column: id
+  alias: kinsw
+sortable: true
+only_pagecount: true
+orderby:
+  - \Ts\Gui2\Data\InsuranceWeek  
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\InsuranceWeek
+  - getListWhere  
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: kinsw
+        searchtype: LIKE
+        column:
+          - title
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog: 
+          - \Ts\Gui2\Data\InsuranceWeek  
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\InsuranceWeek  
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Bezeichnung
+    column: title
+    width: name
+    resize: true   
+  - 
+    title: Startwoche	
+    column: startweek
+    width: name
+  - 
+    title: Wochenanzahl	
+    column: weeks
+    width: name
+    format: Ext_Thebing_Gui2_Format_Int
+  - 
+    title: Extrawoche	
+    column: extra
+    width: name
+    format: Ext_Thebing_Gui2_Format_YesNo  

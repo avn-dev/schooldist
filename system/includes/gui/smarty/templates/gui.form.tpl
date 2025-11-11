@@ -1,0 +1,3 @@
+<form action="{$sAction|escape:"htmlall"}" method="{$sMethod|escape:"htmlall"}"{if $sName != ''} name="{$sName|escape:"htmlall"}"{/if}{if $sID != ''} id="{$sID|escape:"htmlall"}"{/if}{if $sCss != ''} class="{$sCss|escape:"htmlall"}"{/if}{if $sStyle != ''} style="{$sStyle|escape:"htmlall"}"{/if}{if $sEnctype != ''} enctype="{$sEnctype|escape:"htmlall"}"{/if}{if $sTarget != ''} target="{$sTarget|escape:"htmlall"}"{/if} {if $sOnSubmit != ''} onsubmit="{$sOnSubmit|escape:"htmlall"}"{/if}{if $sOnReset != ''} onreset="{$sOnReset|escape:"htmlall"}"{/if}>
+	{$sInnerHTML}
+</form>

@@ -1,0 +1,3 @@
+CREATE TABLE `ts_teachers_courselanguages` (`teacher_id` int(11) NOT NULL, `courselanguage_id` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `ts_teachers_courselanguages` ADD UNIQUE KEY `teacher_courselanguage` (`teacher_id`,`courselanguage_id`), ADD KEY `teacher_id` (`teacher_id`);
+INSERT INTO ts_teachers_courselanguages (SELECT t.id teacher_id, l.id courselanguage_id FROM `ts_teachers` t JOIN kolumbus_tuition_levelgroups l WHERE  t.active = 1 AND l.active = 1);

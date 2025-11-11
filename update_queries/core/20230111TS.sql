@@ -1,0 +1,1 @@
+ALTER TABLE `tc_communication_templates` ADD `valid_until` DATE NOT NULL DEFAULT '0000-00-00' AFTER `created`;

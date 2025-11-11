@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_weeks` CHANGE `active` `active` TINYINT(4) NOT NULL DEFAULT '1';

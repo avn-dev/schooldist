@@ -1,0 +1,7 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oFactory	= new Ext_Gui2_Factory('ts_document');
+$oGui		= $oFactory->createGui('invoice', null, array('document_type' => 'invoice_creditnote_manual_creditnote_offer'));
+$oGui->display();

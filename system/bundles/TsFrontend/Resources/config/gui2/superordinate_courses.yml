@@ -1,0 +1,53 @@
+class:
+  wdbasic: \TsTuition\Entity\SuperordinateCourse
+  data: \TsFrontend\Gui2\SuperordinateCourseData
+sortable: true
+pagination: false
+access: 
+    - ts_admin_frontend_course_superordinate
+    - ""
+designer:
+  additional_flex:
+    -
+      section: tuition_courses_superordinate
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+        alias:
+          - ts_sc_i18n
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsFrontend\Gui2\SuperordinateCourseData
+          - createDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsFrontend\Gui2\SuperordinateCourseData
+          - createDialog
+      -
+        element: icon_delete
+      -
+        element: icon_file_manager
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_sc_i18n
+    width: name
+    resize: true
+    i18n:
+      jointable: ts_sc_i18n
+      pass_language: true
+      all: false
+      show_flag: true

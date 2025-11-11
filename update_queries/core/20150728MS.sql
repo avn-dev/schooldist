@@ -1,0 +1,1 @@
+ALTER TABLE `tc_complaints_categories` ADD `type` VARCHAR(255) NOT NULL AFTER `valid_until`;

@@ -1,0 +1,34 @@
+class:
+  wdbasic: Ext_TC_Frontend_Log
+id:
+  alias: tc_fl
+access: core_frontend_combinations
+bars: []
+columns:
+  -
+    column: created
+    title: Zeitpunkt
+    width: date
+    format: Ext_TC_Gui2_Format_Date_DateTime
+  -
+    column: template_name
+    title: Template
+    width: name
+  -
+    column: url
+    title: URL
+    width: long_description
+    resize: true
+  -
+    column: method
+    title: Methode
+    width: name
+  -
+    column: user_agent
+    title: User Agent
+    width: long_description
+  -
+    column: ip
+    title: IP
+    width: name
+default_columns: []

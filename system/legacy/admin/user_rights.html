@@ -1,0 +1,183 @@
+<?php
+
+include("./includes/main.inc.php");
+
+Access_Backend::checkAccess("user_admin");
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<form name="f2" method="post">
+
+<input type="hidden" name="userID" />
+
+<input type="hidden" name="action" value="reload" />
+<input type="hidden" name="role" />
+<input type="hidden" name="ext_role" />
+<input type="hidden" name="access" />
+<input type="hidden" name="access_denied" />
+
+<?
+
+
+
+$system_data['upload_http'] = "media/";
+
+// Alle Rechtenamen und Status hier in Array reinschreiben
+// Datenbankabfrage, welche Rechte aufgrund der Role/function zugeteilt sind
+// Abfrage, welche Rechte explizit entzogen sind
+
+
+//Datenbankabfrage auf table : rights
+$aRights = (array)DB::getQueryRows("SELECT * FROM `system_rights` ORDER BY description");
+foreach($aRights as $my_right) {
+   	$all_rights.=$my_right['right']."|";
+   	$right_descriptions.=$my_right['description']."|";
+}
+
+
+// Auslesen der Daten nach userID
+$aUsers = (array)DB::getQueryRows("SELECT * FROM system_user WHERE id = ".(int)$_VARS['userID']." ");
+foreach($aUsers as $temp_data) {
+	// gegebene Rechte
+	$exp_given_rights = $temp_data['access'];
+	// Explizit entzogene Rechte
+	$exp_denied_rights = $temp_data['access_denied'];
+}
+
+// Ausfiltern der impliziten gegebenen Rechte
+// Für die vergebene Rolle...
+$role_given_rights = "";
+
+if($_VARS['role']) {
+	//hole Rechte aus DB und schreibe in $role_right
+	$aRoleRights = (array)DB::getQueryRows("SELECT * FROM  `system_rights` r1, system_roles2rights r2, system_roles r3 WHERE r1.id = r2.right_id AND r2.role_id = r3.id AND r3.id = '".$_VARS['role']."'");
+    foreach($aRoleRights as $aRoleRight) {
+    	$role_given_rights .= $aRoleRight['right']."|";
+    }
+} // ende if role
+
+// ... und für die zusätzlichen Rollen
+if ($_VARS['ext_role'])
+{
+	$array_of_ext_roles=explode("|",$_VARS['ext_role']);
+	for ($j=0;$j<count($array_of_ext_roles);$j++)
+	{
+		//hole Rechte aus DB und schreibe in $role_right
+		if($array_of_ext_roles[$j]!="|")
+		{
+			$aRoleRights = (array)DB::getQueryRows("SELECT * FROM  `system_rights` r1, system_roles2rights r2, system_roles r3 WHERE r1.id = r2.right_id AND r2.role_id = r3.id AND r3.id = '".$array_of_ext_roles[$j]."'");
+			foreach($aRoleRights as $current_right) {
+				$role_right=$current_right['right'];
+                // Prüfen, ob Recht schon durch andere Rolle gegeben ist
+				if ( !(strpos($role_given_rights, $role_right))) {
+					$role_given_rights.=$role_right."|";
+    			}
+            } // ende while
+		} // ende if |
+	} // ende for count
+} // ende if ext_role
+
+// Erzeugen von Arrays zum besseren Handling
+if(!$all_rights==0){$array_of_all_rights=explode("|",$all_rights);}
+if(!$role_given_rights==0){$array_of_role_given_rights=explode("|",$role_given_rights);}
+if(!$exp_denied_rights==0){$array_of_exp_denied_rights=explode("|",$exp_denied_rights);}
+if(!$given_rights==0){$array_of_given_rights=explode("|",$given_rights);}
+if(!$right_descriptions==0){$array_of_right_descriptions=explode("|",$right_descriptions);}
+
+// �berschrift der Tabelle
+?>
+
+
+<table class="table" cellpadding="4" cellspacing="0" border="0" width="100%">
+	<colgroup>
+	    <col width=10%>
+	    <col width=10%>
+	    <col width=10%>
+	    <col width=10%>
+	    <col width=60% align=left>
+	</colgroup>
+	<tr>
+		<th rowspan=2 style="text-align:center; vertical-align:middle">Rolle</th>
+		<th rowspan=2 style="text-align:center; vertical-align:middle">lassen</th>
+		<th colspan=2 style="border-bottom:0px solid white !important;text-align:center"">explizit</th>
+		<th rowspan=2 style="vertical-align:middle">Recht</th>
+	</tr>
+	<tr>
+		<th style="text-align:center">erteilen</th>
+		<th style="text-align:center">entziehen</th>
+	</tr>
+
+<?
+
+// einzelne Rechte
+// wiederhole für jedes vorhandene Recht
+for ($i=0;$i<count($array_of_all_rights)-1;$i++) {
+
+	echo '<input type="hidden" name="right'.$i.'" value="'.$array_of_all_rights[$i].'">';
+	echo "<tr>";
+
+  	if (!empty($array_of_all_rights[$i]) && strpos($role_given_rights, $array_of_all_rights[$i]) !== false) {
+    	// grünes Häkenchen
+    	echo " <td style='text-align:center'><img src=\"".$system_data['upload_http']."ok.png\" border=0></td>";
+	} else {
+		// rotes Kreuzchen
+		echo " <td style='text-align:center'><img src=\"".$system_data['upload_http']."delete.png\" border=0></td>";
+	}
+
+  // 3 Radio buttons
+	if($_VARS['action'] == 'reload') {
+		$current_status=Array();
+	 	$current_status[${"status$i"}]="checked";
+	    echo "<td style='text-align:center'>";
+	    echo '<input type="radio" '.$current_status[0].' name="status'.$i.'" value="0">';
+	    echo"</td>";
+	    echo "<td style='text-align:center'>";
+	    echo "<input type=radio $current_status[1] name=status$i value=1>";
+	    echo"</td>";
+	    echo "<td style='text-align:center'>";
+	    echo "<input type=radio $current_status[2] name=status$i value=2>";
+	    echo"</td>";
+	} else {
+		for ($j=0;$j<3;$j++) {
+    		$current_status="";
+			if(
+				(
+					$j == 1 && 
+					!(
+						strpos($exp_given_rights, '|'.$array_of_all_rights[$i].'|') === false
+					)
+				) || 
+				( 
+					$j == 2 && 
+					!(
+						strpos($exp_denied_rights, '|'.$array_of_all_rights[$i].'|') === false
+					)
+				)
+			) {
+				$current_status="checked";
+			}
+		    elseif($j==0)
+		    {
+				$current_status="checked";
+			}
+
+		    echo "<td style='text-align:center'>";
+		    echo "<input type=radio $current_status name=status$i value=$j>";
+		    echo"</td>";
+		}
+	}
+
+	echo "<td>".$array_of_right_descriptions[$i]."</td>";
+	echo "</tr>";
+
+} // ende Wiederholungen
+
+?>
+</table>
+
+<br><br><br>
+<input type="hidden" name="right_cnt" value=<?= $i-1 ?>>
+</form>
+<?=Admin_Html::loadAdminFooter()?>

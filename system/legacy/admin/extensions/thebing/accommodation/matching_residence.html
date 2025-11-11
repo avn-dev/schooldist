@@ -1,0 +1,32 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$aViews = [
+    'matching_other' => [
+        'access' => 'thebing_accommodation_other_matching',
+        'gui_unique' => 'thebing_residence_matching_hostfamily',
+    ],
+    'parking' => [
+        'access' => 'thebing_accommodation_parking_matching',
+        'gui_unique' => 'thebing_parking_matching',
+    ],
+];
+
+$sView = 'matching_other';
+
+if(
+    isset($_GET['view']) &&
+    isset($aViews[(string)$_GET['view']])
+) {
+    $sView = (string)$_GET['view'];
+}
+
+$sAccess = $aViews[$sView]['access'];
+Ext_Thebing_Access::accesschecker($sAccess);
+
+$sTitle = Ext_TS_System_Navigation::t();
+
+$sGuiUnique = $aViews[$sView]['gui_unique'];
+
+include_once(Util::getDocumentRoot()."system/legacy/admin/extensions/thebing/accommodation/matching.php");

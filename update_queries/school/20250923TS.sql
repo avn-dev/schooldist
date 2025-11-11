@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_forms` ADD `booking_auto_confirm` TINYINT(1) NOT NULL DEFAULT '0' AFTER `acc_depending_on_course`;

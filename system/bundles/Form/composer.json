@@ -1,0 +1,8 @@
+{
+  "name": "fidelo-bundle/form",
+  "version": "1.0.1",
+  "require": {
+    "google/recaptcha": "1.3.*",
+    "fidelo-software/laravel-spamshield": "2.2.*"
+  }
+}

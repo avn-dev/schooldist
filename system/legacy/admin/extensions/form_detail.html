@@ -1,0 +1,291 @@
+<?php
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+include_once("./form.inc.html");
+
+if (
+	isset($_VARS['task']) &&
+	$_VARS['task'] == 'sort_fields'
+) {
+	
+	foreach ($_VARS['sortableContent'] as $iPosition=>$iFieldId) {
+		$sSql = "UPDATE `form_options` SET `position` = :position WHERE `id` = :id";
+		$aSql = array(
+			'position' => (int)$iPosition,
+			'id' => (int)$iFieldId
+		);
+		DB::executePreparedQuery($sSql, $aSql);
+	}
+
+	die();
+	
+}
+
+Admin_Html::loadAdminHeader();
+
+//aktivieren/deaktivieren bearbeiten
+if($_VARS['form_active_id'] > 0){
+	$form_aufgabe = db_query("UPDATE `form_options` SET `active` = '".$_VARS['form_active']."' WHERE `id` = ".(int)$_VARS['form_active_id']);
+}//if
+
+//Einträge löschen
+if ($_VARS['form_loesch_id']){
+	//id's extrahieren
+	$_VARS['form_loesch_id'] = explode("|",$_VARS['form_loesch_id']);
+	for ($i = 0; $i <= count($_VARS['form_loesch_id']); $i++) {
+		if ($_VARS['form_loesch_id'][$i] > 0) {
+			$form_aufgabe = (db_query($db_data['module'], "DELETE FROM `form_options` WHERE `id` = ".(int)$_VARS['form_loesch_id'][$i]));
+			db_query("ALTER TABLE `form_data_".(int)$_VARS['form_id']."` DROP `field_".$_VARS['form_loesch_id'][$i]."`");
+		}//if
+	}//for
+}//if
+
+$form_abfrage = db_query("SELECT * FROM `form_init` WHERE `id` = ".(int)$_VARS['form_id']);
+$form_array = get_data($form_abfrage);
+$form_id = $form_array['id'];
+    
+if ($_VARS['action'] == "setposition") {
+	changePosition($_VARS['dir'], $_VARS['id'], "form_options", "WHERE `form_id` = ".(int)$_VARS['form_id'], "module");
+}
+
+?>
+<style>
+.newfolder {
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+.select_on {
+	background-color: buttonface;
+	border-bottom: 1px solid buttonhighlight;
+	border-right: 1px solid buttonhighlight;
+	border-top: 1px solid buttonshadow;
+	border-left: 1px solid buttonshadow;
+}
+.select_off {
+	background-color: buttonface;
+	border-top: 1px solid buttonhighlight;
+	border-left: 1px solid buttonhighlight;
+	border-bottom: 1px solid buttonshadow;
+	border-right: 1px solid buttonshadow;
+}
+</style>
+<script>
+
+var folder = "<?php echo $folder; ?>";
+/**
+ * Sets/unsets the pointer in browse mode
+ *
+ * @param   object   the table row
+ * @param   object   the color to use for this row
+ * @param   object   the background color
+ *
+ * @return  boolean  whether pointer is set or not
+ */
+var delete_media = new Array();
+ 
+function setPointer(theRow, thePointerColor, theNormalBgColor) {
+
+	for (var i=0;i<document.getElementsByTagName("tr").length;i++) {
+		var a = eval("document.getElementsByTagName('tr')["+i+"];");
+		if(a.id != "") {
+			var theCells = null;
+
+			if (thePointerColor == '' || typeof(a.style) == 'undefined') {
+				return false;
+			}
+			if (typeof(document.getElementsByTagName) != 'undefined') {
+				theCells = a.getElementsByTagName('td');
+			}
+			else if (typeof(theRow.cells) != 'undefined') {
+				theCells = a.cells;
+			}
+			else {
+				return false;
+			}
+			var rowCellsCnt  = theCells.length;
+			var currentColor = null;
+			var newColor     = null;
+			var newTextColor = '#AAAAAA';
+			// Opera does not return valid values with "getAttribute"
+			currentColor = theCells[0].style.backgroundColor;
+			newColor     = theNormalBgColor;
+			newTextColor = '#AAAAAA';
+			delete_media[a.id] = '0';
+			//delete_media[theRow.id] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+
+			for (var c = 0; c < rowCellsCnt; c++) {
+				theCells[c].style.backgroundColor = newColor;
+				theCells[c].style.color = newTextColor;
+			} // end for
+			////////////////////////////////////////////////////////////////////////////////////////		
+		}
+	}
+
+    var theCells = null;
+
+    if (thePointerColor == '' || typeof(theRow.style) == 'undefined') {
+        return false;
+    }
+    if (typeof(document.getElementsByTagName) != 'undefined') {
+        theCells = theRow.getElementsByTagName('td');
+    }
+    else if (typeof(theRow.cells) != 'undefined') {
+        theCells = theRow.cells;
+    }
+    else {
+        return false;
+    }
+    var rowCellsCnt  = theCells.length;
+    var currentColor = null;
+    var newColor     = null;
+	var newTextColor = '#000000';
+    // Opera does not return valid values with "getAttribute"
+	currentColor = theCells[0].style.backgroundColor;
+	newColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+				 ? theNormalBgColor
+				 : thePointerColor;
+	newTextColor     = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+				 ? '#AAAAAA'
+				 : '#000000';
+
+	var iItemId = theRow.id.replace(/field_/, '');
+
+	delete_media[iItemId] = (currentColor.toLowerCase() == thePointerColor.toLowerCase())
+				 ? 0
+				 : 1;
+	for (var c = 0; c < rowCellsCnt; c++) {
+		theCells[c].style.backgroundColor = newColor;
+		theCells[c].style.color = newTextColor;
+	} // end for
+
+    return true;
+} // end of the 'setPointer()' function
+
+
+
+function upd_file_prefs(entry_id){
+	top.frames[0].document.form_form_1.entry_id.value = entry_id;
+}
+
+function deleteitem() {
+
+	var count = 0;
+	var loeschen = "|";
+
+	for(i=0;i<=delete_media.length;i++) {
+		if(delete_media[i] == 1) {
+			count++;
+			loeschen +=  i + "|";
+		}
+	}
+	
+	if(count>1) {
+		var text = "Möchten Sie diese " + count + " Felder wirklich entfernen?";
+		var check = confirm(text);
+	 } 
+	 if(count==1) {
+	 var text = "Möchten Sie dieses Feld wirklich entfernen?";
+	  var check = confirm(text);
+	 }
+	 if(count==0) {
+	 var text = "Es ist kein Feld markiert!";
+	alert(text);
+	 }  
+	if(check) {
+		document.location.href='<?=$_SERVER['PHP_SELF']?>?form_id=<?=$_VARS['form_id']?>&form_loesch_id=' + loeschen;
+	}
+}
+
+function upd_form_data(entry_id){
+	parent.document.form_form_1.entry_id.value = entry_id;
+}
+</script>
+<script for="document" event="onkeydown()" language="JScript" type="text/jscript">
+<!--
+ {
+ if(window.event.keyCode == "46") {
+deleteitem();
+  }
+ }
+//-->
+</script>
+<script>
+
+var loading;
+var imagetypes = "jpg|png|gif|tif|bmp";
+
+</script>
+
+<table cellpadding="1" cellspacing="0" border="0" width="100%" style="table-layout: fixed;">
+	<tr style="cursor:pointer;">
+		<td width=5% class=select_off>ID</td>
+		<td width=35% class=select_off>Name</td>
+		<td width=20% class=select_off>Typ</td>
+		<td width=10% class=select_off>Zuordnung</td>
+		<td width=10% class=select_off>Bedingung</td>
+		<td width=10% class=select_off>Aktiv</td>
+		<td width=10% class=select_off>Position</td>		
+	</tr>
+	<tbody id="sortableContent" style="position:static;">
+<?php
+
+//Daten holen
+$form_abfrage = (db_query($db_data['module'], "SELECT * FROM `form_options` WHERE `form_id` = ".(int)$form_id." ORDER BY `position`"));
+while($form_array = get_data($form_abfrage)) {
+	
+	//Grafik und Link für active/deactive
+	if($form_array['active'] == 1){
+		$form_active_gra = "sitemap_active.gif";
+		$form_active_link = $PHP_SELF."?form_id=".$_VARS['form_id']."&form_active_id=".$form_array['id']."&form_active=2";
+	}else{
+		$form_active_gra = "sitemap_inactive.gif";
+		$form_active_link = $PHP_SELF."?form_id=".$_VARS['form_id']."&form_active_id=".$form_array['id']."&form_active=1";
+	}//else
+	
+	//Listeneinträge erzeugen
+	echo "<tr style=\"cursor:default;".(($form_array['type'] == 'onlytitle')?'font-weight:bold;':'')."\" id=\"field_".$form_array['id']."\" onclick=\"setPointer(this, 'ACTIVECAPTION', '#FFFFFF'); upd_form_data('".$form_array['id']."');\">";
+	echo "<td nowrap>".$form_array['id']."</td>";
+	echo "<td nowrap>".$form_array['name']."</td>";
+	echo "<td nowrap>".$aFormTypes[$form_array['type']]."</td>";
+	echo "<td nowrap>".$form_array['allocation']."</td>";
+	echo "<td nowrap>".($form_array['display_condition'] ? "Ja" : "")."</td>";
+	echo "<td nowrap align=\"center\"><a href=\"".$form_active_link."\"><img src=\"/admin/media/$form_active_gra\" border=0 align=absmiddle></a></td>";
+	echo "<td nowrap align=\"center\"><img src=/admin/media/spacer.gif width=3 height=1><a href=$PHP_SELF?form_action=entries&form_id=".$_VARS['form_id']."&action=setposition&dir=up&id=".$form_array['id']."><img src=\"/admin/media/sitemap_up.png\" border=0 alt=top></a><a href=$PHP_SELF?form_action=entries&form_id=".$_VARS['form_id']."&action=setposition&dir=down&id=".$form_array['id']."><img src=\"/admin/media/sitemap_down.png\" border=0 alt=down></a>&nbsp;</td>\n";
+
+}//while
+?>	
+	</tbody>
+</table>
+
+<style type="text/css">
+	.move {
+		cursor:move;
+	}
+</style>
+<script type="text/javascript">
+	Event.observe(window, 'load', function()
+	{
+		Sortable.create('sortableContent',
+		{
+			constraint:'vertical',
+			tag:'tr',
+			scroll: window,
+			onUpdate: function()
+			{
+				new Ajax.Request('/admin/extensions/form_detail.html',
+				{
+					method: "post",
+					parameters: 'task=sort_fields&' + Sortable.serialize("sortableContent")
+				});
+			}
+		});
+
+	});
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

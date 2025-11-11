@@ -1,0 +1,2 @@
+ALTER TABLE  `tc_frontend_templates` ADD  `field_mode` ENUM(  'default',  'prefix',  'individual' ) NOT NULL DEFAULT  'default';
+ALTER TABLE  `tc_frontend_templates_templates` CHANGE  `type`  `type` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

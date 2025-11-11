@@ -1,0 +1,23 @@
+{
+  "//": "This file will be used as base for core:npm:build.",
+  "private": true,
+  "name": "fidelo-framework",
+  "description": "Fidelo Framework",
+  "dependencies": {
+    "@fidelo-bundle/core": "file:./system/bundles/Core"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "dev": "npm run development",
+    "development": "NODE_ENV=development npx webpack --progress",
+    "watch": "npm run development -- --watch",
+    "prod": "npm run production",
+    "production": "NODE_ENV=production npx webpack"
+  },
+  "author": {
+    "name": "Fidelo Software GmbH",
+    "email": "support@fidelo.com",
+    "url": "https://fidelo.com"
+  },
+  "license": "UNLICENSED"
+}

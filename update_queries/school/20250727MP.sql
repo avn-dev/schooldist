@@ -1,0 +1,1 @@
+ALTER TABLE `ts_payment_conditions_settings` CHANGE `installment_split` `installment_split` ENUM('service_period','percentage','quarterly_month','monthly') CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL;

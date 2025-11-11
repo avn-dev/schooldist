@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "name": "@fidelo-bundle/ts",
+  "version": "1.0.0",
+  "dependencies": {
+  }
+}

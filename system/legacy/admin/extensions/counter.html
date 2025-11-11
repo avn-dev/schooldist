@@ -1,0 +1,57 @@
+<?
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Besucherzähler</h1>
+
+<?
+
+db_query("CREATE TABLE `counter` (
+  `id` int(11) NOT NULL auto_increment,
+  `changed` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  `created` timestamp NOT NULL default '0000-00-00 00:00:00',
+  `active` tinyint(1) NOT NULL default '1',
+  `day` date NOT NULL default '0000-00-00',
+  `views` int(11) NOT NULL default '0',
+  `visits` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM");
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+
+	if($_VARS['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$config->offset = $_VARS['offset'];
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+?>
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+			<?=printTableStart()?>
+			<?=printFormText("Anfangswert", "offset", $config->offset)?>
+			<?=printTableEnd()?>
+	
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+
+<?
+}
+?>
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

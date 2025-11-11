@@ -1,0 +1,281 @@
+<?php
+
+include_once(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Ext_Thebing_Access::accesschecker('thebing_marketing_cancelation_fee');
+
+$oClient			= Ext_Thebing_Client::getInstance();
+$oSchool			= Ext_Thebing_Client::getFirstSchool();
+$oCurrency			= new Ext_Thebing_Currency_Util($oSchool->id);
+$aCurrencys			= $oCurrency->getCurrencyList(true);
+$aCurrencys			= Ext_Thebing_Util::addEmptyItem($aCurrencys, Ext_Thebing_L10N::getEmptySelectLabel('all'), '');
+
+$sDescriptionPart	= 'Thebing » Marketing » Stornofee';
+
+############################ Stornogruppen #############################
+$oGuiGroup	= new Ext_TC_Gui2(md5('thebing_marketing_cancellationgroup'));
+// Datenbasis
+$oGuiGroup->setWDBasic(Ext_Thebing_Cancellation_Group::class);
+$oGuiGroup->setTableData('where', ['active' => 1]);
+$oGuiGroup->setTableData('limit', 30);
+$oGuiGroup->setTableData('orderby', ['name' => 'ASC']);
+
+//Listenoptionen
+$oGuiGroup->column_sortable				= 1;
+$oGuiGroup->row_sortable				= 0;
+$oGuiGroup->multiple_selection			= 0;
+
+$oDialog			= $oGuiGroup->createDialog($oGuiGroup->t('Eintrag "{name}" editieren'), $oGuiGroup->t('Neuer Eintrag'));
+$oDialog->width		= 900;
+$oDialog->height	= 650;
+
+$oDialog->setElement($oDialog->createRow($oGuiGroup->t('Name'), 'input', array(
+	'db_alias'	=> 'kcg',
+	'db_column'	=> 'name',
+	'required'	=> 1,
+)));
+
+$oDialog->setElement($oDialog->createRow($oGuiGroup->t('Kostenstelle'), 'input', array(
+	'db_alias'	=> 'kcg',
+	'db_column'	=> 'cost_center',
+)));
+
+// Leiste(n)
+$oBar					= $oGuiGroup->createBar();
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'name');
+$oFilter->db_alias		= array('kcg', 'kcg');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder = $oGuiGroup->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGuiGroup->setBar($oBar);
+
+$oBar			= $oGuiGroup->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon($oGuiGroup->t('Neuer Eintrag'), $oDialog, $oGuiGroup->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGuiGroup->t('Editieren'), $oDialog, $oGuiGroup->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGuiGroup->t('Löschen'), $oGuiGroup->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGuiGroup->setBar($oBar);
+
+$oBar			= $oGuiGroup->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGuiGroup->setBar($oBar);
+
+// Spalten
+$oColumn				= $oGuiGroup->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'kcg';
+$oColumn->title			= $oGuiGroup->t('Name');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGuiGroup->setColumn($oColumn);
+
+$oGuiGroup->addDefaultColumns();
+
+############################ Storno's #############################
+$oGui	= new Ext_TC_Gui2(md5('thebing_marketing_cancellationfee'));
+
+// Datenbasis
+$oGui->setWDBasic(Ext_TC_Cancellationconditions_Fee::class);
+$oGui->setTableData('where', ['active' => 1]);
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', ['created' => 'DESC']);
+
+$oGui->gui_description				= $sDescriptionPart;
+$oGui->gui_title					= $oGui->t('Stornogebühren');
+$oGui->column_sortable				= 1;
+$oGui->row_sortable					= 0;
+$oGui->multiple_selection			= 0;
+
+$aFeeTypes = Ext_Thebing_Util::getStornoTypeOptions();
+
+$aTaxes	= \Ext_TS_Vat::getCategories();
+$aTaxes = \Ext_Thebing_Util::addEmptyItem($aTaxes, $oGui->t('keine Steuer'));
+
+// Dialog
+$oDialog			= $oGui->createDialog($oGui->t('Eintrag "{name}" editieren'), $oGui->t('Neuer Eintrag'));
+$oDialog->width		= 900;
+$oDialog->height	= 650;
+$oDialog->setElement($oDialog->createRow($oGui->t('Bezeichnung'), 'input', array(
+	'db_alias'	=> 'tc_ccf',
+	'db_column'	=> 'name',
+	'required'	=> 1
+)));
+
+$oDialog->setElement($oDialog->createRow($oGuiGroup->t('Währung'), 'select', array(
+	'db_alias'			=> 'tc_ccf',
+	'db_column'			=> 'currency_iso',
+	'select_options'	=> $aCurrencys
+)));
+
+$oH3		= $oDialog->create('h4');
+$oH3		->setElement($oGui->t('Stornobedingungen'));
+$oDialog	->setElement($oH3);
+
+$oDialog->setElement($oDialog->createRow($oGui->t('Tage'), 'input', array(
+	'db_alias'	=> 'tc_ccf',
+	'db_column'	=> 'days',
+	'required'	=> 1,
+	'class'		=> "w100 amount",
+	'format'	=> new Ext_Gui2_View_Format_Int()
+)));
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Minimaler Wert'),
+		'input',
+		[
+			'db_alias' => 'tc_ccf',
+			'db_column'	=> 'minimum_value',
+			'class' => 'amount',
+			'format' => new Ext_Thebing_Gui2_Format_Float()
+		]
+	)
+);
+
+$aDynamicKinds = Ext_TC_Cancellationconditions_Dynamic::getDynamicFeeKinds(true);
+$aStornoTypes = $oSchool->getStornoTypeFromOptions();
+
+$oJoinContainer = $oDialog->createJoinedObjectContainer('dynamic_fees', ['min' => 1, 'max' => 20]);
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Betrag'), 'input', [
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'amount',
+	'class' => 'amount',
+	'format' => new Ext_Thebing_Gui2_Format_Float(),
+	'required' => 1
+]));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Prozent/Währung'), 'select', [
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'kind',
+	'required' => 1,
+	'select_options' => $aDynamicKinds,
+]));
+
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Anwenden auf'), 'select', [
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'type',
+	'select_options' => \Illuminate\Support\Arr::only($aStornoTypes, ['all', 'all_split', 'selection']),
+	'required' => 1,
+	'child_visibility' => [
+		[
+			'db_alias' => 'tc_ccfd',
+			'db_column' => 'tax_category_id',
+			'joined_object_key' => 'dynamic_fees',
+			'on_values' => ['all', 'all_split']
+		],
+		[
+			'db_alias' => 'tc_ccfd',
+			'db_column' => 'selection',
+			'joined_object_key' => 'dynamic_fees',
+			'on_values' => ['selection']
+		]
+	]
+]));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Leistungen'), 'select', [
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'selection',
+	'select_options' => \Illuminate\Support\Arr::except($aStornoTypes, ['all', 'all_split', 'selection']),
+	'multiple' => 5,
+	'jquery_multiple' => 1,
+	'searchable' => 1
+]));
+
+$oJoinContainer->setElement($oJoinContainer->createRow($oGui->t('Steuer'), 'select', [
+	'db_alias' => 'tc_ccfd',
+	'db_column' => 'tax_category_id',
+	'select_options' => $aTaxes
+]));
+
+$oDialog->setElement($oJoinContainer);
+
+// Leiste(n)
+$oBar					= $oGui->createBar();
+$oBar->width			= '100%';
+
+$oFilter				= $oBar->createFilter();
+$oFilter->db_column		= array('id', 'name');
+$oFilter->db_alias		= array('tc_ccf', 'tc_ccf');
+$oFilter->db_operator	= 'LIKE';
+$oFilter->id			= 'search';
+$oFilter->placeholder 	= $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+$oBar->position	= 'top';
+$oPagination	= $oBar->createPagination();
+$oBar->setElement($oPagination);
+$oLoading		= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+// Spalten
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'name';
+$oColumn->db_alias		= 'tc_ccf';
+$oColumn->title			= $oGui->t('Bezeichnung');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= true;
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'days';
+$oColumn->db_alias		= 'tc_ccf';
+$oColumn->title			= $oGui->t('Tage');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('name');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_Gui2_View_Format_Int();
+$oGui->setColumn($oColumn);
+
+$oColumn				= $oGui->createColumn();
+$oColumn->db_column		= 'minimum_value';
+$oColumn->db_alias		= 'tc_ccf';
+$oColumn->title			= $oGui->t('Minimaler Wert');
+$oColumn->width			= Ext_Thebing_Util::getTableColumnWidth('amount');
+$oColumn->width_resize	= false;
+$oColumn->format		= new Ext_Thebing_Gui2_Format_Float();
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+
+$aOptionalInfo			= array();
+$aOptionalInfo['js'][]	= '/admin/extensions/thebing/gui2/util.js';
+$aOptionalInfo['js'][]	= '/admin/extensions/thebing/marketing/js/cancellation_fee.js';
+$aOptionalInfo['css'][]	= '/assets/ts/css/gui2.css';
+$aOptionalInfo['css'][]	= '/admin/extensions/thebing/marketing/css/cancellation_fee.css';
+#$oGui->addJs('marketing/js/cancellation_fee.js');
+
+// Anzeige
+#$oGui->display();
+$oPage = new Ext_TS_Gui2_Page();
+$oPage->setGui($oGuiGroup);
+$oPage->setGui($oGui,		array('hash' => $oGuiGroup->hash, 'foreign_key' => 'group_id', 'parent_primary_key' => 'id', 'reload' => true));
+
+$oPage->display($aOptionalInfo);

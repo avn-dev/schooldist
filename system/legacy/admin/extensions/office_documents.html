@@ -1,0 +1,1253 @@
+<?php
+ 
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess("office_documents");
+
+$_SESSION['office']['documents'] = array();
+$arrConfigData = $objOffice->getConfigData();
+$aColumns = (array)Ext_Office_Config::get('document_columns');
+
+if(isset($_VARS['client_id'])) {
+	$iClientID = (int)$_VARS['client_id'];
+} else {
+	$iClientID = (int)\Core\Handler\SessionHandler::getInstance()->get('office_client_id');
+}
+
+if($iClientID == 0) {
+	$iClientID = 1;
+}
+
+\Core\Handler\SessionHandler::getInstance()->set('office_client_id', $iClientID);
+
+$aSQL = array(
+	'iClientID'	=> $iClientID
+);
+$sSQL = "
+	SELECT
+		*
+	FROM
+		`office_forms`
+	WHERE
+		`active` 	= 1 AND
+		`client_id`	= :iClientID
+";
+$aResults = DB::getPreparedQueryData($sSQL, $aSQL);
+
+$sPDFForms = '';
+$aPDFForms = array();
+foreach($aResults as $iKey => $aResult) {
+	$sPDFForms .= '<option value="'.$aResult['id'].'">'.$aResult['name'].'</option>';
+	$aPDFForms[$aResult['id']] = $aResult['name'];
+}
+
+
+/* ========== FRONTEND ========== */
+
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+
+	if($_VARS['action'] == "config") {
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+		$config->form_id = $_VARS['form_id'];
+		$config->type = $_VARS['type'];
+		$config->date = $_VARS['date'];
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+	}
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$aOptions = array();
+	$aOptions['xhtml'] = false;
+	Admin_Html::loadAdminHeader($aOptions);
+
+	?><table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+		<tr>
+			<td valign="top">
+
+				<h1>Office &raquo; Dokumente</h1>
+
+				<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+					<input type="hidden" name="action" value="config">
+					<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+					<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+					<input type="hidden" name="content_id" value="<?=$_VARS['content_id']?>">
+					<?=printTableStart()?>
+					<?=printFormSelect("Formular", "form_id", $aPDFForms, $config->form_id)?>
+					<?=printFormSelect("Typen", "type", $aSectionNames, $config->type)?>
+					<?=printFormText("Datum ab", "date", $config->date)?>
+					<?=printTableEnd()?>
+
+					<?=printSubmit("Konfiguration speichern")?>
+				</form>
+
+			</td>
+		</tr>
+	</table><?php
+
+	Admin_Html::loadAdminFooter();
+	die();
+
+}
+
+$aOptions = array();
+$aOptions['additional'] = '<script type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+if(!$_VARS['task']) {
+	$aOptions['body'] = ' scroll="no"';
+}
+$aOptions['xhtml'] = false;
+Admin_Html::loadAdminHeader($aOptions);
+
+
+/* ========== AUSLESEN DER DATEN ========== */
+
+
+// Positionen
+$aArticles = array(0 => "");
+if (
+	$_VARS['type'] == "offer" ||
+	$_VARS['type'] == "confirmation" ||
+	$_VARS['type'] == "account" ||
+	$_VARS['type'] == "contract"
+) {
+	$rArticle = DB::getQueryRows("SELECT * FROM office_articles");
+	foreach($rArticle as $aArticle) {
+		 $aArticles[$aArticle['id']] = $aArticle['number']." ".$aArticle['product']." (".$aArticle['price']." &euro;)";
+		 $aArticlesDetails[$aArticle['id']] = $aArticle;
+	}
+}
+
+// Firma
+$aCustomersFull = $objOfficeDao->getCustomers($arrConfigData);
+$aCustomers = array(0 => 'bitte w&auml;hlen');
+foreach((array)$aCustomersFull as $aCustomer) {
+	$aCustomers[$aCustomer['id']] = $aCustomer['name'].' ('.$aCustomer['number'].')';
+}
+
+// Bearbeiter
+$aEditors = $objOfficeDao->getEditors();
+
+
+/* ========== SEITE/LISTE GENERIEREN ========== */
+
+
+?><script type="text/javascript" src="/admin/extensions/office/js/document.js"></script>
+<script type="text/javascript" src="/admin/extensions/office/js/project.js"></script>
+<script type="text/javascript" src="/admin/extensions/office/js/tablednd.js"></script><?php
+
+\System::wd()->executeHook('include_additional_files');
+
+?><script type="text/javascript">
+
+var objLitBox;
+var arrIcons = ['toolbar_pdf_export',
+	'toolbar_pdf_print',
+	'toolbar_pdf_email',
+	'toolbar_payments',
+	'toolbar_edit',
+	'toolbar_ticket',
+	'toolbar_project',
+	'toolbar_delete',
+	'toolbar_accept',
+	'toolbar_decline',
+	'toolbar_finish',
+	'toolbar_release',
+	'toolbar_ticket',
+	'toolbar_checklist',
+	'toolbar_copy',
+	'export_list_pdf',
+	'export_list_xlsx'];
+var arrIconState = [];
+var bCheckToolbarInProgress = 0;
+var loadDocumentListObserver;
+var loadDocumentListEventElement;
+var active;
+var counter = 0;
+var selectedRows = [];
+
+function sendPost() {
+
+	var iDocumentId = $('inputDocumentId').value;
+	var iFormId = $('inputFormId').value;
+	var sRequestUrl = '/admin/extensions/office/office.php';
+	var sParameters = 'action=sendPost&document_id='+iDocumentId+'&form_id='+iFormId;
+	new Ajax.Request(
+		sRequestUrl,
+		{
+			method : 'post',
+			parameters : sParameters,
+			onComplete : sendPostCallback
+		}
+	);
+
+}
+
+function sendFax() {
+
+	var iDocumentId = $('inputDocumentId').value;
+	var iFormId = $('inputFormId').value;
+	var sRequestUrl = '/admin/extensions/office/office.php';
+	var sParameters = 'action=sendFax&document_id='+iDocumentId+'&form_id='+iFormId+'&fax='+encodeURIComponent($F('inputFax'));
+	new Ajax.Request(
+		sRequestUrl,
+		{
+			method : 'post',
+			parameters : sParameters,
+			onComplete : sendPostCallback
+		}
+	);
+
+}
+
+function sendPostCallback(oResponse) {
+
+	var oData = oResponse.responseText.evalJSON();
+	if(oData.success) {
+		$('LB_title').update('<span style="color: green;">'+oData.message+'</span>');
+		window.setTimeout("objLitBox.remove();", 4000);		
+		loadDocumentList();
+	} else {
+		$('LB_title').update('<span style="color: red;">'+oData.message+'</span>');
+	}
+
+}
+
+function sendMail() {
+
+	var iDocumentId = $('inputDocumentId').value;
+	var iFormId = $('inputFormId').value;
+	var sMail = $('inputMail').value;
+	var sSubject = $('inputSubject').value;
+	var sText = $('inputText').value;
+	var sRequestUrl = '/admin/extensions/office/office.php';
+	var sParameters = 'action=sendMail&document_id='+iDocumentId+'&form_id='+iFormId+'&email='+encodeURIComponent(sMail)+'&subject='+encodeURIComponent(sSubject)+'&text='+encodeURIComponent(sText);
+	new Ajax.Request(
+		sRequestUrl,
+		{
+			method : 'post',
+			parameters : sParameters,
+			onComplete : sendMailCallback
+		}
+	); 
+
+}
+
+function sendMailCallback(oResponse) {
+
+	var oData = oResponse.responseText.evalJSON();
+	if(oData.success) {
+		$('LB_title').update('<span style="color: green;">'+oData.message+'</span>');
+		window.setTimeout("objLitBox.remove();", 4000);		
+		loadDocumentList();
+	} else {
+		$('LB_title').update('<span style="color: red;">'+oData.message+'</span>');
+	}
+
+}
+
+function getOkMessage(iModus) {
+
+	document.getElementById('OK-TEXT').style.display = 'inline';
+	document.getElementById('FORM-TEXT').style.display = 'none';
+
+	if(
+		iModus === 1 &&
+		counter > 0
+	) {
+		window.clearInterval(active);
+		objLitBox.remove();
+		counter = 0;
+	} else {
+		counter++;
+		active = window.setInterval("getOkMessage(1)", 2000);
+		loadDocumentList();
+	}
+
+}
+
+function prepareDialog(iDocumentID) {
+
+	var sRequestUrl = '/admin/extensions/office.ajax.php';
+	var sParameters = 'task=prepare_email&document_id='+iDocumentID;
+	new Ajax.Request(
+		sRequestUrl,
+		{
+			method : 'post',
+			parameters : sParameters,
+			onComplete : openDialog
+		}
+	);
+
+}
+
+function openDialog(oResponse) {
+
+	var oData = oResponse.responseText.evalJSON();
+	var oGUI = new GUI;
+	var sSubject = '';
+	var sBody = '';
+	var sHTML = '';
+
+	if(oData.by_email === 0) {
+		sHTML += '<div style="padding: 10px;">Der Kunde wünscht den Versand von Dokumenten per Post!</div>';
+	}
+
+	if(oData.subject) {
+		sSubject = oData.subject;
+	}
+
+	if(oData.body) {
+		sBody = oData.body;
+	}
+
+	sHTML += oGUI.startCol('');
+	sHTML += oGUI.startFieldset('Per E-Mail versenden');
+	sHTML += '<input type="hidden" name="inputDocumentId" id="inputDocumentId" value="'+oData.document_id+'" />';
+	sHTML += '<input type="hidden" name="inputFormId" id="inputFormId" value="'+oData.form_id+'" />';
+	sHTML += oGUI.printFormInput('E-Mail-Adresse', 'inputMail', oData.email);
+	sHTML += oGUI.printFormInput('Betreff', 'inputSubject', sSubject);
+	sHTML += oGUI.printFormTextarea('Nachricht', 'inputText', sBody, 10);
+	sHTML += oGUI.printFormButton('E-Mail absenden', 'sendMail();', 'send_mail');
+	sHTML += oGUI.endFieldset();
+	sHTML += oGUI.endCol();
+	sHTML += oGUI.startCol('');
+	sHTML += oGUI.startFieldset('Per Post versenden');
+	sHTML += oGUI.printFormButton('Brief absenden', 'sendPost();', 'send_post');
+	sHTML += oGUI.endFieldset();
+	sHTML += oGUI.startFieldset('Per Fax versenden');
+	sHTML += oGUI.printFormInput('Faxnummer', 'inputFax', oData.fax);
+	sHTML += oGUI.printFormButton('Fax absenden', 'sendFax();', 'send_post');
+	sHTML += oGUI.endFieldset();
+	sHTML += oGUI.endCol();
+
+	objLitBox = new LITBox(
+		sHTML,
+		{
+			type: 'alert',
+			overlay: true,
+			height: 370,
+			width: 700,
+			resizable: false,
+			opacity: .9
+		}
+	);
+
+}
+
+function checkRow(e, sId, bMultiple) {
+
+	if(
+		e &&
+		e.target &&
+		e.target.tagName == 'INPUT' &&
+		e.target.type === 'checkbox'
+	) {
+		bMultiple = true;
+	}
+
+	var objRow = $(sId);
+
+	if(
+		!bMultiple &&
+		selectedRows.length > 0
+	) {
+		selectedRows.each(function(sRowId) {
+			var oRow = $(sRowId);
+			oRow.className = "";
+			$('documents_checkboxes_'+sRowId.replace('tr_', '')).checked = false;
+		});
+		selectedRows = [];
+	}
+
+	if(objRow) {
+
+		if(!objRow.hasClassName('selectedRow')) {
+			objRow.className = "selectedRow";
+			$('documents_checkboxes_'+sId.replace('tr_', '')).checked = true;
+			// Nur checken, wenn es sich geändert hat
+			if(selectedRows.indexOf(sId) === -1) {
+				selectedRows.push(sId);
+			}
+		} else {
+			objRow.className = "";
+			$('documents_checkboxes_'+sId.replace('tr_', '')).checked = false;
+			if(selectedRows) {
+				selectedRows = selectedRows.filter(function(sRowId) {
+					if(sRowId === sId) {
+						return false;
+					} else {
+						return true;
+					}
+				});
+			}
+		}
+
+	}
+
+	checkDocumentToolbar(selectedRows);
+
+}
+
+function changeState(iDocumentId, sState) {
+
+	var sRequestUrl = '/admin/extensions/office.ajax.php';
+	var sParameters = 'task=changeState&document_id='+iDocumentId+'&state='+sState;
+	new Ajax.Request(
+		sRequestUrl,
+		{
+			method : 'post',
+			parameters : sParameters,
+			onComplete : function() {
+				loadDocumentList();
+			}
+		}
+	);
+
+}
+
+function executeAction(sId, sAction) {
+
+	if(bCheckToolbarInProgress) {
+		window.setTimeout("executeAction('"+sId+"', '"+sAction+"')", 100);
+		return false;
+	}
+
+	if(
+		sAction !== 'new' &&
+		sAction !== 'export_list_pdf' &&
+		sAction !== 'export_list_xlsx' &&
+		!arrIconState['toolbar_'+sAction]
+	) {
+		alert("Diese Aktion ist nicht zulässig!");
+		return false;
+	}
+
+	var iDocumentId;
+
+	if(
+		sAction !== 'new' && 
+		selectedRows
+	) {
+		iDocumentId = selectedRows[0].replace(/tr_/, '');
+	}
+
+	switch(sAction) {
+		case "delete":
+			deleteDocument(iDocumentId);
+			break;
+		case "edit":
+			openDocumentDialog(iDocumentId);
+			break;
+		case "new":
+			openDocumentDialog();
+			break;
+		case "ticket":
+			openTicketDialog(iDocumentId);
+			break;
+		case "project":
+			openProjectDialog(iDocumentId);
+			break;
+		case "copy":
+			openCopyDialog(iDocumentId);
+			break;
+		case "pdf_export":
+			window.open('/admin/extensions/office/office.php?action=openPdf&template=true&document_id=' + iDocumentId);
+			break;
+		case "pdf_print":
+			window.open('/admin/extensions/office/office.php?template=false&document_id=' + iDocumentId);
+			break;
+		case "pdf_email":
+			prepareDialog(iDocumentId);
+			break;
+		case "payments":
+			openPayments(iDocumentId);
+			break;
+		case "accept":
+			changeState(iDocumentId, 'accepted');
+			break;
+		case "decline":
+			changeState(iDocumentId, 'declined');
+			break;
+		case "finish":
+			changeState(iDocumentId, 'finished');
+			break;
+		case "release":
+			changeState(iDocumentId, 'released');
+			break;
+		case "checklist":
+			openCheckListDialog(iDocumentId);
+			break;
+		case "export_list_pdf":
+			var sLink = '/admin/extensions/office/office.php?action='+sAction;
+			selectedRows.each(function(sTr) {
+				var sId = sTr.replace(/tr_/, '');
+				sLink += '&id[]='+sId;
+			});
+			window.open(sLink);
+			break;
+		case "export_list_xlsx":
+			openXlsxExportDialog(sAction);
+			break;
+		default:
+			alert("Diese Aktion ist nicht zulässig!");
+			break;
+	}
+
+}
+
+function openXlsxExportDialog(sAction) {
+
+	var sHTML = '';
+	var oTable = $('tbl_documents');
+
+	sHTML += '<p><b>Export XLSX</b></p>';
+	sHTML += '<form method="GET" action="/admin/extensions/office/office.php" target="_blank">';
+	sHTML += '<input type="hidden" name="action" value="'+sAction+'" />';
+	oTable.childElements().each(function(oTr) {
+		var sId = oTr.id.replace(/tr_/, '');
+		sHTML += '<input type="hidden" name="id[]" value="'+sId+'" />';
+	});
+	sHTML += '<p>Format: <select class="txt" name="format">';
+		sHTML += '<option value="default">Standard</option>';
+		sHTML += '<option value="extended1">Erweitert 1</option>';
+	sHTML += '</select>';
+	sHTML += '<input type="submit" class="btn" value="Export" /></p>';
+	sHTML += '</form>';
+	sHTML += '<p><b>Standard:</b><br />Nr., Art, Betreff, Kunde, Land, USt.-ID, Bearbeiter, Datum, Netto, Brutto</p>';
+	sHTML += '<p><b>Erweitert 1:</b><br />Status, ID, Nr., Art, Betreff, Kunde, Ansprechpartner, Produktbereich, Datum, Buchung, Netto</p>';
+
+	objLitBox = new LITBox(
+		sHTML,
+		{
+			type: 'alert',
+			overlay: true,
+			height: 300,
+			width: 450,
+			resizable: false,
+			opacity: .9
+		}
+	);
+
+}
+
+function checkDocumentToolbar(aRows) {
+
+	if(!bCheckToolbarInProgress) {
+
+		bCheckToolbarInProgress = 1;
+
+		if(aRows) {
+
+			var sRequestUrl = '/admin/extensions/office.ajax.php';
+			var sParameters = 'task=check_toolbar&';
+			aRows.each(function(sRowId) {
+				sParameters += 'document_id[]='+sRowId.replace('tr_', '')+'&';
+			});
+			new Ajax.Request(
+				sRequestUrl,
+				{
+					method : 'post',
+					parameters : sParameters,
+					onComplete : checkDocumentToolbarCallback
+				}
+			);
+
+		} else {
+
+			arrIcons.each(function(strIcon) {
+				switchDocumentToolbarIcon(strIcon, 0);
+			});
+			bCheckToolbarInProgress = 0;
+
+		}
+
+	}
+
+}
+
+function checkDocumentToolbarCallback(oResponse) {
+
+	var oData = oResponse.responseText.evalJSON();
+	var arrList = oData['data'];
+
+	arrIcons.each(function(sIcon) {
+		var bShow = arrList[sIcon];
+		switchDocumentToolbarIcon(sIcon, bShow);
+	});
+
+	bCheckToolbarInProgress = 0;
+
+}
+
+function switchDocumentToolbarIcon(sIcon, bShow) {
+
+	var objIcon = $(sIcon);
+
+	if(bShow) {
+		if(
+			arrIconState[sIcon] === undefined ||
+			arrIconState[sIcon] === 0
+		) {
+			$j(objIcon).fadeIn();
+		}
+		arrIconState[sIcon] = 1;
+	} else {
+		if(
+			arrIconState[sIcon] === undefined ||
+			arrIconState[sIcon] === 1
+		) {
+			$j(objIcon).fadeTo(0.2);
+		}
+		arrIconState[sIcon] = 0;
+	}
+
+}
+
+function checkSearchOptions() {
+
+	var bIsNaN = isNaN($F('search')); 
+
+	if(
+		!bIsNaN &&
+		$F('search') !== ''
+	) {
+		$('to').disable();
+		$('from').disable();
+		$('to').setStyle({ color: '#999' });
+		$('from').setStyle({ color: '#999' });
+	} else {
+		$('to').enable();
+		$('from').enable();
+		$('to').setStyle({ color: '#000' });
+		$('from').setStyle({ color: '#000' });
+	}
+
+}
+
+function prepareLoadDocumentList(oEvent) {
+
+	checkSearchOptions();
+
+	if(oEvent) {
+		loadDocumentListEventElement = oEvent;
+	}
+
+	if(loadDocumentListObserver) {
+		clearTimeout(loadDocumentListObserver);
+		loadDocumentListEventElement = null;
+	}
+	loadDocumentListObserver = setTimeout(loadDocumentList.bind(), 500);
+
+}
+
+function loadDocumentList(sOrder) {
+
+	checkSearchOptions();
+
+	$('toolbar_loading').show();
+	$('sort_id').removeClassName('active');
+	$('sort_number').removeClassName('active');
+	$('sort_customer').removeClassName('active');
+	if($('sort_product_area')) {
+		$('sort_product_area').removeClassName('active');
+	}
+	$('sort_amount_net').removeClassName('active');
+
+	if(!sOrder) {
+		sOrder = '';
+	}
+
+	var sRequestUrl = '/admin/extensions/office.ajax.php';
+	var sParameters = 'task=get_documents';
+
+	sParameters += '&type='+encodeURIComponent($('type').value);
+	sParameters += '&state='+encodeURIComponent($('state').value);
+	sParameters += '&search='+encodeURIComponent($('search').value);
+	sParameters += '&client_id='+encodeURIComponent($('client_id').value);
+
+	if($('product_area_id')) {
+		sParameters += '&product_area_id=' + encodeURIComponent($('product_area_id').value);
+	}
+	sParameters += '&order='+sOrder;
+
+	if(!$('from').disabled) {
+		sParameters += '&from='+encodeURIComponent($('from').value);
+	}
+	if(!$('to').disabled) {
+		sParameters += '&to='+encodeURIComponent($('to').value);
+	}
+
+	if(selectedRows) {
+		selectedRows.each(function(sTr) {
+			var sId = sTr.replace(/tr_/, '');
+			sParameters += '&id[]='+sId;
+		});
+	}
+
+	new Ajax.Request(
+		sRequestUrl,
+		{
+			method : 'post',
+			parameters : sParameters,
+			onComplete : loadDocumentListCallback
+		}
+	); 
+
+}
+
+function loadDocumentListCallback(oResponse) {
+
+	var oData = oResponse.responseText.evalJSON();
+	var aList = oData['data'];
+	var sOrder = oData['order'];
+	var aIds = oData['id'];
+
+	if(
+		sOrder && 
+		sOrder !== 'undefined' &&
+		$('sort_'+sOrder)
+	) {
+		$('sort_'+sOrder).addClassName('active');
+	}
+
+	var rowCnt = aList.length;
+	var tbody = document.getElementById("tbl_documents");
+
+	while(tbody.hasChildNodes()) {
+		tbody.removeChild(tbody.firstChild);
+	}
+
+	selectedRows = [];
+
+	var fTotal = 0;
+	var c = 0;
+	var tr = document.createElement("tr");
+	var oTr = tr.cloneNode(true);
+
+	for(var i = 0; i < rowCnt; i++) {
+		oTr = tr.cloneNode(false);
+		tbody.appendChild(oTr);
+		var sId = "tr_"+aList[i]['id'];
+		oTr.id = sId;
+		Event.observe(oTr, 'click', checkRow.bindAsEventListener(c, sId));
+		Event.observe(oTr, 'dblclick', executeAction.bindAsEventListener(c, 'edit'));
+		Event.observe(oTr, 'mouseout', resetHighlightRow); 
+		Event.observe(oTr, 'mousemove', setHighlightRow);
+		addCells(oTr, i,aList[i]);
+		if(aList[i]['typeKey'] === 'credit') {
+			fTotal -= parseFloat(aList[i]['price_net']);
+		} else {
+			fTotal += parseFloat(aList[i]['price_net']);
+		}
+		c++;
+    }
+    tbody = null;
+
+	if(loadDocumentListEventElement) {
+		loadDocumentListEventElement.focus();
+		loadDocumentListEventElement.value = loadDocumentListEventElement.value;
+	}
+
+	document.getElementById('tbl_documents_total_field').innerHTML = fTotal.number_format(2, ",", ".") + " &euro;";
+	document.getElementById('tbl_documents_total_field').style.textAlign = 'right';
+
+	if(aIds) {
+		aIds.each(function(iId) {
+			checkRow(null, 'tr_'+iId, true);
+		});
+	}
+
+	checkDocumentToolbar(selectedRows);
+
+	$('toolbar_loading').hide();
+
+}
+
+function addCells(tr, cnt, arrList) {
+
+	var td12 = document.createElement("td");
+	tr.appendChild(td12);
+	var stringTd12 = '<input type="checkbox" value="'+arrList['id']+'" class="documents_checkboxes" id="documents_checkboxes_'+arrList['id']+'">';
+	td12.innerHTML = stringTd12;
+
+	var td0 = document.createElement("td");
+	//td0.style.textAlign = 'center';
+	tr.appendChild(td0);
+	var stringTd0 = null;
+	if(arrList['state'] === 'reminded')
+	{
+		stringTd0 = '<img src="/admin/media/bullet_error.png" alt="Erinnert" title="Erinnert" />';
+	}
+	else if(arrList['state'] === 'released')
+	{
+		stringTd0 = '<img src="/admin/media/bullet_white.png" alt="Freigegeben" title="Freigegeben" />';
+	}
+	else if(arrList['state'] === 'accepted')
+	{
+		stringTd0 = '<img src="/admin/media/bullet_green.png" alt="Angenommen" title="Angenommen" />';
+	}
+	else if(arrList['state'] === 'paid')
+	{
+		stringTd0 = '<img src="/admin/media/bullet_green.png" alt="Bezahlt" title="Bezahlt" />';
+	}
+	else if(arrList['state'] === 'declined')
+	{
+		stringTd0 = '<img src="/admin/media/bullet_red.png" alt="Abgelehnt" title="Abgelehnt" />';
+	}
+	else if(arrList['state'] === 'finished')
+	{
+		stringTd0 = '<img src="/admin/media/office_finished.png" alt="Erledigt" title="Erledigt" />';
+	}
+	else
+	{
+		stringTd0 = '<img src="/admin/media/bullet_orange.png" alt="Angelegt" title="Angelegt" />';
+	}
+	if(arrList['send'] === 1) {
+		stringTd0 += '<img src="/admin/media/email.png" alt="Versendet" title="Versendet" />';
+	}
+	td0.innerHTML = stringTd0;
+	//td0.appendChild(document.createTextNode(stringTd0));
+
+	var td00 = document.createElement("td");
+	tr.appendChild(td00);
+	td00.appendChild(document.createTextNode(arrList['id']));
+	td00.style.textAlign = 'right';
+
+	var td1 = document.createElement("td");
+	tr.appendChild(td1);
+	td1.appendChild(document.createTextNode(arrList['number']));
+	td1.style.textAlign = 'right';
+
+	var td2 = document.createElement("td");
+	tr.appendChild(td2);
+	td2.appendChild(document.createTextNode(arrList['type'] + ' '));
+
+	var td3 = document.createElement("td");
+	tr.appendChild(td3);
+	td3.appendChild(document.createTextNode(arrList['subject'] + ' '));
+
+	var td4 = document.createElement("td");
+	tr.appendChild(td4);
+	td4.appendChild(document.createTextNode(arrList['k_matchcode'] + ' '));
+<?if(in_array('country', $aColumns)) {?>
+	var td9 = document.createElement("td");
+	tr.appendChild(td9);
+	td9.appendChild(document.createTextNode(arrList['k_country'] + ' '));
+<?}?>
+<?if(in_array('vat_id', $aColumns)) {?>
+	var td10 = document.createElement("td");
+	tr.appendChild(td10);
+	td10.appendChild(document.createTextNode(arrList['vat_id_nr'] + ' '));
+<?}?>
+<?if(in_array('product_area', $aColumns)) {?>
+	var td11 = document.createElement("td");
+	tr.appendChild(td11);
+	td11.appendChild(document.createTextNode(arrList['product_area'] + ' '));
+<?}?>
+<?if(in_array('editor', $aColumns)) {?>
+	var td5 = document.createElement("td");
+	tr.appendChild(td5);
+	td5.appendChild(document.createTextNode(arrList['u_firstname'] + ' ' + arrList['u_lastname']));
+<?}?>
+	var td6 = document.createElement("td");
+	tr.appendChild(td6);
+	td6.appendChild(document.createTextNode(arrList['date']));
+
+	var td61 = document.createElement("td");
+	tr.appendChild(td61);
+	td61.appendChild(document.createTextNode(arrList['booking_date']));
+
+	var td7 = document.createElement("td");
+	tr.appendChild(td7);
+	td7.appendChild(document.createTextNode(arrList['f_price_net']+ ' ' + arrList['currency']));
+	td7.style.textAlign = 'right';
+<?if(in_array('gross', $aColumns)) {?>
+	var td8 = document.createElement("td");
+	tr.appendChild(td8);
+	td8.appendChild(document.createTextNode(arrList['f_price']+ ' ' + arrList['currency']));
+	td8.style.textAlign = 'right';
+<?}?>
+	td0 = td1 = td2 = td3 = td4 = td5 = td6 = td61 = td7 = td8 = td9 = td10 = td11 = td12 = null;
+
+}
+
+</script><?php
+
+$oDate = new WDDate();
+$aLimits = $oDate->getMonthLimits();
+
+if(!$_VARS['from'] && !$_SESSION['from']) {
+	$_SESSION['from'] = strftime('%x', $aLimits['start']);
+	\System::wd()->executeHook('define_specified_document_from_time', $_SESSION);
+}
+
+if(!$_VARS['to'] && !$_SESSION['until']) {
+	$_SESSION['until'] = strftime('%x', $aLimits['end']);
+
+	\System::wd()->executeHook('define_specified_document_till_time', $_SESSION);
+}
+
+$aTmpDocumentStates = array_merge(array('' => 'Alle'), $aDocumentStates);
+$oProductArea = new \Office\Entity\ProductArea;
+$aProductAreas = $oProductArea->getArrayList(true);
+$aProductAreas = array(0 => 'Alle') + $aProductAreas;
+
+$arrConfig = array();
+$arrConfig['css'] 		= "txt";
+//$arrConfig['onChange']	= "prepareLoadDocumentList(this);";
+
+$arrConfig['name']		= "type";
+$arrConfig['id'] 		= "type";
+$arrConfig['options']	= $aSectionNames;
+$arrConfig['selected']	= $_SESSION['type'];
+$objSelect = new GUI_FormSelect($arrConfig);
+
+$strDocumentType = $objSelect->generateHTML();
+
+$arrConfig['name']		= "state";
+$arrConfig['id'] 		= "state";
+$arrConfig['options']	= $aTmpDocumentStates;
+$arrConfig['selected']	= $_SESSION['state'];
+$objSelect = new GUI_FormSelect($arrConfig);
+
+$strDocumentState = $objSelect->generateHTML();
+
+$arrConfig['name']		= "product_area_id";
+$arrConfig['id'] 		= "product_area_id";
+$arrConfig['options']	= $aProductAreas;
+$arrConfig['selected']	= $_SESSION['product_area_id'];
+$objSelect = new GUI_FormSelect($arrConfig);
+
+$sProductAreaSelect = $objSelect->generateHTML();
+
+unset($arrConfig['options']);
+unset($arrConfig['selected']);
+
+//$arrConfig['onKeyUp']	= "prepareLoadDocumentList(this);";
+$arrConfig['style']	= "width: 75px;";
+
+$arrConfig['name']	= "from";
+$arrConfig['id'] 	= "from";
+$arrConfig['value']	= $_SESSION['from'];
+$objSelect = new GUI_FormText($arrConfig);
+
+$strDocumentDateFrom = $objSelect->generateHTML();
+
+$arrConfig['name']	= "to";
+$arrConfig['id'] 	= "to";
+$arrConfig['value']	= $_SESSION['until'];
+$objSelect = new GUI_FormText($arrConfig);
+
+$strDocumentDateUntil = $objSelect->generateHTML();
+
+unset($arrConfig['style']);
+
+$arrConfig['name']		= "search";
+$arrConfig['id'] 		= "search";
+$arrConfig['value']		= $_SESSION['search'];
+$objSelect = new GUI_FormText($arrConfig);
+
+$strDocumentSearch = $objSelect->generateHTML();
+
+$arrConfig = array();
+$arrConfig['css'] 		= "txt";
+$arrConfig['onChange']	= 'go(\'' . $_SERVER['PHP_SELF'] . '?client_id=\' + $F(\'client_id\'))';
+//$arrConfig['onChange']	= "prepareLoadDocumentList(document.getElementById('from'));";
+$arrConfig['name']		= "client_id";
+$arrConfig['id'] 		= "client_id";
+$arrConfig['values']	= (array)$aClients;
+$arrConfig['selected']	= (int)\Core\Handler\SessionHandler::getInstance()->get('office_client_id');
+$objClientSelect = new GUI_FormSelect($arrConfig);
+$strClientSelect	= $objClientSelect->generateHTML();
+
+?>
+<section class="content custom-gui">
+
+	<div class="divHeader">
+
+	
+
+	<div class="divToolbar">
+		<div class="divToolbarLabel">Filter:</div>
+		<div class="divToolbarFormItem" style="display:none;">
+			Mandant <?=$strClientSelect?>
+		</div>
+		<div class="divToolbarFormItem">
+			Dokumentart <?=$strDocumentType?>
+		</div>
+		<div class="divToolbarFormItem">
+			Status <?=$strDocumentState?>
+		</div>
+		<?php if(in_array('product_area', $aColumns)) { ?>
+		<div class="divToolbarFormItem">
+			Produktbereich <?=$sProductAreaSelect?>
+		</div>
+		<?php } ?>
+
+		<div class="divCleaner"></div>
+
+	</div>
+
+	<div class="divToolbar divTopLine">
+
+		<div class="divToolbarLabel" style="visibility: hidden;">Filter:</div>
+
+		<div class="divToolbarFormItem">
+			Von <?=$strDocumentDateFrom?>
+		</div>
+		<div class="divToolbarFormItem">
+			Bis <?=$strDocumentDateUntil?>
+		</div>
+		<div class="divToolbarFormItem">
+			Suche <?=$strDocumentSearch?>
+		</div>
+		<div class="divToolbarFormItem">
+			<a href="javascript:void(false);" class="btn" style="background-color: #dedede; color: #000; padding: 0 4px;" onclick="loadDocumentList();">Go</a>
+		</div>
+
+		<div class="divToolbarIcon">
+			<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+		</div>
+		<div class="divToolbarIcon">
+			<img src="/admin/media/spacer.gif" height="16" width="1" alt="" />
+		</div>
+
+		<div class="divCleaner"></div>
+
+	</div>
+
+	<div class="divToolbar divTopLine">
+
+		<div class="divToolbarLabel">Anlegen:</div>
+		<div class="divToolbarIcon" id="toolbar_new">
+			<img src="/admin/media/page_new.gif" onclick="executeAction(0, 'new');" alt="anlegen" title="anlegen" />
+		</div>
+
+		<div class="divToolbarSeparator">::</div>
+
+		<div class="divToolbarIcon" id="toolbar_ticket">
+			<img src="/admin/extensions/office/images/office_note_add.png" onclick="executeAction(0, 'ticket');" alt="Wiedervorlage" title="Wiedervorlage" />
+		</div>
+
+		<div class="divToolbarSeparator">::</div>
+
+		<div class="divToolbarIcon" id="toolbar_project">
+			<img src="/admin/extensions/office/images/office_project_add.png" onclick="executeAction(0, 'project');" alt="Projekt" title="Projekt" />
+		</div>
+
+		<div class="divToolbarSeparator">::</div>
+
+		<div class="divToolbarLabel">Bearbeitung:</div>
+		<div class="divToolbarIcon" id="toolbar_edit">
+			<img src="/admin/media/pencil.png" onclick="executeAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_delete">
+			<img src="/admin/media/cross.png" onclick="executeAction(0, 'delete');" alt="löschen" title="löschen" />
+		</div> 
+
+		<div class="divToolbarIcon" id="toolbar_release">
+			<img src="/admin/media/page_go.png" onclick="executeAction(0, 'release');" alt="freigeben" title="freigeben" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_accept">
+			<img src="/admin/media/accept.png" onclick="executeAction(0, 'accept');" alt="annehmen" title="annehmen" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_decline">
+			<img src="/admin/media/stop.png" onclick="executeAction(0, 'decline');" alt="ablehnen" title="ablehnen" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_finish">
+			<img src="/admin/media/document_finished.png" onclick="executeAction(0, 'finish');" alt="erledigt" title="erledigt" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_copy">
+			<img src="/admin/media/page_copy.png" onclick="executeAction(0, 'copy');" alt="weiterführen" title="weiterführen" />
+		</div>
+
+		<div class="divToolbarSeparator">::</div>
+
+		<div class="divToolbarLabel">Ausgabe:</div>
+
+		<div class="divToolbarIcon" id="toolbar_pdf_export">
+			<img src="/admin/media/acrobat.png" onclick="executeAction(0, 'pdf_export');" alt="PDF mit Briefbogen" title="PDF mit Briefbogen" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_pdf_print">
+			<img src="/admin/media/printer.png" onclick="executeAction(0, 'pdf_print');" alt="PDF ohne Briefbogen" title="PDF ohne Briefbogen" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_pdf_email">
+			<img src="/admin/media/email.png" onclick="executeAction(0, 'pdf_email');" alt="Per E-Mail versenden" title="Per E-Mail versenden" />
+		</div>
+
+		<div class="divToolbarIcon" id="toolbar_payments">
+			<img src="/admin/extensions/office/images/money.png" onclick="executeAction(0, 'payments');" alt="Zahlungen" title="Zahlungen" />
+		</div>
+
+		<div class="divToolbarSeparator">::</div>
+
+		<div class="divToolbarLabel">Checkliste:</div>
+
+		<div class="divToolbarIcon" id="toolbar_checklist">
+			<img src="/admin/extensions/office/images/checklist.png" onclick="executeAction(0, 'checklist');" alt="Checkliste" title="Checkliste" />
+		</div>
+
+		<div class="divToolbarSeparator">::</div>
+
+		<div class="divToolbarLabel">Export:</div>
+
+		<div class="divToolbarIcon" id="export_list_pdf">
+			<img src="/admin/media/acrobat.png" onclick="executeAction(0, 'export_list_pdf');" alt="Export PDF" title="Export PDF" />
+		</div>
+
+		<div class="divToolbarIcon" id="export_list_xlsx">
+			<img src="/admin/extensions/office/images/page_white_excel.png" onclick="executeAction(0, 'export_list_xlsx');" alt="Export XLSX" title="Export XLSX" />
+		</div>
+
+		<div class="divCleaner"></div>
+
+	</div>
+
+	<div class="divHeaderBottomGrey"><img src="/admin/media/spacer.gif" height="7" /></div>
+	<div class="divHeaderBottomWhite"><img src="/admin/media/spacer.gif" height="5" /></div>
+
+</div>
+
+<table id="tableDocuments" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+	<?php
+		ob_start();
+	?>
+	<colgroup>
+		<col style="width: 30px;"/>
+		<col style="width: 40px;"/>
+		<col style="width: 50px;"/>
+		<col style="width: 60px;"/>
+		<col style="width: 120px;"/>
+		<col style="width: 200px;"/>
+		<col/>
+		<?php if(in_array('country', $aColumns)) { ?>
+			<col style="width: 120px;"/>
+		<?php } ?>
+		<?php if(in_array('vat_id', $aColumns)) { ?>
+			<col style="width: 100px;"/>
+		<?php } ?>
+		<?php if(in_array('product_area', $aColumns)) { ?>
+			<col style="width: 150px;"/>
+		<?php } ?>
+		<?php if(in_array('editor', $aColumns)) { ?>
+			<col style="width: 150px;"/>
+		<?php } ?>
+		<col style="width: 75px;"/>
+		<col style="width: 75px;"/>
+		<col style="width: 120px;"/>
+		<?php if(in_array('gross', $aColumns)) { ?>
+			<col style="width: 120px;"/>
+		<?php } ?>
+	</colgroup>
+	<?php
+		$sColGroup = ob_get_flush();
+		$iColumnsWithoutGross = 9;
+	?>
+	<thead>
+		<tr>
+			<th><input type="checkbox" onclick="$$('.documents_checkboxes').each(function(oCheckbox) { if(this.checked) { checkRow(null, 'tr_'+oCheckbox.value, true); } else { checkRow(null, null, false); } }.bind(this));"</th>
+			<th>&nbsp;</th>
+			<th><span id="sort_id" onclick="loadDocumentList('id');">ID</span></th>
+			<th><span id="sort_number" onclick="loadDocumentList('number');">Nr.</span></th>
+			<th>Art</th>
+			<th>Betreff</th>
+			<th><span id="sort_customer" onclick="loadDocumentList('customer');">Kunde</span></th>
+			<?php if(in_array('country', $aColumns)) {
+				$iColumnsWithoutGross++;
+				?><th>Land</th><?php
+			} ?>
+			<?php if(in_array('vat_id', $aColumns)) {
+				$iColumnsWithoutGross++;	
+				?><th>USt.-ID</th><?php
+			} ?>
+			<?php if(in_array('product_area', $aColumns)) {
+				$iColumnsWithoutGross++;	
+				?><th><span id="sort_product_area" onclick="loadDocumentList('product_area');">Produktbereich</span></th><?php
+			} ?>
+			<?php if(in_array('editor', $aColumns)) {
+				$iColumnsWithoutGross++;	
+				?><th>Bearbeiter</th><?php
+			} ?>
+			<th>Datum</th>
+			<th>Buchung</th>
+			<th><span id="sort_amount_net" onclick="loadDocumentList('amount_net');">Netto</span></th>
+			<?php if(in_array('gross', $aColumns)) { ?>
+				<th>Brutto</th>
+			<?php } ?>
+		</tr>
+	</thead>
+	<tbody id="tbl_documents">
+	</tbody>
+</table>
+
+<div style="height: 25px; overflow: hidden; padding-right: 16px;">
+	<table cellpadding="0" cellspacing="0" border="0" width="100%" class="table" style="table-layout: fixed;">
+		<?=$sColGroup?>
+		<tr>
+			<th colspan="<?=$iColumnsWithoutGross?>">Gesamt</th>
+			<th id="tbl_documents_total_field" class="txtRight"></th>
+			<?php if(in_array('gross', $aColumns)) { ?>
+				<th>&nbsp;</th>
+			<?php } ?>
+		</tr>
+	</table>
+</div>
+
+<div style="overflow: hidden; margin-top: 5px; width:100%;">
+	<div style="height: 20px; overflow: hidden; text-align:center; background: #eee; border-top: 1px solid #ccc; font-size: 10px;">
+		<img src="/admin/media/bullet_orange.png" align="absmiddle" alt="Angelegt" /> = Angelegt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/bullet_white.png" align="absmiddle" alt="Freigegeben" /> = Freigegeben&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/bullet_green.png" align="absmiddle" alt="Angenommen / Bezahlt" /> = Angenommen / Bezahlt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/bullet_red.png" align="absmiddle" alt="Abgelehnt" /> = Abgelehnt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/office_finished.png" align="absmiddle" alt="Erledigt" /> = Erledigt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/bullet_error.png" align="absmiddle" alt="Erinnert" /> = Erinnert
+	</div>
+</div>
+</section>
+<script type="text/javascript">
+
+	function checkDocumentListHeight() {
+		var intHeight = 0;
+		intHeight = window.innerHeight;
+		if(!intHeight) {
+			intHeight = document.body.clientHeight;
+		}
+		if(!intHeight) {
+			intHeight = document.documentElement.clientHeight;
+		}
+		
+		var iHeadlineHeight = 0;//$$('.content-header').first().getHeight();
+		var iHeaderHeight = $$('.divHeader').first().getHeight();
+		var iTableHeadHeight = $$('.scroll-table-head').first().getHeight();
+
+		intHeight = intHeight - iHeadlineHeight - iHeaderHeight - iTableHeadHeight - 70;
+
+		var objTable = $('tableDocuments-body');
+
+		if(objTable) {
+			objTable.style.height = intHeight+'px';	
+		} else {
+			document.write('<style>.scroll-table-body { height: '+intHeight+'px; }</style>');
+		}
+
+	}
+
+	Event.observe(window, 'load', ScrollableTable.load);
+	Event.observe(window, 'load', function() {
+		loadDocumentList();	
+		checkDocumentListHeight();
+	});
+	Event.observe(window, 'resize', checkDocumentListHeight);
+
+	document.body.style.overflow="hidden";
+
+</script><?php
+
+Admin_Html::loadAdminFooter();

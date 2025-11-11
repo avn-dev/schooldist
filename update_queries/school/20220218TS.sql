@@ -1,0 +1,3 @@
+UPDATE `tc_flex_sections` SET `title` = 'Buchhaltung » Firmen » Einstellungen', `type` = 'accounting_companies_options', `category` = 'accounting_companies' WHERE `id` = 37;
+INSERT INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES ('55', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '1', 'Firmen » Daten', 'companies_details', 'companies');
+INSERT INTO `tc_flex_sections` (`id`, `changed`, `created`, `active`, `title`, `type`, `category`) VALUES ('56', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '1', 'Firmen » Mitarbeiter » Persönliche Daten', 'companies_users_details', 'companies_users');

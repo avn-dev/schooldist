@@ -1,0 +1,186 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$aOptionalHeaderData = array();
+
+$oGui = new Ext_TC_Gui2(md5('core_admin_pdf_positiongroups'), 'Ext_TC_Positiongroup_Gui2_Data');
+
+$oGui->access = array('core_admin_templates_positiongroups', '');
+
+$oGui->setWDBasic('Ext_TC_Positiongroup');
+
+// Listen Optionen
+$oGui->column_sortable		= 1; // es geht nur eine sortierart!
+$oGui->multiple_selection	= 0;
+$oGui->query_id_column		= 'id';
+$oGui->query_id_alias		= 'tc_p';
+
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+
+$oGui->calendar_format		= Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+
+$sGuiDescription = $oGui->gui_description;
+
+// OBERE LISTE
+
+$oDialog = $oGui->createDialog($oGui->t('Positionsgruppe "{name}" editieren'), $oGui->t('Neue Positionsgruppe anlegen'));
+$oDiv		= $oDialog->createRow( $oGui->t('Name'), 'input',	array('db_column' => 'name', 'db_alias' => 'tc_p', 'required' => 1));
+$oDialog->setElement($oDiv);
+$oDialog->width = 950;
+$oDialog->height = 500;
+
+
+# START - Leiste 1 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oFilter = $oBar->createFilter();
+	$oFilter->db_column = array('name');
+	$oFilter->db_alias = array('tc_p');
+	$oFilter->id = 'search';
+	$oFilter->placeholder = $oGui->t('Suche').'…';
+	$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+# Leiste 2 #
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oGui->gui_description),
+			$oDialog,
+			L10N::t('Neuer Eintrag', $oGui->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oGui->gui_description),
+				$oDialog,
+				L10N::t('Editieren', $oGui->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+# Leiste 3 #
+$oBar = $oGui->createBar();
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelGroup = $oBar->createLabelGroup($oGui->t('Export'));
+	$oBar->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGui->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGui->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+
+# ENDE - Leiste 3 #
+
+
+$oColName								= new Ext_Gui2_Head();
+$oColName->db_column					= 'name';
+$oColName->db_alias						= 'tc_p';
+$oColName->select_column				= 'name';
+$oColName->title						= L10N::t('Name', $sGuiDescription);
+$oColName->width						= Ext_TC_Util::getTableColumnWidth('name');
+$oColName->width_resize					= true;
+$oColName->format						= 'Text';
+
+$oGui->setColumn($oColName);
+
+$oDefaultColumn = $oGui->getDefaultColumn();
+$oDefaultColumn->setAliasForAll('tc_p');
+$oGui->setDefaultColumn($oDefaultColumn);
+
+$oGui->addDefaultColumns();
+
+$oSectionGui = new Ext_TC_Gui2(md5($sGuiDescription.'unten'), 'Ext_TC_Positiongroup_Section_Gui2_Data');
+
+// UNTERE LISTE
+
+$aLanguages = Ext_TC_Factory::executeStatic('Ext_TC_Util', 'getTranslationLanguages');
+
+$oDialog2 = $oSectionGui->createDialog($oSectionGui->t('Gruppe "{name}" editieren'), $oSectionGui->t('Gruppe anlegen'));
+
+$oDialog2->width = 950;
+$oDialog2->height = 500;
+
+$oSectionGui->setWDBasic('Ext_TC_Positiongroup_Section');
+
+// Listen Optionen
+$oSectionGui->gui_description				= $sGuiDescription;
+$oSectionGui->gui_title						= L10N::t('Gruppierungen', $oSectionGui->gui_description).' '.$sTitleAddon;
+$oSectionGui->row_sortable					= 1; // es geht nur eine sortierart! ( hat prioritär )
+$oSectionGui->query_id_column				= 'id';
+$oSectionGui->query_id_alias				= 'tc_ps';
+$oSectionGui->calendar_format				= new Ext_Tc_Gui2_Format_Date();
+$oSectionGui->access = array('core_admin_templates_positiongroups', '');
+
+## ENDE DIALOG TAB ##
+
+
+# START - Leiste 1 #
+$oBar = $oSectionGui->createBar();
+$oBar->width = '100%';
+
+	$oIcon = $oBar->createNewIcon(
+			L10N::t('Neuer Eintrag', $oSectionGui->gui_description),
+			$oDialog2,
+			L10N::t('Neuer Eintrag', $oGui->gui_description)
+		);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createEditIcon(
+				L10N::t('Editieren', $oSectionGui->gui_description),
+				$oDialog2,
+				L10N::t('Editieren', $oGui->gui_description)
+			);
+	$oBar ->setElement($oIcon);
+
+	$oIcon = $oBar->createDeleteIcon(L10N::t('Löschen', $oSectionGui->gui_description), L10N::t('Löschen', $oGui->gui_description));
+	$oBar ->setElement($oIcon);
+
+$oSectionGui->setBar($oBar);
+
+$oBar = $oSectionGui->createBar();
+
+	$oFilter = $oBar->createPagination(false);
+	$oBar ->setElement($oFilter);
+
+	$oLabelGroup = $oBar->createLabelGroup($oGui->t('Export'));
+	$oBar->setElement($oLabelGroup);
+
+	$oIcon = $oBar->createCSVExport(L10N::t('Export CSV', $oGui->gui_description));
+	$oIcon->label = L10N::t('CSV', $oGui->gui_description);
+	$oBar ->setElement($oIcon);
+
+	$oLoading = $oBar->createLoadingIndicator();
+	$oBar->setElement($oLoading);
+
+$oSectionGui->setBar($oBar);
+
+# ENDE - Leiste 3 #
+
+$oSectionGui->addLanguageColumns($aLanguages, 'name', 'i18n', $oGui->t('Name'), true);
+
+$oDefaultColumn = $oSectionGui->getDefaultColumn();
+$oDefaultColumn->setAliasForAll('tc_ps');
+$oSectionGui->setDefaultColumn($oDefaultColumn);
+
+$oSectionGui->addDefaultColumns();
+
+$oPage = new Ext_Gui2_Page();
+$oPage->setGui($oGui);
+$oPage->setGui($oSectionGui, array('hash' => $oGui->hash, 'foreign_key' => 'positiongroup_id', 'parent_primary_key' => 'id', 'reload' => true));
+$oPage->display($aOptionalHeaderData);

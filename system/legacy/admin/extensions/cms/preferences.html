@@ -1,0 +1,1808 @@
+<?php
+
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("page_pref");
+
+\System::wd()->executeHook('preferences', $_VARS);
+
+Admin_Html::loadAdminHeader();
+
+$objWebDynamicsDAO = new Cms\Helper\Data;
+
+$oPage = Cms\Entity\Page::getInstance($_VARS['page_id']);
+$oPageAccess = new Cms\Helper\Access\Page($oPage);
+
+$my_page = DB::getQueryRow("SELECT * FROM cms_pages WHERE id = ".(int)$_VARS['page_id']."");
+$arrPath = explode("/",$my_page['path']);
+$my_page['folder'] = $arrPath[count($arrPath)-2];
+
+?>
+		<section class="content-header">
+            <h1>
+<?
+                if (
+                	$_VARS['topic'] != "meta" || 
+                	$_VARS['select'] != "global"
+                ) {
+
+                	if($my_page['file'] == 'index') {
+                		echo sprintf(L10N::t('Eigenschaften der Kategorie "%s"', 'CMS'), $my_page['title']);	
+                	} else {
+                		echo sprintf(L10N::t('Eigenschaften der Seite "%s"', 'CMS'), $my_page['title']);
+                	}
+
+                } else {
+                	echo "Globale Metadaten";
+                }
+?>
+			</h1>
+		</section>
+			
+<section class="content">
+<?
+
+if($_VARS['complete_path']) {
+	$_VARS['page_id'] = pathtoid($_VARS['complete_path']);
+}
+if($_VARS['page_id']) {
+	$_VARS['complete_path'] = $oPage->getLink();
+}
+
+$complete_path	= $_VARS['complete_path'];
+$page_id		= $_VARS['page_id'];
+
+if(
+	!$_VARS['page_id'] && 
+	!$_VARS['tid'] && 
+	!(
+		$_VARS['topic'] == "meta" && 
+		$_VARS['select'] == "global"
+	)
+) {
+	\Util::handleErrorMessage("Seite konnte nicht gefunden werden.");
+	die();
+}
+
+if($_VARS['tid']) {
+	 $_VARS['page_id'] = $_VARS['tid'];
+}
+
+if ($_VARS['site'] == "global") {
+	$_VARS['site'] = "";
+}
+
+$topics = array(
+				array("global", L10N::t('Einstellungen', 'CMS')),
+				array("enhanced", L10N::t('Erweitert', 'CMS')),
+				array("access", L10N::t('Zugriff', 'CMS')),
+				array("logs", L10N::t('Letzte Aktionen', 'CMS')),
+				array("comments", L10N::t('Kommentare', 'CMS')),
+				array("meta", L10N::t('Meta Angaben', 'CMS'))
+			);
+
+if(!$_VARS['topic']) {
+	$_VARS['topic'] = "global";
+}
+
+$bAccess = $oPageAccess->checkRightInPath('page_pref', (int)$_VARS['page_id']);
+
+if(!$bAccess) {
+	$headtitle = "Eigenschaften von \"".$my_page['title']."\"";
+	printAdminMenue($topics, $headtitle);
+	echo "<h2>".sprintf(L10N::t('Sie haben keine Rechte, diese Seite zu editieren.<br>Wenden Sie sich an den Ersteller "%s".', 'CMS'), "<a href=\"/admin/comment.html?site=$complete_path&receiver=".$my_page['author']."\">".$my_page['author']."</a>")."</h2>";
+	echo Admin_Html::loadAdminFooter();
+	die();
+}
+
+?>
+  
+<script for="document" event="onkeydown()" language="JScript" type="text/jscript">
+<!--
+{
+	if(window.event.ctrlKey && window.event.keyCode == "83") {
+		document.formular.submit();
+	}
+}
+//-->
+</script>
+
+<?php
+
+if($_VARS['edit'] == "save") {
+	
+	if($_VARS['x_folder']) {
+
+		$_VARS['folder'] = replace_specialchars(strtolower($_VARS['folder']));
+		$arrPath = explode("/",$my_page['path']);
+		$path="";
+		for($i=0;$i<count($arrPath)-2;$i++) {
+			$path .= $arrPath[$i]."/";
+		}
+		$path .= $_VARS['folder'];
+		$from 	= \Util::getDocumentRoot().$my_page['language']."/".$my_page['path'];
+		$from 	= substr($from,0,strlen($from)-1);
+		$to 	= \Util::getDocumentRoot().$my_page['language']."/".$path;
+
+		if($from != $to) {
+
+			$exists_result = DB::getQueryRows("SELECT * FROM cms_pages WHERE path='".$path."' AND file='".$my_page['file']."' AND element != 'template' AND language = '".$my_page['language']."'");
+			if(empty($exists_result)) {
+				$_VARS['x_path'] = true;
+				$path .= "/";
+				replaceContent("/".$my_page['language']."/".$my_page['path'],"/".$my_page['language']."/".$path);
+				$sSql = "
+						UPDATE 
+							cms_pages 
+						SET 
+							path = REPLACE(path, '".$my_page['path']."', '".$path."') 
+						WHERE 
+							site_id = ".(int)$my_page['site_id']." AND
+							path LIKE '".$my_page['path']."%' AND 
+							(
+								language = '".$my_page['language']."' OR
+								language = ''
+							)
+						";
+				DB::executeQuery($sSql);
+			} else {
+				$_VARS['x_folder_error'] = L10N::t("Eine Kategorie mit diesem Namen exisitert schon!", 'CMS');
+				$_VARS['x_folder'] = false;
+			}
+
+		} else {
+
+			$_VARS['x_folder'] = false;
+
+		}
+
+		$_VARS['path'] = $path;
+
+	}
+
+	if($_VARS['x_file']) {
+
+		$_VARS['file'] = \Util::getCleanFileName($_VARS['file']);
+		$from 	= \Util::getDocumentRoot().$my_page['language']."/".$my_page['path'].$my_page['file'].".html";
+		$to 	= \Util::getDocumentRoot().$my_page['language']."/".$my_page['path'].$_VARS['file'].".html";
+
+		if($from != $to) {
+			
+			$sSql = "SELECT * FROM cms_pages WHERE path = :path AND file = :file AND element != 'template' AND language = :language";
+			$aSql = [
+				'path' => $my_page['path'],
+				'file' => $_VARS['file'],
+				'language' => $my_page['language']
+			];
+
+			$exists_result = DB::getQueryRows($sSql, $aSql);
+
+			if(empty($exists_result)) {
+				replaceContent("/".$my_page['language']."/".$my_page['path'].$my_page['file'].".html", "/".$my_page['language']."/".$my_page['path'].$_VARS['file'].".html");
+			} else {
+				$_VARS['x_file_error'] = L10N::t("Eine Seite mit diesem Namen exisitert schon!", 'CMS');
+				$_VARS['x_file'] = false;
+			}
+		} else {
+			$_VARS['x_file'] = false;
+		}
+	}
+
+	$where = "";
+	$_VARS['validfrom'] = $_VARS['from3'].'-'.$_VARS['from2'].'-'.$_VARS['from1'].' '.$_VARS['from4'].':'.$_VARS['from5'].":00";
+	$_VARS['validto'] = $_VARS['to3'].'-'.$_VARS['to2'].'-'.$_VARS['to1'].' '.$_VARS['to4'].':'.$_VARS['to5'].":00";
+
+	if($_VARS['x_template'])    	$where .= "template  = '".\DB::escapeQueryString($_VARS['template'])."',";
+	if($_VARS['x_header']) 	   		$where .= "header  = '".\DB::escapeQueryString($_VARS['header'])."', ";
+	if($_VARS['x_parameter'])   	$where .= "parameter  = '".\DB::escapeQueryString($_VARS['parameter'])."', ";
+	if($_VARS['x_doctype'])     	$where .= "doctype  = '".\DB::escapeQueryString($_VARS['doctype'])."', ";
+	if($_VARS['x_title']) 	   		$where .= "title  = '".\DB::escapeQueryString($_VARS['title'])."', ";
+	if($_VARS['x_path']) 	   		$where .= "path  = '".\DB::escapeQueryString($_VARS['path'])."', ";
+	if($_VARS['x_file']) 	   		$where .= "file  = '".\DB::escapeQueryString($_VARS['file'])."', ";
+	if($_VARS['x_description'])		$where .= "description  = '".\DB::escapeQueryString($_VARS['description'])."', ";
+	if($_VARS['x_css']) 			$where .= "css  = '".\DB::escapeQueryString($_VARS['css'])."', ";
+	if($_VARS['x_active'] != "")	$where .= "active  = '".\DB::escapeQueryString($_VARS['active'])."', ";
+
+	if(isset($_VARS['dynamic'])) {
+		$where .= "dynamic  = '".\DB::escapeQueryString($_VARS['dynamic'])."', ";
+	}
+
+	if($_VARS['x_access1']) {
+
+		$aAccess = [];
+		if(!empty($_VARS['access1'])) {
+			foreach($_VARS['access1'] as $sValue) {
+				if(!empty($sValue)) {
+					$aAccess[$sValue] = 1;
+				}
+			}
+		}
+
+		if(empty($aAccess)) {
+			$sAccess = '';
+		} else {
+			$sAccess = json_encode($aAccess);	
+		}		
+
+		$where .= "access  = '".\DB::escapeQueryString($sAccess)."', ";
+
+	}
+
+	if($_VARS['x_login1']) 	   		$where .= "login  = '".\DB::escapeQueryString($_VARS['login1'])."', ";
+	if($_VARS['x_menue']) 	   		$where .= "menue  = '".\DB::escapeQueryString($_VARS['menue'])."', ";
+	if($_VARS['x_search']) 	   		$where .= "search  = '".\DB::escapeQueryString($_VARS['search'])."', ";
+	if($_VARS['x_element']) 	   	$where .= "element  = '".\DB::escapeQueryString($_VARS['element'])."', ";
+	if($_VARS['x_stats']) 	   		$where .= "stats  = '".\DB::escapeQueryString($_VARS['stats'])."', ";
+	if($_VARS['x_message']) 	   	$where .= "message  = '".\DB::escapeQueryString($_VARS['message'])."', ";
+	if($_VARS['x_width']) 	   		$where .= "width = '".\DB::escapeQueryString($_VARS['width'])."', ";
+	if($_VARS['x_height']) 	   		$where .= "height  = '".\DB::escapeQueryString($_VARS['height'])."', ";
+	if($_VARS['x_validfrom'])   	$where .= "validfrom  = '".\DB::escapeQueryString($_VARS['validfrom'])."', ";
+	if($_VARS['x_validto']) 	   	$where .= "validto  = '".\DB::escapeQueryString($_VARS['validto'])."', ";
+	if($_VARS['x_window']) 	   		$where .= "window  = '".\DB::escapeQueryString($_VARS['window'])."', ";
+	if($_VARS['x_emailcoding']) 	$where .= "emailcoding  = '".\DB::escapeQueryString($_VARS['emailcoding'])."', ";
+	if($_VARS['x_editable'])    	$where .= "`editable`  = '".\DB::escapeQueryString($_VARS['editable'])."', ";
+	if($_VARS['x_localization'])    $where .= "`localization` = '".\DB::escapeQueryString($_VARS['localization'])."', ";
+	if($_VARS['x_language'])    	$where .= "`language`  = '".\DB::escapeQueryString($_VARS['language'])."', ";
+	if($_VARS['x_https'])    		$where .= "`https`  = '".\DB::escapeQueryString($_VARS['https'])."', ";
+	if($_VARS['x_internal_link'])   $where .= "`internal_link` = '".\DB::escapeQueryString($_VARS['internal_link'])."', ";
+
+	if($_VARS['x_warrant1'] && $_VARS['x_warrant2']) {
+		$arrTemp = array();
+		$arrTemp['accept'] 	= $_VARS['warrant1'];
+		$arrTemp['deny'] 	= $_VARS['warrant2'];
+		$where .= "`warrant` = '".\DB::escapeQueryString(serialize($arrTemp))."', ";
+	}
+
+	$pos = strrpos($where,",");
+	$where = substr($where,0,$pos);
+	DB::executeQuery("UPDATE cms_pages SET $path_query $where WHERE id = ".(int)$_VARS['page_id']."");
+
+	enterlog($_VARS['page_id'], \Cms\Helper\Log::LOG_PAGE_PROPERTIES);
+
+	// Routen aktualisieren
+	$oRoutingService = new \Core\Service\RoutingService();
+	$bSuccess = $oRoutingService->buildRoutes();
+	
+?>
+
+<script>
+if(parent.parent.menue) {
+//parent.parent.menue.location.reload();
+}
+</script>
+<?
+}
+
+$my_site = DB::getQueryRow("SELECT * FROM cms_pages WHERE id = ".(int)$_VARS['page_id']."");
+ 
+$arrPath = explode("/",$my_site['path']);
+$my_site['folder'] = $arrPath[count($arrPath)-2];
+
+$oSite = Cms\Entity\Site::getInstance($my_site['site_id']);
+$aLanguages = $oSite->getLanguages();
+
+$arrPageSelectOptions = array('site_id'=>$my_site['site_id'], 'value_type'=>1);
+$arrPageSelectOptionsLink = array('site_id'=>$my_site['site_id'], 'empty'=>array(''=>"Keine Seite"));
+
+?>
+
+            <form method="post" name="formular" action="<?=$_SERVER['PHP_SELF']?>" class="form-horizontal">
+                <input type="hidden" name="topic" value="<?=$_VARS['topic']?>" />
+                <input type="hidden" name="page_id" value="<?=(int)$_VARS['page_id']?>" />
+                <input type="hidden" name="pref_site_path" value="<?=$my_site['path']?>" />
+                <input type="hidden" name="pref_site_name" value="<?=$my_site['file']?>" />
+		
+	<div class="nav-tabs-custom">
+<?
+
+$headtitle = "Eigenschaften von \"".$my_site['title']."\"";
+if(
+	$_VARS['topic'] != "meta" || 
+	(
+		$_VARS['topic'] == "meta" && 
+		$_VARS['select'] != "global"
+	)
+) {
+	printAdminMenue($topics,$headtitle);
+}
+
+?>
+
+            <div class="tab-content">
+              <div class="tab-pane active" id="tab_1">
+            
+<script>
+function openEditor(obj) {
+	window.open('editor.html?target='+obj,'editor','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+</script>
+
+<?
+
+if($_VARS['topic'] == "global") {
+
+?>
+
+	<table class="table">
+<?
+	if($my_site['element'] == "page") {
+?>
+		<tr>
+			<th>URL</th>
+			<td><?=$oPage->getLink(null, true)?></td>
+		</tr>
+<?
+	}
+
+	if($my_site['element'] == "page" || $my_site['element'] == "xml" || $my_site['element'] == "link" || $my_site['element'] == "intern" || $my_site['element'] == "code" || $my_site['element'] == "frameset") {
+		$aTypes = $admin_data['elements'];
+		unset($aTypes['template']);
+		echo "<input type=\"hidden\" name=\"x_element\" value=\"1\">";
+		printFormSelect(L10N::t("Seitentyp", 'CMS'), "element", $aTypes, $my_site['element'], 0, 1, 25);
+	}
+	echo "<input type=\"hidden\" name=\"x_title\" value=\"1\">";
+	printFormText(L10N::t('Titel', 'CMS'), "title", $my_site['title']);
+	printFormSelect(L10N::t('Aktiv', 'CMS'), "active", array("1"=>"Ja", "0"=>"Nein", "2"=>L10N::t('tempor&auml;r', 'CMS')), $my_site['active'],"",1,13);
+	echo "<input type=\"hidden\" name=\"x_description\" value=\"1\">";
+	printFormTextarea(L10N::t('Beschreibung', 'CMS'), "description",$my_site['description']);
+	if($my_site['element'] == "xml" || $my_site['element'] == "page" || $my_site['element'] == "link" || $my_site['element'] == "intern" || $my_site['element'] == "code" || $my_site['element'] == "frameset") {
+		if($my_site['file'] != "index") {
+			echo "<input type=\"hidden\" name=\"x_file\" value=\"1\">";
+			printFormText(L10N::t('Dateiname', 'CMS'),"file",$my_site['file']);
+		} else {
+			echo "<input type=\"hidden\" name=\"x_folder\" value=\"1\">";
+			printFormText(L10N::t('Verzeichnisname', 'CMS'), "folder", $my_site['folder']);
+		}
+	}
+	echo "<input type=\"hidden\" name=\"x_active\" value=\"1\">";
+	
+	if($my_site['element'] == "link") {
+		echo "<input type=\"hidden\" name=\"x_parameter\" value=\"1\">";
+		printFormText(L10N::t('URL', 'CMS'), "parameter", $my_site['parameter']);
+	}
+
+	if($my_site['element'] == "intern") {
+		
+		$iInternalLink = (int)$my_site['internal_link'];
+		if(
+			empty($iInternalLink) &&
+			!empty($my_site['parameter'])
+		) {
+			$iInternalLink = (int)$my_site['parameter'];
+		}
+
+		echo "\t\t<input type=\"hidden\" name=\"x_internal_link\" value=\"1\">\n";
+		echo printFormPageSelect(L10N::t('Verknüpfte Seite', 'CMS'), "internal_link", $iInternalLink, $arrPageSelectOptions);
+
+	}
+
+	if($my_site['element'] == "code") {
+		echo "<input type=\"hidden\" name=\"x_template\" value=\"1\">";
+		printFormTextarea(L10N::t('HTML-Sourcecode', 'CMS')."<br>(<a href=\"#\" onclick=\"openEditor('opener.document.formular.template');\">".L10N::t('Editor starten', 'CMS')."</a>)","template",$my_site['template']);
+	}
+
+	if($my_site['element'] == "frameset") {
+		echo "<input type=\"hidden\" name=\"x_template\" value=\"1\">";
+		printFormTextarea(L10N::t('Frameset-Sourcecode', 'CMS')."<br>(<a href=\"#\" onclick=\"openEditor('opener.document.formular.template');\">".L10N::t('Editor starten', 'CMS')."</a>)","template",$my_site['template']);
+	}
+	if($my_site['element'] == "template") {
+		echo "<input type=\"hidden\" name=\"x_template\" value=\"1\">";
+		printFormTextarea(L10N::t('Template-Sourcecode', 'CMS')."<br>(<a href=\"#\" onclick=\"openEditor('opener.document.formular.template');\">".L10N::t('Editor starten', 'CMS')."</a>)","template",$my_site['template']);
+		
+		$arrFiles = $objWebDynamicsDAO->getCssFiles();
+		$arrSelect = array(''=>L10N::t('Keine', 'CMS'));
+		foreach((array)$arrFiles as $arrFile) {
+			$arrSelect[$arrFile['name']] = $arrFile['name'];
+		}
+		echo "<input type=\"hidden\" name=\"x_css\" value=\"1\">";
+		printFormSelect("Stylesheet Datei:", "css", $arrSelect, $my_site['css']);
+	
+		echo "<input type=\"hidden\" name=\"x_path\" value=\"1\">";
+		$result_templates = (array)DB::getQueryRows("SELECT * FROM cms_pages WHERE element = 'template' AND active = 1 ORDER BY title");
+		$arrTemplates = array();
+		$arrTemplates[''] = "keine";
+		foreach($result_templates as $my_template) {
+			$arrTemplates[$my_template['file']] = $my_template['title'];
+		}
+		printFormSelect(L10N::t('&Uuml;bergeordnete Vorlage', 'CMS'),"path",$arrTemplates,$my_site['path'],"",1,1);
+	
+		echo "<input type=\"hidden\" name=\"x_editable\" value=\"1\">";
+		printFormCheckbox(L10N::t('&Uuml;ber Editor pflegbar', 'CMS'), "editable", 1, $my_site['editable']);
+	
+	}
+	
+	//if($my_site['element'] == "xml" || $my_site['element'] == "template") {
+	//	echo "<input type=\"hidden\" name=\"x_parameter\" value=\"1\">";
+	//	printFormSelect("Zeichensatz:","parameter",array("utf-8"=>"Unicode (UTF-8)","ISO-8859-1"=>"westeurop&auml;isch (ISO-8859-1)","koi8-u"=>"Kyrillisch (KOI8-U)"),$my_site['parameter'],"",1,2);
+	//}
+
+	if($my_site['element'] == "template") {
+
+		$arrDocTypes = array(
+							''=>
+								L10N::t('nicht definiert', 'CMS'),
+							'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">' =>
+								"HTML 4.01 im Quirx-Mode (nicht empfohlen)",
+							'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' =>
+								"HTML 4.01 im kompatiblen Modus",
+							'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' =>
+								"HTML 4.01 im strikten Modus (empfohlen)",
+							'<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">' =>
+								"XHTML 1.0 im kompatiblen Modus",
+							'xhtml_strict' =>
+								"XHTML 1.0 im strikten Modus (empfohlen)",
+							'html5' =>
+								"HTML 5",
+							'automatic switch XHTML1.1 / HTML 4.01' =>
+								"XHTML 1.1 / HTML 4.01 automatisch (Expertenoption)"
+						);
+	
+		echo "<input type=\"hidden\" name=\"x_doctype\" value=\"1\">";
+		printFormSelect(L10N::t('HTML-Variante', 'CMS'), "doctype", $arrDocTypes, $my_site['doctype'], "", 1, 54);
+	
+	}
+	if($my_site['element'] == "page") {
+		
+		if(
+			$my_site['path'] != "" || 
+			$my_site['file'] != ""
+		) {
+			// language
+			$arrOptions = array(""=>L10N::t('sprachübergreifende Seite', 'CMS'));
+			foreach((array)$aLanguages as $arrLanguage) {
+				$arrOptions[$arrLanguage['code']] = $arrLanguage['name'];
+			}
+			echo "<input type=\"hidden\" name=\"x_language\" value=\"1\">\n";
+			printFormSelect(L10N::t('Sprache', 'CMS'), "language", $arrOptions, $my_site['language']);
+			
+			// language - content
+			if($my_site['language'] == "") {
+				echo "<input type=\"hidden\" name=\"x_localization\" value=\"1\">\n";
+				printFormCheckbox(L10N::t('Inhalt sprachabhängig', 'CMS'), "localization", 1, $my_site['localization']);
+			}
+		}
+
+	}
+	
+	if($my_site['element'] == "page" || $my_site['element'] == "link" || $my_site['element'] == "intern") {
+		if($my_site['file'] != "index") {
+			echo "<tr><th>".L10N::t('Seitenvorlage', 'CMS')."</th><td>\n";
+			echo "<input type=\"hidden\" name=\"x_template\" value=\"1\">\n";
+			echo "<select name=\"template\" class=\"txt form-control\">\n";
+			$result_templates = (array)DB::getQueryRows("SELECT * FROM cms_pages WHERE element = 'template' AND active = 1 ORDER BY title");
+			foreach($result_templates as $my_template) {
+				if($my_site['template'] == $my_template['file']) {
+					echo "<option value=\"".$my_template['file']."\" selected>".$my_template['title']."\n";
+				} else {
+					echo "<option value=\"".$my_template['file']."\">".$my_template['title']."\n";
+				}
+			}
+			echo "</select>\n";
+			echo "</td></tr>\n";
+		}
+		echo "<input type=\"hidden\" name=\"x_search\" value=\"1\">";
+		printFormCheckbox(L10N::t("In den Suchindex aufnehmen", 'CMS'), "search", 1, $my_site['search']);
+		
+		//echo "<input type=\"hidden\" name=\"x_emailcoding\" value=\"1\">";
+		//printFormSelect("E-Mail-Adressen verschl&uuml;sseln:", "emailcoding", array("1"=>"Ja","0"=>"Nein"), $my_site['emailcoding'],"",1,16);
+	}
+	
+	if(
+		$my_site['element'] == "frameset" || 
+		$my_site['element'] == "page" || 
+		$my_site['element'] == "link" || 
+		$my_site['element'] == "intern" || 
+		$my_site['element'] == "code"
+	) {
+
+		echo "<input type=\"hidden\" name=\"x_https\" value=\"1\">";
+		printFormCheckbox(L10N::t("Nur über https erreichbar", 'CMS'), "https", 1, $my_site['https']);
+		
+		echo "<input type=\"hidden\" name=\"x_window\" value=\"1\">";
+		printFormSelect(
+			L10N::t("Fenstertyp", 'CMS'),
+			"window",
+			array(
+				"normal"=>L10N::t("Standardfenster", 'CMS'),
+				"blank"=>L10N::t("neues Fenster", 'CMS'),
+				"popup"=>L10N::t("Popupfenster", 'CMS'),
+				"fullscreen"=>L10N::t("Fullscreen Popup", 'CMS')
+			), 
+			$my_site['window'],
+			"",
+			1,
+			3
+		);
+		echo "<input type=\"hidden\" name=\"x_menue\" value=\"1\">";
+
+		$arrOptions = array(
+							"1"=>L10N::t('Einblenden', 'CMS'),
+							"0"=>L10N::t('Ausblenden', 'CMS'),
+							"2"=>L10N::t('Wenn Zugriffsrecht vorhanden > einblenden', 'CMS'),
+							"5"=>L10N::t('Wenn Zugriffsrecht vorhanden > ausblenden', 'CMS'),
+							"3"=>L10N::t('Wenn eingeloggt > ausblenden', 'CMS'),
+							"4"=>L10N::t('Wenn eingeloggt > einblenden', 'CMS')
+							);
+	
+		printFormSelect(L10N::t("Sichtbarkeit in der Navigation", 'CMS'), "menue", $arrOptions, $my_site['menue'],"",1,14);
+		echo "<input type=\"hidden\" name=\"x_stats\" value=\"1\">";
+		printFormSelect(L10N::t("In die Statistik aufnehmen", 'CMS'), "stats", array("1"=>"Ja","0"=>"Nein"), $my_site['stats'],"",1,15);
+
+		printFormSelect(L10N::t("Cache", 'CMS'), "dynamic", array("1"=>L10N::t("Inaktiv", 'CMS'),"0"=>L10N::t("Aktiv", 'CMS')), $my_site['dynamic']);
+		
+	}
+	
+	printTableEnd();
+?>
+                    <input type="hidden" name="edit" value="save" />
+                    <?printAdminFooter()?>
+            </form>
+<?
+/////////////////////////////////////////////////////////////////////////////////////
+// erweiterte einstellungen
+/////////////////////////////////////////////////////////////////////////////////////
+} elseif($_VARS['topic'] == "enhanced") {
+	
+?>
+
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+
+<?
+	
+	
+	if ($my_site['window'] == "popup"){
+		echo "<tr><th>".L10N::t('PopUp Gr&ouml;sse', 'CMS')."</th><td>";
+		echo "<input type=\"hidden\" name=\"x_width\" value=\"1\">";
+		echo "<input type=text name=width value='".htmlspecialchars($my_site['width'])."' size=5>";
+		echo " x ";
+		echo "<input type=\"hidden\" name=\"x_height\" value=\"1\">";
+		echo "<input type=text name=height value='".htmlspecialchars($my_site['height'])."' size=5>";
+		echo "</td></tr>\n";
+	}
+
+	echo "<tr><th>HTML-Header<br>(<a href=\"#\" onclick=\"openEditor('opener.document.formular.header');\">Editor starten</a>)";
+	echo printHint(17);
+	echo "</th><td>";
+	echo "<input type=\"hidden\" name=\"x_header\" value=\"1\">";
+	echo "<textarea name=header cols=\"50\" rows=\"3\" class=\"txt form-control\">".htmlspecialchars(($my_site['header']))."</textarea>";
+	echo "</td></tr>\n";
+	
+	echo "<tr><th>Parameter";
+	echo printHint(18);
+	echo "</th><td>";
+	echo "<input type=\"hidden\" name=\"x_parameter\" value=\"1\">";
+	echo "<input type=text name=parameter value='".htmlspecialchars($my_site['parameter'])."' size=30 class=\"txt form-control\">";
+	echo "</td></tr>\n";
+	echo "<tr><th>Nachricht";
+	echo printHint(19);
+	echo "</th><td>";
+	echo "<input type=\"hidden\" name=\"x_message\" value=\"1\">";
+	echo "<input type=text name=message value='".htmlspecialchars($my_site['message'])."' size=30 class=\"txt form-control\">";
+	echo "</td></tr>";
+	
+	if ($my_site['active'] == 2){
+	            ?>
+	            <TR bgcolor=#FFFFFF>
+	                <Th>
+	                    G&uuml;ltig von
+	                    <?=printHint(20)?>
+	                </Th>
+	                <td class="form-inline">
+	<?
+		if(empty($my_site['validfrom'])) {
+			$dFrom = new DateTime();
+		} else {
+			$dFrom = new DateTime($my_site['validfrom']);
+		}
+		echo "<input type=\"hidden\" name=\"x_validfrom\" value=\"1\">";
+		echo '<select name=from1 size=1 class="form-control input-sm">';
+		for ($i=1;$i<32;$i++) {
+			if ($i==$dFrom->format('d')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select> ";
+		echo '<select name=from2 size=1 class="form-control input-sm">';
+		for ($i=1;$i<13;$i++) {
+			if ($i==$dFrom->format('m')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select> ";
+		echo '<select name=from3 size=1 class="form-control input-sm">';
+		for ($i=date('Y');$i<date('Y')+10;$i++) {
+			if ($i==$dFrom->format('Y')) {
+				echo "<option value=".$i." selected>$i";
+			} else {
+				echo "<option value=".$i.">$i";
+			}
+		}
+		echo "</select>&nbsp;&nbsp;&nbsp;&nbsp;";
+		echo '<select name=from4 size=1 class="form-control input-sm">';
+		for ($i=0;$i<24;$i++) {
+			if ($i==$dFrom->format('G')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select> ";
+		echo '<select name=from5 size=1 class="form-control input-sm">';
+		for ($i=0;$i<60;$i++) {
+			if ($i==$dFrom->format('i')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select>";
+                    ?>
+
+                </TD>
+            </TR>
+            <TR bgcolor=#FFFFFF>
+                <Th>
+                    G&uuml;ltig bis
+                    <?=printHint(21)?>
+                </Th>
+                <td class="form-inline">
+
+<?
+
+		if(empty($my_site['validto'])) {
+			$dTo = new DateTime();
+		} else {
+			$dTo = new DateTime($my_site['validto']);
+		}
+		echo "<input type=\"hidden\" name=\"x_validto\" value=\"1\">";
+		echo '<select name=to1 size=1 class="form-control input-sm">';
+		for ($i=1;$i<32;$i++) {
+			if ($i==$dTo->format('d')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select> ";
+		echo '<select name=to2 size=1 class="form-control input-sm">';
+		for ($i=1;$i<13;$i++) {
+			if ($i==$dTo->format('m')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select> ";
+		echo '<select name=to3 size=1 class="form-control input-sm">';
+		for ($i=date('Y');$i<date('Y')+10;$i++) {
+			if ($i==$dTo->format('Y')) {
+				echo "<option value=".$i." selected>$i";
+			} else {
+				echo "<option value=".$i.">$i";
+			}
+		}
+		echo "</select>&nbsp;&nbsp;&nbsp;&nbsp;";
+		echo '<select name=to4 size=1 class="form-control input-sm">';
+		for ($i=0;$i<24;$i++) {
+			if ($i==$dTo->format('G')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select> ";
+		echo '<select name=to5 size=1 class="form-control input-sm">';
+		for ($i=0;$i<60;$i++) {
+			if ($i==$dTo->format('i')) {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT)." selected>$i";
+			} else {
+				echo "<option value=".str_pad($i, 2, '0', STR_PAD_LEFT).">$i";
+			}
+		}
+		echo "</select>";
+                    ?>
+                </TD>
+            </TR>
+<?
+	}
+            ?>
+            <?=printTableEnd()?>
+            <input type="hidden" name="edit" value="save">
+            <?printAdminFooter()?>
+            </form>
+<?
+} // ende
+/////////////////////////////////////////////////////////////////////////////////////
+// zugriffs einstellungen
+/////////////////////////////////////////////////////////////////////////////////////
+elseif($_VARS['topic'] == "access") {
+
+	$oPage = \Cms\Entity\Page::getInstance($my_site['id']);
+
+	include('./preferences.access.php');
+	
+?>
+
+		<input type="hidden" name="edit" value="save" />
+		<?printAdminFooter()?>
+
+	</form>
+
+<?
+} // ende
+/////////////////////////////////////////////////////////////////////////////////////
+// topic = struktur
+/////////////////////////////////////////////////////////////////////////////////////
+elseif($_VARS['topic'] == "struktur") {
+
+?>
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+            <tr>
+                <td valign=top>
+                    <table border=0 cellpadding=0 cellspacing=0>
+                        <tr>
+                            <td>
+<?
+$m_site = DB::getQueryRow("SELECT * FROM cms_pages WHERE id = $page_id");
+$m_template = DB::getQueryRow("SELECT * FROM cms_pages WHERE file LIKE '".$m_site['template']."' AND element = 'template'");
+$template_id = $m_template['id'];
+echo "<tr><td height=16><img src=\"/admin/media/img-page-globe.gif\" border=0 align=absmiddle> ".$m_site['title']."</td></tr>";
+function sitecontent($content,$end,$level,$count) {
+	global $page_id,$db_data,$template_id;
+	if($count[$level]) $count[$level]++;
+	else               $count[$level] = 0;
+
+	while($pos = strpos($content,"#content")) {
+		$pos = $pos-1;
+		$string1 = substr($content,$pos+9,3);
+
+		$element = (int)$string1;
+
+		if ($element >= 900) {
+			$new_element = $element - 900;
+			$m_element = DB::getQueryRow("SELECT * FROM content WHERE page_id = '".$template_id."' AND number = '".$new_element."'");
+		} else {
+			$m_element = DB::getQueryRow("SELECT * FROM content WHERE page_id = '".$page_id."' AND number = '".$element."'");
+		}
+
+		switch($m_element['element']) {
+			case "content";
+				$icon = "sitemap_content.gif";
+				$name = "Content Bereich";
+				break;
+			case "modul";
+				$icon = "sitemap_modul.gif";
+				$m_modul = DB::getQueryRow("SELECT * FROM elements WHERE file LIKE '".$m_element['file']."'");
+				$name = $m_modul['title'];
+				break;
+			case "submodul";
+				$icon = "sitemap_submodul.gif";
+				$m_modul = DB::getQueryRow("SELECT * FROM elements WHERE file LIKE '".$m_element['file']."'");
+				$name = $m_modul['title'];
+				break;
+			case "template";
+				$icon = "sitemap_template.gif";
+				$m_template = DB::getQueryRow("SELECT * FROM elements WHERE name LIKE '".$m_element['file']."'");
+				$name = $m_template['title'];
+				break;
+		}
+		$tree = "";
+		$level = $m_element['level'];
+
+		for($i=1;$i<$m_element['level'];$i++) {
+
+			if($end[$i][$count[$i]] == "stop") {
+				$tree .= "<img src=\"/admin/media/spacer.gif\" width=17 height=16 align=\"texttop\">";
+			} else {
+				$tree .= "<img src=\"/admin/media/sitemap_4.gif\" border=0 align=texttop>";
+			}
+		}
+
+		if(strpos($content,"#content",$pos+2)) {
+			$tree .= "<img src=\"/admin/media/sitemap_2.gif\" border=0 align=texttop>";
+		} else {
+			$tree .= "<img src=\"/admin/media/sitemap_3.gif\" border=0 align=texttop>";
+			if(!$count[$level]) $count[$level] = 0;
+			$end[$level][$count[$level]] = "stop";
+		}
+		echo "<tr height=16><td> $tree<img src=\"/admin/media/$icon\" border=0 align=absmiddle> ".$name."</td></tr>\n";
+		//if($m_element['element'] == "content") {
+		sitecontent($m_element['content'],$end,$level,$count);
+		//}
+		if($m_element['element'] == "template") {
+			$arr = explode("|",$m_element['content']);
+			$i=0;
+			$new_number = 0;
+			while($arr[$i] != "") {
+				$old_number = $i+1;
+				if ($old_number < 10) {
+					$old_number = "00".$old_number;
+				} elseif ($new_number < 100) {
+					$old_number = "0".$old_number;
+				}
+				$new_number = $arr[$i];
+				if ($new_number < 10) {
+					$new_number = "00".$new_number;
+				} elseif ($new_number < 100) {
+					$new_number = "0".$new_number;
+				}
+				$m_template['template'] = str_replace("<#content$old_number#>","<#content$new_number#>",$m_template['template']);
+				$i++;
+			}
+			sitecontent($m_template['template'],$end,$level,$count);
+		}
+	$content = substr($content,$pos+2);
+	} // end while
+} // end function
+$end = array();
+$level = 0;
+$count = array();
+sitecontent($m_template['template'],$end,$level,$count);
+                                ?>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width=450>
+                    <iframe width="450" height="350" name="detail" frameborder="0">
+                    </iframe>
+                </td>
+            </tr>
+</table>
+</td>
+</tr>
+</table>
+</form>
+<?
+//include("includes/overview_bottom.inc");
+}/////////////////////////////////////////////////////////////////////////////////////
+// logs
+/////////////////////////////////////////////////////////////////////////////////////
+elseif ($_VARS['topic'] == "logs") {
+?>
+
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+
+<tr>
+    <th style="width:200px;">
+        Benutzer
+    </th>
+    <th style="width:140px;">
+        Zeit
+    </th>
+    <th style="width:auto;">
+        Aktion
+    </th>
+</tr>
+<?php
+
+
+$result_stats = \Log::getLogEntries(15, '\Cms\Entity\Page', (int)$page_id);
+$tblclass = "first";
+foreach($result_stats as $my_logs) {
+?>
+<tr id="tr_<?=$my_logs['id']?>">
+    <td>
+        <?=$my_logs['name']?>
+    </td>
+    <td>
+        <?=$my_logs['ftime']?>
+    </td>
+    <td>
+        <?=$my_logs['action']?>
+    </td>
+</tr>
+<?
+	if($tblclass == "first") {
+		$tblclass = "second";
+	} else {
+		$tblclass = "first";
+	}
+}
+?>
+</table>
+</td>
+</tr>
+</table>
+</form>
+<?
+}
+/////////////////////////////////////////////////////////////////////////////////////
+// comments
+/////////////////////////////////////////////////////////////////////////////////////
+elseif ($_VARS['topic'] == "comments") {
+?>
+
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+
+<tr>
+    <th width="25">
+        &nbsp;
+    </th>
+    <th>
+        An
+    </th>
+    <th>
+        Von
+    </th>
+    <th>
+        Betreff
+    </th>
+    <th>
+        Kommentar
+    </th>
+    <th width=120>
+        Gesendet
+    </th>
+</tr>
+<?
+$result_message = DB::getQueryRows("SELECT * FROM comments WHERE page_id = '".$page_id."' AND status != 'deleted' AND done != 'done' ORDER BY send DESC LIMIT 15");
+$count_message = count_rows($result_message);
+if(!empty($result_message)) {
+foreach($result_message as $my_message) {
+$mktime = $my_message['send'];
+
+$erhalten = strftime("%a %d.%m.%Y %H:%M",$mktime);
+$erhalten1 = substr($erhalten,0,2);
+$erhalten2 = substr($erhalten,3);
+$erhalten = $erhalten1.$erhalten2;
+if($my_message['status'] == "noticed") {
+$img = "<img src=\"/admin/media/comment_new.gif\" border=0>";
+$status = "bemerkt"; }
+elseif($my_message['status'] == "read") {
+$img = "<img src=\"/admin/media/comment_read.gif\" border=0>";
+$status = "gelesen"; }
+elseif($my_message['status'] == "ok") {
+$img = "<img src=\"/admin/media/comment_read.gif\" border=0>";
+$status = "erledigt"; }
+elseif($my_message['status'] == "new") {
+$img = "<img src=\"/admin/media/comment_new.gif\" border=0>";
+$status = "neu"; }
+elseif($my_message['status'] == "reply") {
+$img = "<img src=\"/admin/media/comment_replay.gif\" border=0>";
+$status = "beantwortet"; }
+echo "<tr><td align=center>$img</td><td>".$my_message['receiver']."</td><td>".$my_message['user']."</td><td>";
+if($my_message['status'] == "new" || $my_message['status'] == "noticed") echo "<strong>";
+echo "".$my_message['subject']."";
+if($my_message['status'] == "new" || $my_message['status'] == "noticed") echo "</strong>";
+echo "</td><td>".$my_message['comment']."</td><td>".$erhalten."</td></tr>\n";
+}
+} else {
+echo "<tr><td colspan=6>Es liegen keine unerledigten Kommentare vor!</td></tr>";
+}
+?>
+</table>
+</td>
+</tr>
+</table>
+</form>
+<?
+}/////////////////////////////////////////////////////////////////////////////////////
+// meta
+/////////////////////////////////////////////////////////////////////////////////////
+elseif ($_VARS['topic'] == "meta") {
+
+	if(!$page_id) {
+		$page_id = pathtoid($site);
+	}
+	$select_id = 0;
+	if ($_VARS['select'] != "global") {
+		$_VARS['select'] = "local";
+		$select_id = $page_id;
+	}
+
+	if($_VARS['update'] == "ok") {
+
+		enterlog($page_id,"Metadaten wurden ge&auml;ndert.");
+		$result_meta = DB::getQueryRows("SELECT * FROM cms_meta WHERE page_id = ".(int)$select_id."");
+
+		if(!empty($result_meta)) {
+			
+			$aSql = array(
+							'description'		 		=>	$_VARS['description'],
+							'keywords'			 		=>	$_VARS['keywords'],
+							'dublin_core'		 		=>	$_VARS['dublin_core'],
+							'dc_author'			 		=>	$_VARS['dc_author'],
+							'dc_author_text'	 		=>	$_VARS['dc_author_text'],
+							'dc_contributors'    		=>	$_VARS['dc_contributors'],
+							'dc_date'            		=>  $_VARS['dc_date'],
+							'dc_date_isScheme'   		=>  $_VARS['dc_date_isScheme'],
+							'dc_type'			 		=>  $_VARS['dc_type'],
+							'dc_source'			 		=>  $_VARS['dc_source'],
+							'dc_source_isScheme' 		=>  $_VARS['dc_source_isScheme'],
+							'dc_relation'    	 		=>  $_VARS['dc_relation'],
+							'dc_coverage'		 		=>  $_VARS['dc_coverage'],
+							'dc_coverage_isScheme'		=>  $_VARS['dc_coverage_isScheme'],
+							'dc_rights'         		=>  $_VARS['dc_rights'],
+							'dc_rights_isScheme'		=>  $_VARS['dc_rights_isScheme'],
+							'relational_links' 		    =>  $_VARS['relational_links'],
+							'link_alternates'  	 		=>  $_VARS['link_alternates'],
+							'link_start'				=>	$_VARS['link_start'],
+							'link_next'					=>  $_VARS['link_next'],
+							'link_prev'					=>  $_VARS['link_prev'],
+							'link_contents'    			=>  $_VARS['link_contents'],
+							'link_index'				=>  $_VARS['link_index'],
+							'link_glossary'				=>  $_VARS['link_glossary'],
+							'link_copyright'			=>  $_VARS['link_copyright'],
+							'link_chapter'				=>  $_VARS['link_chapter'],
+							'link_section'				=>  $_VARS['link_section'],
+							'link_subsection' 			=>  $_VARS['link_subsection'],
+							'link_appendix'				=>  $_VARS['link_appendix'],
+							'link_help'					=>  $_VARS['link_help'],
+							'link_bookmarks'			=>  $_VARS['link_bookmarks'],
+							'meta_handling'				=>  $_VARS['meta_handling'],
+							'meta_handling_localallow'	=>  $_VARS['meta_handling_localallow'],
+							'page_id'					=>  (int)$select_id
+							
+							
+							
+						);
+			
+			
+			$metaupdate = "UPDATE cms_meta SET 
+							description       			= :description, 
+							keywords         			= :keywords, 
+				            dublin_core       			= :dublin_core, 
+							dc_author         			= :dc_author, 
+							dc_author_text    			= :dc_author_text,
+							dc_contributors   			= :dc_contributors, 
+							dc_date           			= :dc_date, 
+							dc_date_isScheme  			= :dc_date_isScheme, 
+							dc_type			  			= :dc_type, 
+							dc_source		  			= :dc_source, 
+							dc_source_isScheme			= :dc_source_isScheme, 
+							dc_relation       			= :dc_relation, 
+							dc_coverage          		= :dc_coverage, 
+							dc_coverage_isScheme 		= :dc_coverage_isScheme, 
+							dc_rights					= :dc_rights, 
+							dc_rights_isScheme  		= :dc_rights_isScheme, 
+							relational_links    		= :relational_links, 
+							link_alternates     		= :link_alternates, 
+							link_start					= :link_start, 
+							link_next					= :link_next, 
+							link_prev					= :link_prev, 
+							link_contents	    		= :link_contents, 
+							link_index					= :link_index, 
+							link_glossary				= :link_glossary, 
+							link_copyright				= :link_copyright, 
+							link_chapter				= :link_chapter, 
+							link_section				= :link_section, 
+							link_subsection				= :link_subsection, 
+							link_appendix				= :link_appendix, 
+							link_help					= :link_help, 
+							link_bookmarks	   			= :link_bookmarks, 
+							meta_handling				= :meta_handling, 
+							meta_handling_localallow	= :meta_handling_localallow 
+						WHERE 
+							page_id = :page_id" ;
+			$aResult = DB::getpreparedQueryData($metaupdate,$aSql);
+			
+		} else {
+			$my_meta = DB::getQueryData("SELECT * FROM cms_meta WHERE page_id = '0'");
+			
+			$aSql = array(
+		     'selectid'						=>  (int)$select_id,
+		     'publisher'					=>  (string)$_VARS['publisher'],
+		     'Publisher_Email'				=> 	(string)$_VARS['Publisher_Email'],
+		     'Identifier_URL'				=> 	(string)$_VARS['Identifier_URL'],
+		     'description'					=> 	(string)$_VARS['description'],
+		     'keywords'						=> 	(string)$_VARS['keywords'],
+		     'page_topic'					=>	(string)$_VARS['page_topic'],
+		     'audience'						=> 	(string)$_VARS['audience'],
+		     'robots'						=> 	(string)$_VARS['robots'],
+		     'Content_Language'				=> 	(string)$_VARS['Content_Language'],
+		     'revisit_after'				=> 	(string)$_VARS['revisit_after'],
+		     'expires'						=> 	(string)$_VARS['expires'],
+		     'title'						=> 	(string)$_VARS['title'],
+		     'dublin_core'					=>	(int)$_VARS['dublin_core'],
+		     'dc_author'					=>	(string)$_VARS['dc_author'],
+		     'dc_author_text'				=>	(string)$_VARS['dc_author_text'],
+		     'dc_contributors'				=>	(string)$_VARS['dc_contributors'],
+		     'dc_date'						=>  (string)$_VARS['dc_date'],
+		     'dc_date_isScheme'				=>	(int)$_VARS['dc_date_isScheme'],
+		     'dc_type'						=>	(string)$_VARS['dc_type'],
+		     'dc_source'					=> 	(string)$_VARS['dc_source'],
+		     'dc_source_isScheme'			=>	(int)$_VARS['dc_source_isScheme'],
+		     'dc_relation'					=>	(string)$_VARS['dc_relation'],
+		     'dc_coverage'					=> 	(string)$_VARS['dc_coverage'],
+		     'dc_coverage_isScheme'			=>	(int)$_VARS['dc_coverage_isScheme'],
+		     'dc_rights'					=> 	(string)$_VARS['dc_rights'],
+		     'dc_rights_isScheme'			=> 	(int)$_VARS['dc_rights_isScheme'],
+		     'relational_links'				=>	(int)$_VARS['relational_links'],
+		     'link_alternates'				=> 	(string)$_VARS['link_alternates'],
+		     'link_start'					=> 	(string)$_VARS['link_start'],
+		     'link_next'					=>	(string)$_VARS['link_next'],
+		     'link_prev'					=> 	(string)$_VARS['link_prev'],
+		     'link_contents'				=> 	(string)$_VARS['link_contents'],
+		     'link_index'					=>	(string)$_VARS['link_index'],
+		     'link_glossary'				=> 	(string)$_VARS['link_glossary'],
+		     'link_copyright'				=>	(string)$_VARS['link_copyright'],
+		     'link_chapter'					=>	(string)$_VARS['link_chapter'],
+		     'link_section'					=>	(string)$_VARS['link_section'],
+		     'link_subsection'				=> 	(string)$_VARS['link_subsection'],
+		     'link_appendix'				=> 	(string)$_VARS['link_appendix'],
+		     'link_help'					=> 	(string)$_VARS['link_help'],
+		     'link_bookmarks'				=> 	(string)$_VARS['link_bookmarks'],
+		     'meta_handling'				=> 	(int)$_VARS['meta_handling'],
+		     'meta_handling_localallow'		=> (int)$_VARS['meta_handling_localallow']
+		     
+		      
+		     
+		     
+		     
+		     );
+			$metainsert = "INSERT INTO cms_meta 
+			(	page_id, 
+			 	publisher, 
+			 	Publisher_Email, 
+				Identifier_URL, 
+				DESCRIPTION, 
+				keywords, 
+				page_topic, 
+				audience, 
+				robots, 
+				Content_Language, 
+				revisit_after, 
+				expires, 
+				title, 
+				dublin_core, 
+				dc_author, 
+				dc_author_text, 
+				dc_contributors, 
+				dc_date, 
+				dc_date_isScheme, 
+				dc_type, 
+				dc_source, 	
+				dc_source_isScheme, 
+				dc_relation, 
+				dc_coverage, 
+				dc_coverage_isScheme, 
+				dc_rights, 
+				dc_rights_isScheme, 
+				relational_links, 
+				link_alternates, 
+				link_start, 
+				link_next, 
+				link_prev, 
+				link_contents, 
+				link_index, 
+				link_glossary, 
+				link_copyright, 
+				link_chapter, 
+				link_section, 
+				link_subsection, 
+				link_appendix, 
+				link_help, 
+				link_bookmarks, 
+				meta_handling, 
+				meta_handling_localallow
+				)
+			 VALUES 
+				( 	:selectid, 
+					:publisher, 
+					:Publisher_Email,
+					:Identifier_URL, 
+					:description, 
+					:keywords, 
+					:page_topic, 
+					:audience, 
+					:robots, 
+					:Content_Language, 
+					:revisit_after, 
+					:expires, 
+					:title, 
+					:dublin_core, 
+					:dc_author, 
+					:dc_author_text, 
+					:dc_contributors, 
+					:dc_date, 
+					:dc_date_isScheme, 
+					:dc_type, 
+					:dc_source, 
+					:dc_source_isScheme, 
+					:dc_relation, 
+					:dc_coverage, 
+					:dc_coverage_isScheme, 
+					:dc_rights, 
+					:dc_rights_isScheme, 
+					:relational_links, 
+					:link_alternates, 
+					:link_start, 
+					:link_next, 
+					:link_prev, 
+					:link_contents, 
+					:link_index, 
+					:link_glossary, 
+					:link_copyright, 
+					:link_chapter, 
+					:link_section, 
+					:link_subsection, 
+					:link_appendix, 
+					:link_help, 
+					:link_bookmarks, 
+					:meta_handling, 
+					:meta_handling_localallow 
+				)" ;
+			 DB::executePreparedQuery($metainsert,$aSql);
+		}
+
+	}
+
+//$metaresult = db_query($db_data['system'],"SELECT * FROM cms_meta WHERE page_id = '$page_id' OR page_id = '0' ORDER BY page_id DESC LIMIT 1");
+$meta = DB::getQueryData("SELECT * FROM cms_meta WHERE page_id = ".(int)$_VARS['page_id']."");
+$meta = $meta[0];
+
+//check to see what meta_handling is active (0=ignore global, 1=extend local by global, 2=ignore local)
+$meta_handling_array = DB::getQueryRow("SELECT * FROM cms_meta WHERE page_id = '0'");
+$meta_handling_check = $meta_handling_array['meta_handling'];
+if ($_VARS['select'] == "global") {
+	if ($meta_handling_check == 3) {
+		// Global ignorieren
+		echo "<p>Die Option &quot;Globale Einstellungen ignorieren&quot; ist aktiv, deshalb k&ouml;nnen Sie die globalen Metadaten dieser Seite zur Zeit nicht bearbeiten. Bitte &auml;ndern Sie die Einstellung, um Zugriff zu erhalten.</p>";
+	}
+} else {
+	if ($meta_handling_check == 2) {
+		// Lokal ignorieren
+		echo "<p>In den globalen Einstellungen f&uuml;r Metadaten ist die Option &quot;Lokale Einstellungen ignorieren&quot; eingestellt, deshalb k&ouml;nnen Sie die Metadaten dieser Seite zur Zeit nicht bearbeiten. Bitte &auml;ndern Sie die globale Einstellung, um Zugriff zu erhalten.</p>";
+	} else if ($meta_handling_check == 1) {
+		// Lokal und Global anzeigen
+		echo "<p>In den globalen Einstellungen f&uuml;r Metadaten ist die Option &quot;Globale Einstellung erg&auml;nzt leere lokale Optionen (Empfohlen)&quot; eingestellt, deshalb werden Ihnen die globalen Vorgabewerte jeder Option zus&auml;tzlich angezeigt. Wenn Sie eine lokale Option nicht einstellen, so wird die Seite die entsprechende globale Vorgabe verwenden.</p>";
+	}
+}
+ 
+	if ($_VARS['select'] == "global") {
+?>
+
+	<table width="100%" cellpadding="4" cellspacing="0" border="0" class="table">
+
+<tr>
+	<td>
+		Sollen lokale Seiten ihr Verhältnis zu den globalen Metadaten verändern dürfen?
+	</td>
+	<td>
+		<input type="checkbox" name="meta_handling_localallow" value="1"<? if ($meta_handling_array['meta_handling_localallow']) { echo " checked"; } ?>>
+	</td>
+</tr>
+<tr class="second">
+	<td>
+		Wie sollen sich globale und seitenspezifische Metadaten zueinander verhalten?
+	</td>
+	<td>
+		<? (($meta['meta_handling'] == 0)?$meta['meta_handling'] = 3:"") ?>
+		<select name="meta_handling" onChange="changeFields();">
+			<option value="1"<?=(($meta['meta_handling']==1)?" selected":"")?>>
+			Globale Einstellung erg&auml;nzt leere lokale Optionen (Empfohlen)
+			<option value="3"<?=(($meta['meta_handling']==3)?" selected":"")?>>
+			Globale Einstellungen ignorieren
+			<option value="2"<?=(($meta['meta_handling']==2)?" selected":"")?>>
+			Lokale Einstellungen ignorieren
+		</select>
+	</td>
+</tr>
+
+	<input type="hidden" name="select" value="global" />
+
+<? } else { ?>
+
+	<p>Zu den <a href="<?=$_VARS['PHP_SELF']?>?&topic=meta&select=global">globalen Einstellungen f&uuml;r Metadaten</a></p>
+	<input type="hidden" name="meta_handling_localallow" value="0" />
+	<input type="hidden" name="select" value="lokal" />
+	<? if ($meta_handling_array['meta_handling_localallow']) { ?>
+<tr class="second">
+	<td>
+		Wie sollen sich globale und seitenspezifische Metadaten zueinander verhalten?
+	</td>
+	<td>
+		<select name="meta_handling" onChange="changeFields();">
+			<option value="0"<?=((!$meta['meta_handling'])?" selected":"")?>>
+			Keine Angabe
+			<option value="1"<?=(($meta['meta_handling']==1)?" selected":"")?>>
+			Globale Einstellung erg&auml;nzt leere lokale Optionen (Empfohlen)
+			<option value="3"<?=(($meta['meta_handling']==3)?" selected":"")?>>
+			Globale Einstellungen ignorieren
+			<option value="2"<?=(($meta['meta_handling']==2)?" selected":"")?>>
+			Lokale Einstellungen ignorieren
+		</select>
+		<? if (($_VARS['select'] != "global") && ($meta_handling_check == 1)) { ?>
+			<? (($meta_handling_check == 0)?$meta_handling_check = 3:"") ?>
+			<select disabled>
+			<option<?=(($meta_handling_check==1)?" selected":"")?>>
+			Globale Einstellung erg&auml;nzt leere lokale Optionen (Empfohlen)
+			<option<?=(($meta_handling_check==3)?" selected":"")?>>
+			Globale Einstellungen ignorieren
+			<option<?=(($meta_handling_check==2)?" selected":"")?>>
+			Lokale Einstellungen ignorieren
+		</select>
+		<? } ?>
+	</td>
+</tr>
+	<? } else { ?>
+		<input type="hidden" name="meta_handling" value="<?=$meta['meta_handling']?>">
+	<? } ?>
+<? } ?>
+<? $ignorable_counter = 0; ?>
+<tr id="ignore_start">
+    <td valign=top>
+
+        Die
+        <b>META-Description</b>
+        darf bis zu 200 Zeichen lang sein. Sie sollten die gesamte L&auml;nge ausnutzen, um Informationen &uuml;ber Ihre Firma/Produkte/Person/Inhalt zu vermitteln.
+        <br>
+        Restzeichen:
+        <input type="text" name="description_count" size="3" value=200>
+    </td>
+    <td valign=top>
+<textarea onkeydown="counter('description',200)" cols="30" rows="5" name="description"><? echo $meta['DESCRIPTION']; ?></textarea>
+<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<textarea cols=\"30\" rows=\"5\" disabled>".$meta_handling_array['DESCRIPTION']."</textarea>":"")?>
+    </td>
+</tr>
+<tr class=second>
+    <td valign=top>
+        Die
+        <b>META-Keywords</b>
+        d&uuml;rfen einzelne W&ouml;rter oder Ausdr&uuml;cke sein und sollten durch Kommata getrennt werden. Die gesamte Zeichenkette darf bis zu 1000 Zeichen lang sein. Wiederholen Sie Ihre Keywords nicht mehr als 7-mal. Verwenden Sie verschiedene Variationen von Keywords, wie z.B. den Plural oder Gross- und Kleinschreibung.
+        <br>
+        Restzeichen:
+        <input type="text" name="keywords_count" size="3" value=1000>
+    </td>
+    <td valign=top>
+<textarea onkeydown="counter('keywords',1000)" cols="30" rows="5" name="keywords"><? echo $meta['keywords']; ?></textarea>
+<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<textarea cols=\"30\" rows=\"5\" disabled>".$meta_handling_array['keywords']."</textarea>":"")?>
+    </td>
+</tr>
+<?
+	$arrUser = array();
+	$resData = (array)DB::getQueryRows("SELECT id,firstname,lastname FROM system_user WHERE active = 1 ORDER BY lastname, firstname");
+	$arrUser[0] = "Anderer (Textfeld)";
+	foreach($resData as $arrData) {
+		$arrUser[$arrData['id']] = $arrData['lastname'].", ".$arrData['firstname'];
+	}
+	echo "<input type=\"hidden\" name=\"x_dc_author\" value=\"1\">\n";
+	printFormSelect("Folgenden Benutzer als Autoren<br>der Seite angeben:", "dc_author", $arrUser, $meta['dc_author']);
+	echo ((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printFormSelect("&nbsp;", "", $arrUser, $meta_handling_array['dc_author'], "disabled"):"");
+	echo "<input type=\"hidden\" name=\"x_dc_author_text\" value=\"1\">\n";
+	printFormText("Alternative Autorenangabe (Leer f&uuml;r Automatik)", "dc_author_text", $meta['dc_author_text']);
+	echo ((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printFormText("&nbsp;", "", $meta_handling_array['dc_author_text'], "disabled"):"");
+	?>
+<tr>
+	<td valin="top">
+		Die folgenden Angaben nach
+		<a href="http://www.dublincore.org" target="_blank"><b>Dublin Core</b></a>
+		verwenden.
+	</td>
+	<td valign="top">
+		<input type="checkbox" name="dublin_core" value="1"<? if ($meta['dublin_core']) { echo " checked"; } ?>>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"checkbox\"".($meta_handling_array['dublin_core']?" checked":"")." disabled>":"")?>
+
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Dublin Core:
+		<b>Contributors</b>
+		Diese Angabe enth&auml;lt eine Liste (durch Zeilenumbruch getrennt) aller inhaltlich beteiligten (au&szlig;er dem Autor). Die gesamte Zeichenkette darf bis zu 1000 Zeichen lang sein.
+		<br>
+        Restzeichen:
+        <input type="text" name="dc_contributors_count" size="3" value=1000>
+	</td>
+	<td valign="top">
+		<textarea onkeydown="counter('dc_contributors',1000)" cols="30" rows="5" name="dc_contributors"><? echo $meta['dc_contributors']; ?></textarea>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<textarea cols=\"30\" rows=\"5\" disabled>".$meta_handling_array['dc_contributors']."</textarea>":"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Dublin Core:
+		<b>Date</b>
+		Diese Angabe enth&auml;lt das Datum der letzten &Auml;nderung an der Seite.
+	</td>
+	<td valign="top">
+		<input type="text" name="dc_date" size="30" value="<?=$meta['dc_date']?>">
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"text\" size=\"30\" value=\"".$meta_handling_array['dc_date']."\" disabled>":"")?>
+		<input type="button" name="dc_date_nowButton" value="<- <?=date("Y-m-d\TH:i:sO")?>" onclick="this.form.dc_date.value='<?=date("Y-m-d\TH:i:sO")?>'"><br>
+		<input type="checkbox" name="dc_date_isScheme" value="1"<? if ($meta['dc_date_isScheme']) { echo "checked"; } ?>><?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"checkbox\"".($meta_handling_array['dublin_core']?" checked":"")." disabled>":"")?> Diese Angabe entspricht einer <a href="http://www.w3.org/TR/NOTE-datetime" target="_blank">W3C Datumsangabe</a> (z.B. <?=date("Y-m-d\TH:i:sO")?>).
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Dublin Core:
+		<b>type</b>
+		Diese Angabe beschreibt den Typ der Seite.
+	</td>
+	<td valign="top">
+		<!-- Angaben entsprechen DCTERMS.DCMIType -->
+		<select name="dc_type" size="1">
+			<option value=""<? if ($meta['dc_type'] == "") { echo " selected"; } ?>>Keine Angabe</option>
+			<option value="Text"<? if ($meta['dc_type'] == "Text") { echo " selected"; } ?>>Text</option>
+			<option value="Service"<? if ($meta['dc_type'] == "Service") { echo " selected"; } ?>>Dienstleistung</option>
+			<option value="Event"<? if ($meta['dc_type'] == "Event") { echo " selected"; } ?>>Ereignis, Event</option>
+			<option value="Dataset"<? if ($meta['dc_type'] == "Dataset") { echo " selected"; } ?>>Datensatz (z.B. Tabelle)</option>
+			<option value="Image"<? if ($meta['dc_type'] == "Image") { echo " selected"; } ?>>Bild, Video</option>
+			<option value="Sound"<? if ($meta['dc_type'] == "Sound") { echo " selected"; } ?>>Sound, Musik</option>
+			<option value="Software"<? if ($meta['dc_type'] == "Software") { echo " selected"; } ?>>Software</option>
+			<option value="InteractiveResource"<? if ($meta['dc_type'] == "InteractiveResource") { echo " selected"; } ?>>Interaktive Seite (Formular, Applet)</option>
+			<option value="Collection"<? if ($meta['dc_type'] == "Collection") { echo " selected"; } ?>>Verzeichnis-Liste (Links)</option>
+			<option value="PhysicalObject"<? if ($meta['dc_type'] == "PhysicalObject") { echo " selected"; } ?>>Physisches Objekt</option>
+		</select>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Dublin Core:
+		<b>Source</b>
+		Diese Angabe notiert Quellenverweise.
+	</td>
+	<td valign="top">
+		<input type="text" name="dc_source" size="30" value="<?=$meta['dc_source']?>">
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"text\" size=\"30\" value=\"".$meta_handling_array['dc_source']."\" disabled>":"")?>
+		<br>
+		<input type="checkbox" name="dc_source_isScheme" value="1"<? if ($meta['dc_source_isScheme']) { echo "checked"; } ?>><?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"checkbox\"".($meta_handling_array['dublin_core']?" checked":"")." disabled>":"")?> Diese Angabe ist eine URL.
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Dublin Core:
+		<b>Relation</b>
+		Diese Angabe beschreibt den Bezug der Seite zum Gesamtprojekt.
+	</td>
+	<td valign="top">
+		<input type="text" name="dc_relation" size="30" value="<?=$meta['dc_relation']?>">
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"text\" size=\"30\" value=\"".$meta_handling_array['dc_relation']."\" disabled>":"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Dublin Core:
+		<b>Coverage</b>
+		Diese Angabe besc hreibt den r&auml;umlichen oder zeitlichen G&uuml;ltigkeitsbereich der Seite.
+	</td>
+	<td valign="top">
+		<input type="text" name="dc_coverage" size="30" value="<?=$meta['dc_coverage']?>">
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"text\" size=\"30\" value=\"".$meta_handling_array['dc_coverage']."\" disabled>":"")?>
+		<br>
+		<input type="checkbox" name="dc_coverage_isScheme" value="1"<? if ($meta['dc_coverage_isScheme']) { echo "checked"; } ?>><?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"checkbox\"".($meta_handling_array['dc_coverage_isScheme']?" checked":"")." disabled>":"")?> Diese Angabe entspricht dem <a href="http://www.getty.edu/research/conducting_research/vocabularies/tgn/" target="_blank">Getty Thesaurus of Geographic Names</a> (z.B. Aachen).
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Dublin Core:
+		<b>Rights</b>
+		Diese Angabe enth&auml;lt Urheberrechtshinweise und Verwendungsgenehmigungen.
+	</td>
+	<td valign="top">
+		<input type="text" name="dc_rights" size="30" value="<?=$meta['dc_rights']?>">
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"text\" size=\"30\" value=\"".$meta_handling_array['dc_rights']."\" disabled>":"")?>
+		<br>
+		<input type="checkbox" name="dc_rights_isScheme" value="1"<? if ($meta['dc_rights_isScheme']) { echo "checked"; } ?>><?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"checkbox\"".($meta_handling_array['dc_rights_isScheme']?" checked":"")." disabled>":"")?> Diese Angabe ist eine URL (z.B. http://www.gnu.org/licenses/fdl.html).
+	</td>
+</tr>
+<tr>
+	<td valin="top">
+		Die folgenden
+		<b>Relationalen Links</b>
+		verwenden (Erlauben manchen Browsern zus&auml;tzliche Navigationselemente anzuzeigen).
+	</td>
+	<td valign="top">
+		<input type="checkbox" name="relational_links" value="1"<? if ($meta['relational_links']) { echo " checked"; } ?>>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"checkbox\"".($meta_handling_array['relational_links']?" checked":"")." disabled>":"")?>
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Alternates</b>
+		Dies ist eine Liste von Links und Sprachangaben (Immer eine URL, ein Komma und eine Sprachangabe pro Zeile, z.B. "/german/,de" oder "/english/home/view.html,en"). Die gesamte Zeichenkette darf bis zu 1000 Zeichen lang sein.
+		<br>
+        Restzeichen:
+        <input type="text" name="link_alternates_count" size="3" value=1000>
+	</td>
+	<td valign="top">
+		<textarea onkeydown="counter('link_alternates',200)" cols="30" rows="5" name="link_alternates"><? echo $meta['link_alternates']; ?></textarea>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<textarea cols=\"30\" rows=\"5\" disabled>".$meta_handling_array['link_alternates']."</textarea>":"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Relationale Links:
+		<b>Start</b>
+		Dieser Link verweist auf die erste Seite eines Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_start" value="1" />
+		<?=printPageSelect('link_start',htmlspecialchars($meta['link_start']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_start',htmlspecialchars($meta_handling_array['link_start']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Next</b>
+		Dieser Link verweist auf die n&auml;chste Seite des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_next" value="1" />
+		<?=printPageSelect('link_next',htmlspecialchars($meta['link_next']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_next',htmlspecialchars($meta_handling_array['link_next']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Relationale Links:
+		<b>Prev</b>
+		Dieser Link verweist auf die vorherige Seite des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_prev" value="1" />
+		<?=printPageSelect('link_prev',htmlspecialchars($meta['link_prev']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_prev',htmlspecialchars($meta_handling_array['link_prev']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Contents</b>
+		Dieser Link verweist auf ein Inhaltsverzeichnis des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_contents" value="1" />
+		<?=printPageSelect('link_contents',htmlspecialchars($meta['link_contents']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_contents',htmlspecialchars($meta_handling_array['link_contents']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Relationale Links:
+		<b>Index</b>
+		Dieser Link verweist auf ein Stichwortverzeichnis oder einen Index des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_index" value="1" />
+		<?=printPageSelect('link_index',htmlspecialchars($meta['link_index']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_index',htmlspecialchars($meta_handling_array['link_index']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Glossary</b>
+		Dieser Link verweist auf ein Glossar des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_glossary" value="1" />
+		<?=printPageSelect('link_glossary',htmlspecialchars($meta['link_glossary']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_glossary',htmlspecialchars($meta_handling_array['link_glossary']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Relationale Links:
+		<b>Copyright</b>
+		Dieser Link verweist auf die Urheberangaben und Verwendungsbedingeungen des Projektes. Es bietet sich an, diese gleich der Dublin Core Angabe "Rights" zu setzen.
+	</td>
+	<td valign="top">
+		<input type="text" name="link_copyright" size="30" value="<?=$meta['link_copyright']?>">
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<input type=\"text\" size=\"30\" value=\"".$meta_handling_array['link_copyright']."\" disabled>":"")?>
+		<input type="button" name="link_copyright_copyButton" value="<- Dublin Core: Rights" onclick="this.form.link_copyright.value=this.form.dc_rights.value">
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Chapter</b>
+		Dieser Link verweist auf die Startseite des Kapitels zu dem diese Seite geh&ouml;rt.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_chapter" value="1" />
+		<?=printPageSelect('link_chapter',htmlspecialchars($meta['link_chapter']), $arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_chapter',htmlspecialchars($meta_handling_array['link_chapter']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Relationale Links:
+		<b>Section</b>
+		Dieser Link verweist auf die Startseite der Sektion (unterhalb des Kapitels) zu der diese Seite geh&ouml;rt.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_section" value="1" />
+		<?=printPageSelect('link_section',htmlspecialchars($meta['link_section']),$arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_section',htmlspecialchars($meta_handling_array['link_section']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Subsection</b>
+		Dieser Link verweist auf die Startseite der Untersektion zu der diese Seite geh&ouml;rt.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_subsection" value="1" />
+		<?=printPageSelect('link_subsection',htmlspecialchars($meta['link_subsection']),$arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_subsection',htmlspecialchars($meta_handling_array['link_subsection']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr>
+	<td valign="top">
+		Relationale Links:
+		<b>Appendix</b>
+		Dieser Link verweist auf den Anhang des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_appendix" value="1" />
+		<?=printPageSelect('link_appendix',htmlspecialchars($meta['link_appendix']),$arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_appendix',htmlspecialchars($meta_handling_array['link_appendix']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr class="second">
+	<td valign="top">
+		Relationale Links:
+		<b>Help</b>
+		Dieser Link verweist auf die Hilfeseite des Projektes.
+	</td>
+	<td valign="top">
+		<input type="hidden" name="x_link_help" value="1" />
+		<?=printPageSelect('link_help',htmlspecialchars($meta['link_help']),$arrPageSelectOptionsLink)?>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?printPageSelect('link_help',htmlspecialchars($meta_handling_array['link_help']),"","txt form-control","","disabled",array(''=>"Keine Seite"),0,""):"")?>
+	</td>
+</tr>
+<tr id="ignore_end">
+	<td valign="top">
+		Relationale Links:
+		<b>Bookmarks</b>
+		Dies ist eine Liste von Vorschl&auml;gen zu Bookmarks, Lesezeichen, bzw. Favoriten (Immer eine URL, ein Komma und ein Titel pro Zeile, z.B. "/german/,Deutsche Startseite des Projektes"). Die gesamte Zeichenkette darf bis zu 1000 Zeichen lang sein.
+		<br>
+        Restzeichen:
+        <input type="text" name="link_bookmarks_count" size="3" value=1000>
+	</td>
+	<td valign="top">
+		<textarea onkeydown="counter('link_bookmarks',1000)" cols="30" rows="5" name="link_bookmarks"><? echo $meta['link_bookmarks']; ?></textarea>
+		<?=((($_VARS['select'] != "global") && ($meta_handling_check == 1))?"<textarea cols=\"30\" rows=\"5\" disabled>".$meta_handling_array['link_bookmarks']."</textarea>":"")?>
+	</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<input type="hidden" name="update" value="ok">
+<?printAdminFooter()?>
+<?
+if ($_VARS['select'] == "global") {
+	?>
+	<script type="text/javascript">
+	<!--
+	<?
+	if ($meta_handling_check == 3 || $meta_handling_check == 0) {
+		// Global ignorieren
+		?>
+
+		knoten = document.getElementById("ignore_start");
+		while (knoten != null) {
+			knoten.style.display = "none";
+			if (knoten.attributes.id == "ignore_end") {
+				break;
+			}
+			knoten = knoten.nextSibling;
+		}
+		<?
+	}
+	?>
+	function changeFields() {
+		if (document.formular.meta_handling.value == 3 || document.formular.meta_handling.value == 0) {
+			knoten = document.getElementById("ignore_start");
+			while (knoten != null) {
+				knoten.style.display = "none";
+				if (knoten.attributes.id == "ignore_end") {
+					break;
+				}
+				knoten = knoten.nextSibling;
+			}
+		} else {
+			knoten = document.getElementById("ignore_start");
+			while (knoten != null) {
+				knoten.style.display = "";
+				if (knoten.attributes.id == "ignore_end") {
+					break;
+				}
+				knoten = knoten.nextSibling;
+			}
+		}
+	}
+	-->
+	</script>
+	<?
+} else {
+	?>
+	<script type="text/javascript">
+	<!--
+	<?
+	if ((($meta['meta_handling'] == 2) && $meta_handling_array['meta_handling_localallow']) || ((!$meta_handling_array['meta_handling_localallow']) && ($meta_handling_array['meta_handling'] == 2)) ) {
+		if (!$meta_handling_array['meta_handling_localallow']) {
+			?>
+			buttons = document.formular.getElementsByTagName("button");
+			buttons[0].style.display = "none";
+			buttons[1].style.display = "none";
+			<?
+		}
+	?>
+	knoten = document.getElementById("ignore_start");
+	while (knoten != null) {
+		knoten.style.display = "none";
+		if (knoten.attributes.id == "ignore_end") {
+			break;
+		}
+		knoten = knoten.nextSibling;
+	}
+	<?
+	}
+	?>
+	function changeFields() {
+		if (document.formular.meta_handling.value == 2 || (document.formular.meta_handling.value == 0) && (<?=(($meta_handling_array['meta_handling'] == 2)?"true":"false") ?>)) {
+			knoten = document.getElementById("ignore_start");
+			while (knoten != null) {
+				knoten.style.display = "none";
+				if (knoten.attributes.id == "ignore_end") {
+					break;
+				}
+				knoten = knoten.nextSibling;
+			}
+		} else {
+			knoten = document.getElementById("ignore_start");
+			while (knoten != null) {
+				knoten.style.display = "";
+				if (knoten.attributes.id == "ignore_end") {
+					break;
+				}
+				knoten = knoten.nextSibling;
+			}
+		}
+	}
+	-->
+	</script>
+	<?
+}
+?>
+	
+	
+              </div>
+              <!-- /.tab-pane -->
+            </div>
+            <!-- /.tab-content -->
+          </div>
+	
+</form>
+<script type="text/javascript">
+<!--
+function counter(on,i)
+{
+	eval("document.formular."+on+"_count.value = "+i+" - document.formular."+on+".value.length - 1;");
+//	if(eval("document.formular."+on+".value.length;") > i)
+//	{
+//		eval("document.formular."+on+".value = document.formular."+on+".value.slice(0,"+i+"-1);")
+//	}
+}
+//counter('keywords',1000);
+//counter('description',200);
+//counter('dc_contributors',1000);
+//counter('link_alternates',1000);
+//counter('link_bookmarks',1000);
+-->
+</script>
+<?
+}
+?>
+  
+
+</section>
+
+<script type="text/javascript">
+if(parent && parent.Page) {
+	parent.Page.showActions();
+	parent.Page.selectTab('settings');
+}
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

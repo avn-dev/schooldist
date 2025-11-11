@@ -1,0 +1,405 @@
+<?php
+
+/* 
+ * active Zustände:
+ * 0: nicht aktiv
+ * 1: aktiv
+ * 2: gelöscht vom Empfänger
+ * 3: gelöscht vom Absender
+ */
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+if($_VARS['task'] == "preview") {
+
+	$sTan = \Util::generateRandomString(8);
+	setcookie("WD_TAN_COOKIE", $sTan, 0, "/");
+
+} elseif($_VARS['task'] == "send") {
+
+	if($_VARS['WD_CM_TAN_POST'] != $_COOKIE['WD_TAN_COOKIE']) {
+		$_VARS['task'] = "preview";
+		$sError = "Es ist ein Fehler aufgetreten. Ihre TAN ist ungültig!";
+	}
+	setcookie("WD_TAN_COOKIE", "0", -3600, "/");
+
+}
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+if($_POST['action'] == "config") {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->ftime = $_VARS['ftime'];
+	$config->error_notcomplete = $_VARS['error_notcomplete'];
+	$config->error_nouser = $_VARS['error_nouser'];
+	$config->emailnotify = $_VARS['emailnotify'];
+	$config->emailsubject = $_VARS['emailsubject'];
+	$config->emailcontent = $_VARS['emailcontent'];
+	$config->save_config($_VARS['page_id'], $_VARS['element_id']);
+}
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Community &raquo; Private Nachrichten</h1>
+			<p>
+<?
+
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+?>
+	<form method="POST" action="community_messaging.html">
+	<input type="hidden" name="action" value="config">
+	<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+	<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+	<?=printTableStart()?>
+	<?=printFormText("Format der Zeitangabe (strftime-Parameter)", "ftime", $config->ftime)?>
+	<?=printFormText("Fehlermeldung bei unvollständigem Formular", "error_notcomplete", $config->error_notcomplete)?>
+	<?=printFormText("Fehlermeldung bei unbekanntem Empfänger", "error_nouser", $config->error_nouser)?>
+	<?=printFormSelect("E-Mail Benachrichtigung","emailnotify",array("0"=>"Aus","1"=>"Ein"),$config->emailnotify)?>
+	<?=printFormText("E-Mail Betreff","emailsubject",$config->emailsubject)?>
+	<?=printFormTextarea("E-Mail Inhalt","emailcontent",$config->emailcontent)?>
+	<?=printTableEnd()?>
+	<?=printSubmit("Konfiguration speichern")?>
+	</form>		
+<?
+} else {
+
+	$aGroupNo = array();
+	foreach((array)$_VARS['groupno'] as $aGroup) {
+		$aTemp = explode("|",$aGroup);
+		$iDatabase = $aTemp[0];
+		$iGroup = $aTemp[1];
+		$aGroupNo[$iDatabase] .= " AND `groups` NOT LIKE '%|".$iGroup."|%' ";
+	}
+
+	if($_VARS['task'] == "preview") {
+
+		$sWhere = "";
+		foreach((array)$_VARS['iFilter'] as $k=>$v) {
+			$iFilter = $_VARS['iFilter'][$k];
+			if(is_numeric($iFilter)) $iFilter = "ext_".$iFilter;
+			switch($_VARS['iMode'][$k]) {
+				case "1":
+					$sWhere .= " `".$iFilter."` LIKE '%".$_VARS['sFilter'][$k]."%' AND";
+					break;
+				case "6":
+					$sWhere .= " `".$iFilter."` > '".$_VARS['sFilter'][$k]."' AND";
+					break;
+				case "7":
+					$sWhere .= " `".$iFilter."` < '".$_VARS['sFilter'][$k]."' AND";
+					break;
+				case "8":
+					$sWhere .= " `".$iFilter."` != '' AND";
+					break;
+				case "10":
+					$sWhere .= " `".$iFilter."` > SUBDATE(NOW(),INTERVAL ".intval($_VARS['sFilter'][$k])." DAY) AND";
+					break;
+				default:
+					$sWhere .= " `".$iFilter."` LIKE '%".$_VARS['sFilter'][$k]."%' AND";
+					break;
+			}
+		}
+
+		$aGroups = CustomerDb\Helper\Functions::getCustomerGroups();
+		$iTotalCount = 0;
+		$iCount = array();
+		$sGroupName = array();
+		foreach($_VARS['group'] as $aGroup) {
+			$aTemp = explode("|",$aGroup);
+			$iDatabase = $aTemp[0];
+			$iGroup = $aTemp[1];
+			if($iGroup > 0) {
+				$sQuery = "SELECT id FROM customer_db_".$iDatabase." WHERE groups LIKE '%|".$iGroup."|%' ".$aGroupNo[$iDatabase]." AND ".$sWhere." 1 AND active = 1";
+			} else {
+				$sQuery = "SELECT id FROM customer_db_".$iDatabase." WHERE ".$sWhere." 1 ".$aGroupNo[$iDatabase]." AND active = 1";
+			}
+			$rRecipients = db_query($db_data['module'],$sQuery);
+			$sGroupName[$aGroup] = $aGroups[$aGroup];
+			$iCount[$aGroup] = count_rows($rRecipients);
+			$iTotalCount += $iCount[$aGroup];
+		}
+?>
+	<h2>Vorschau</h2>
+	<span style="color:red;"><?=$sError?></span>
+	<form method="POST" name="formMessaging" action="community_messaging.html">
+	<input type="hidden" name="task" value="send">
+	<input type="hidden" name="subject" value="<?=htmlspecialchars($_VARS['subject'])?>">
+	<input type="hidden" name="message" value="<?=htmlspecialchars($_VARS['message'])?>">
+	<input type="hidden" name="iTotalCount" value="<?=$iTotalCount?>">
+	<input type="hidden" name="WD_CM_TAN_POST" value="<?=$sTan?>">
+	<?
+	foreach($_VARS['group'] as $aGroup) {
+	?>
+		<input type="hidden" name="group[]" value="<?=htmlspecialchars($aGroup)?>">
+	<?
+	}
+	foreach($_VARS['groupno'] as $aGroup) {
+	?>
+		<input type="hidden" name="groupno[]" value="<?=htmlspecialchars($aGroup)?>">
+	<?
+	}
+	foreach((array)$_VARS['iFilter'] as $k=>$v) {
+	?>
+		<input type="hidden" name="iFilter[]" value="<?=htmlspecialchars($_VARS['iFilter'][$k])?>">
+		<input type="hidden" name="sFilter[]" value="<?=htmlspecialchars($_VARS['sFilter'][$k])?>">
+		<input type="hidden" name="iMode[]" value="<?=htmlspecialchars($_VARS['iMode'][$k])?>">
+	<?
+		$i++;
+	}
+	?>
+	<input type="hidden" name="emailnotify" value="<?=htmlspecialchars($_VARS['emailnotify'])?>">
+	<input type="hidden" name="emailsubject" value="<?=htmlspecialchars($_VARS['emailsubject'])?>">
+	<input type="hidden" name="emailcontent" value="<?=htmlspecialchars($_VARS['emailcontent'])?>">
+
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th valign="top">Betreff</th>
+			<td valign="top"><?=$_VARS['subject']?></td>
+		</tr>
+		<tr>
+			<th valign="top">Nachricht</th>
+			<td valign="top"><?=nl2br(strip_tags($_VARS['message'],"<br><p><a><img>"))?></td>
+		</tr>
+		<tr>
+			<th valign="top">Empfängergruppe</th>
+			<td valign="top">
+			<?
+			foreach($_VARS['group'] as $aGroup) {
+			?>
+			<?=$sGroupName[$aGroup]?> (<?=$iCount[$aGroup]?> Empfänger)<br>
+			<?
+			}
+			?>
+			</td>
+		</tr>
+	</table>
+	<p align="right">
+		<input type="submit" value="Nachricht absenden" onClick="document.formMessaging.submit();this.disabled = 1;" class="btn">
+	</p>
+	</form>
+<?
+	} elseif($_VARS['task'] == "send") {
+?>
+			<p>
+			Fortschritt:
+			<table id="table1" cellpadding="0" cellspacing="0" border="0" style="height:10px;width:400px;border:1px solid #29527A;table-layout:fixed;margin-top:5px;">
+				<tr>
+					<td id="td1" style="width:1px;background-color:#dededf;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+					<td id="td2" style="width:399px;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+				</tr>
+			</table>
+			</p>
+			<p>
+			Aktueller Stand:<br>
+			<span id="spanStatus">0</span>
+			</p>
+		</td>
+	</tr>
+</table>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?
+		flush();
+		ignore_user_abort(true);
+		set_time_limit(7200);
+
+		$factor = 400/$_VARS['iTotalCount'];
+		$aDoneRecipients = array();
+
+		@mkdir("./community_messaging",$system_data['chmod_mode_dir']);
+		@chmod("./community_messaging",$system_data['chmod_mode_dir']);
+
+		$sLogname = "./community_messaging/log_".time().".txt";
+		$fh = fopen($sLogname,"w");
+
+		fwrite($fh,"Eine Interne Nachricht wurde am ".strftime("%A %d. %B %Y %H:%M:%S",time())." an folgende Empfänger versendet:\n\n");
+
+		$aGroups = CustomerDb\Helper\Functions::getCustomerGroups();
+
+		$sWhere = "";
+		foreach((array)$_VARS['iFilter'] as $k=>$v) {
+			if(is_numeric($_VARS['iFilter'][$k])) $_VARS['iFilter'][$k] = "ext_".$_VARS['iFilter'][$k];
+			switch($_VARS['iMode'][$k]) {
+				case "1":
+					$sWhere .= " `".$_VARS['iFilter'][$k]."` LIKE '%".$_VARS['sFilter'][$k]."%' AND";
+					break;
+				case "6":
+					$sWhere .= " `".$_VARS['iFilter'][$k]."` > '".$_VARS['sFilter'][$k]."' AND";
+					break;
+				case "7":
+					$sWhere .= " `".$_VARS['iFilter'][$k]."` < '".$_VARS['sFilter'][$k]."' AND";
+					break;
+				case "8":
+					$sWhere .= " `".$_VARS['iFilter'][$k]."` != '' AND";
+					break;
+				case "10":
+					$sWhere .= " `".$_VARS['iFilter'][$k]."` > SUBDATE(NOW(),INTERVAL ".intval($_VARS['sFilter'][$k])." DAY) AND";
+					break;
+				default:
+					$sWhere .= " `".$_VARS['iFilter'][$k]."` LIKE '%".$_VARS['sFilter'][$k]."%' AND";
+					break;
+			}
+		}
+
+		$i=0;
+		$iDoubles = 0;
+		foreach($_VARS['group'] as $aGroup) {
+			$aTemp = explode("|",$aGroup);
+			$iDatabase = $aTemp[0];
+			$iGroup = $aTemp[1];
+
+			$aSender = get_data(db_query($db_data['module'],"SELECT id, nickname, email FROM customer_db_".$iDatabase." WHERE id = 1"));
+			$sEmailsubject = str_replace("#wd:sender#",$aSender['nickname'], $_VARS['emailsubject']);
+			$sEmailcontent = str_replace("#wd:sender#",$aSender['nickname'], $_VARS['emailcontent']);
+			$sSubject = str_replace("#wd:sender#",$aSender['nickname'], $_VARS['subject']);
+			$sContent = str_replace("#wd:sender#",$aSender['nickname'], $_VARS['message']);
+
+			if($iGroup > 0) {
+				$sQuery = "SELECT id, nickname, email FROM customer_db_".$iDatabase." WHERE groups LIKE '%|".$iGroup."|%' ".$aGroupNo[$iDatabase]." AND ".$sWhere." 1 AND active = 1";
+			} else {
+				$sQuery = "SELECT id, nickname, email FROM customer_db_".$iDatabase." WHERE ".$sWhere." 1 ".$aGroupNo[$iDatabase]." AND active = 1";
+			}
+
+			$rRecipients = db_query($db_data['module'],$sQuery);
+			while($aRecipients = get_data($rRecipients)) {
+
+				if(!in_array($aRecipients['email'],$aDoneRecipients)) {
+
+					$sTempEmailSubject = str_replace("#wd:receiver#",$aRecipients['nickname'], $sEmailsubject);
+					$sTempEmailContent = str_replace("#wd:receiver#",$aRecipients['nickname'], $sEmailcontent);
+					$sTempSubject = str_replace("#wd:receiver#",$aRecipients['nickname'], $sSubject);
+					$sTempContent = str_replace("#wd:receiver#",$aRecipients['nickname'], $sContent);
+	
+					if($_VARS['emailnotify']) {
+						wdmail($aRecipients['email'], $system_data['project_name']." - ".$sTempEmailSubject, $sTempEmailContent, $system_data['mail_from']);
+					}
+
+					$sQuery = "INSERT INTO community_messaging SET idUser = '1', tblUser = '".$iDatabase."', idReceiver = '".$aRecipients['id']."', tblReceiver = '".$iDatabase."', subject = '".\DB::escapeQueryString($sTempSubject)."', message = '".\DB::escapeQueryString($sTempContent)."', changed = NOW(), received = 0, active = 3 ";
+					DB::executeQuery($sQuery);
+					$i++;
+					if($i%20 == 0) {
+						sleep(1);
+						echo "<script>document.getElementById('spanStatus').innerText='".$i."';document.getElementById('td1').style.width='".intval($factor*$i)."';document.getElementById('td2').style.width='".intval(400-($factor*$i))."';</script>\n";
+						flush();
+					}
+					fwrite($fh,"E-Mail: ".$aRecipients['email'].", Nickname: ".$aRecipients['nickname'].", ID: ".$aRecipients['id']."\r\n");
+					$aDoneRecipients[] = $aRecipients['email'];
+				} else {
+					$iDoubles++;
+				}
+			}
+			fwrite($fh,"\r\n\r\n\r\n".$sTempEmailSubject."\r\n\r\n".$sTempEmailContent."\r\n\r\n".$sTempSubject."\r\n\r\n".$sTempContent."\r\n\r\n\r\n\r\n");
+		}
+		fclose($fh);
+?>
+	<script>
+	document.getElementById('spanStatus').innerText='<?=$i?>';
+	document.getElementById('td1').style.width='400';
+	document.getElementById('td2').style.width='0';
+	</script>
+	<h2>Ihre Nachricht wurde erfolgreich an <?=$i?> Empfänger versendet.</h2>
+	<p><?=$iDoubles?> doppelte Empfänger wurden rausgefiltert.</p>
+	<p>Hier finden Sie das Protokoll dieser Nachricht &raquo; <a href="<?=$sLogname?>" target="_blank">Protokoll</a></p>
+<?
+	} else {
+		$rConfig = db_query($db_data['system'],"SELECT param FROM cms_extensions_config WHERE param LIKE '%emailsubject%'");
+		$aConfig = get_data($rConfig);
+		$aConfig = unserialize($aConfig['param']);
+		$_VARS['emailnotify'] 	= ($_VARS['emailnotify'])?$_VARS['emailnotify']:$aConfig->emailnotify;
+		$_VARS['emailsubject'] 	= ($_VARS['emailsubject'])?$_VARS['emailsubject']:$aConfig->emailsubject;
+		$_VARS['emailcontent']	= ($_VARS['emailcontent'])?$_VARS['emailcontent']:$aConfig->emailcontent;
+
+		$config->idTable = 1;
+
+		$i=0;
+		$config->aFilter = array();
+		foreach((array)$_VARS['iFilter'] as $k=>$v) {
+			if($_VARS['iDeleteFilter'] != $i) {
+				$config->aFilter[$i] = array($_VARS['iFilter'][$k],$_VARS['sFilter'][$k],$_VARS['iMode'][$k]);
+				$i++;
+			} else {
+				unset($config->aFilter[$i]);
+			}
+		}
+
+		if($_VARS['task'] == "addFilter") {
+			$config->aFilter[] = array(0,0,0);
+		}
+
+?>
+	<h2>Nachricht an registrierte Benutzer senden</h2>
+	<form name="f1" method="POST" action="community_messaging.html">
+	<input type="hidden" name="task" value="">
+	<input type="hidden" name="iDeleteFilter" value="-1">
+	<?=printTableStart()?>
+	<?=printFormText("Betreff","subject",$_VARS['subject'])?>	
+
+	<tr>
+		<th width="40%">Nachricht</th>
+		<td width="60%">
+<?
+	$oFCKeditor = new FCKeditor('message') ;
+	$oFCKeditor->BasePath 	= '/admin/editor/';
+	$oFCKeditor->Value		= ($_VARS['message']);
+	$oFCKeditor->ToolbarSet = "Basic";
+	echo $oFCKeditor->CreateHtml();
+?>
+		</td>
+	</tr>
+
+	<?=printFormMultiSelect("An Benutzer der markierten Gruppen senden","group[]", CustomerDb\Helper\Functions::getCustomerGroups(),$_VARS['group'],"size=5")?>
+	<?=printFormMultiSelect("Benutzer der markierten Gruppen ausschliessen","groupno[]", CustomerDb\Helper\Functions::getCustomerGroups(),$_VARS['groupno'],"size=5")?>
+
+	<?=printFormSelect("E-Mail Benachrichtigung","emailnotify",array("0"=>"Aus","1"=>"Ein"),$_VARS['emailnotify'])?>
+	<?=printFormText("E-Mail Betreff","emailsubject",$_VARS['emailsubject'])?>
+	<?=printFormTextarea("E-Mail Inhalt","emailcontent",$_VARS['emailcontent'])?>
+
+	<?=printTableEnd()?>
+	<br>
+	<?=printTableStart()?>
+		<tr>
+			<th colspan="2">Filterkriterien:&nbsp;<button onClick="document.f1.task.value='addFilter';document.f1.submit();" class="btn">Filter hinzufügen</button></th>
+		</tr>
+		<?
+			foreach($config->aFilter as $i=>$elem) {
+				echo printFormSelect("<a href=\"javascript:document.f1.iDeleteFilter.value='".$i."';document.f1.submit();\"><img src=\"/admin/media/delete.png\" border=0 align=absmiddle></a>&nbsp;Feld ".($i+1), "iFilter[]", CustomerDb\Helper\Functions::getCustomerFields($config->idTable),$elem[0],"onChange=\"document.f1.submit();\"");
+				$aValues = array();
+				if($elem[0]) {
+					$my_field = get_data(db_query($db_data['module'],"SELECT id,type FROM customer_db_definition WHERE field_nr = '".$elem[0]."' AND db_nr = '".$config->idTable."' AND active = 1"));
+					if($my_field['type'] == "Select Field") {
+						$res_val = db_query($db_data['module'],"SELECT display, value  FROM customer_db_values WHERE definition_id = '".$my_field['id']."' AND active = 1 ORDER BY display");
+						while($my_val = get_data($res_val)) {
+							$aValues[$my_val['value']] = $my_val['display'];
+						}
+						echo printFormSelect("Wert ".($i+1), "sFilter[]",$aValues,$elem[1]);
+					} elseif($my_field['type'] == "image") {
+						echo printFormCheckbox("Wert ".($i+1), "sFilter[]", 1,$elem[1]);
+					} else {
+						echo printFormText("Wert ".($i+1), "sFilter[]",$elem[1]);
+					}
+				}
+				echo printFormSelect("Vergleich ".($i+1), "iMode[]",array("1"=>"Volltext","6"=>"größer","7"=>"kleiner","8"=>"nicht leer","10"=>"innerhalb der letzten x Tage"),$elem[2]);
+			}
+		?>
+	<?=printTableEnd()?>
+	
+	<?=printSubmit("Vorschau","onClick=\"document.f1.task.value='preview';return true;\"")?>
+	</form>
+
+<?
+	}
+}
+?>
+ 
+		</td>
+	</tr>
+</table>
+<?=Admin_Html::loadAdminFooter()?>

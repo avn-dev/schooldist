@@ -1,0 +1,431 @@
+<?php
+
+include_once(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+// TODO : create office_projects right
+
+Access_Backend::checkAccess('office_projects');
+
+/* ==================================================================================================== */
+
+if(
+	isset($_VARS['task']) &&
+	$_VARS['task'] == 'analysis_export'
+) {
+
+	// aktuell angezeigte Projekte laden
+
+	$oProject = new Ext_Office_Project('office_projects');
+	$aProjects = $oProject->getProjectsList(
+		$_SESSION['project_state'],
+		$_SESSION['project_from'],
+		$_SESSION['project_to'],
+		$_SESSION['project_search'],
+		$_SESSION['product_area']
+	);
+	$aSelectedProjects = (array)$_VARS['selected_projects'];
+
+	// Die Projektaktivitäten so umwandeln das wir alle Einträge für ein Projekt haben,
+	// für jedes Projekt eine List von Zeilen, jeweils mit "title" und "time" als Keys
+	//
+	// $aExportProjects = array(
+	//     <index projekt 1> => array(
+	//         <index projekteintrag 1> => array(
+	//             'title' => <Titel/Text des ersten Eintrags, der erste Eintrag ist das Projekt selber>,
+	//             'time' => array('h' => <int>, 'm' => <int>, 's' => <int>)
+	//         ),
+	//         <index projekteintrag 2> => array(
+	//             'title' => <Titel/Text des zweiten Eintrags, der zweite Eintrag ist eine Aktivität>,
+	//             'time' => array('h' => <int>, 'm' => <int>, 's' => <int>)
+	//         ),
+	//         <index projekteintrag 3> => array(
+	//             'title' => <Titel/Text des dritten Eintrags, ab jetzt folgen alle Mitarbeiter der Aktivität, dann die nächste Aktivität, usw.>,
+	//             'time' => array('h' => <int>, 'm' => <int>, 's' => <int>)
+	//         )
+	//         <index projekteintrag 4> => array(
+	//             ...
+	//         )
+	//     )
+	//     <index projekt 2> => array(
+	//         ...
+	//     )
+	// )
+
+	$aExportProjects = array();
+	foreach($aProjects as $aProject) {
+
+		if(!in_array($aProject['id'], $aSelectedProjects)) {
+			continue;
+		}
+
+		$oProject = new Ext_Office_Project('office_projects', $aProject['id']);
+		$aAnalysis = $oProject->getAnalysis();
+		$sProjectTitle = trim($aProject['title']);
+		if(empty($sProjectTitle)) {
+			$sProjectTitle = 'Projekt #'.$aProject['id'];
+		}
+		$aProjectTime = array('h' => 0, 'm' => 0, 's' => 0);
+		$aProjectEntries = array();
+
+		if(
+			!isset($aAnalysis['times']) ||
+			!is_array($aAnalysis['times'])
+		) {
+			continue;
+		}
+
+		foreach($aAnalysis['times'] as $aActivity) {
+
+			$sActivityTitle = trim($aActivity['title']);
+			if(empty($sActivityTitle)) {
+				$sActivityTitle = trim($aActivity['alias']);
+			}
+			if(empty($sActivityTitle)) {
+				$sActivityTitle = 'Position #'.$aActivity['position_id'];
+			}
+			$aActivityTime = array('h' => 0, 'm' => 0, 's' => 0);
+			$aActivityEntries = array();
+
+			if(
+				!isset($aActivity['times']) ||
+				!is_array($aActivity['times'])
+			) {
+				continue;
+			}
+
+			foreach($aActivity['times'] as $aTime) {
+
+				$aNewActivityEntry = array(
+					'title' => trim($aTime['firstname'].' '.$aTime['lastname']),
+					'time' => array('h' => $aTime['time']['H'], 'm' => $aTime['time']['M'], 's' => $aTime['time']['S'])
+				);
+				if(empty($aNewActivityEntry['title'])) {
+					$aNewActivityEntry['title'] = 'Mitarbeiter #'.$aTime['employee_id'];
+				}
+				$aActivityEntries[] = $aNewActivityEntry;
+				$aActivityTime['h'] += $aNewActivityEntry['time']['h'];
+				$aActivityTime['m'] += $aNewActivityEntry['time']['m'];
+				$aActivityTime['s'] += $aNewActivityEntry['time']['s'];
+
+			}
+
+			$aProjectEntries[] = array(
+				'title' => $sActivityTitle,
+				'time' => $aActivityTime
+			);
+			foreach($aActivityEntries as $aActivityEntry) {
+				$aProjectEntries[] = $aActivityEntry;
+			}
+			$aProjectTime['h'] += $aActivityTime['h'];
+			$aProjectTime['m'] += $aActivityTime['m'];
+			$aProjectTime['s'] += $aActivityTime['s'];
+
+		}
+
+		$aNewExportProject = array();
+		$aNewExportProject[] = array(
+			'title' => $sProjectTitle,
+			'time' => $aProjectTime
+		);
+		foreach($aProjectEntries as $aProjectEntry) {
+			$aNewExportProject[] = $aProjectEntry;
+		}
+		$aExportProjects[] = $aNewExportProject;
+
+	}
+
+	// Jetzt haben wir die Zeilen pro Projekt, nun müssen alle Zeilen der Projekte jeweils nebeneinander,
+	// also in die erste Zeile des Exports die "erste Zeile" jedes Projekts, in die zweite Zeile des Exports
+	// jeweils die "zweite Zeile" jedes Projekts, usw.
+	// Wenn ein Projekt weniger Zeilen hat als andere müssen diese mit leeren Strings aufgefüllt/ausgegeben werden,
+	// damit am Ende alle Zeilen eines Projekts wieder untereinander stehen
+
+	$aExportRows = array();
+	$aExportOptions = array();
+	$iRow = 1;
+	do {
+
+		$aNewExportRow = array();
+		$bRowHasContent = false;
+		$iColumn = 0;
+
+		reset($aExportProjects);
+		while(null !== $iCurrecExportProjectKey = key($aExportProjects)) {
+
+			if(count($aExportProjects[$iCurrecExportProjectKey]) < 1) {
+
+				$aNewExportRow[] = '';
+				$aNewExportRow[] = '';
+
+			} else {
+
+				$aCurrentExportProjectRow = array_shift($aExportProjects[$iCurrecExportProjectKey]);
+
+				while($aCurrentExportProjectRow['time']['s'] > 60) {
+					$aCurrentExportProjectRow['time']['s'] -= 60;
+					$aCurrentExportProjectRow['time']['m'] += 1;
+				}
+
+				while($aCurrentExportProjectRow['time']['m'] > 60) {
+					$aCurrentExportProjectRow['time']['m'] -= 60;
+					$aCurrentExportProjectRow['time']['h'] += 1;
+				}
+
+				$aNewExportRow[] = $aCurrentExportProjectRow['title'];
+				$aNewExportRow[] = ($aCurrentExportProjectRow['time']['h'] / (24)) +
+				                   ($aCurrentExportProjectRow['time']['m'] / (24 * 60)) +
+				                   ($aCurrentExportProjectRow['time']['s'] / (24 * 60 * 60));
+				$bRowHasContent = true;
+
+				$aExportOptions['cell_format'][$iRow][$iColumn+1]['format'] = \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC;
+				$aExportOptions['cell_format'][$iRow][$iColumn+1]['style'] = '[h]:mm:ss';
+
+			}
+
+			$iColumn += 2;
+			next($aExportProjects);
+
+		}
+
+		if($bRowHasContent) {
+			$aExportRows[] = $aNewExportRow;
+		}
+
+		$iRow++;
+
+	} while($bRowHasContent);
+
+	// Generieren der XLS
+
+	WDExport::exportXLSX('Projektauswertung', $aExportRows, $aExportOptions);
+	die;
+
+}
+
+/* ==================================================================================================== */
+
+$aOptions = array();
+$aOptions['additional']  = '<script type="text/javascript" src="/admin/extensions/office/js/app.office.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/extensions/office/office.css" />';
+if(!isset($_VARS['task']) || $_VARS['task'] = false)
+{
+	$aOptions['body'] = ' scroll="no"';
+}
+$aOptions['xhtml'] = false;
+echo Admin_Html::loadAdminHeader($aOptions);
+
+/* ==================================================================================================== */
+
+if(!$_VARS['project_from'] && !isset($_SESSION['project_from'])) {
+	$_SESSION['project_from'] = '';//01.'.date('m').'.'.date('Y');
+
+	\System::wd()->executeHook('define_specified_project_from_time', $_SESSION);
+}
+
+if(!$_VARS['project_to'] && !isset($_SESSION['project_to'])) {
+	$_SESSION['project_to'] = '';//date('t').'.'.date('m').'.'.date('Y');
+
+	\System::wd()->executeHook('define_specified_project_till_time', $_SESSION);
+}
+
+if(!isset($_SESSION['project_state'])) {
+	$_SESSION['project_state'] = 'opened';
+}
+
+/* ==================================================================================================== */
+
+// Set filter function and input style
+//$aConfig['onKeyUp'] = 'prepareLoadProjectsList(this);';
+//$aConfig['style']   = 'width: 75px;';
+
+/* ================================================== */ // Create the filter attribute 'state'
+$aProjectStates = array(
+	''			=> 'alle',
+	'opened'	=> 'laufend',
+	'closed'	=> 'geschlossen'
+);
+//$aConfig['onChange']	= 'prepareLoadProjectsList(this);';
+$aConfig['name']		= 'project_state';
+$aConfig['id'] 			= 'project_state';
+$aConfig['options']		= $aProjectStates;
+$aConfig['selected']	= $_SESSION['project_state'];
+$oSelect				= new GUI_FormSelect($aConfig);
+$sProjectState			= $oSelect->generateHTML();
+$sProjectState = str_replace('form-control', '', $sProjectState);
+unset($aConfig['options'], $aConfig['selected']);
+
+/* ================================================== */ // Create the filter attribute 'from'
+$aConfig['name']	= 'project_from';
+$aConfig['id'] 		= 'project_from';
+$aConfig['value']	= $_SESSION['project_from'];
+$aConfig['style']	= 'width: 75px;';
+$oSelect			= new GUI_FormText($aConfig);
+$sProjectDateFrom	= $oSelect->generateHTML();
+unset($aConfig['value'], $aConfig['style']);
+
+/* ================================================== */ // Create the filter attribute 'to'
+$aConfig['name']	= 'project_to';
+$aConfig['id'] 		= 'project_to';
+$aConfig['value']	= $_SESSION['project_to'];
+$aConfig['style']	= 'width: 75px;';
+$objSelect			= new GUI_FormText($aConfig);
+$sProjectDateUntil	= $objSelect->generateHTML();
+unset($aConfig['value'], $aConfig['style']);
+
+/* ================================================== */ // Create the filter attribute 'product_area'
+$oProductArea = new \Office\Entity\ProductArea;
+$aProductAreaList = $oProductArea->getArrayList();
+$aProductAreas = array('' => 'alle');
+if(is_array($aProductAreaList)) {
+    $aProductAreaList = array_values($aProductAreaList);
+    foreach($aProductAreaList as $aProductArea) {
+        $aProductAreas[$aProductArea['id']] = $aProductArea['name'];
+    }
+}
+$aConfig['name']		= 'product_area';
+$aConfig['id'] 			= 'product_area';
+$aConfig['options']		= $aProductAreas;
+$aConfig['selected']	= $_SESSION['product_area'];
+$oSelect				= new GUI_FormSelect($aConfig);
+$sProductArea			= $oSelect->generateHTML();
+$sProductArea = str_replace('form-control', '', $sProductArea);
+unset($aConfig['options'], $aConfig['selected']);
+
+/* ================================================== */ // Create the filter attribute 'search'
+$aConfig['name']	= 'project_search';
+$aConfig['id'] 		= 'project_search';
+$aConfig['value']	= $_SESSION['project_search'];
+$objSelect			= new GUI_FormText($aConfig);
+$sProjectSearch		= $objSelect->generateHTML();
+unset($aConfig['value']);
+
+/* ==================================================================================================== */
+
+?>
+
+<script type="text/javascript" src="/admin/extensions/office/js/project.js"></script>
+
+<? \System::wd()->executeHook('include_additional_files'); ?>
+
+<section class="content custom-gui">
+
+	<div class="divHeader">
+
+	<div class="divToolbar">
+		<div class="divToolbarLabel">Filter:</div>
+		<div class="divToolbarFormItem">
+			Status <?=$sProjectState?>
+		</div>
+		<div class="divToolbarFormItem">
+			von <?=$sProjectDateFrom?>
+		</div>
+		<div class="divToolbarFormItem">
+			bis <?=$sProjectDateUntil?>
+		</div>
+		<div class="divToolbarFormItem">
+			Produktbereich <?=$sProductArea?>
+		</div>
+		<div class="divToolbarFormItem">
+			Suche <?=$sProjectSearch?>
+		</div>
+		<div class="divToolbarFormItem">
+			<a href="javascript:void(false);" class="btn" style="background-color: #dedede; color: #000; padding: 0 4px;" onclick="loadProjectsList();">Go</a>
+		</div>
+		<div class="divToolbarIcon">
+			<img id="toolbar_loading" src="/admin/media/indicator.gif" alt="" />
+		</div>
+		<div class="divToolbarIcon">
+			<img src="/admin/media/spacer.gif" style="height:16px; width:1px;" alt="" />
+		</div>
+		<div class="divCleaner"></div>
+	</div>
+
+	<div class="divToolbar divTopLine">
+		<div class="divToolbarLabel">Anlegen:</div>
+		<div class="divToolbarIcon" id="toolbar_new">
+			<img src="/admin/media/page_new.gif" onclick="executeProjectAction(0, 'new');" alt="anlegen" title="anlegen" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Bearbeitung:</div>
+		<div class="divToolbarIcon" id="toolbar_edit">
+			<img src="/admin/media/pencil.png" onclick="executeProjectAction(0, 'edit');" alt="bearbeiten" title="bearbeiten" />
+		</div>
+		<div class="divToolbarIcon" id="toolbar_delete">
+			<img src="/admin/media/cross.png" onclick="executeProjectAction(0, 'delete');" alt="löschen" title="löschen" />
+		</div> 
+		<div class="divToolbarIcon" id="toolbar_finish">
+			<img src="/admin/media/document_finished.png" onclick="executeProjectAction(0, 'finish');" alt="schließen" title="schließen" />
+		</div>
+		<div class="divToolbarIcon" id="toolbar_copy">
+			<img src="/admin/media/page_copy.png" onclick="executeProjectAction(0, 'copy');" alt="kopieren" title="kopieren" />
+		</div>
+		<div class="divToolbarSeparator">::</div>
+		<div class="divToolbarLabel">Auswertung:</div>
+		<div class="divToolbarIcon" id="toolbar_analysis">
+			<img src="/admin/media/chart_bar.png" onclick="executeProjectAction(0, 'analysis');" alt="Auswertung" title="Auswertung" />
+		</div>
+		<div class="divToolbarIcon" id="toolbar_analysis_export">
+			<img src="/admin/media/export.png" onclick="executeProjectAction(0, 'analysis_export_times');" alt="Auswertung Arbeitszeiten als XLS" title="Auswertung Arbeitszeiten als XLS" />
+		</div>
+		<div class="divCleaner"></div>
+	</div>
+
+	<div class="divHeaderBottomGrey"><img src="/admin/media/spacer.gif" height="7" /></div>
+	<div class="divHeaderBottomWhite"><img src="/admin/media/spacer.gif" height="5" /></div>
+
+</div>
+
+<table id="tableProjects" cellpadding="0" cellspacing="0" border="0" width="100%" class="table sortable scroll" style="table-layout: fixed;">
+	<colgroup>
+		<col style="width:24px;" />
+		<col />
+		<col style="width:200px;" />
+		<col />
+		<col style="width:170px;" />
+		<col style="width:150px;" />
+		<col style="width:90px;" />
+		<col style="width:90px;" />
+		<col style="width:90px;" />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>&nbsp;</th>
+			<th>Titel</th>
+			<th>Kategorie</th>
+			<th>Kunde</th>
+			<th>Produktbereich</th>
+			<th>Bearbeiter</th>
+			<th>Datum</th>
+			<th>Budget</th>
+<?
+			if(Ext_Office_Config::get('projects_show_reporting_list', null, 1)) {
+?>
+			<th title="Zeit * Tätigkeitsstundensatz * Mitarbeiterfaktor der Tätigkeit">Verbraucht</th>
+			<th>Kosten</th>
+<?
+			}
+?>
+		</tr>
+	</thead>
+	<tbody id="tbl_projects"></tbody>
+</table>
+
+<div style="overflow: hidden; width:100%;">
+	<div style="height: 20px; overflow: hidden; text-align:center; background: #eee; border-top: 1px solid #ccc; font-size: 10px;">
+		<img src="/admin/media/bullet_green.png" align="absmiddle" alt="Laufend" /> = Laufend&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<img src="/admin/media/office_finished.png" align="absmiddle" alt="Geschlossen" /> = Geschlossen&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	</div>
+</div>
+
+</section>
+<script type="text/javascript">
+	checkProjectsListHeight();
+
+	Event.observe(window, 'load', ScrollableTable.load);
+	Event.observe(window, 'load', loadProjectsList);
+	Event.observe(window, 'resize', checkProjectsListHeight);
+
+	document.body.style.overflow = 'hidden';
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_tuition_classes` ADD `lesson_duration` DECIMAL(10,2) NULL DEFAULT NULL AFTER `teacher_can_add_students`;

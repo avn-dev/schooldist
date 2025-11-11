@@ -1,0 +1,1 @@
+INSERT INTO `system_config` (`c_key`, `c_value`) VALUES ('chmod_mode_file_readonly', '444');

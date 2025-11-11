@@ -1,0 +1,80 @@
+class:
+  wdbasic: Form\Entity\Option
+  data: Form\Gui2\Data\Fields
+orderby : 
+  - Form\Gui2\Data\Fields
+  - getOrderBy
+where : 
+  - Form\Gui2\Data\Fields
+  - getWhere
+id:
+  column: id
+  alias: f_o
+title: "Felder"
+description: "Formulare"
+access: "modules_admin"
+sortable: true
+bars:
+    - 
+      position: top
+      set: []
+      type: ""
+      elements:
+        -
+          element: inputfilter
+          label: Suche
+          searchtype: LIKE
+          column: 
+            - name
+          alias: 
+            -
+          access:
+    - 
+      position: top
+      set: []
+      type: ""
+      access: []
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Form\Gui2\Data\Fields
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Form\Gui2\Data\Fields
+            - getDialog
+        - 
+          element: icon_delete
+columns:
+  -
+    title: ID
+    column: id
+    description: ""
+    resize: false
+    width: id
+    format: Ext_Gui2_View_Format_Int
+  -
+    title: Aktiv
+    column: display
+    description: ""
+    resize: false
+    width: 50
+    db_type: tinyint
+    inplace_editor: 1
+    inplace_editor_type: checkbox
+    inplace_editor_start: 1
+  -
+    title: Name
+    column: name
+    description: ""
+    resize: true
+    width: name
+  -
+    title: Typ
+    column: type
+    description: ""
+    resize: false
+    format: \Form\Gui2\Format\Type
+    width: comment

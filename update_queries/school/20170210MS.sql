@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_agency_comments` ADD `follow_up` DATE NULL DEFAULT NULL;

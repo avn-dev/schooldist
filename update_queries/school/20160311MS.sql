@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_inboxlist` ADD `status` TINYINT(1) UNSIGNED NOT NULL DEFAULT '1' COMMENT '1 = activ / 0 = disabled' AFTER `user_id`;

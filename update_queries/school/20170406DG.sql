@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_email_log` ADD `template_id` MEDIUMINT UNSIGNED NOT NULL AFTER `sender_id`;

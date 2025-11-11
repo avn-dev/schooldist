@@ -1,0 +1,161 @@
+/*
+ * THIS CSS WILL BE USED IN SCHOOL REGISTRATION FORM V3 AND PAYMENT FORM
+ */
+
+.payment-methods {
+	margin-top: $spacer;
+
+	.card-title img {
+		// Höhe von PayPal Icon pp-logo-100px.png: 100x26
+		max-height: 26px;
+	}
+
+	label.is-invalid {
+		color: $danger;
+	}
+
+	.payment-method-label {
+		font-size: $h4-font-size;
+		padding-left: $spacer * .5;
+
+		i,
+		img {
+			vertical-align: -($spacer * .25);
+		}
+
+		&::before,
+		&::after {
+			top: $spacer * .75;
+		}
+
+		.subtitle {
+			display: block;
+			color: $text-muted;
+			font-size: $font-size-base;
+		}
+	}
+
+	&.row > div {
+		// Höhe von .card überschreibt margin-bottom
+		margin-bottom: $grid-gutter-width * .5;
+		@include media-breakpoint-up(md) {
+			margin-bottom: $grid-gutter-width;
+		}
+
+		.card {
+			margin-bottom: 0;
+		}
+	}
+
+	.card {
+		margin-bottom: $spacer;
+		height: 100%;
+
+		&.active {
+			border: 1px solid $primary;
+		}
+	}
+
+	> .card {
+		// BS4 überschreiben für leere Karten
+		.card-title {
+			margin-bottom: 0;
+		}
+
+		&.active > .card-body > .card-title {
+			margin-bottom: $spacer * .75;
+		}
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+}
+
+@mixin payment-disabled {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.payment-paypal {
+	margin-left: auto;
+	margin-right: auto;
+
+	// Paypal button size is only responsive up to 750px
+	// https://github.com/paypal/paypal-checkout-components/issues/446
+	// As the element is an inline-block use text-align
+	text-align: center;
+
+	// Style like in Paypal shop demo
+	// https://demo.paypal.com/de/demo/go_platform/pcRestClientV2/paymentOptions
+	&.disabled {
+		@include payment-disabled();
+	}
+}
+
+.payment-stripe {
+	// Pass to JavaScript
+	--input-color: #{$input-color};
+
+	.form-control-stripe {
+		padding-top: 0.7em;
+		//color: $input-color;
+	}
+
+	// Fake class as no class can be given for disabled state
+	.form-control-disabled {
+		background-color: $input-disabled-bg;
+		opacity: 1;
+	}
+
+	// Overwrites .Stripe--focus
+	.form-control-focus {
+		// Add primary color glow on focus
+		// Can't use mixin as it applies &:focus
+		//@include form-control-focus($ignore-warning: true);
+		color: $input-focus-color;
+		background-color: $input-focus-bg;
+		border-color: $input-focus-border-color;
+		outline: 0;
+		@if $enable-shadows {
+			@include box-shadow($input-box-shadow, $input-focus-box-shadow);
+		} @else {
+			box-shadow: $input-focus-box-shadow;
+		}
+	}
+
+	.btn-block {
+		margin-top: $spacer * 0.5;
+	}
+
+	&.disabled {
+		@include payment-disabled();
+	}
+}
+
+.payment-klarna {
+	text-align: center;
+
+	.btn-block {
+		display: inline-block;
+		max-width: 600px; // Matches max-width of Klarna iframe
+		margin-top: $spacer * 0.5;
+	}
+}
+
+.payment-transfermate {
+	.payment-methods {
+		label.custom-control-label {
+			font-size: $h5-font-size;
+		}
+
+		.card-title img {
+			// VISA Icon ist riesig
+			max-width: 60px;
+		}
+	}
+}
+
+.payment-moneris {
+	height: 510px;
+}

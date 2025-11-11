@@ -1,0 +1,121 @@
+class:
+  wdbasic: Ext_TC_Exchangerate_Table
+  data: Ext_TC_Exchangerate_Table_Gui2_Data
+orderby: 
+  - Ext_TC_Exchangerate_Table_Gui2
+  - getOrderby
+id:
+  column: id
+  alias: tc_et
+access: 
+  - core_admin_exchangerate
+  - ""
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column:
+          - name
+        alias:
+          - tc_et
+
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Exchangerate_Table_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Exchangerate_Table_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+      - 
+        element: seperator
+      - 
+        element: icon
+        label: Wechselkurse aktualisieren
+        access:
+          - core_admin_exchangerate
+          - exchangerate_update
+        task: confirm
+        action: exchangerate_update
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - refresh
+      - 
+        element: icon
+        label: Wechselkurse ansehen
+        access:
+          - core_admin_exchangerate
+          - exchangerate_view
+        task: openDialog
+        action: exchangerate_view
+        dialog:
+          - Ext_TC_Exchangerate_Table_Gui2_Data
+          - getExchangerateDialog
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - money
+columns:
+  -
+    visible: true
+    title: Name
+    column: name
+    alias: tc_et
+    width: name
+    resize: true
+  -
+    visible: true
+    sortable: false
+    title: Aktualisierungszeitpunkt
+    column: update_time
+    alias: tc_ets
+    width: name
+    format: Ext_TC_Exchangerate_Format_Time
+    resize: false
+    
+default_columns:
+  -
+    visible: true
+    sortable: true
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    column: creator_id
+    alias: tc_et
+    width: user_name
+  -
+    visible: true
+    sortable: true
+    title: Erstellt
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: created
+    alias: tc_et
+    width: date
+  -
+    visible: true
+    sortable: true
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    column: editor_id
+    alias: tc_et
+    width: user_name
+  -
+    visible: true
+    sortable: true
+    title: Bearbeitet
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: changed
+    alias: tc_et
+    width: date

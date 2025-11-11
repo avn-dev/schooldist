@@ -1,0 +1,142 @@
+<?php
+
+include (\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+if($_VARS['task'] == "start") {
+
+	$bolMatch = preg_match("/\(ID: ([0-9]+)\)/i", $_VARS['search'], $arrReg);
+	if($bolMatch) {
+		$_VARS['idUser'] = $arrReg[1];
+	}
+	if($_VARS['idUser'] > 0 && $_VARS['idTable'] > 0) {
+		
+		$oCustomerDB = new Ext_CustomerDB_DB($_VARS['idTable']);
+		$aUser = $oCustomerDB->getCustomer($_VARS['idUser']);
+		
+		DB::executeQuery("INSERT INTO `customer_db_support` SET idUser = '".(int)$aUser['id']."', idTable = '".(int)$_VARS['idTable']."', password_md5 = '".\DB::escapeQueryString($aUser['password'])."', password_temp = '".\DB::escapeQueryString($_VARS['passwort_temp'])."', idAdmin = '".(int)$user_data['id']."'");
+
+		$oCustomerDB->updateCustomerField($_VARS['idUser'], 'password', $_VARS['passwort_temp']);
+
+		Log::enterLog(0,"Kundendatenmodul: Start einer Support Session für Benutzer ".$aUser['nickname']." (".$_VARS['idUser'].", ".$_VARS['idTable'].")");
+	}
+
+} elseif($_VARS['task'] == "delete") {
+
+	$aSession = DB::getQueryRow("SELECT password_md5,idUser,idTable FROM `customer_db_support` WHERE id = ".(int)$_VARS['id']."");
+	
+	if(!empty($aSession)) {
+
+		$oCustomerDB = new Ext_CustomerDB_DB($aSession['idTable']);
+		$aUser = $oCustomerDB->getCustomer($aSession['idUser']);
+
+		DB::executeQuery("DELETE FROM `customer_db_support` WHERE id = ".(int)$_VARS['id']."");
+
+		// Passwort ist bereits codiert
+		$oCustomerDB->db_encode_pw = false;
+		$oCustomerDB->updateCustomerField($aSession['idUser'], 'password', $aSession['password_md5']);
+
+		Log::enterLog(0,"Kundendatenmodul: Ende einer Support Session für Benutzer ".$aUser['nickname']." (".$aSession['idUser'].", ".$aSession['idTable'].")");
+
+	}
+	
+}
+
+$aDatabase = (array)DB::getQueryPairs("SELECT id, db_name FROM customer_db_config WHERE active = 1 ORDER BY db_name");
+
+if(!$_VARS['idTable']) {
+	reset($aDatabase);
+	$_VARS['idTable'] = key($aDatabase);
+}
+
+
+$headerOptions = [
+	'additional' => '
+		<link rel="stylesheet" href="/assets/core/jquery/jquery-ui.min.css">
+		<link rel="stylesheet" href="/assets/core/jquery/jquery-ui.theme.min.css">
+	'
+];
+Admin_Html::loadAdminHeader($headerOptions);
+
+?>
+
+<section class="content-header">
+	<h1><?=L10N::t('Kundendatenbank')?> &raquo; <?=L10N::t('Support')?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+		<div class="box-body">
+
+			<h2>Offene Sessions</h2>
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th>Benutzer</th>
+					<th>Temporäres Passwort</th>
+					<th>Eingerichtet seit</th>
+					<th>Angelegt durch</th>
+					<th>Aktion</th>
+				</tr>
+				<?
+				$aSessions = (array)DB::getQueryRows("SELECT u.username,s.idUser,s.idTable,s.id,s.password_temp,UNIX_TIMESTAMP(s.created) c FROM `customer_db_support` s, system_user u WHERE s.idAdmin = u.id ORDER BY s.created DESC");
+				foreach($aSessions as $aSession) {
+					// Userdaten holen
+					$oCustomerDB = new Ext_CustomerDB_DB($aSession['idTable']);
+					$aUserdata = $oCustomerDB->getCustomer($aSession['idUser']);
+				?>
+				<tr>
+					<td><?=$aUserdata['nickname']." (".$aUserdata['email'].")"?></td>
+					<td><?=$aSession['password_temp']?></td>
+					<td><?=strftime("%x %X",$aSession['c'])?></td>
+					<td><?=$aSession['username']?></td>
+					<td align="center"><a href="<?=$_SERVER['PHP_SELF']?>?task=delete&id=<?=$aSession['id']?>"><img title="Session beenden" src="/admin/media/delete.png" border="0"></a></td>
+				</tr>
+				<?
+				}
+				?>
+			</table>
+					
+			<h2>Neue Session einrichten</h2>
+			
+			<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+			<input type="hidden" name="task" value="start">
+			<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<?=printFormSelect("Datenbank", "idTable", $aDatabase, $_VARS['idTable'], "onChange=\"this.form.submit();\"")?>
+				<tr>
+					<th>Kunde (Name, Firma, ID)</th>
+					<td>
+							<input name="search" id="search_input" type="text" class="txt form-control" value="<?=$_VARS['search']?>" />
+						</div>
+					</td>
+				</tr>
+
+				<?=printFormText("Temporäres Passwort","passwort_temp","admin")?>
+			</table>
+			<?=printSubmit("Session starten")?>
+			</form>
+			
+  
+			
+		</div>
+	</div>
+</section>
+<?php
+
+$additionalFooter = '
+	<script src="/assets/core/jquery/jquery-ui.min.js?v='.\System::d('version').'"></script>
+
+	<script language="JavaScript" type="text/javascript">
+		//new Ajax.Autocompleter("search_input", "search_list", "", {});
+
+		$j("#search_input").autocomplete({
+			source: "/admin/extensions/customer_db/ajax.php?idTable='.(int)$_VARS['idTable'].'"
+		  });
+
+	</script>
+
+	';
+
+Admin_Html::loadAdminFooter($additionalFooter);
+
+?>

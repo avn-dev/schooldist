@@ -1,0 +1,46 @@
+hash: e5a7ebc4aa4007b50acf6822df8152de
+class:
+  wdbasic: Ext_Thebing_Marketing_Activity
+  data: \Ts\Gui2\Data\Activity
+access: thebing_marketing_activity
+id:
+  column: id
+limit_selection: false
+orderby:
+  - \Ts\Gui2\Data\Activity
+  - getOrderby
+where:
+  - \Ts\Gui2\Data\Activity
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        column: 
+            - id
+            - title
+        searchtype: LIKE
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - \Ts\Gui2\Data\Activity
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - \Ts\Gui2\Data\Activity
+          - getDialog
+     -
+        element: icon_delete
+columns:
+  - 
+    title: Titel
+    column: title
+    width: name
+    resize: true  

@@ -1,0 +1,113 @@
+class:
+  wdbasic: \TsActivities\Entity\Activity
+  data: \TsActivities\Gui2\Data\ActivityData
+access: thebing_activities_icon
+title: Aktivitäten
+pagination: false
+sortable: true
+id:
+  column: id
+  alias: ts_act
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - short
+          - name
+        alias:
+          - ts_act
+          - ts_act_i18n
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+      -
+        element: selectfilter
+        label: Schule
+        label_as_item: true
+        alias:
+          - ts_acts_filter
+        column:
+          - school_id
+        entries:
+          - Ext_Thebing_Client
+          - getSchoolList
+          - true
+        value:
+          - Ext_Thebing_School
+          - getSchoolIdFromSession
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        label: Neuer Eintrag
+        dialog:
+        - \TsActivities\Gui2\Data\ActivityData
+        - getDialog
+      -
+        element: icon_edit
+        dialog:
+        - \TsActivities\Gui2\Data\ActivityData
+        - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+      -
+        element: icon_file_manager
+columns:
+  -
+    title: Name
+    column: name
+    alias: ts_act_i18n
+    width: name
+    resize: true
+    i18n:
+      jointable: ts_act_i18n
+      pass_language: true
+      all: false
+      show_flag: true
+  -
+    title: Abkürzung
+    column: short
+    width: name
+  -
+    title: Abrechnung
+    column: billing_period
+    width: name
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [TsActivities\Gui2\Data\ActivityData, getBillingPeriodOptions]
+  -
+    title: Anbieter
+    column: providers
+    width: name
+  -
+    title: Deaktiviert ab
+    column: valid_until
+    width: date
+    format: \Ext_Thebing_Gui2_Format_Date
+  -
+    title: Schule
+    column: schools
+    width: name
+    resize: true
+    sortable: false
+    format: \Ts\Gui2\School\MultiSelectFormat
+  -
+    title: App-Bild
+    column: app_picture
+    width: yes_no
+    format: Ext_Gui2_View_Format_YesNo
+  -
+    title: Frontend-Bild
+    column: frontend_picture
+    width: yes_no
+    format: Ext_Gui2_View_Format_YesNo

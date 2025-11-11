@@ -1,0 +1,40 @@
+class:
+  wdbasic: Ext_Thebing_Placementtests_Question_Category
+  data: TsTuition\Gui2\Data\PlacementtestCategory
+sortable: true
+only_pagecount: true
+access: ''
+orderby:
+  - TsTuition\Gui2\Data\PlacementtestCategory
+  - getOrderBy
+bars:
+  - position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - id
+          - category
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - TsTuition\Gui2\Data\PlacementtestCategory
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - TsTuition\Gui2\Data\PlacementtestCategory
+          - getDialog
+      -
+        element: icon_delete
+columns:
+  -
+    title: Titel
+    column: category
+    width: name
+    resize: true

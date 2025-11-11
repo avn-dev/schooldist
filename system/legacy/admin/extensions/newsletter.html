@@ -1,0 +1,724 @@
+<?
+
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+?>
+
+<?=Admin_Html::loadAdminHeader()?>
+
+<?
+
+if($_POST['action'] == "config") {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+	$config->newsletter_id = $_VARS['newsletter_id'];
+	$config->save_config($_VARS['page_id'], $_VARS['element_id']);
+}
+
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+			<h1>Standardmodule &raquo; Newsletter</h1>
+			<p>
+<?
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$res = db_query($db_data['module'],"SELECT id,name FROM newsletter_init ORDER BY name");
+	$aNewsletter = array();
+	while($my = get_data($res)) {
+		$aNewsletter[$my['id']] = $my['name'];
+	}
+
+?>
+			<form method="POST" action="newsletter.html">
+			<input type="hidden" name="action" value="config">
+			<input type="hidden" name="page_id" value="<?=$_VARS['page_id']?>">
+			<input type="hidden" name="element_id" value="<?=$_VARS['element_id']?>">
+			<?=printTableStart()?>
+			<?=printFormSelect("Newsletter", "newsletter_id", $aNewsletter, $config->newsletter_id)?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>		
+<?
+} else {
+?>
+
+<style>
+.newsletter_elem{
+	width:350px;
+	border:1px solid black;
+}
+.newsletter_small{
+	width:50px;
+	border:1px solid black;
+}
+.newsletter_middle{
+	width:160px;
+	border:1px solid black;
+}
+.newsletter_large{
+	width:580px;
+	border:1px solid black;
+}
+</style>
+<script>
+<!--
+
+function umklappen(aus, ein){	// (c) by plan-i GmbH, all rights reserved!!!
+   	var i = 0;				<?	// Diese Funktion blendet benannte Bereiche ein oder aus ?>
+   	var rows=document.getElementsByName(aus);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='inline';
+	  	}
+   	var rows=document.getElementsByName(ein);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='none';
+	  	}
+	document.all.active.value=aus;
+	}
+
+function go_detail(act) {
+	if(act == "add") {
+		document.newsletter_newsletter_1.newsletter_action.value='properties'; 
+		document.newsletter_newsletter_1.submit();
+	} else if(document.newsletter_newsletter_1.newsletter_id.value>0) {
+		document.newsletter_newsletter_1.newsletter_action.value=act; 
+		document.newsletter_newsletter_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+function go_entry(act) {
+	if(act=="add") {
+		document.newsletter_newsletter_1.newsletter_action.value="edit";
+		document.newsletter_newsletter_1.entry_id.value=0;
+		document.newsletter_newsletter_1.submit();
+	} else if(document.newsletter_newsletter_1.entry_id.value>0) {
+		document.newsletter_newsletter_1.newsletter_action.value=act; 
+		document.newsletter_newsletter_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+function open_media(newsletter_field,s) {
+	window.open('/admin/frame.<? echo $file_ext; ?>?file=media&mode=selecticon&newsletter_name=entry_form&input_name=&submit_button_value=Bild auswählen&newsletter_submit=0&type=images&search='+s+'&input_name_title=&input_name_name='+newsletter_field, 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+
+-->
+</script>
+
+
+
+<?
+// $active initialisieren:
+$active=(int)$active; // so kommt in $active eine Null, wenn da ein text, oder gar nichts drin steht.
+?>
+<form name="formular" method="post" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="HIDDEN" NAME="active" value="<?=$active?>">
+</form>
+
+
+
+<?
+if(!$_VARS['newsletter_action']){
+?>
+<h2>Bitte wählen Sie zunächst aus welchen Newsletter Sie pflegen wollen:</h2>
+      <IFRAME src="newsletter_elements.html" style="width:100%;height:340" name="detail2" frameborder="1" scrolling="yes"></IFRAME>
+
+<form name="newsletter_newsletter_1" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="newsletter_id" value="0">
+<input type="hidden" name="newsletter_action" value="0">
+<input type="HIDDEN" NAME="active" value="0">
+</form>
+<p align="right">
+<?make_button("Newsletter hinzufügen", "#", "onclick=\"go_detail('add');\"");?>&nbsp;
+<?make_button("Newsletter löschen", "#", "onclick=\"if(confirm('Möchten Sie diesen Newsletter wirklich löschen?')) go_detail('delete');\"");?>&nbsp;
+<?make_button("Eigenschaften bearbeiten", "#", "onclick=\"go_detail('properties');\"");?>&nbsp;
+<?make_button("Newsletter versenden", "#", "onclick=\"go_detail('send');\"");?>
+</p>
+<p align="right">
+<!--<?make_button("Newsletter verwalten", "#", "onclick=\"go_detail('history');\"");?>&nbsp;-->
+<?make_button("Empfänger bearbeiten", "#", "onclick=\"go_detail('entries');\"");?>&nbsp;
+<?make_button("Empfänger importieren", "#", "onclick=\"go_detail('import');\"");?>&nbsp;
+<?make_button("Empfänger exportieren", "#", "onclick=\"go_detail('download');\"");?>
+</p>
+<?
+} elseif($_VARS['newsletter_action'] == 'delete') {
+
+	if($_VARS['newsletter_id'] > 0) {      
+		$sQuery = "DELETE FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."' LIMIT 1";
+		db_query($db_data['module'],$sQuery);
+	}
+
+?>
+<script>
+	document.location.href='newsletter.html';
+</script>
+<?
+} elseif($_VARS['newsletter_action'] == 'download') {
+?>
+<form name="newsletter_newsletter_1" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="entry_id" value="0">
+<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+<input type="hidden" name="newsletter_action" value="0">
+<input type="HIDDEN" NAME="active" value="0">
+</form>
+<TABLE cellpadding="4" cellspacing="1" border="0" width="100%">
+	<TR height="185" class="first">
+		<TD width=99%>
+<?
+	$newsletter_abfrage3 = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+	$newsletter_array3 = get_data($newsletter_abfrage3);
+
+	@mkdir("./newsletter",$system_data['chmod_mode_dir']);
+	@chmod("./newsletter",$system_data['chmod_mode_dir']);
+	$fExport = "./newsletter/newsletter.csv";
+	$fh = fopen($fExport, "w");
+	$csv = '"Anrede","Vorname","Weitere Vornamen","Nachname","Suffix","Firma","Abteilung","Position","Straße geschäftlich","Straße geschäftlich 2","Straße geschäftlich 3","Ort geschäftlich","Region geschäftlich","Postleitzahl geschäftlich","Land geschäftlich","Straße privat","Straße privat 2","Straße privat 3","Ort privat","Region privat","Postleitzahl privat","Land privat","Weitere Straße","Weitere Straße 2","Weitere Straße 3","Weiterer Ort","Weitere Region","Weitere Postleitzahl","Weiteres Land","Telefon Assistent","Fax geschäftlich","Telefon geschäftlich","Telefon geschäftlich 2","Rückmeldung","Autotelefon","Telefon Firma","Fax privat","Telefon privat","Telefon privat 2","ISDN","Mobiltelefon","Weiteres Fax","Weiteres Telefon","Pager","Haupttelefon","Mobiltelefon 2","Telefon für Hörbehinderte","Telex","Abrechnungsinformation","Benutzer 1","Benutzer 2","Benutzer 3","Benutzer 4","Beruf","Büro","E-Mail-Adresse","E-Mail: Angezeigter Name","E-Mail 2: Adresse","E-Mail 2: Angezeigter Name","E-Mail 3: Adresse","E-Mail 3: Angezeigter Name","Empfohlen von","Geburtstag","Geschlecht","Hobby","Initialen","Internet-Frei/Gebucht","Jahrestag","Kategorien","Kinder","Konto","Name Assistent","Name des/der Vorgesetzten","Notizen","Organisations-Nr.","Ort","Partner","Postfach","Priorität","Privat","Regierungs-Nr.","Reisekilometer","Sprache","Stichwörter","Vertraulichkeit","Verzeichnisserver","Webseite"';
+	$csv .= "\r\n";
+	fputs($fh,$csv);
+
+	$newsletter_abfrage4 = db_query($db_module, "SELECT * FROM newsletter_recipients WHERE newsletter_id = '".$_VARS['newsletter_id']."' AND active = 1 ORDER BY id DESC");
+	while($my_abfrage4 = get_data($newsletter_abfrage4)) {
+		if($my_abfrage4['sex']==2)
+			$anrede = "Frau";
+		elseif($my_abfrage4['sex']==1)
+			$anrede = "Herr";
+		else
+			$anrede = "";
+		$csv = '"'.$anrede.'","'.$my_abfrage4['firstname'].'","","'.$my_abfrage4['name'].'","","","","",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"'.$my_abfrage4['email'].'","'.$my_abfrage4['email'].'",,,,,,"0.0.00","Keine Angabe",,"",,"0.0.00",,,"",,,,,"",,,"Normal","Aus",,,"","","Normal"';
+		$csv .= "\r\n";
+		fputs($fh,$csv);
+	}
+
+	fclose($fh);
+	chmod($fExport, $system_data['chmod_mode_file']);   
+
+?>
+<script>
+window.open('<?=$fExport?>');
+history.back();
+</script>
+<?
+} elseif($_VARS['newsletter_action'] == 'import') {
+
+	$rNewsletter = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+	$aNewsletter = get_data($rNewsletter);
+
+?>
+<h2>Import von Empfängern in "<?=$aNewsletter['name']?>":</h2>
+
+<form method="POST" name="import_form" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="newsletter_action" value="startimport">
+<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+			<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th>Trennzeichen</th>
+					<td><input type="text" name="import_separator" value=";" class="txtxs"></td>
+				</tr>
+				<tr>
+					<th>Geschlecht</th>
+					<td>männlich <input type="text" name="import_male" value="m" class="txtxs"> weiblich <input type="text" name="import_female" value="w" class="txtxs"></td>
+				</tr>
+				<tr>
+					<th>Position</th>
+					<td>Name 	<input type="text" name="import_name" value="1" class="txtxs"> 
+					Vorname 	<input type="text" name="import_firstname" value="2" class="txtxs"> 
+					E-Mail 		<input type="text" name="import_email" value="3" class="txtxs"> 
+					Geschlecht	<input type="text" name="import_sex" value="4" class="txtxs">
+					</td>
+				</tr>
+				<tr>
+					<th>Datei</th>
+					<td>Bitte wählen Sie eine .CSV Datei von Ihrer Festplatte aus.<br><input type="file" name="import_file" value="" class="txt"></td>
+				</tr>
+			</table>
+</form>
+	<p align="right">
+	<?make_button("Import starten", "#", "onclick=\"document.import_form.submit();\"");?>&nbsp;
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html?active=0';\"");?>
+	</p>
+
+<?
+} elseif($_VARS['newsletter_action'] == 'startimport') {
+
+	$rNewsletter = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+	$aNewsletter = get_data($rNewsletter);
+
+$i=0;
+$arr = file($_FILES['import_file']['tmp_name']);
+foreach($arr as $elem) {
+	$entry = explode($_VARS['import_separator'],$elem);
+	foreach($entry as $k=>$v) {
+		$entry[$k] = str_replace('"','',$entry[$k]);
+		$entry[$k] = preg_replace('/(^[^a-z0-9 ]+)|([^a-z0-9 ]+$)/i', '', $entry[$k]); 
+		$entry[$k] = trim($entry[$k]);
+	}
+	$name 		= $entry[$_VARS['import_name']-1];
+ 	$firstname 	= $entry[$_VARS['import_firstname']-1];
+ 	$email 		= $entry[$_VARS['import_email']-1];
+	$sex 		= $entry[$_VARS['import_sex']-1];
+	if($sex == $import_male) 
+		$sex = "1";
+	elseif($sex == $import_female) 
+		$sex = "2";
+	else 
+		$sex = 0;
+	if(checkEmailMx($email)) {
+		if(!get_data(db_query($db_data['module'],"SELECT id FROM newsletter_recipients WHERE email LIKE '".\DB::escapeQueryString($email)."'"))) {
+			db_query($db_data['module'],"INSERT INTO newsletter_recipients (newsletter_id, name, firstname, email, sex, active) VALUES ('".$_VARS['newsletter_id']."','".\DB::escapeQueryString($name)."','".\DB::escapeQueryString($firstname)."','".\DB::escapeQueryString($email)."','".\DB::escapeQueryString($sex)."',1)");
+			$i++;
+		}
+	}
+}
+echo $i;
+?>
+<script>
+	document.location.href='newsletter.html?newsletter_id=<?=$_VARS['newsletter_id']?>&newsletter_action=entries&active=0&dnp=<?=rand()?>';
+</script>
+<?
+} elseif($_VARS['newsletter_action'] == 'send') {
+
+	$rNewsletter = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+	$aNewsletter = get_data($rNewsletter);
+
+?>
+<script>
+
+function preview() {
+	document.send_form.submit();
+}
+
+</script>
+
+	<h2>Newsletter versenden an "<?=$aNewsletter['name']?>":</h2>
+
+<form method="POST" name="send_form" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="newsletter_action" value="preview">
+<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+			<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th>Empfänger</th>
+					<td><select name="send_recipients" class="txt">
+						<option value="0">Alle
+<?
+$newsletter_abfrage = (db_query($db_module, "SELECT * FROM newsletter_recipients WHERE newsletter_id = '".$_VARS['newsletter_id']."' ORDER BY name"));
+while($my_ne = get_data($newsletter_abfrage)) {
+	echo "						<option value=".$my_ne['id'].">".$my_ne['firstname']." ".$my_ne['name']." (".$my_ne['email'].")\n";
+}
+?>
+					</select></td>
+				</tr>
+				<?=printFormText("Betreff","send_subject")?>
+				<?=printFormText("Anrede für männliche Empfänger","send_sex[1]","Sehr geehrter Herr")?>
+				<?=printFormText("Anrede für weibliche Empfänger","send_sex[2]","Sehr geehrte Frau")?>
+				<?=printFormText("Anrede für Empfänger ohne Zuordnung","send_sex[0]","Sehr geehrte Damen und Herren")?>
+				<?=printFormPageSelect("Ort der Abmeldeseite","nl_removelink")?>
+				<?=printFormPageSelect("Ort der HTML E-Mail","nl_htmlpath")?>
+				<tr>
+					<th valign="top">Alternative Text E-Mail</th>
+					<td>
+					<div style="padding: 5px 5px 5px 5px;width:580;height:20;background-color:#dededf;"><strong>Platzhalter:</strong>
+					#name#
+					#id#
+					#vorname#
+					#anrede#
+					#email#
+					</div>
+					<textarea name="send_text" class="txt" style="width:580px;" rows=20>#anrede# #vorname# #name#,
+
+
+
+______________________________________________________________________________
+Diese Nachricht wurde vom <?=$project_name?> Newslettersystem versendet.
+Wenn Sie in Zukunft keine weiteren Nachrichten erhalten wollen, klicken Sie 
+einfach auf den folgenden Link:
+#remove#?newsletter_action=remuser&newsletter_recipient=#email#
+					</textarea></td>
+				</tr>
+			</table>
+</form>
+	<p align="right">
+	<?make_button("Vorschau", "#", "onclick=\"preview()\"");?>&nbsp;
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html?active=0';\"");?>
+	</p>
+
+<?
+} elseif($_VARS['newsletter_action'] == 'preview') {
+
+	$rNewsletter = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+	$aNewsletter = get_data($rNewsletter);
+
+?>
+<script>
+function confirmsend() {
+	if(confirm("Möchten Sie den Newsletter wirklich absenden?")) {
+		document.send_form.submit();
+	} else {
+		return false;
+	}
+}
+
+
+</script>
+
+<?
+
+if($send_recipients=="0") {
+	$nl_receiver = "Alle";
+} else {
+	list($nl_receiver) = get_data(db_query($db_module, "SELECT email FROM newsletter_recipients WHERE id = '$send_recipients'"));
+}
+
+?>
+	<h2>Newsletter versenden an "<?=$aNewsletter['name']?>":</h2>
+
+<form method="POST" name="send_form" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="newsletter_action" value="startsend">
+<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+<input type="hidden" name="nl_removelink" value="<?=$nl_removelink?>">
+			<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+				<tr>
+					<th>Empfänger</th>
+					<td><input type="hidden" name="send_recipients" value="<?=$send_recipients?>"><?=$nl_receiver?></td>
+				</tr>
+				<tr>
+					<th>Betreff</th>
+					<td><input type="hidden" name="send_subject" value="<?=$send_subject?>"><?=$send_subject?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für männliche Empfänger</th>
+					<td><input type="hidden" name="send_sex[1]" value="<?=$send_sex[1]?>"><?=$send_sex[1]?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für weibliche Empfänger</th>
+					<td><input type="hidden" name="send_sex[2]" value="<?=$send_sex[2]?>"><?=$send_sex[2]?></td>
+				</tr>
+				<tr>
+					<th valign="top">Anrede für Empfänger ohne Zuordnung</th>
+					<td><input type="hidden" name="send_sex[0]" value="<?=$send_sex[0]?>"><?=$send_sex[0]?></td>
+				</tr>
+
+<? if(is_file(\Util::getDocumentRoot().$nl_htmlpath)) { ?>
+				<tr>
+					<th valign="top">HTML E-Mail</th>
+					<td>
+					<iframe src="<?=$system_data['domain'].$nl_htmlpath?>" style="width:100%;background-color:#FFFFFF;border:1px solid black;" frameborder="0" onclick="return false;">
+					</iframe>
+					<input type="hidden" name="nl_htmlpath" value="<?=$nl_htmlpath?>"></td>
+				</tr>
+<? } ?>
+				<tr>
+					<th valign="top">Alternative Text E-Mail</th>
+					<td>
+					<div style="width:100%;background-color:#FFFFFF;border:1px solid black;font-family:Courier;">
+					<?=nl2br($send_text)?>
+					</div>
+					<input type="hidden" name="send_text" value="<?=$send_text?>"></td>
+				</tr>
+			</table>
+</form>
+	<p align="right">
+	<?make_button("senden", "#", "onclick=\"confirmsend()\"");?>&nbsp;
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html?active=0';\"");?>
+	</p>
+					
+<?
+} elseif($_VARS['newsletter_action'] == 'startsend') {
+
+	$rNewsletter = db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'");
+	$aNewsletter = get_data($rNewsletter);
+
+	$i=0;
+	$iDoubles = 0;
+
+	if($send_recipients>0)
+		$all = "AND id = ".$send_recipients."";
+	else
+		$all = "";
+
+	$rRecipients = db_query($db_data['module'], "SELECT * FROM newsletter_recipients WHERE newsletter_id  = '".$_VARS['newsletter_id']."' ".$all." AND active = 1");
+	$iRecipients = count_rows($rRecipients);
+
+	flush();
+	ignore_user_abort(true);
+	set_time_limit(7200);
+
+	$factor = 400 / $iRecipients;
+	$aDoneRecipients = array();
+
+?>
+			<h2>Newsletter versenden an "<?=$aNewsletter['name']?>":</h2>
+			<p>
+			Fortschritt:
+			<table id="table1" cellpadding="0" cellspacing="0" border="0" style="height:10px;width:400px;border:1px solid #29527A;table-layout:fixed;margin-top:5px;">
+				<tr>
+					<td id="td1" style="width:1px;background-color:#dededf;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+					<td id="td2" style="width:399px;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+				</tr>
+			</table>
+			</p>
+			<p>
+			Aktueller Stand:<br>
+			<span id="spanStatus">0</span>
+			</p>
+		</td>
+	</tr>
+</table>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?
+
+	include('../includes/htmlMimeMail.php');
+
+	if(is_file(\Util::getDocumentRoot().$nl_htmlpath)) {
+		$temp_code = implode("\n",file($system_data['domain'].$nl_htmlpath));
+
+		$temp_code = str_replace('href="/','href="'.$system_data['domain'].'/',$temp_code);
+
+		// Prepare HTML Code
+		preg_match_all("/([A-Za-z0-9_\-\/\.]+(css|jpg|png|gif))/",$temp_code,$regs);
+		$array = array();
+		foreach($regs[1] as $elem) {
+			if(is_file(\Util::getDocumentRoot().$elem) && !in_array($elem,$array)) {
+				$array[] = $elem;
+				$temp_code = str_replace($elem,substr($elem,strrpos($elem,"/")),$temp_code);
+			}
+		}
+		$temp_code = preg_replace("/[^\"]+#remove#/",$system_data['domain'].$nl_removelink."?newsletter_action=remuser&newsletter_recipient=#email#",$temp_code);
+	}
+
+	$send_text = preg_replace("/(\r\n|\n|\r)/", "\n",$send_text ); 
+
+	$send_text = str_replace("#remove#",$system_data['domain'].$nl_removelink,$send_text);
+
+	@mkdir("./newsletter",$system_data['chmod_mode_dir']);
+	@chmod("./newsletter",$system_data['chmod_mode_dir']);
+
+	$sLogname = "./newsletter/log_".time().".txt";
+	$fh = fopen($sLogname,"w");
+
+	fwrite($fh,"Ein Newsletter wurde am ".strftime("%x %X",time())." an folgende Empfänger versendet:\n\n");
+
+while($newsletter_array4 = get_data($rRecipients)) {
+	if(!in_array($aRecipients['email'],$aDoneRecipients)) {
+		$mail = new htmlMimeMail();
+
+		$text = $send_text;
+		$text = str_replace("#anrede#",$send_sex[$newsletter_array4['sex']],$text);
+		$text = str_replace("#id#",$newsletter_array4['id'],$text);
+		$text = str_replace("#name#",$newsletter_array4['name'],$text);
+		$text = str_replace("#vorname#",$newsletter_array4['firstname'],$text);
+		$text = str_replace("#email#",$newsletter_array4['email'],$text);
+	
+		$html = $temp_code;
+		$html = str_replace("#anrede#",$send_sex[$newsletter_array4['sex']],$html);
+		$html = str_replace("#id#",$newsletter_array4['id'],$html);
+		$html = str_replace("#name#",$newsletter_array4['name'],$html);
+		$html = str_replace("#vorname#",$newsletter_array4['firstname'],$html);
+		$html = str_replace("#email#",$newsletter_array4['email'],$html);
+	
+		if(is_file(\Util::getDocumentRoot().$nl_htmlpath)) {
+			foreach($array as $elem) {
+		    	$handle = $mail->getFile($system_data['domain'].$elem);
+	    		$mail->addHtmlImage($handle, substr($elem,strrpos($elem,"/")), 'image/'.substr($elem,strrpos($elem,".")).'');
+			}
+			$mail->setHtml($html, $text, './');
+		} else {
+			$mail->setText($text);
+		}
+		$mail->setReturnPath($aNewsletter['email']);
+		$mail->setFrom("".$system_data['project_name']." <".$aNewsletter['email'].">");
+		$mail->setSubject($send_subject);
+		$mail->setHeader('X-Mailer', 'webDynamics Newslettermodul (by Fidelo Software GmbH)');
+
+	  	$result = $mail->send(array($newsletter_array4['email']), 'mail');
+	
+		fwrite($fh,"Status: ".intval($result)." Empfänger: ".$newsletter_array4['email']." Fehler: ".$mail->errors."\r\n");
+	
+		if($result) {
+			$i++;
+		}
+		if($i%20 == 0) {
+			sleep(1);
+			echo "<script>document.getElementById('spanStatus').innerText='".$i."';document.getElementById('td1').style.width='".intval($factor*$i)."';document.getElementById('td2').style.width='".intval(400-($factor*$i))."';</script>\n";
+			flush();
+		}
+	} else {
+		$iDoubles++;
+	}
+}
+
+//db_query($db_module,"INSERT INTO newsletter_mails SET newsletter_id = '".$_VARS['newsletter_id']."', date = '".strftime("%A %d. %B %Y %H:%M:%S",time())."', ip = '".$_SERVER['REMOTE_ADDR']."', author = '".$user_data['name']."', text = '".$text."' ");
+fclose($fh);
+
+?>
+
+	<script>
+	document.getElementById('spanStatus').innerText='<?=$i?>';
+	document.getElementById('td1').style.width='400';
+	document.getElementById('td2').style.width='0';
+	</script>
+	<h3>Ihre Nachricht wurde erfolgreich an <?=$i?> Empfänger versendet.</h3>
+	<p><?=$iDoubles?> doppelte Empfänger wurden rausgefiltert.</p>
+	<p>Hier finden Sie das Protokoll dieser Nachricht &raquo; <a href="<?=$sLogname?>" target="_blank">Protokoll</a></p>
+	<p align="right">
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html?active=0';\"");?>
+	</p>
+
+<?
+} elseif($_VARS['newsletter_action'] == 'entries') {
+?>
+<form name="newsletter_newsletter_1" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="entry_id" value="0">
+<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+<input type="hidden" name="newsletter_action" value="0">
+<input type="HIDDEN" NAME="active" value="0">
+</form>
+
+<?
+$newsletter_abfrage3 = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+$newsletter_array3 = get_data($newsletter_abfrage3);
+?>
+<h2>Empfänger von "<?=$newsletter_array3['name']?>":</h2>
+      <IFRAME src="newsletter_detail.html?newsletter_action=<?=$_VARS['newsletter_action']?>&newsletter_id=<?echo $_VARS['newsletter_id'];?>" style="width:100%;height:340px; border: 1px solid #999999;" name="detail" frameborder="0" scrolling="yes"></IFRAME>
+	<p align="right">
+	<?make_button("hinzufügen", "#", "onclick=\"go_entry('add');\"");?>&nbsp;
+	<?make_button("editieren", "#", "onclick=\"go_entry('edit');\"");?>&nbsp;
+	<?make_button("löschen", "#", "onclick=\"detail.deleteitem();\"");?>
+	</p>
+	<p align="right">
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html';\"");?>
+	</p>
+<?
+} elseif($_VARS['newsletter_action'] == 'properties') {
+	
+$newsletter_abfrage3 = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+$newsletter_array3 = get_data($newsletter_abfrage3);
+?>
+<h2>Eigenschaften von "<?=$newsletter_array3['name']?>":</h2>
+
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+	<form method="POST" name="init_form" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="newsletter_action" value="saveinit">
+	<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+		<?=printFormText("Name","init_name",$newsletter_array3['name'])?>
+		<?=printFormText("Absender E-Mail-Adresse","init_email",$newsletter_array3['email'])?>
+
+		<?=printFormText("Betreff","send_subject")?>
+		<?=printFormText("Anrede für männliche Empfänger","send_sex[1]","Sehr geehrter Herr")?>
+		<?=printFormText("Anrede für weibliche Empfänger","send_sex[2]","Sehr geehrte Frau")?>
+		<?=printFormText("Anrede für Empfänger ohne Zuordnung","send_sex[0]","Sehr geehrte Damen und Herren")?>
+		<?=printFormPageSelect("Ort der Abmeldeseite","nl_removelink")?>
+		<?=printFormPageSelect("Ort der HTML E-Mail","nl_htmlpath")?>
+
+	</form>
+	</table>
+	<p align="right">
+	<?make_button("speichern", "#", "onclick=\"document.init_form.submit();\"");?>&nbsp;
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html?active=0';\"");?>
+	</p>
+
+<?
+} elseif($_VARS['newsletter_action'] == 'saveinit') {
+
+	if($_VARS['newsletter_id']>0) {
+		db_query($db_module,"UPDATE newsletter_init SET name = '".$_VARS['init_name']."', email = '".$_VARS['init_email']."' WHERE id = '".$_VARS['newsletter_id']."'");
+	} else {
+		db_query($db_module,"INSERT INTO newsletter_init SET name = '".$_VARS['init_name']."', email = '".$_VARS['init_email']."'");
+		$_VARS['newsletter_id'] = get_insert_id();
+	}
+?>
+<script>
+	document.location.href='newsletter.html?newsletter_id=<?=$_VARS['newsletter_id']?>&newsletter_action=properties&active=0&dnp=<?=rand()?>';
+</script>
+<?
+} elseif($_VARS['newsletter_action'] == 'new' || $_VARS['newsletter_action'] == 'edit') {
+
+	$rNewsletter = (db_query($db_module, "SELECT * FROM newsletter_init WHERE id = '".$_VARS['newsletter_id']."'"));
+	$aNewsletter = get_data($rNewsletter);
+
+	if($_VARS['entry_id'] > 0) {
+		$rEntry = (db_query($db_module, "SELECT * FROM newsletter_recipients WHERE id = '".$_VARS['entry_id']."'"));
+		$aEntry = get_data($rEntry);
+	}
+
+?>
+<h2>Eigenschaften von "<?=$aNewsletter['name']?>":</h2>
+
+<form method="POST" name="entry_form" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="newsletter_action" value="save">
+<input type="hidden" name="newsletter_id" value="<?=$_VARS['newsletter_id']?>">
+<input type="hidden" name="entry_id" value="<?=$_VARS['entry_id']?>">
+<TABLE cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+	<tr>
+		<th>Name</th>
+		<td><input type=text name="entry_name" value="<?=$aEntry['name']?>" class="txt"></td>
+	</tr>
+	<tr>
+		<th>Vorname</th>
+		<td><input type=text name="entry_firstname" value="<?=$aEntry['firstname']?>" class="txt"></td>
+	</tr>
+	<tr>
+		<th>E-Mail</th>
+		<td><input type=text name="entry_email" value="<?=$aEntry['email']?>" class="txt"></td>
+	</tr>
+	<tr>
+		<th>Geschlecht</th>
+		<td>
+		<select name="entry_sex" class="txt">
+		<option value="0" <?=(($aEntry['sex']=="0")?"selected":"")?>>unbekannt
+		<option value="2"  <?=(($aEntry['sex']=="2")?"selected":"")?>>weiblich
+		<option value="1"  <?=(($aEntry['sex']=="1")?"selected":"")?>>männlich
+		</select>
+		</td>
+	</tr>
+</TABLE>
+</form>
+	<p align="right">
+	<?make_button("speichern", "#", "onclick=\"document.entry_form.submit();\"");?>&nbsp;
+	<?make_button("zurück zur Liste", "#", "onclick=\"document.location.href='newsletter.html?newsletter_id=".$_VARS['newsletter_id']."&newsletter_action=entries&active=0';\"");?>
+	</p>
+
+
+<?
+} elseif($_VARS['newsletter_action'] == 'save') {
+
+	if($_VARS['entry_id'] > 0) {      
+		$sQuery = "UPDATE newsletter_recipients SET name = '".\DB::escapeQueryString($entry_name)."', firstname = '".\DB::escapeQueryString($entry_firstname)."', email = '".\DB::escapeQueryString($entry_email)."', sex = '".\DB::escapeQueryString($entry_sex)."', active = 1 WHERE id = '".$_VARS['entry_id']."'";
+	} else {
+		$sQuery = "INSERT INTO newsletter_recipients SET newsletter_id = '".$_VARS['newsletter_id']."', name = '".\DB::escapeQueryString($entry_name)."', firstname = '".\DB::escapeQueryString($entry_firstname)."', email = '".\DB::escapeQueryString($entry_email)."', sex = '".\DB::escapeQueryString($entry_sex)."', active = 1";
+	}
+	db_query($db_data['module'],$sQuery);
+
+?>
+<script>
+	document.location.href='newsletter.html?newsletter_id=<?=$_VARS['newsletter_id']?>&newsletter_action=entries&active=0';
+</script>
+<?
+} elseif($_VARS['newsletter_action'] == 'delete') {
+
+?>
+<script>
+	document.location.href='form.html?newsletter_id=<?=$_VARS['newsletter_id']?>&newsletter_action=entries&active=0';
+</script>
+<?
+}
+?>
+</td>
+	</tr>
+</table>
+<?
+}
+?>
+<?=Admin_Html::loadAdminFooter()?>
+

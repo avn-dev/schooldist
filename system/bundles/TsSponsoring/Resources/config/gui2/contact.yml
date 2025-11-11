@@ -1,0 +1,5 @@
+parent: ts_contact
+options:
+  dialog_addresses: false
+access: thebing_marketing_sponsoring
+title: Kontakte

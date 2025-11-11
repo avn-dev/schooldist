@@ -1,0 +1,54 @@
+class:
+  wdbasic: Ext_TC_Countrygroup
+  data: Ext_TC_Countrygroup_Gui2_Data
+access: [core_admin_countrygroups, '']
+orderby:
+  - Ext_Thebing_Email_Template_Gui2
+  - getOrderBy
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        id: search
+        column:
+          - name
+        searchtype: LIKE
+        label: Suche
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+  -
+    position: top
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Countrygroup_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Countrygroup_Gui2_Data
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_cg
+    width: 300
+    resize: true
+  -
+    title: Gültig bis
+    column: valid_until
+    alias: tc_cg
+    width: date
+    format: Ext_Thebing_Gui2_Format_Date
+    default: false

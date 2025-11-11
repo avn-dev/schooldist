@@ -1,0 +1,497 @@
+set: courses
+class:
+  wdbasic: Ext_TS_Inquiry_Journey_Course
+  gui: Ext_Thebing_Gui2
+  data: Ext_TS_Inquiry_Journey_Course_Gui2_Data
+  date_format: Ext_Thebing_Gui2_Format_Date
+access: thebing_tuition_course_list
+title: 
+  - Ext_TS_System_Navigation
+  - t
+id:
+  column: id
+  alias: ts_ijc
+where: 
+  - Ext_TS_Inquiry_Journey_Course_Gui2_Data
+  - getListWhere
+designer:
+  filter: ts_inquiry_journey_courses
+  additional_flex:
+    -
+      section: tuition_courses_general
+      primary_key: course_id
+    - 
+      section: student_record_course
+      primary_key: inquiry_id
+      primary_key_alias: ts_ij
+    - 
+      section: student_record_journey_course
+      primary_key: id
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: selectfilter
+        label: Eingecheckt
+        column: checkin
+        value: ''
+        entries:
+          - Ext_TC_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          no: '`checkin` IS NULL'
+          yes: '`checkin` IS NOT NULL'
+        label_as_item: true
+  -
+    position: top
+    last: true
+    set: [exams]
+    elements:
+      -
+        element: icon
+        label: TELC
+        action: telc_export
+        task: requestAsUrl
+        active: 1
+        access:
+          - thebing_tuition_course_list
+          - telc_export
+        img:
+          - Ext_TC_Util
+          - getIcon
+          - excel
+columns:
+  -
+    title: Eingecheckt
+    column: checkin
+    width: datetime
+    default: false
+    format: Ext_Thebing_Gui2_Format_Date_Time
+    style: Ext_TS_Inquiry_Index_Gui2_Style_Checkin
+  -
+    title: Kundennummer
+    group: Persönliche Daten
+    column: number
+    alias: tc_cn
+    data: customer_number
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - customer_number
+       - true
+    width: number
+    resize: false
+    filterset:
+      type: input
+  -
+    title: Name
+    column: inbox_name
+    alias: tc_c
+    sortable_column: lastname
+    group: Persönliche Daten
+    width: name
+    resize: true
+    format: Ext_Thebing_Gui2_Format_Name
+  -
+    title: Vorname
+    column: firstname
+    alias: tc_c
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: input
+  -
+    title: Nachname
+    column: lastname
+    alias: tc_c
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: input
+  -
+    title: [Ext_TS_Inquiry_Index_Gui2_Data, getGroupColumnTitle]
+    group: Persönliche Daten
+    column: short
+    alias: kg
+    data: group_short
+    width: group_short
+    resize: false
+    sortable: true
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - group_name
+      - true
+  -
+    title: Alter
+    column: age
+    format: Ext_Thebing_Gui2_Format_Age
+    group: Persönliche Daten
+    width: number
+    resize: false
+    default: false
+  -
+    title: Geburtsdatum
+    column: birthday
+    format: Ext_Thebing_Gui2_Format_Date
+    group: Persönliche Daten
+    alias: tc_c
+    width: date
+    resize: false
+    default: false
+  -
+    title: Geschlecht
+    column: gender
+    format: Ext_Thebing_Gui2_Format_Gender
+    group: Persönliche Daten
+    alias: tc_c
+    width: name
+    resize: false 
+    default: false
+  -
+    title: Adresse
+    column: address
+    group: Persönliche Daten
+    alias: tc_a
+    width: name
+    resize: false
+    default: false
+  -
+    title: Adresszusatz
+    column: address_addon
+    group: Persönliche Daten
+    alias: tc_a
+    width: name
+    resize: false
+    default: false
+  -
+    title: PLZ
+    column: zip
+    group: Persönliche Daten
+    alias: tc_a
+    width: name
+    resize: false
+    default: false
+  -
+    title: Stadt
+    column: city
+    group: Persönliche Daten
+    alias: tc_a
+    width: name
+    resize: false
+    default: false
+  -
+    title: Land
+    column: country_iso
+    format: Ext_TC_Gui2_Format_Country
+    group: Persönliche Daten
+    alias: tc_a
+    width: name
+    resize: false
+    default: false
+  -
+    title: Nationalität
+    column: nationality
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Muttersprache
+    column: customer_mother_tongue
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: E-Mail
+    column: email
+    group: Persönliche Daten
+    alias: tc_ea
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+       - email
+       - true
+    width: name
+    resize: false
+    default: false
+    filterset:
+      type: input
+  -
+    title: Telefonnummer
+    column: phone_private
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: Mobilfunknummer
+    column: phone_mobile
+    group: Persönliche Daten
+    width: name
+    resize: false
+    default: false
+  -
+    title: E-Mail (Gruppe)
+    column: group_email
+    group: Persönliche Daten
+    width: name
+    default: false
+  -
+    title: Agenturnummer
+    column: number
+    group: Persönliche Daten
+    alias: ts_an
+    data: agency_number
+    width: number
+    resize: false
+    default: false
+  -
+    title: Agentur
+    column: ext_1
+    group: Persönliche Daten
+    alias: ka
+    width: name
+    resize: false
+    filterset:
+      type: input
+  -
+    title: Schülerstatus
+    column: student_status
+    sortable_column: text
+    group: Persönliche Daten
+    alias: k_ss
+    width: name
+    resize: false
+    default: false
+  -
+    visible: false
+    title: Schülerstatus
+    column: status_id
+    group: Persönliche Daten
+    alias: ts_i
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCustomerStatusOptions
+  -
+    title: Nummer
+    column: number
+    group: Kurs
+    alias: ts_ijc
+    width: short_name
+    default: false
+  - 
+    title: Kurs
+    column: name_short
+    group: Kurs
+    alias: ktc
+    width: short_name
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+        - course_full_name
+        - true
+    resize: false
+  -
+    visible: false
+    title: Kurs
+    column: id
+    group: Kurs
+    alias: ktc
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Journey_Course_Gui2_Data
+        - getCourseList
+  -
+    visible: false
+    title: Kurskategorie
+    column: category_id
+    group: Kurs
+    alias: ktc
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCourseCategories
+  -
+    title: GL
+    description: Gebuchte Lektionen
+    column: lessons_absolute
+    group: Kurs
+    width: icon
+    format: \Ext_Thebing_Gui2_Format_Float
+    format_params:
+      - 2
+      - false
+  -
+    title: VL
+    description: Verbleibende Lektionen
+    column: lessons_remaining
+    group: Kurs
+    width: icon
+    format: \Ext_Thebing_Gui2_Format_Float
+    format_params:
+      - 2
+      - false
+  -
+    title: ZL
+    description: Zugewiesene Lektionen
+    column: lessons_used
+    group: Kurs
+    width: icon
+    format: \Ext_Thebing_Gui2_Format_Float
+    format_params:
+      - 2
+      - false
+  -
+    title: AL
+    description: Ausgefallene Lektionen
+    column: lessons_cancelled
+    group: Kurs
+    width: icon
+    format: \Ext_Thebing_Gui2_Format_Float
+    format_params:
+      - 2
+      - false
+  -
+    visible: false
+    column: course_period_filter
+    alias: ts_ijc
+    title: Kurszeitraum
+    filterset:
+      type: date
+      search_type: contact
+      from_column: from
+      until_column: until
+  -
+    title: Kursstart
+    column: from
+    group: Kurs
+    format: Ext_Thebing_Gui2_Format_Date
+    alias: ts_ijc
+    width: date
+    resize: false
+  -
+    title: Kursende
+    column: until
+    group: Kurs
+    format: Ext_Thebing_Gui2_Format_Date
+    alias: ts_ijc
+    width: date
+    resize: false
+  -
+    title: Kurs Kommentar
+    column: comment
+    group: Kurs
+    alias: ts_ijc
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+       - comment
+       - true
+       - 80
+    width: comment
+    resize: false
+  -
+    title: Kursniveau
+    column: level_name
+    group: Kurs
+    width: name
+    resize: false
+  -
+    group: Kurs
+    title: Kurssprache
+    width: name
+    default: false
+    column: courselanguage_id
+    alias: ts_ijc
+    filterset:
+      type: select
+      options:
+        - Ext_TS_Inquiry_Index_Gui2_Data
+        - getCourselanguageFilterOptions
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_Tuition_LevelGroup, getSelectOptions ]
+  -
+    title: Kurswochen relativ
+    column: weeks
+    group: Kurs
+    alias: ts_ijc
+    width: number
+    resize: false
+  -
+    title: Letzte Niveauanpassung
+    column: latest_level_change
+    sortable: false
+    group: Kurs
+    format: \Ts\Gui2\Format\LatestLevelChange
+    width: name
+    resize: false
+  -
+    title: Inbox
+    column: inbox
+    group: Buchung
+    alias: ts_i
+    data: inbox
+    width: name
+    resize: false
+    default: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+    - [ Ext_Thebing_System, getInboxList, true, true ]
+    filterset:
+      type: select
+      options:
+        - Ext_Thebing_System
+        - getInboxListForSelect
+        - true
+        - false
+  -
+    title: Offener Betrag gesamt
+    column: amount_open_original
+    group: Buchung
+    alias: ts_i
+    width: number
+    resize: date
+    format: Ext_Thebing_Gui2_Format_Amount
+    style: \Ts\Gui2\Style\Amount
+    default: false    
+default_columns:
+  -
+    title: Ersteller
+    column: creator_id
+    alias: ""
+    width: user_name
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    sortable: true
+  -
+    title: Erstellt
+    column: created
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true
+  -
+    title: Bearbeiter
+    alias: ts_i
+    column: editor_id
+    width: editor_id
+    resize: false
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    sortable: true
+  -
+    title: Verändert
+    column: changed
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_DateTime
+    sortable: true

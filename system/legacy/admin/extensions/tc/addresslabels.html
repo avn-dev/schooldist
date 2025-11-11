@@ -1,0 +1,63 @@
+<?php
+
+include_once(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+/* ==================================================================================================== */
+
+$oGui								= new Ext_TC_Gui2(md5('tc_addresslabels'), 'Ext_TC_Address_Label_Gui2_Data');
+$oGui->access						= array('core_admin_addresslabels', '');
+$oGui->include_jquery				= true;
+$oGui->include_jquery_multiselect	= true;
+$oGui->calendar_format				= Ext_TC_Factory::getObject('Ext_TC_Gui2_Format_Date');
+$oGui->row_sortable					= 1;
+$oGui->class_js						= 'AddresslabelGui';
+
+$oGui->setWDBasic('Ext_TC_Address_Label');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('i18n.name' => 'ASC'));
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Dialog
+
+$aLanguages			= Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getCorrespondenceLanguages', array(true));
+
+$oDialog			= $oGui->createDialog($oGui->t('Adressbezeichnung editieren'), $oGui->t('Adressbezeichnung anlegen'));
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Icons
+
+$oBar			= $oGui->createBar();
+$oBar->width	= '100%';
+
+$oIcon			= $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+
+$oIcon			= $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+
+$oIcon			= $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */ // Pagination and loading
+
+$oBar				= $oGui->createBar();
+$oBar->width		= '100%';
+$oBar->position		= 'top';
+
+$oPagination		= $oBar->createPagination(true, false);
+$oBar->setElement($oPagination);
+
+$oLoading			= $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+$oGui->addLanguageColumns($aLanguages, 'name', 'i18n', $oGui->t('Name'), true);
+$oGui->addDefaultColumns();
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+$aOptional = array();
+
+$aOptional['js'][]	= '/admin/extensions/tc/addresslabels/js/addresslabels.js';
+
+$oGui->display($aOptional);

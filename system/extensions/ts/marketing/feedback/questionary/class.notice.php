@@ -1,0 +1,3 @@
+<?php
+
+class Ext_TS_Marketing_Feedback_Questionary_Notice extends Ext_TC_Marketing_Feedback_Questionary_Notice {}

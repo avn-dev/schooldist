@@ -1,0 +1,85 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = new Ext_TC_Gui2(md5('tc_communication_blocks'), 'Ext_TC_Communication_Block_Gui2_Data');
+
+$oGui->include_jquery = true;
+$oGui->include_jquery_multiselect = true;
+$oGui->access = array('core_admin_templates_blocks', '');
+
+$oGui->setWDBasic('Ext_TC_Communication_Block');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('tc_cb.name' => 'ASC'));
+
+$aLanguages = Ext_TC_Factory::executeStatic('Ext_TC_Object', 'getLanguages', array(true));
+
+$oDialog = $oGui->createDialog($oGui->t('Block "{name}" editieren'), $oGui->t('Block anlegen'));
+$oDialog->height = 580;
+
+$oTab = $oDialog->createTab($oGui->t('Einstellungen'));
+
+$oTab->setElement($oDialog->createRow($oGui->t('Name'), 'input', array(
+	'db_alias' => 'tc_cb',
+	'db_column' => 'name',
+	'required' => true
+)));
+
+$oTab->setElement($oDialog->createRow($oGui->t('Beschreibung'), 'input', array(
+	'db_alias' => 'tc_cb',
+	'db_column' => 'description',
+	'required' => true
+)));
+		
+		
+$oTab->setElement($oDialog->createRow($oGui->t('Korrespondenzsprachen'), 'select', array(
+	'db_alias' => '',
+	'db_column' => 'languages',
+	'multiple' => 5, 
+	'jquery_multiple' => 1,
+	'select_options' => $aLanguages,
+	'searchable' => 1,
+	'required' => 1
+)));
+
+$oDialog->setElement($oTab);
+
+
+$oBar = $oGui->createBar();
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name');
+$oFilter->db_operator = 'LIKE';
+$oFilter->id = 'search';
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oBar->setElement($oFilter);
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oBar->width = '100%';
+
+$oIcon = $oBar->createNewIcon($oGui->t('Neuer Eintrag'), $oDialog, $oGui->t('Neuer Eintrag'));
+$oBar->setElement($oIcon);
+$oIcon = $oBar->createEditIcon($oGui->t('Editieren'), $oDialog, $oGui->t('Editieren'));
+$oBar->setElement($oIcon);
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+$oPagination = $oBar->createPagination(false, true);
+$oBar->setElement($oPagination);
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+$oGui->setBar($oBar);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = 'tc_cb';
+$oColumn->title = $oGui->t('Name');
+$oColumn->width = Ext_TC_Util::getTableColumnWidth('name');
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oGui->addDefaultColumns();
+$oGui->display();

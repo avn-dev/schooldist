@@ -1,0 +1,43 @@
+class:
+  wdbasic: \TsScreen\Entity\Schedule
+  data: \TsScreen\Gui2\Data\ScreenData
+  date_format: Ext_Thebing_Gui2_Format_Date
+foreign_key: screen_id
+description: TS » Digital Screens
+access: thebing_admin_icon
+sortable: false
+only_pagecount: false
+id:
+  column: id
+  alias: ts_scrs
+bars:
+    -
+      position: top
+      elements:
+        -
+          element: icon_new
+          dialog: 
+          - \TsScreen\Gui2\Data\ScreenData
+          - getScheduleDialog
+        -
+          element: icon_edit
+          dialog: 
+          - \TsScreen\Gui2\Data\ScreenData
+          - getScheduleDialog
+        -
+          element: icon_delete
+columns:
+  -
+    title: Typ
+    column: type
+    alias: ts_scrs
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [\TsScreen\Gui2\Data\ScreenData, getTypeOptions]
+  -
+    title: Beschreibung
+    column: description
+    alias: ts_scrs
+    width: name
+    resize: true

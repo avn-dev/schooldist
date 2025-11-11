@@ -1,0 +1,1 @@
+ALTER TABLE `language_data_external` ADD `verified` TINYINT(1) NOT NULL DEFAULT '0' AFTER `service`;

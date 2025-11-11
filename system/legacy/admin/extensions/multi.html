@@ -1,0 +1,1137 @@
+<?php
+
+ob_start();
+
+include("../includes/main.inc.php");
+
+if(!$_SESSION['multi']['table_structure_update_1']) {
+
+	addSystemRight('multi', 'Multidata', 'multi');
+	addSystemRight('multi_admin', 'Multidata » Alle Tabellen', 'multi');
+
+	$_SESSION['multi']['table_structure_update_1'] = 1;
+
+}
+
+Access_Backend::checkAccess("multi");
+
+global $LANGUAGE_DATA;
+getExtensionTranslations('multi');
+
+include_once("./multi.inc.html");
+
+Admin_Html::loadAdminHeader();
+
+?>
+
+<section class="content-header">
+	<h1><?=$LANGUAGE_DATA['multidata']?> &raquo; <?=$LANGUAGE_DATA['administration']?></h1>
+</section>
+
+<section class="content">
+	<div class="box box-default">
+        <div class="box-body">
+              
+	
+<?
+
+if($_VARS['page_id'] && $_VARS['element_id']) {
+
+	if($_VARS['action'] == "config") {
+
+		// Leere Einträge aus Filter entfernen
+		foreach((array)$_VARS['filter'] as $iFilter=>$aFilter) {
+			if(empty($aFilter['field'])) {
+				unset($_VARS['filter'][$iFilter]);
+			}
+		}
+
+		$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+		$config->multi_id = $_VARS['multi_id'];
+		$config->random = $_VARS['random'];
+		$config->norequest = $_VARS['norequest'];
+		$config->show = $_VARS['show'];
+		$config->sortbycat = $_VARS['sortbycat'];
+		$config->showcat = $_VARS['showcat'];
+		$config->sortby_field = $_VARS['sortby_field'];
+		$config->sortby_dir = $_VARS['sortby_dir'];
+		$config->use_smarty = $_VARS['use_smarty'];
+		$config->select_mode = $_VARS['select_mode'];
+		$config->filter = $_VARS['filter'];
+		$config->save_config($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id']);
+
+	}
+
+	$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+	$aMultis = (array)DB::getQueryPairs("SELECT id, name FROM multi_init ORDER BY name");
+
+	$aCategories = array(
+		'0' => 'keine Auswahl'
+	);
+	$rCategory = (array)DB::getQueryRows("SELECT * FROM multi_categories WHERE multi_id = ".(int)$config->multi_id." AND active = '1'");
+	foreach($rCategory as $aCategory) {
+		$aCategories[$aCategory['id']] = $aCategory['name'];
+	}
+
+	$aFields = array('' => '', 'id' => 'ID', 'title' => 'Titel');
+	$aFieldValues = array();
+	$rCategory = (array)DB::getQueryRows("SELECT * FROM multi_fields WHERE multi_id = ".(int)$config->multi_id." ORDER BY position");
+	foreach($rCategory as $aCategory) {
+		if(!empty($aCategory['value'])) {
+			$aFieldValues[$aCategory['field_id']] = explode('|', $aCategory['value']);
+		}
+		$aFields[$aCategory['field_id']] = $aCategory['name'];
+	}
+
+	$aDirection = array(
+		'ASC' => 'aufsteigend',
+		'DESC' => 'absteigend'
+	);
+	$aSelectMode = array(
+		'current' => 'nur Einträge die im Zeitraum liegen',
+		'archive' => 'nur Einträge die nach dem Zeitraum liegen',
+		'all' => 'Alle'
+	);
+
+?>
+			<form method="POST" action="multi.html">
+			<?=printFormHidden('action', 'config')?>
+			<?=printFormHidden('page_id', $_VARS['page_id'])?>
+			<?=printFormHidden('element_id', $_VARS['element_id'])?>
+			<?=printFormHidden('content_id', $_VARS['content_id'])?>
+			<?=printFormHidden('language', $_VARS['language'])?>
+			<?=printTableStart()?>
+				<?=printFormSelect("Multidata", "multi_id", $aMultis, $config->multi_id)?>
+<?php
+				if($oConfig->use_smarty === '0') {
+					echo printFormCheckbox("Smarty-Template benutzen", "use_smarty", "1", $oConfig->use_smarty);
+				} else {
+					echo printFormHidden('use_smarty', 1);
+				}
+?>
+				<?=printFormCheckbox("Parameter über GET / POST ablehnen?", "norequest", "1", $config->norequest)?>
+				<?=printFormText("Einträge in der Liste", "show", $config->show)?>
+				<?=printFormCheckbox("Nach Kategorien sortieren", "sortbycat", "1", $config->sortbycat)?>
+				<?=printFormCheckbox("Zufälligen Eintrag anzeigen", "random", "1", $config->random)?>
+				<?=printFormSelect("Nur diese Kategorie anzeigen", "showcat", $aCategories, $config->showcat)?>
+				<?=printFormSelect("Anzeigemodus", "select_mode", $aSelectMode, $config->select_mode)?>
+			<?=printTableEnd()?>
+				
+			<h2>Filter</h2>
+			<?=printTableStart()?>
+			<?
+			$aFilters = (array)$config->filter;
+
+			array_push($aFilters, array());
+
+			$i=0;
+			foreach($aFilters as $aFilter) {
+			?>
+			<tr>
+				<th width="40%"><?=($i+1)?>. Filter</th>
+				<td width="60%">
+					<div class="row">
+						<div class="col-md-6">
+							<select name="filter[<?=$i?>][field]" class="txt form-control">
+								<?
+								foreach($aFields as $key=>$val) {
+									if(
+										$key === '' || 
+										!empty($aFieldValues[$key])
+									) {
+										echo "<option value=\"".$key."\" ".(($key==$aFilter['field'])?"selected":"").">".$val."</option>";
+									}
+								}
+								?>
+							</select>	
+						</div>
+						<div class="col-md-6">
+							<select name="filter[<?=$i?>][compare]" class="txt form-control">
+								<?
+								foreach((array)$aFieldValues[$aFilter['field']] as $key=>$val) {
+									echo "<option value=\"".$val."\" ".(($val==$aFilter['compare'])?"selected":"").">".$val."</option>";
+								}
+								?>
+							</select>
+						</div>
+					</div>
+						
+				</td>
+			</tr>
+			<?	
+				$i++;
+			}
+
+			?>
+			<?=printTableEnd()?>
+			
+			
+			
+			
+			<?
+			if(
+				$config->multi_id > 0 &&
+				$config->random != 1
+			) {
+			?>
+			<h2>Sortierung</h2>
+			<?=printTableStart()?>
+			<?
+				$aTemp = $config->sortby_field;
+				$aTempDir = $config->sortby_dir;
+				$config->sortby_field = array();
+				$config->sortby_dir = array();
+				foreach((array)$aTemp as $k=>$v) {
+					if(!empty($v)) {
+						$config->sortby_field[] = $v;
+						$config->sortby_dir[] = $aTempDir[$k];
+					}
+				}
+				$i=0;
+				while($i == 0 || $config->sortby_field[$i-1]) {
+			?>
+			<tr>
+				<th width="40%"><?=($i+1)?>. Sortieren nach</th>
+				<td width="60%">
+					<div class="row">
+						<div class="col-md-6">
+							<select name="sortby_field[<?=$i?>]" class="txt form-control">
+								<?
+								foreach($aFields as $key=>$val) {
+									echo "<option value=\"".$key."\" ".(($key==$config->sortby_field[$i])?"selected":"").">".$val."</option>";
+								}
+								?>
+							</select>	
+						</div>
+						<div class="col-md-6">
+							<select name="sortby_dir[<?=$i?>]" class="txt form-control">
+								<?
+								foreach($aDirection as $key=>$val) {
+									echo "<option value=\"".$key."\" ".(($key==$config->sortby_dir[$i])?"selected":"").">".$val."</option>";
+								}
+								?>
+							</select>		
+						</div>
+					</div>
+								
+				</td>
+			</tr>
+			<?	
+					if($config->sortby_field[$i]) {
+						unset($aFields[$config->sortby_field[$i]]);
+					}
+					$i++;
+				}
+			}
+			?>
+			<?=printTableEnd()?>
+			<?=printSubmit("Konfiguration speichern")?>
+			</form>
+<?
+} else {
+?>
+<style>
+.form_elem{
+	width:400px;
+	border:1px solid black;
+}
+</style>
+<script>
+<!--
+
+function umklappen(aus, ein){	// (c) by plan-i GmbH, all rights reserved!!!
+   	var i = 0;				<?	// Diese Funktion blendet benannte Bereiche ein oder aus ?>
+   	var rows=document.getElementsByName(aus);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='inline';
+	  	}
+   	var rows=document.getElementsByName(ein);
+   	for(i=0; i<rows.length; i++){
+      	rows[i].style.display='none';
+	  	}
+	document.all.active.value=aus;
+	}
+
+function go_detail(act) {
+	if(act == "new") {
+		document.multi_form_1.multi_action.value='properties'; 
+		document.multi_form_1.submit();
+	} else if(document.multi_form_1.multi_id.value>0) {
+		document.multi_form_1.multi_action.value=act; 
+		document.multi_form_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+function go_entry(act) {
+	if(act == 'new' || act == 'newfield' || document.multi_form_1.entry_id.value>0) {
+		document.multi_form_1.multi_action.value=act; 
+		document.multi_form_1.submit();
+	} else {
+		alert("Bitte markieren Sie einen Eintrag!");
+	}
+}
+
+function open_media(form_field,s) {
+	window.open('/admin/frame.html?file=media&mode=selecticon&form_name=multiForm&input_name=&submit_button_value=<?=urlencode('übernehmen')?>&form_submit=0&input_name_title=&input_name_name='+form_field, 'media','status=no,resizable=yes,menubar=no,scrollbars=yes,width=770,height=550');
+}
+
+
+var arrRows = [];
+
+function addCol(id) {
+	var idRow = document.multiForm.elements['TableRows_'+id].options[document.multiForm.elements['TableRows_'+id].selectedIndex].value;
+	var objTable = document.getElementById('Table_'+id);
+	var iRowIndex = objTable.rows.length;
+	var objTr = objTable.insertRow(iRowIndex);
+	objTr.id = 'tr_'+id+''+iRowIndex;
+	objTr.onmouseout = function() {	showRow(id+''+iRowIndex,0); };
+	objTr.onmousemove = function() { showRow(id+''+iRowIndex,1); };
+	objTr.ondblclick = function() { removeRow(objTr); };
+	var objTd = objTr.insertCell(0);
+	objTd.innerHTML = ""+arrRows[idRow][2]+"<br><img src=\"/admin/media/delete.png\" onClick=\"removeRow(document.getElementById('"+objTr.id+"'));\" border=0>";
+	objTd.align = "center";
+	for(var i=1;i<=arrRows[idRow][0];i++) {
+		var objTd = objTr.insertCell(i);
+		objTd.id = 'TableCell_'+id+'_'+iRowIndex+'_'+i+'';
+		objTd.innerHTML = '<textarea name=\"field_'+id+'['+iRowIndex+']['+i+']\" rows=2 cols=20 class=\"txt2\"></textarea>';
+		if(i==1) {
+			objTd.innerHTML += '<input type=hidden name="field_'+id+'['+iRowIndex+'][0]" value="'+idRow+'">';
+		}
+	}
+}
+
+function removeRow(on) {
+	if(confirm('Möchten Sie diese Zeile wirklich löschen?')) {
+		on.parentNode.deleteRow(on.rowIndex);
+	}
+}
+
+
+-->
+</script>
+
+
+
+
+<?
+// $active initialisieren:
+$active=(int)$active; // so kommt in $active eine Null, wenn da ein text, oder gar nichts drin steht.
+?>
+
+<form name="formular" method="post">
+<input type="HIDDEN" NAME="active" value="<?=$active?>">
+</form>
+
+<?php
+
+if($_VARS['multi_action'] == 'deleteCategory') {
+	
+	postdeletion("multi_categories",$_VARS['id'],"Kategorie");
+
+	$_VARS['multi_action'] = 'categories';
+	
+} elseif($_VARS['multi_action'] == 'moveCategory') {
+	
+	changePosition($_VARS['dir'],$_VARS['id'],"multi_categories","WHERE multi_id = '".$_VARS['multi_id']."'");
+
+	$_VARS['multi_action'] = 'categories';
+	
+} elseif($_VARS['multi_action'] == 'saveCategory') {
+
+	if($_VARS['id'] > 0) {
+		DB::executeQuery("UPDATE multi_categories SET name = '".$_VARS['name']."' WHERE id = ".(int)$_VARS['id']."");
+	} else {
+		DB::executeQuery("INSERT INTO multi_categories SET name = '".$_VARS['name']."', multi_id = ".(int)$_VARS['multi_id']."");
+	}
+
+	$_VARS['multi_action'] = 'categories';
+	
+}
+
+if(!$_VARS['multi_action']) {
+?>
+
+	<p><?=$LANGUAGE_DATA['choose_element']?></p>
+	<iframe id="iframe_autoheight" src="multi_elements.html" style="width:100%;height:340px;border: 1px solid #999999;" name="detail2" frameborder="0" scrolling="yes"></iframe>
+	<form name="multi_form_1">
+	<input type="hidden" name="multi_id" value="0">
+	<input type="hidden" name="multi_action" value="0">
+	<input type="HIDDEN" NAME="active" value="0">
+	</form>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['downloads'], "#", "onclick=\"go_detail('downloads');\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['edit_categories'], "#", "onclick=\"go_detail('categories');\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['edit_properties'], "#", "onclick=\"go_detail('properties');\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['edit_fields'], "#", "onclick=\"go_detail('fields');\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['edit_data'], "#", "onclick=\"go_detail('entries');\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['import_data'], "#", "onclick=\"go_detail('import');\"");?>
+	</p>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['add_element'], "#", "onclick=\"go_detail('new');\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['delete_element'], "#", "onclick=\"if(confirm('".$LANGUAGE_DATA['delete_element']."')) go_detail('delete');\"");?>
+	</p>
+
+<?
+} elseif($_VARS['multi_action'] == 'delete') {
+
+	if($_VARS['multi_id'] > 0) {
+		$aMulti = DB::getQueryRow("SELECT * FROM multi_init WHERE id = ".(int)$_VARS['multi_id']."");
+		postdeletion("multi_init",$_VARS['multi_id'],"Multidaten Element \"".$aMulti['name']."\"");
+	}
+
+?>
+<script>
+	document.location.href='multi.html';
+</script>
+<?
+} elseif($_VARS['multi_action'] == 'import') {
+
+	set_time_limit(3600);
+
+	function CSV2Array($content) {
+		if ($content[strlen($content)-1]!="\r" && $content[strlen($content)-1]!="\n") {
+		    $content .= "\r\n";
+		}
+
+		$arr=array();
+		$temp = $content;
+
+		// "" ersetzen durch Spezialzeichen
+		$temp = str_replace('""','#_#_#',$temp);
+
+		$tma=array();
+		while (strlen($temp)>0) {
+			// Wenn erstes Zeichen "
+			if($temp[0]=='"') {
+				// " abschneiden
+				$temp = substr($temp,1);
+				$str='';
+
+				while(1) {
+					$matches=array();
+					if(!preg_match('/^(.*?)"("*?)(;|\r\n)(.*)$/is',$temp,$matches))
+						return $arr;
+					$temp=$matches[4];
+					if (fmod(strlen($matches[2]),2) > 0) {
+						$str .= $matches[1].$matches[2].'"'.$matches[3];
+						continue;
+					} else {
+						$tma[] = $str.$matches[1].$matches[2];
+						if($matches[3] != ';') {
+							$arr[] = str_replace('#_#_#','"',$tma);
+							$tma = array();
+						}
+						break;
+					}
+				}
+			} else {
+				$matches=array();
+				if(!preg_match('/^([^;\r\n]*)(;|\r\n)(.*)$/is',$temp,$matches))
+					return $arr;
+				$tma[]=$matches[1];
+				$temp=$matches[3];
+				if ($matches[2]!=';') {
+					$arr[] = str_replace('#_#_#','"',$tma);
+					$tma=array();
+				}
+			}
+		}
+		return $arr;
+   }
+
+	// Felder auslesen
+	$aData = array();
+	$aTemp = array();
+	$form_abfrage = (array)DB::getQueryRows("SELECT * FROM multi_fields WHERE multi_id = '".$_VARS['multi_id']."' ORDER BY position");
+	foreach($form_abfrage as $aFields) {
+		$aData[$aFields['field_id']] = $aFields['name'];
+		$aTemp[] = "f".$aFields['field_id'];
+	}
+
+	if(is_file($_FILES['import']['tmp_name'])) {
+		$sContent = file_get_contents($_FILES['import']['tmp_name']);
+		$aContent = CSV2Array($sContent);
+		$iEntries = count($aContent);
+		$factor = 400 / $iEntries;
+		$aDoneEntries = array();
+?>
+			<p>
+			Fortschritt:
+			<table id="table1" cellpadding="0" cellspacing="0" border="0" style="height:10px;width:400px;border:1px solid #29527A;table-layout:fixed;margin-top:5px;">
+				<tr>
+					<td id="td1" style="width:1px;background-color:#dededf;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+					<td id="td2" style="width:399px;"><img src="/admin/media/spacer.gif" border="0" width="1" height="1"></td>
+				</tr>
+			</table>
+			</p>
+		</td>
+	</tr>
+</table>
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?
+		flush();
+		$i=0;
+		$j=0;
+		foreach($aContent as $aImport) {
+			$aEntry = array();
+			foreach($aImport as $k=>$v) {
+				if($_VARS['import_charset'] != "UTF-8") {
+					$aImport[$k] = iconv($_VARS['import_charset'], "UTF-8", $aImport[$k]);
+				}
+				//$aImport[$k] = str_replace('"','', $aImport[$k]);
+				$aImport[$k] = trim($aImport[$k]);
+				$aImport[$k] = str_replace('NULL', '', $aImport[$k]);
+				$aEntry[] = $aImport[$k];
+			}
+			if($aEntry[0] != "") {
+				DB::executeQuery("INSERT INTO multi_entry SET multi_id = '".$_VARS['multi_id']."', name = '".$aEntry[0]."', active = 1");
+				$idEntry = get_insert_id();
+				$c=1;
+				foreach($aData as $k=>$v) {
+					DB::executeQuery("INSERT INTO multi_data SET multi_id = '".$_VARS['multi_id']."', entry_id = '".$idEntry."', field_id = '".$k."', value = '".\DB::escapeQueryString($aEntry[$c])."' ");
+					$c++;
+				}
+				$i++;
+			}
+			if($j%20 == 0) {
+				echo "<script>document.getElementById('td1').style.width='".intval($factor*$j)."';document.getElementById('td2').style.width='".intval(400-($factor*$j))."';</script>\n";
+				flush();
+			}
+			$j++;
+		}
+
+?>
+	<script>
+	document.getElementById('td1').style.width='400';
+	document.getElementById('td2').style.width='0';
+	</script>
+	<h2><?=$LANGUAGE_DATA['import_done']?></h2>
+	<p>
+	<?=sprintf($LANGUAGE_DATA['import_done_state'], $i)?>
+	</p>
+<?
+		// Datentabelle neu schreiben
+		Ext_Multi::writeMultiDataTable($_VARS['multi_id']);
+	}
+?>
+
+<form name="multi_form_1" method="POST" enctype="multipart/form-data">
+<input type="hidden" name="entry_id" value="0">
+<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+<input type="hidden" name="multi_action" value="import">
+	<h2><?=$LANGUAGE_DATA['import_headline']?></h2>
+	<h3><?=$LANGUAGE_DATA['import_text']?></h3>
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<tr>
+			<th><?=$LANGUAGE_DATA['import_fields']?></th>
+			<td>
+			<?=$LANGUAGE_DATA['import_entry_name']?>, 
+			<?
+			echo implode(", ",$aData);
+			?>
+			</td>
+		</tr>
+	</table>
+	<h3>Importdatei</h3>
+	<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+		<?=printFormText($LANGUAGE_DATA['charset_label'], "import_charset", "UTF-8")?>
+		<tr>
+			<th><?=$LANGUAGE_DATA['separator_label']?></th>
+			<td><input type="text" name="import_separator" value=";" class="txtxs"></td>
+		</tr>
+		<tr>
+			<th><?=$LANGUAGE_DATA['import_label']?></th>
+			<td><input type="file" class="txt" name="import"></td>
+		</tr>
+	</table>
+	<?=printSubmit($LANGUAGE_DATA['start_import'])?>
+	<p align="right">
+		<button class="btn" onClick="document.location.href='<?=$_SERVER['PHP_SELF']?>';"><?=$LANGUAGE_DATA['back']?></button>
+	</p>
+</form>
+<?
+} elseif($_VARS['multi_action'] == 'downloads') {
+
+	$multi_array2 = DB::getQueryRow("SELECT * FROM multi_init WHERE id = ".(int)$_VARS['multi_id']."");
+
+?>
+	<form name="multi_form_1">
+		<input type="hidden" name="entry_id" value="0">
+		<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+		<input type="hidden" name="multi_action" value="0">
+		<input type="HIDDEN" NAME="active" value="0">
+	</form>
+<?
+	$multi_abfrage3 = (array)DB::getQueryRows("SELECT * FROM cms_stats s, multi_data m WHERE s.page_id > '100000' AND (s.page_id - 100000) = m.id AND m.multi_id = '".$_VARS['multi_id']."'");
+?>
+
+		<h2><?=sprintf($LANGUAGE_DATA['downloads_of'], $multi_array2['name'])?></h2>
+		
+		<table cellpadding="4" cellspacing="0" border="0" width="100%" class="table">
+			<tr>
+				<th><?=$LANGUAGE_DATA['date']?></th>
+				<th><?=$LANGUAGE_DATA['file']?></th>
+				<th><?=$LANGUAGE_DATA['user']?></th>
+			</tr>
+<?
+	foreach($multi_abfrage3 as $multi_array3) {
+	$user = get_data(db_query("SELECT nickname, email FROM customer_db_".$multi_array3['idTable']." WHERE id = ".$multi_array3['idUser']));
+?>
+			<tr>
+				<td><?=strftime("%x %X", $multi_array3['time'])?></td>
+				<td><a href="/media/<?=$multi_array3['value']?>" target=_blank><?=substr($multi_array3['value'], strrpos($multi_array3['value'], "/")+1);?></a></td>
+				<td><?=$user['nickname']." (".$user['email'].")";?></td>
+			</tr>
+<?
+	}
+?>
+		</table>
+		<p align="right">
+			<?make_button($LANGUAGE_DATA['back'], "#", "onclick=\"document.location.href='multi.html'; return false;\"");?>
+		</p>
+
+<?
+} elseif($_VARS['multi_action'] == 'fields') {
+?>
+<form name="multi_form_1">
+<input type="hidden" name="entry_id" value="0">
+<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+<input type="hidden" name="multi_action" value="0">
+<input type="HIDDEN" NAME="active" value="0">
+</form>
+<?
+$multi_array3 = DB::getQueryRow("SELECT * FROM multi_init WHERE id = '".$_VARS['multi_id']."'");
+?>
+
+	<h2><?=sprintf($LANGUAGE_DATA['fields_in'], $multi_array3['name'])?></h2>
+		
+	<iframe id="iframe_autoheight" src="multi_fields.html?multi_action=<?=$_VARS['multi_action']?>&multi_id=<?=$_VARS['multi_id']?>" style="width:100%;height:340px;border: 1px solid #999999;" name="detail" frameborder="0" scrolling="yes"></iframe>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['new'], "#", "onclick=\"go_entry('newfield'); return false;\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['edit'], "#", "onclick=\"go_entry('editfield'); return false;\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['delete'], "#", "onclick=\"detail.deleteitem(); return false;\"");?><br>
+	<?make_button($LANGUAGE_DATA['back'], "#", "onclick=\"document.location.href='multi.html'; return false;\"");?>
+	</p>
+
+<?
+} elseif($_VARS['multi_action'] == 'entries') {
+
+	header('Location: multi_entries_gui.html?multi_id=' . $_VARS['multi_id']);
+	exit();
+
+} elseif($_VARS['multi_action'] == 'categories') {
+
+	$aMulti = DB::getQueryRow("SELECT * FROM multi_init WHERE id = ".(int)$_VARS['multi_id']."");
+
+?>
+
+	<h2><?=sprintf($LANGUAGE_DATA['categories_of'], $aMulti['name'])?></h2>
+
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+		<tr>
+			<th width="90%"><?=$LANGUAGE_DATA['category']?></th>
+			<th width="10%"><?=$LANGUAGE_DATA['actions']?></th>
+		</tr>
+		<?
+		$rCategories = (array)DB::getQueryRows("SELECT * FROM multi_categories WHERE multi_id = '".$_VARS['multi_id']."' AND active = '1' ORDER BY position, name");
+		foreach($rCategories as $aCategories) {
+		?>
+		<tr>
+			<td><?=$aCategories['name']?></td>
+			<td align="center">
+				<a href="<?=$_SERVER['PHP_SELF']?>?multi_action=moveCategory&multi_id=<?=$_VARS['multi_id']?>&id=<?=$aCategories['id']?>&dir=up"><img src="/admin/media/sitemap_up.png" border=0 align="absmiddle" alt="hoch"></a>&nbsp;
+				<a href="<?=$_SERVER['PHP_SELF']?>?multi_action=moveCategory&multi_id=<?=$_VARS['multi_id']?>&id=<?=$aCategories['id']?>&dir=down"><img src="/admin/media/sitemap_down.png" border=0 align="absmiddle" alt="runter"></a>&nbsp;
+				<a href="<?=$_SERVER['PHP_SELF']?>?multi_action=editCategory&multi_id=<?=$_VARS['multi_id']?>&id=<?=$aCategories['id']?>"><img src="/admin/media/edit.png" border="0"></a>&nbsp;
+				<a href="<?=$_SERVER['PHP_SELF']?>?multi_action=deleteCategory&multi_id=<?=$_VARS['multi_id']?>&id=<?=$aCategories['id']?>"><img src="/admin/media/delete.png" border="0"></a>
+			</td>
+		</tr>
+		<?
+		}
+		?>
+	</table>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['create_category'], "#", "onclick=\"document.location.href='multi.html?multi_action=editCategory&multi_id=".$_VARS['multi_id']."';\"");?>&nbsp;
+	<?make_button($LANGUAGE_DATA['back'], "#", "onclick=\"document.location.href='multi.html'; return false;\"");?>
+	</p>
+<?
+
+} elseif($_VARS['multi_action'] == 'editCategory') {
+
+	$aMulti = DB::getQueryRow("SELECT * FROM multi_init WHERE id = ".(int)$_VARS['multi_id']."");
+	$aCategory = DB::getQueryRow("SELECT * FROM multi_categories WHERE id = ".(int)$_VARS['id']."");
+
+?>
+	
+	<h2><?=sprintf($LANGUAGE_DATA['category_title'], $aCategory['name'], $aMulti['name'])?></h2>
+	
+	<form method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+	<input type="hidden" name="multi_action" value="saveCategory">
+	<input type="hidden" name="id" value="<?=$_VARS['id']?>">
+	<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+	<?=printTableStart()?>
+		<?=printFormText($LANGUAGE_DATA['name'], "name",$aCategory['name'])?>
+	<?=printTableEnd()?>
+	<?=printSubmit($LANGUAGE_DATA['save'])?>
+	</form>
+<?
+} elseif($_VARS['multi_action'] == 'properties') {
+
+	$multi_array3 = DB::getQueryRow("SELECT * FROM multi_init WHERE id = ".(int)$_VARS['multi_id']."");
+?>
+
+	<h2><?=sprintf($LANGUAGE_DATA['properties_of'], $multi_array3['name'])?></h2>
+	
+	<form method="POST" name="init_form" action="multi.html">
+	<input type="hidden" name="multi_action" value="saveinit">
+	<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+	<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+		<?=printFormText($LANGUAGE_DATA['name'], "init_name",$multi_array3['name'])?>
+		<tr>
+			<th><?=$LANGUAGE_DATA['display']?></th>
+      		<td>
+      		<input type="checkbox" name="init_view[]" value="search" <?=((strstr($multi_array3['view'],"search"))?"checked":"")?>> <?=$LANGUAGE_DATA['search']?>
+      		<input type="checkbox" name="init_view[]" value="list" <?=((strstr($multi_array3['view'],"list"))?"checked":"")?>> <?=$LANGUAGE_DATA['list']?>
+      		<input type="checkbox" name="init_view[]" value="detail" <?=((strstr($multi_array3['view'],"detail"))?"checked":"")?>> <?=$LANGUAGE_DATA['detail']?>
+			</td>
+		</tr>
+		<?=printFormCheckbox($LANGUAGE_DATA['use_gui'], "init_gui", 1, $multi_array3['use_gui'])?>
+		<?=printFormCheckbox('Einträge nicht manuell sortierbar', "sortable_automatically", 1, $multi_array3['sortable_automatically'])?>
+		<?=printFormText($LANGUAGE_DATA['init_email_label'], "init_email",$multi_array3['email'])?>		
+	</table>
+	<?printSubmit($LANGUAGE_DATA['save']);?>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['back_to_list'], "#", "onclick=\"document.location.href='multi.html'; return false;\"");?>
+	</p>
+	</form>
+<?
+} elseif($_VARS['multi_action'] == 'newfield' || $_VARS['multi_action'] == 'editfield') {
+
+if($_VARS['multi_action'] == 'newfield') $_VARS['entry_id'] = 0;
+
+$multi_array2 = DB::getQueryRow("SELECT * FROM multi_init WHERE id = ".(int)$_VARS['multi_id']."");
+
+$_VARS['multi_id'] = $multi_array2['id'];
+
+$multi_array = DB::getQueryRow("SELECT * FROM multi_fields WHERE id = ".(int)$_VARS['entry_id']."");
+
+if(!$multi_array['name']) $multi_array['name'] = $LANGUAGE_DATA['new_entry'];
+
+?>
+
+	<h2><?=sprintf($LANGUAGE_DATA['properties_of'], $multi_array['name'])?></h2>
+
+	<form method="POST" name="multi_form_1" action="multi.html">
+	<input type="hidden" name="multi_action" value="savefield">
+	<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+	<input type="hidden" name="entry_id" value="<?=$_VARS['entry_id']?>">
+
+	<?=printTableStart()?>
+		<?=printFormText($LANGUAGE_DATA['name'], "field_name", $multi_array['name'])?>
+		<tr>
+			<th><?=$LANGUAGE_DATA['display']?></th>
+			<td>
+				<input type="checkbox" name="field_display[]" value="search" <?=((strstr($multi_array['display'],"search"))?"checked":"")?>> <?=$LANGUAGE_DATA['search']?>
+				<input type="checkbox" name="field_display[]" value="list" <?=((strstr($multi_array['display'],"list"))?"checked":"")?>> <?=$LANGUAGE_DATA['list']?>
+				<input type="checkbox" name="field_display[]" value="detail" <?=((strstr($multi_array['display'],"detail"))?"checked":"")?>> <?=$LANGUAGE_DATA['detail']?>
+		    </td>
+		</tr>
+		<?=printFormSelect("Typ","field_type", $aMultiTypes, $multi_array['type'])?>
+
+<?
+		if($multi_array['type'] == 'reference') {
+
+			$arrAdditional = unserialize($multi_array['value']);
+			
+			$aTables = array(0=>$LANGUAGE_DATA['select_please_choose']);
+			$aItems = DB::listTables();
+			foreach((array)$aItems as $sTable) {
+				$aTables[$sTable] = $sTable;
+			}
+
+			echo printFormSelect($LANGUAGE_DATA['db_table_label'], "field_value[db_table]",$aTables,$arrAdditional['db_table']);
+			if($arrAdditional['db_table']) {
+				$rFields = DB::getQueryRows("SHOW COLUMNS FROM ".$arrAdditional['db_table']);
+				$aFields[0] = $LANGUAGE_DATA['select_please_choose'];
+				foreach($rFields as $aField) {
+					$aFields[$aField['Field']] = $aField['Field'];
+				}
+				echo printFormSelect($LANGUAGE_DATA['db_field_value_label'], "field_value[db_field_value]",$aFields,$arrAdditional['db_field_value']);
+				echo printFormSelect($LANGUAGE_DATA['db_field_text_label'], "field_value[db_field_text]",$aFields,$arrAdditional['db_field_text']);
+			}
+			echo printFormTextarea($LANGUAGE_DATA['db_query_label'], "field_value[db_query]",$arrAdditional['db_query']);
+
+		} else {
+			echo printFormTextarea(L10N::t('Vorbelegung<br>(Bei Selectbox: mit \"|\" getrennt)<br>(Bei Referenzfeld: Feld ID)', 'Multidata'), "field_value", $multi_array['value'],5);
+		}
+?>
+		<?=printFormTextarea($LANGUAGE_DATA['options'], "field_options",$multi_array['options'],5)?>
+
+	<?=printTableEnd()?>
+	<?=printSubmit($LANGUAGE_DATA['save'])?>
+	</form>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['back_to_list'], "#", "onclick=\"go_detail('fields'); return false;\"");?>
+	</p>
+<?
+} elseif($_VARS['multi_action'] == 'new' || $_VARS['multi_action'] == 'edit') {
+
+	$multi_array2 = DB::getQueryRow("SELECT * FROM multi_init WHERE id = '".$_VARS['multi_id']."'");
+
+	$_VARS['multi_id'] = $multi_array2['id'];
+
+	$multi_array = DB::getQueryRow("SELECT *,UNIX_TIMESTAMP(validfrom) validfrom,UNIX_TIMESTAMP(validuntil) validuntil FROM multi_entry WHERE id = ".(int)$_VARS['entry_id']."");
+
+	if(!$multi_array['name']) $multi_array['name'] = $LANGUAGE_DATA['new_entry'];
+
+	$aCategories = array("0"=>"keine Auswahl");
+	$rCategory = (array)DB::getQueryRows("SELECT * FROM multi_categories WHERE multi_id = '".$_VARS['multi_id']."' AND active = '1'");
+	foreach($rCategory as $aCategory) {
+		$aCategories[$aCategory['id']] = $aCategory['name'];
+	}
+
+	if($multi_array['validfrom'] < 1) {
+		$multi_array['validfrom'] = time();
+	}
+
+	$arrData = $objWebDynamicsDAO->getWebSiteLanguages(0);
+	$arrLanguages = array(""=>"");
+	foreach((array)$arrData as $arrLanguage) {
+		$arrLanguages[$arrLanguage['code']] = $arrLanguage['name'];		
+	}
+
+	$aGroups = CustomerDb\Helper\Functions::getCustomerGroups();
+	$aGroups = Ext_Multi_Access::getGroups($aGroups);
+	$aAccess = Ext_Multi_Access::getAccess($_VARS['entry_id']);
+
+?>
+<h2><?=sprintf($LANGUAGE_DATA['properties_of'], $multi_array['name'])?></h2>
+
+<form method="POST" name="multiForm" action="<?=$_SERVER['PHP_SELF']?>">
+<input type="hidden" name="multi_action" value="save">
+<input type="hidden" name="multi_id" value="<?=$_VARS['multi_id']?>">
+<input type="hidden" name="entry_id" value="<?=$_VARS['entry_id']?>">
+	<?=printTableStart('200px', 'auto')?>
+		<?=printFormText($LANGUAGE_DATA['name'], "entry_name",$multi_array['name'])?>
+		<?=printFormSelect($LANGUAGE_DATA['category'], "entry_category",$aCategories,$multi_array['category_id'])?>
+		<?=printFormSelect($LANGUAGE_DATA['language'], "entry_language", $arrLanguages, $multi_array['language_code'])?>
+		<?=printFormDate($LANGUAGE_DATA['display_from'], "validfrom", $multi_array['validfrom'])?>
+		<?=printFormDate($LANGUAGE_DATA['display_until'], "validuntil", $multi_array['validuntil'])?>
+
+		<tr>
+			<th>Nur bei folgenden Beutzergruppen zeigen</th>
+			<td>
+				<select name="access[]" class="txt" size="5" multiple="multiple">
+					<option value="" <? if(!isset($aAccess[1])) { ?>selected="selected"<? } ?>>keine Zugriffsbeschränkung</option>
+					<? foreach((array)$aGroups as $iDB_ID => $aCutomerGroups) { ?>
+						<? foreach((array)$aCutomerGroups as $iGroupID => $sValue) { ?>
+							<option value="<?=$iDB_ID?>_<?=$iGroupID?>" <? if($aAccess[1][$iDB_ID][$iGroupID]) { ?>selected="selected"<? } ?>><?=$sValue?></option>
+						<? } ?>
+					<? } ?>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>Nicht bei folgenden Beutzergruppen zeigen</th>
+			<td>
+				<select name="noaccess[]" class="txt" size="5" multiple="multiple">
+					<option value="" <? if(!isset($aAccess[0])) { ?>selected="selected"<? } ?>>keine Zugriffsbeschränkung</option>
+					<? foreach((array)$aGroups as $iDB_ID => $aCutomerGroups) { ?>
+						<? foreach((array)$aCutomerGroups as $iGroupID => $sValue) { ?>
+							<option value="<?=$iDB_ID?>_<?=$iGroupID?>" <? if($aAccess[0][$iDB_ID][$iGroupID]) { ?>selected="selected"<? } ?>><?=$sValue?></option>
+						<? } ?>
+					<? } ?>
+				</select>
+			</td>
+		</tr>
+
+	<?=printTableEnd()?>
+	<br>
+	<?=printTableStart('200px', 'auto')?>
+<?
+$sScript  = "";
+$multi_abfrage2 = (array)DB::getQueryRows("SELECT field_id as id,name,type,value,options FROM multi_fields WHERE multi_id = '".$_VARS['multi_id']."' ORDER BY position");
+foreach($multi_abfrage2 as $multi_array2) {
+
+	if($_VARS['entry_id'] > 0){
+		$multi_array3 = DB::getQueryRow("SELECT * FROM multi_data WHERE field_id = '".$multi_array2['id']."' AND multi_id = '".$_VARS['multi_id']."' AND entry_id = ".(int)$_VARS['entry_id']."");
+		$value = $multi_array3['value'];
+	} else {
+		$value = $multi_array2['value'];
+	}
+
+	if($multi_array2['type'] == "text") {
+		echo printFormText($multi_array2['name'],"field_".$multi_array2['id'],$value);
+	} elseif($multi_array2['type'] == "int") {
+		echo printFormText($multi_array2['name'],"field_".$multi_array2['id'],$value);
+	} elseif($multi_array2['type'] == "textarea") {
+		echo printFormTextarea($multi_array2['name'], "field_".$multi_array2['id'], $value);
+	} elseif($multi_array2['type'] == "html") {
+		echo printFormHTMLarea($multi_array2['name'], "field_".$multi_array2['id'], $value, "Webdynamics", 1, 0, '100%', '400px');
+	} elseif($multi_array2['type'] == "select") {
+		echo "<TR><th>".$multi_array2['name']."</th>";
+		echo "<td><select name=field_".$multi_array2['id']." class=form_elem>";
+		$arr = explode("|",$multi_array2['value']);
+		foreach($arr as $elem) {
+			echo "<option value=\"$elem\" ".(($value==$elem)?"selected":"").">$elem";
+		}
+		echo "</select></td>";
+		echo "</TR>\n";
+	} elseif($multi_array2['type'] == "multiselect") {
+		echo "<TR><th>".$multi_array2['name']."</th>";
+		echo "<td><select name=\"field_".$multi_array2['id']."[]\" class=\"form_elem\" multiple size=5>";
+		$arr = explode("|",$multi_array2['value']);
+		foreach($arr as $elem) {
+			echo "<option value=\"$elem\" ".((strstr($value,$elem))?"selected":"").">$elem";
+		}
+		echo "</select></td>";
+		echo "</TR>\n";
+	} elseif($multi_array2['type'] == "image") {
+//		echo "<TR><th>".$multi_array2['name']."</th>";
+//		echo "<td><input type=text name=field_".$multi_array2['id']." value=\"".$value."\" size=60 class=form_elem readonly style=\"background-color:#dededf;\"> <button onclick=\"open_media('field_".$multi_array2['id']."','ok');\">".$LANGUAGE_DATA['choose']."</button> <button onclick=\"document.multiForm.field_".$multi_array2['id'].".value=''\">".$LANGUAGE_DATA['clear']."</button></td>";
+//		echo "</TR>\n";
+		printFormImage($multi_array2['name'], "field_".$multi_array2['id'], $value);
+	} elseif($multi_array2['type'] == "email") {
+		echo printFormText($multi_array2['name'],"field_".$multi_array2['id'],$value);
+	} elseif($multi_array2['type'] == "web") {
+		echo "<TR><th>".$multi_array2['name']."</th>";
+		echo "<td>".printPageSelect("field_".$multi_array2['id'],$value)."</td>";
+		echo "</TR>\n";
+	} elseif($multi_array2['type'] == "download") {
+//		echo "<TR><th>".$multi_array2['name']."</th>";
+//		echo "<td><input type=text name=field_".$multi_array2['id']." value=\"".$value."\" size=60 class=form_elem readonly style=\"background-color:#dededf;\"> <button onclick=\"open_media('field_".$multi_array2['id']."',0);\">".$LANGUAGE_DATA['choose']."</button> <button onclick=\"document.multiForm.field_".$multi_array2['id'].".value=''\">".$LANGUAGE_DATA['clear']."</button></td>";
+//		echo "</TR>\n";
+		printFormMedia($multi_array2['name'], "field_".$multi_array2['id'], $value);
+	} elseif($multi_array2['type'] == "date") {
+		echo printFormText($multi_array2['name'],"field_".$multi_array2['id'],$value);
+	} elseif($multi_array2['type'] == "reference") {
+		echo "<TR><th>".$multi_array2['name']."</th>";
+		echo "<td><select name=\"field_".$multi_array2['id']."\" class=form_elem>";
+		$arrAdditional = unserialize($multi_array2['value']);
+		$strSql = "SELECT `".$arrAdditional['db_field_value']."` value, `".$arrAdditional['db_field_text']."` display FROM `".$arrAdditional['db_table']."` ".$arrAdditional['db_query']."";
+		if(!preg_match("/(DROP|DELETE|PROCESS|SHUTDOWN|INSERT|CREATE|UPDATE|ALTER)/i", $strSql) && preg_match("/(SELECT)/i", $strSql)) {
+			$res_ref = (array)DB::getQueryRows($strSql);
+			foreach($res_ref as $my_ref) {
+			  echo "<option value=\"".$my_ref['value']."\" ".(($value == $my_ref['value'])?"selected":"").">".(($my_ref['display'])?$my_ref['display']:$my_ref['value'])."</option>\n";
+			}
+		}
+		echo "</select></td>";
+		echo "</TR>\n";
+	} elseif($multi_array2['type'] == "table") {
+
+		$sTable = $multi_array2['options'];
+
+		$arrContent = unserialize($value);
+
+		$arrRows = \Cms\Service\PageParser::getBlockContentAll($sTable,"row");
+		$aRowData = array();
+
+		foreach($arrRows as $key=>$val) {
+			preg_match_all("/#wd:cell:[0-9]{1,4}/i",$val[1],$regs);
+			$regs[0] = array_unique($regs[0]);
+			$aRowData[$key] = array(count($regs[0]));
+			$sScript .= "arrRows[".$key."] = new Array('".count($regs[0])."','".str_replace("'","\'",preg_replace("/(\r\n|\r|\n)/",'\n',$val[1]))."','".str_replace("'","\'",preg_replace("/(\r\n|\r|\n)/",'\n',$val[0]))."'); ";
+		}
+		$sScript .= "";
+
+		$sCode2 = "<table cellpadding=\"2\"cellspacing=\"2\" border=\"0\" class=\"table2\" id=\"Table_".$multi_array2['id']."\">\n";
+
+		$c=0;
+		foreach((array)$arrContent as $row) {
+			$sCode2 .= "<tr id=\"tr_".$multi_array2['id']."".$c."\" onmouseout=\"showRow(".$multi_array2['id']."".$c.",0)\" onmousemove=\"showRow(".$multi_array2['id']."".$c.",1);\">";
+			// TD mit Aktionen und Zeilentyp Auswahl
+			$sCode2 .= "<td align=center>";
+
+			$sCode2 .= "<select name=\"field_".$multi_array2['id']."[".$c."][0]\">";
+			foreach($arrRows as $key=>$val) {
+				$sCode2 .= "<option value=\"".$key."\" ".(($row[0]==$key)?"selected":"").">".$val[0]."\n";
+			}
+			$sCode2 .= "<option value=\"".$row[0]."\">";
+			$sCode2 .= "</select>";
+
+			//$sCode2 .= $arrRows[$row[0]][0];
+			$sCode2 .= "<br><img src=\"/admin/media/delete.png\" onClick=\"removeRow(document.getElementById('tr_".$multi_array2['id']."".$c."'));\" border=0></td>";
+			for($i=1;$i<=$aRowData[$row[0]][0];$i++) {
+				$sCode2 .= "<td>";
+				$sCode2 .= "<textarea name=\"field_".$multi_array2['id']."[".$c."][".$i."]\" rows=2 cols=20 class=\"txt2\">".$row[$i]."</textarea>";
+				$sCode2 .= "</td>\n";
+			}
+			$sCode2 .= "</tr>\n";
+			$c++;
+		}
+
+		$sCode2 .= "</table>\n";
+
+		$sCode1 = "<select name=\"TableRows_".$multi_array2['id']."\">\n";
+
+		foreach($arrRows as $key=>$val) {
+			$sCode1 .= "<option value=\"".$key."\">".$val[0]."\n";
+		}
+		$sCode1 .= "</select>\n";
+
+		echo $my_content['content'] = "<tr><th colspan=\"2\">".$multi_array2['name']."</th></tr><tr><td colspan=\"2\">".$sCode2."</td></tr><tr><td>".$sCode1."&nbsp;<button class=\"btn\" onClick=\"addCol(".$multi_array2['id'].");\">".$LANGUAGE_DATA['add']."</button></td></tr>\n";
+
+	}
+
+}
+
+?>
+</TABLE>
+</form>
+	<script>
+	<?=$sScript?>
+	</script>
+	<p align="right">
+	<?make_button($LANGUAGE_DATA['save'], "#", "onclick=\"document.multiForm.submit(); return false;\"");?><br>
+	<?make_button($LANGUAGE_DATA['back'], "#", "onclick=\"document.location.href='multi.html?multi_id=".$_VARS['multi_id']."&multi_action=entries&active=0'; return false;\"");?>
+	</p>
+
+<?
+} elseif($_VARS['multi_action'] == 'savefield') {
+
+	$temp_display="";
+	foreach((array)$_VARS['field_display'] as $value) {
+		$temp_display .= $value."|";
+	}
+	$_VARS['field_display'] = substr($temp_display, 0, -1);
+	
+	$multi_array2 = DB::getQueryRow("SELECT * FROM multi_init WHERE id = '".(int)$_VARS['multi_id']."'");
+
+	$_VARS['multi_id'] = $multi_array2['id'];
+
+	if(is_array($_VARS['field_value'])) {
+		$_VARS['field_value'] = serialize($_VARS['field_value']);
+	}
+
+	if($_VARS['entry_id'] > 0) {
+		$sQuery = "UPDATE multi_fields SET multi_id = '".$_VARS['multi_id']."', type = '".\DB::escapeQueryString($_VARS['field_type'])."', name = '".\DB::escapeQueryString($_VARS['field_name'])."', value = '".\DB::escapeQueryString($_VARS['field_value'])."', options = '".\DB::escapeQueryString($_VARS['field_options'])."', display = '".\DB::escapeQueryString($_VARS['field_display'])."' WHERE id = '".$_VARS['entry_id']."'";
+	} else {
+		$aTemp = DB::getQueryRow("SELECT field_id FROM multi_fields WHERE multi_id = '".$_VARS['multi_id']."' ORDER BY field_id DESC LIMIT 1");
+		$idNext = $aTemp['field_id'] + 1;
+		$sQuery = "INSERT INTO multi_fields SET field_id = '".$idNext."', multi_id = '".$_VARS['multi_id']."', type = '".\DB::escapeQueryString($_VARS['field_type'])."', name = '".\DB::escapeQueryString($_VARS['field_name'])."', value = '".\DB::escapeQueryString($_VARS['field_value'])."', options = '".\DB::escapeQueryString($_VARS['field_options'])."', display = '".\DB::escapeQueryString($_VARS['field_display'])."'";
+	}
+	DB::executeQuery($sQuery);
+
+	// Datentabelle neu schreiben
+	Ext_Multi::writeMultiDataTable($_VARS['multi_id']);
+?>
+<script>
+	document.location.href='multi.html?multi_id=<?=$_VARS['multi_id']?>&multi_action=fields&active=0&dnp=<?=rand()?>';
+</script>
+<?
+} elseif($_VARS['multi_action'] == 'saveinit') {
+
+	$t_init_view = "";
+	foreach((array)$_VARS['init_view'] as $elem) {
+		$t_init_view .= $elem."|";
+	}
+
+	if(!DB::getQueryRow("SELECT * FROM multi_init WHERE id = '".$_VARS['multi_id']."'")) {
+		DB::executeQuery("INSERT INTO multi_init SET name  = '".\DB::escapeQueryString($_VARS['init_name'])."', view = '$t_init_view', `use_gui` = " . (int)$_VARS['init_gui'] . ", `sortable_automatically` = ".(int)$_VARS['sortable_automatically'].", email = '".\DB::escapeQueryString($_VARS['init_email'])."'");
+		$_VARS['multi_id'] = DB::fetchInsertID();
+	} else {
+		DB::executeQuery("UPDATE multi_init SET name  = '".\DB::escapeQueryString($_VARS['init_name'])."', view = '$t_init_view', `use_gui` = " . (int)$_VARS['init_gui'] . ", `sortable_automatically` = ".(int)$_VARS['sortable_automatically'].", email = '".\DB::escapeQueryString($_VARS['init_email'])."' WHERE id = ".(int)$_VARS['multi_id']."");
+	}
+
+?>
+<script>
+	document.location.href='multi.html?multi_id=<?=$_VARS['multi_id']?>&multi_action=properties&active=0&dnp=<?=rand()?>';
+</script>
+<?
+// Eintrag speichern
+} elseif($_VARS['multi_action'] == "save") {
+
+	$multi_array = DB::getQueryRow("SELECT * FROM multi_init WHERE id = '".$_VARS['multi_id']."'");
+
+	$_VARS['multi_id'] = $multi_array['id'];
+
+	$intValidUntil = strtotimestamp($_VARS['validuntil'], 1);
+	if(substr($intValidUntil, -6) == '000000') {
+		if(function_exists('bcadd')) {
+			$intValidUntil = bcadd($intValidUntil, 235959);
+		} else {
+			$intValidUntil = ($intValidUntil + 235959);
+		}
+	}
+
+	$set_entry = "SET multi_id = ".(int)$_VARS['multi_id'].", name = '".\DB::escapeQueryString($_VARS['entry_name'])."', category_id = ".(int)$_VARS['entry_category'].", language_code = '".$_VARS['entry_language']."', validfrom = '".strtotimestamp($_VARS['validfrom'],1)."', validuntil = '".$intValidUntil."'";
+	if($_VARS['entry_id'] > 0) {
+		DB::executeQuery("UPDATE multi_entry $set_entry WHERE id = ".(int)$_VARS['entry_id']."");
+		$multi_abfrage2 = (array)DB::getQueryRows("SELECT field_id as id,type FROM multi_fields WHERE multi_id = '".$_VARS['multi_id']."' ORDER BY position");
+		foreach($multi_abfrage2 as $multi_array2) {
+			$value = "";
+			if(is_array($_VARS["field_".$multi_array2['id']]) && $multi_array2['type'] == "table") {
+				$value = serialize($_VARS["field_".$multi_array2['id']]);
+			} elseif(is_array($_VARS["field_".$multi_array2['id']])) {
+				foreach($_VARS["field_".$multi_array2['id']] as $elem) {
+					$value .= "|".$elem;
+				}
+				$value = substr($value,1);
+			} else {
+				$value = $_VARS["field_".$multi_array2['id']];
+			}
+			if(DB::getQueryRow("SELECT id from multi_data WHERE field_id = '".$multi_array2['id']."' AND multi_id = '".$_VARS['multi_id']."' AND entry_id = ".(int)$_VARS['entry_id']."")) {
+				DB::executeQuery("UPDATE multi_data SET value = '".\DB::escapeQueryString($value)."' WHERE field_id = '".$multi_array2['id']."' AND multi_id = '".$_VARS['multi_id']."' AND entry_id = ".(int)$_VARS['entry_id']."");
+			} else {
+				DB::executeQuery("INSERT INTO multi_data SET value = '".\DB::escapeQueryString($value)."', field_id = '".$multi_array2['id']."', multi_id = '".$_VARS['multi_id']."', entry_id = ".(int)$_VARS['entry_id']."");
+			}
+		}
+
+	} else {
+		DB::executeQuery("INSERT INTO multi_entry ".$set_entry);
+		$_VARS['entry_id'] = DB::fetchInsertID();
+		$multi_abfrage2 = (array)DB::getQueryRows("SELECT field_id as id FROM multi_fields WHERE multi_id = '".$_VARS['multi_id']."' ORDER BY position");
+		foreach($multi_abfrage2 as $multi_array2) {
+			DB::executeQuery("INSERT INTO multi_data SET value = '".\DB::escapeQueryString($_VARS["field_".$multi_array2['id']])."', field_id = '".$multi_array2['id']."', multi_id = '".$_VARS['multi_id']."', entry_id = ".(int)$_VARS['entry_id']."");
+		}
+	}
+
+	Ext_Multi_Access::saveAccess($_VARS['entry_id'], $_VARS['access'], 1);
+	Ext_Multi_Access::saveAccess($_VARS['entry_id'], $_VARS['noaccess'], 0);
+
+	// Datentabelle neu schreiben
+	Ext_Multi::writeMultiDataTable($_VARS['multi_id']);
+
+?>
+<script>
+	document.location.href='multi.html?multi_id=<?=$_VARS['multi_id']?>&multi_action=entries&active=0';
+</script>
+<?
+}
+}
+?>
+
+		</div>
+	</div>
+</section>
+
+<script>
+	
+	function updateHeight() {
+		
+		var iHeight = document.viewport.getHeight() - 250;
+		
+		if($('iframe_autoheight')) {
+			$('iframe_autoheight').style.height = iHeight+'px';
+		}
+		
+	}
+	
+	document.observe('dom:loaded', function(){
+		
+		updateHeight();
+
+		Event.observe(window, 'resize', function() {
+			updateHeight();
+		});	
+	
+	});
+	
+</script>
+
+<?=Admin_Html::loadAdminFooter()?>

@@ -1,0 +1,114 @@
+class:
+  wdbasic: TsSponsoring\Entity\Sponsor
+  data: \TsSponsoring\Gui2\Data\SponsorData
+  date_format: Ext_Thebing_Gui2_Format_Date
+access: thebing_marketing_sponsoring
+title: Sponsoren
+pagination: true
+export: true
+limit: 30
+id:
+  column: id
+  alias: ts_s
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+          - abbreviation
+          - number
+          - firstname
+          - lastname
+          - email
+        alias:
+          - ts_s
+          - ts_s
+          - ts_s
+          - tc_c
+          - tc_c
+          - tc_ea
+        access:
+      -
+        element: seperator
+      -
+        element: validfilter
+        label: Gültigkeit
+      -
+        element: selectfilter
+        label: Land
+        label_as_null_item: true
+        column:
+          - country_iso
+        alias:
+          - tc_a
+        entries:
+          - Ext_Thebing_Data
+          - getCountryList
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - \TsSponsoring\Gui2\Data\SponsorData
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - \TsSponsoring\Gui2\Data\SponsorData
+          - getDialog
+      -
+        element: icon_delete
+      -
+        element: icon_deactivate
+      -
+        element: icon_file_manager
+# Muss auch abgefragt werden, wenn es einfach eingebaut wird
+#      -
+#        element: icon_deactivate
+columns:
+  -
+    title: Nummer
+    column: number
+    width: number
+    default: false
+  -
+    title: Name
+    column: name
+    width: name
+    resize: true
+  -
+    title: Abkürzung
+    column: abbreviation
+    width: short_name
+  -
+    title: Adresse
+    column: address
+    width: name
+  -
+    title: Adresszusatz
+    column: address_addon
+    width: name
+  -
+    title: PLZ
+    column: zip
+    width: name
+  -
+    title: Stadt
+    column: city
+    width: name
+  -
+    title: Bundesland
+    column: state
+    width: name
+  -
+    title: Land
+    column: country_iso
+    format: Ext_Thebing_Gui2_Format_Country
+    width: name

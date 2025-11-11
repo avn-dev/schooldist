@@ -1,0 +1,186 @@
+<?
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Admin_Html::loadAdminHeader();
+
+Access_Backend::checkAccess("office");
+
+$objDao = new classExtensionDao_Office();
+$objOffice = new classExtension_Office;
+$arrConfigData = $objOffice->getConfigData();
+
+/* SPEICHERN */
+
+if ($_VARS['task'] == "saveProtocol") {
+	$strSql = "
+				INSERT INTO 
+					office_protocol  
+				SET  
+					customer_id = '".\DB::escapeQueryString($_VARS['customer_id'])."',  
+					contact_id = '".\DB::escapeQueryString($_VARS['contact_id'])."',  
+					editor_id = '".\DB::escapeQueryString($_VARS['editor_id'])."',  
+					topic = '".\DB::escapeQueryString($_VARS['type'])."',  
+					subject = '".\DB::escapeQueryString($_VARS['subject'])."' 
+				";
+	DB::executeQuery($strSql);
+}
+
+/* AUSLESEN DER DATEN */
+
+// Kategorien
+
+array_pop($aSectionNames);
+unset($aConfigData['activities']['increment']);
+
+$aAdditionalSections = array("-" => "--------------");
+$aAdditionalSections = array_merge($aAdditionalSections, $aConfigData['activities']);
+
+$aAll = array("" => "Alle Dokumente");
+$aSectionNames = array_merge($aAll, $aSectionNames, $aAdditionalSections);
+
+// Firma
+$aCustomersFull = $objDao->getCustomers($arrConfigData);
+$aCustomers = array(0 => 'bitte w&auml;hlen');
+foreach((array)$aCustomersFull as $aCustomer) {
+	$aCustomers[$aCustomer['id']] = $aCustomer['name'].' ('.$aCustomer['number'].')';
+}
+
+// Bearbeiter
+$rEditor = DB::getQueryRows("SELECT id, firstname, lastname FROM system_user WHERE active = 1 ORDER BY lastname");
+foreach($rEditor as $aEditor) {
+	$aEditors[$aEditor['id']] = $aEditor['lastname'].", ".$aEditor['firstname'];
+}
+
+// Protokoll
+$query = "SELECT *, UNIX_TIMESTAMP(`date`) date FROM office_protocol";
+if ($_VARS['customer_id'] != "")	$query .= " WHERE customer_id = '".$_VARS['customer_id']."'";
+if ($_VARS['type'] != "")			$query .= " AND topic = '".$_VARS['type']."'";
+$query .= " ORDER BY date DESC";
+
+// Kontakte
+if ($_VARS['customer_id'] > 0) {
+	$arrContacts = $objDao->getContacts($_VARS['customer_id']);
+	foreach((array)$arrContacts as $intContactId => $arrContact) {
+		$aContacts[$intContactId] = $arrContact['lastname'].", ".$arrContact['firstname'];
+	}
+} else {
+	$aContacts = array("" => "-");
+}
+
+// Protokoll
+$rProtocol = DB::getQueryRows($query);
+foreach($rProtocol as $aProtocol) {
+	$aProtocols[$aProtocol['id']] = $aProtocol;
+}
+
+/* PROTOKOLL */
+?>
+
+<table cellpadding="0" cellspacing="30" border="0" width="100%">
+	<tr>
+		<td valign="top">
+<?
+if ($_VARS['task'] == "editProtocol") {
+	unset($aAdditionalSections["-"]);
+?>
+			<h1>Office &raquo; Protokoll &raquo; Ereignis protokollieren</h1>
+			<br><br>
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="type" value="<?=$_VARS['type']?>">
+			<input type="hidden" name="task" value="editProtocol">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+							<?=printTableStart()?>
+								<?=printFormSelect("Kunde", "customer_id", $aCustomers, $_VARS['customer_id'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?>
+								<?=printFormSelect("Kontakt", "contact_id", $aContacts, '', "style=\"width:300px;\"")?>
+								<?=printFormSelect("Bearbeiter", "editor_id", $aEditors, $user_data['id'], "style=\"width:300px;\"")?>
+								<?=printFormSelect("Aktivit&auml;t", "type", $aAdditionalSections, $_VARS['type'], "style=\"width:300px;\"")?>
+								<?=printFormTextarea("Betreff", "subject", "", 3, 3)?>
+							<?=printTableEnd()?>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("Neues Ereignis speichern", "onclick=\"this.form.task.value='saveProtocol';\"".(($_VARS['customer_id'] == 0)?"disabled":""))?></td>
+								</tr>
+							</table>
+<?
+} else {
+?>
+			<h1>Office &raquo; Protokoll</h1>
+			<br><br>
+			<form name="mask" action="<?=$_SERVER['PHP_SELF']?>" method="post">
+			<input type="hidden" name="type" value="<?=$_VARS['type']?>">
+			<input type="hidden" name="task" value="">
+				<table cellspacing="0" cellpadding="0" border="0" width="100%">
+					<tr>
+						<td valign="top">
+							<?=printTableStart()?>
+								<?=printFormSelect("Kunde", "customer_id", $aCustomers, $_VARS['customer_id'], "style=\"width:300px;\" onChange=\"document.mask.submit();\"")?></td>
+								<?if ($_VARS['customer_id'] != "") echo printFormSelect("Kategorie", "type", $aSectionNames, $_VARS['type'], "style=\"width:300px;\" onChange=\"document.mask.submit();\""); ?></td>
+							<?=printTableEnd()?>
+<?
+
+?>
+							<br>
+							<table cellpadding="4" cellspacing="0" border="0" class="table" width="100%">
+								<tr>
+									<th width="105" nowrap>Datum</th>
+									<th width="120" nowrap>Aktivit&auml;t</th>
+									<th>Betreff</th>
+									<th width="200" nowrap>Kunde</th>
+									<th width="120" nowrap>Kontakt</th>
+									<th width="120" nowrap>Bearbeiter</th>
+									<th width="46" nowrap>PDF</th>
+									
+								</tr>
+<?
+	if ($_VARS['customer_id'] != "") {
+
+		foreach ((array)$aProtocols as $id => $protocol) {
+?>
+								<tr id="tr_<?=$protocol['id']?>" onmouseout="showRow(<?=$protocol['id']?>,0)" onmousemove="showRow(<?=$protocol['id']?>,1);">
+									<td nowrap><?=date("d.m.Y H:i", $protocol['date'])?></td>
+									<td nowrap><?=$aSectionNames[$protocol['topic']]?></td>
+									<td nowrap><?=$protocol['subject']?>&nbsp;</td>
+									<td nowrap><?=$aCustomers[$protocol['customer_id']]?></td>
+									<td nowrap><?=($protocol['contact_id'] > 0)?$aContacts[$protocol['contact_id']]:"-";?></td>
+									<td nowrap><?=$aEditors[$protocol['editor_id']]?>&nbsp;</td>
+									<td nowrap><? if (!(array_key_exists($protocol['topic'], $aAdditionalSections))) {?><a href="extensions/office/office.php?idDocument=<?=$protocol['document_id']?>" target=_blank><img src="media/media_pdf.gif" border="0" align="absMiddle"> PDF</a><? } ?>&nbsp;</td>
+								</tr>
+<?
+		}
+	}
+?>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<br>
+							<table cellpadding="5" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td>&nbsp;</td>
+									<td width="1"><?=printSubmit("Ereignis protokollieren", "onclick=\"this.form.task.value='editProtocol';\"")?></td>
+								</tr>
+							</table>
+<?
+}
+?>
+						
+						</td>
+					</tr>
+				</table>
+			</form>
+		</td>
+	</tr>
+</table>
+
+<?=Admin_Html::loadAdminFooter()?>

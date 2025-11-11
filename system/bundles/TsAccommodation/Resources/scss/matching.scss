@@ -1,0 +1,40 @@
+#matching_bar, #matching_bar_availability {
+  @apply flex flex-row items-center gap-x-2 bg-white border-b border-gray-100/50;
+
+  .guiBarFilter {
+
+    &:has(div[role=button]) {
+      @apply ring-0 p-0;
+    }
+
+    div[role=button] {
+      @apply flex flex-row gap-x-2 px-1.5 rounded items-center relative ring-1 bg-white text-gray-500 ring-gray-100/75 hover:text-gray-600 hover:ring-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 dark:hover:text-gray-100;
+      height: 24px;
+      box-sizing: border-box;
+    }
+  }
+
+  #collapseCriteria {
+    @apply bg-white p-2 rounded-md border border-gray-100/50;
+  }
+
+}
+
+#matching_body {
+  @apply bg-white;
+
+  table.tblMatching {
+    th {
+      @apply bg-gray-50/50 border-b border-r;
+    }
+
+    td {
+      @apply border-b;
+    }
+
+    th, td {
+      @apply border-gray-100/50;
+    }
+  }
+
+}

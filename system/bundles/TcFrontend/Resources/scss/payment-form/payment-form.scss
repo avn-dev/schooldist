@@ -1,0 +1,79 @@
+@import "node_modules/bootstrap/scss/functions";
+@import "node_modules/bootstrap/scss/variables";
+@import "node_modules/bootstrap/scss/mixins";
+
+.fidelo-payment-form {
+
+	.container {
+		max-width: map-get($container-max-widths, 'lg');
+	}
+
+	@include media-breakpoint-up(sm) {
+		// TODO Zu generisch
+		.card-title {
+			h3 {
+				text-align: right;
+			}
+		}
+	}
+
+	.col-customer-details,
+	.col-payment-details {
+		h4 {
+			margin-bottom: $spacer;
+		}
+	}
+
+	.col-payment-details {
+		ul li {
+			display: flex;
+			justify-content: space-between;
+		}
+
+		.pay-full-amount {
+			margin-top: $spacer;
+
+			label {
+				font-weight: bold;
+			}
+		}
+
+		.payment-is-due time {
+			color: $danger;
+			font-weight: bold;
+		}
+	}
+
+	@import "../common/loading-overlay";
+	@import "../common/payment";
+	@import "../bs-stepper";
+
+	@include media-breakpoint-up(md) {
+		.payment-paypal {
+			max-width: 50%;
+		}
+	}
+
+	.payment-moneris {
+		height: 650px;
+	}
+
+	// Font Awesome wird im Payment Form nicht eingebunden
+	i.fa-credit-card,
+	i.fa-landmark {
+		display: inline-block;
+		width: 27px;
+		height: 27px;
+		background-repeat: no-repeat;
+		background-position: center;
+	}
+
+	i.fa-credit-card {
+		background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M0 432c0 26.5 21.5 48 48 48h480c26.5 0 48-21.5 48-48V256H0v176zm192-68c0-6.6 5.4-12 12-12h136c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H204c-6.6 0-12-5.4-12-12v-40zm-128 0c0-6.6 5.4-12 12-12h72c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H76c-6.6 0-12-5.4-12-12v-40zM576 80v48H0V80c0-26.5 21.5-48 48-48h480c26.5 0 48 21.5 48 48z"/></svg>');
+	}
+
+	i.fa-landmark {
+		background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M501.6 92.1L267.2 2a32 32 0 0 0 -22.5 0L10.4 92.1A16 16 0 0 0 0 107.1V144c0 8.8 7.2 16 16 16h480c8.8 0 16-7.2 16-16v-36.9c0-6.7-4.1-12.6-10.4-15zM64 192v160H48c-8.8 0-16 7.2-16 16v48h448v-48c0-8.8-7.2-16-16-16h-16V192h-64v160h-96V192h-64v160h-96V192H64zm432 256H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h480c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16z"/></svg>');
+	}
+
+}

@@ -1,0 +1,555 @@
+<? 
+die('noe...');
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/extensions/office/office.inc.php");
+
+Access_Backend::checkAccess("office");
+
+echo Admin_Html::loadAdminHeader();
+
+/*======================================================*/
+?>
+
+
+<?
+
+	
+	if(!isset($_GET['week']))
+	{
+		$_GET['week'] = 0;
+	} 
+
+	// Time and Date Array
+	$aTimeInfo 		= get_time_info($_GET['week']);
+	$iWeekStart 	= $aTimeInfo[2];
+	$iWeekEnd 		= $aTimeInfo[3];
+	$iMondayClock 	= $aTimeInfo[1] + 25200;
+
+	// Entrys
+	$aEntrys 		= get_entrys($aTimeInfo[2], $aTimeInfo[3]);
+
+	if(getUserID($_COOKIE['session_id']) == 0)
+	{
+		header("Location:login_false.php");
+	}
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<script type="text/javascript" src="js/ajax.js"></script>
+		<script type="text/javascript" src="js/prototype.js"></script>
+		<script type="text/javascript" src="js/scriptaculous.js"></script>
+		<script type="text/javascript" src="js/functions.js"></script>
+		<title>Raumplanung Online</title>
+	</head>
+	<body>
+	<div id="all">
+		<div class="rm_all" id="rm_all">
+		<div class="newEntry" id="newEntry" style="display:none;">
+			<div class="header" id="header">
+				<div class="del">
+					<img style="height: 14px; width: 14px;" src="img/application_delete.png" alt="Schliessen" onclick="closeNewEntry('newEntry');"/>
+				</div>
+				<div class="move">
+					<img style="height: 14px; width: 14px;" src="img/arrow_out.png" alt="Drag" />
+				</div>
+				Neuen Eintrag hinzufügen
+			</div>
+			<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+				<input type="hidden" name="user_id" value="<?=getUserID($_COOKIE['session_id'])?>" id="user_id" />
+				<fieldset>
+					<legend>Raumbuchung</legend>
+					<div class="left">
+						Neue Raumbelegung ab:
+					</div>
+					<div class="right" id="from">
+						
+					</div>
+					<div class="cleaner"></div>
+					<div class="left">
+						bis (ausschließlich) :
+					</div>
+					<div class="right">
+						<select name="to" id="to">
+						</select>
+					</div>
+				</fieldset>
+				<div class="cleaner"></div>
+				<div class="info">
+					<fieldset>
+						<legend>Info-Text</legend>
+						<textarea name="content" id="newEntryTextarea"></textarea>
+					</fieldset>
+				</div>
+				<div class="cleaner"></div>
+				<div class="comment" id="comment">
+					&nbsp;
+				</div>
+				<div class="button">
+					<input type="submit" class="btn" value="hinzufügen" onclick="entry_add(); return false;"/>
+				</div>
+			</form>
+		</div>
+		<div class="newEntry" id="edit_newEntry" style="display:none;">
+			<div class="header">
+				<div class="del">
+					<img style="height: 14px; width: 14px;" src="img/application_delete.png" alt="Schliessen" onclick="closeNewEntry('edit_newEntry');"/>
+				</div>
+				<div class="move">
+					<img style="height: 14px; width: 14px;" src="img/arrow_out.png" alt="Drag" />
+				</div>
+				Eintrag editieren / löschen
+			</div>
+			<form action="<?=$_SERVER['PHP_SELF']?>" method="post">
+				<input type="hidden" name="user_id" value="<?=getUserID($_COOKIE['session_id'])?>" />
+				<fieldset>
+					<legend>Raumbuchung</legend>
+					<div class="left">
+						Neue Raumbelegung ab:
+					</div>
+					<div class="right" id="edit_from">
+						
+					</div>
+					<div class="cleaner"></div>
+					<div class="left">
+						bis (ausschließlich) :
+					</div>
+					<div class="right">
+						<select name="to" id="edit_to">
+						</select>
+					</div>
+				</fieldset>
+				<div class="cleaner"></div>
+				<div class="info">
+					<fieldset>
+						<legend>Info-Text</legend>
+						<textarea name="content" id="edit_newEntryTextarea"></textarea>
+					</fieldset>
+				</div>
+				<div class="cleaner"></div>
+				<div class="comment" id="edit_comment">
+					&nbsp;
+				</div>
+				<div class="button">
+					<button class="btn" onclick="delete_entry(); return false;"/>löschen</button>
+					<input type="submit" class="btn" value="ändern" onclick="edit_entry_add(); return false;"/>
+				</div>
+			</form>
+		</div>
+			<div class="rm_header">	
+			</div>
+			<div class="rm_content">
+				<div class="last_week">
+					<a href="<?=$_SERVER['PHP_SELF']?>?week=<?=$_GET['week'] - 1?>"><img src="/img/arrow_left.png" alt="vorherige Woche" /></a>
+				</div>
+				<div class="current_week">
+					Woche vom <?=strftime('%x', $iWeekStart)?> bis <?=strftime('%x', $iWeekEnd)?> (KW <?=strftime('%V', $iWeekStart)?>)
+				</div>
+				<div class="next_week">
+					<a href="<?=$_SERVER['PHP_SELF']?>?week=<?=$_GET['week'] + 1?>"><img src="/img/arrow_right.png" alt="nächste Woche" /></a>
+				</div>
+				<div class="cleaner"></div>
+				<table class="rm_content_table">
+					<colgroup>
+						<col width="13%" />
+						<col width="12%" />
+						<col width="13%" />
+						<col width="12%" />
+						<col width="13%" />
+						<col width="12%" />
+						<col width="13%" />
+						<col width="12%" />
+						<col width="13%" />
+					</colgroup>
+					<tr>
+						<th>Zeit</th>
+						<th>Montag (<?=strftime('%d.%m',$iWeekStart)?>)</th>
+						<th>Dienstag (<?=strftime('%d.%m',$iWeekStart + 86400)?>)</th>
+						<th>Mittwoch (<?=strftime('%d.%m',$iWeekStart + 172800)?>)</th>
+						<th>Donnerstag (<?=strftime('%d.%m',$iWeekStart + 259200)?>)</th>
+						<th>Freitag (<?=strftime('%d.%m',$iWeekStart + 345600)?>)</th>
+						<th>Samstag (<?=strftime('%d.%m',$iWeekStart + 432000)?>)</th>
+						<th>Sonntag (<?=strftime('%d.%m',$iWeekStart + 518400)?>)</th>
+					</tr>
+
+<?php
+	$aRowspan = array();
+	for($iRow = 14; $iRow <= 44; $iRow++)
+	{
+		for($i = 0; $i < 8; $i++)
+		{
+						
+			$count = 1;
+			
+			$iDay = $iWeekStart + (($i-1) * 86400) + ($iRow * 1800);
+ 
+			if($i == 0)
+			{ 
+?>
+					<tr>	
+						<td class="time"><?=strftime('%R', $iDay)?></td>
+<?php 		}
+
+			if(array_key_exists($iDay, $aEntrys))
+			{
+				$iRowspan = $aEntrys[$iDay]['to'] - $aEntrys[$iDay]['from'];
+				$iRowspan /= 1800;
+				$aRowspan[$i] = $aEntrys[$iDay]['to'];
+				
+				
+				if($aEntrys[$iDay]['user_id'] == 1)
+				{
+					$UserName = 'plan-i:';
+					$Class = 'class="usedplani"';
+					
+				} 
+				elseif($aEntrys[$iDay]['user_id'] == 2)
+				{
+					$UserName = 'Consulimus:';
+					$Class = 'class="usedconsulimus"';
+				} 
+				else 
+				{
+					$UserName = '..Fehler..';
+					$Class = 'class="usederror"';
+				}
+				
+				
+?>
+						<td title="<?=strftime("%x %X",$iDay)?>" <? if($iRowspan > 1){ echo 'rowspan="'.$iRowspan.'"';} ?> <?=$Class?> id="id_<?=$iDay?>" <? if($aEntrys[$iDay]['user_id'] == getUserID($_COOKIE['session_id'])){?>onclick="edit_element(this);"<? } ?>>
+<?							
+							echo '<b>'.$UserName.'</b><br />';
+							echo nl2br(trim($aEntrys[$iDay]['content']));
+?>
+						</td>
+<?php
+			} elseif (
+				$i != 0 && 
+				(
+					$aRowspan[$i] == 0
+						||
+					$aRowspan[$i] <= $iDay
+				)
+			) 
+			{
+?>
+							<td title="<?=strftime("%x %X",$iDay)?>" id="id_<?=$iDay?>" onclick="give_element(this);">
+							</td>
+<?php
+			}				
+			$count++;
+			if($count == 8)
+			{
+				$count = 1;
+				echo '</tr><tr>';
+			}
+		}
+		echo '</tr>';
+	}
+?>
+				</table>
+				<!--div style="margin-left: 70px; color: #D4DDF0;">
+					Und denkt dran Consulimus -> für jede angefangene überzogene Stunde: 50€ Strafebühr ;)
+				</div-->
+			</div>
+		</div>
+	</div>
+	</body>
+</html>
+
+
+<?
+/*======================================================*/
+
+// ============================================================ //
+// Functions
+// ============================================================ //
+// after username and passwort enter
+function logincheck($name, $pass){
+	$sql = "SELECT
+			 		*
+			 FROM 
+					`user` 
+			WHERE 
+					`user_name` = '".DB::escapeQueryString($name)."'
+			AND 
+					`user_pass` = '".DB::escapeQueryString($pass)."'
+	";
+	
+	$rResult = mysql_query($sql);						// read the data from user: where user = ...
+	$iCount = mysql_num_rows($rResult);					// count the entrys of this query
+	
+	if 	($iCount == 1){									// if 1 entry found
+		
+		$aUser = mysql_fetch_array($rResult);			// save results from SELECT.. into "Array User"
+		if ($aUser['active'] != 1){						// if user activity is not 1
+			header("Location:login_false.php");			// goto login_false.php
+		die();
+		}
+		$iUserID = $aUser['id'];						// save UserID into "Integer UserID"
+		$sLastLogin = $aUser['last_login'];				// save last Login Time into "string Last Login"
+		$aLastLogin = explode("-", $sLastLogin);		// login time is saved in db to eng time format. here it will be transformet to ger time format
+		$aLastLogin[3]= explode(" ", $aLastLogin[2]);	//
+		$sLastLogin = $aLastLogin[3][0];				//
+		$sLastLogin .= ".";								//
+		$sLastLogin .= $aLastLogin[1];					//
+		$sLastLogin .= ".";								//
+		$sLastLogin .= $aLastLogin[0];					//
+		$sLastLogin .= " ";								//
+		$sLastLogin .= $aLastLogin[3][1];				//
+		
+		$aCookie = array();
+		// create session id
+		$aCookie['userid'] = $iUserID;					// fill $session with userid
+		$sSessionId = md5 (uniqid (rand()));			// create uniqi session-id
+		$aCookie['sessionid'] = $sSessionId;     	 	 // fill $session with sessionid
+		$aCookie['last_login'] = $sLastLogin;			// fill $session with lastlogin date
+		$aCookie['user_name'] = $name;					// fill $session with username
+
+		updateCookies($iUserID);
+
+
+	// Last Login:
+		$sql = "UPDATE
+			 		`user`
+				SET
+					`last_login` = '".date("Y-m-d H:i:s",time())."'
+				WHERE 
+					`id` = '".$iUserID."'";
+	
+		$rResult = mysql_query($sql);					// read last login time from db
+
+		return true;
+	} else {											// if no entry or more than 1 found
+		header("Location:login_false.php");				//	goto login_false.php
+		die();
+	}
+}
+
+
+
+
+function updateCookies($userid) {
+	
+	$sSql = "
+		SELECT
+			*
+		FROM
+			`user`
+		WHERE
+			`id` = '".DB::escapeQueryString($userid)."'
+		LIMIT 1
+	";
+	$rResult = mysql_query($sSql);
+	$aResult = mysql_fetch_array($rResult);
+	setcookie("sessionid", $aResult['session_id'], time()+604800, "/"); //604800 = 7 Days
+}
+
+
+
+
+function firststart(){
+	
+	$sql = "SELECT
+		 		*
+		 FROM 
+				`user` 
+		WHERE 
+				`session_id` = '".DB::escapeQueryString($_COOKIE['sessionid'])."'
+		LIMIT 1
+	";
+				
+	$rResult = mysql_query($sql);						// look in db for user with session_is = ...
+	$iCount = mysql_num_rows($rResult);
+	
+	$aUser = mysql_fetch_array($rResult);
+	
+	if($iCount == 1){
+		
+//			$_SESSION['userid'] = $aUser['id'];
+		
+		header("Location:roommanager.php");
+		die();
+	}
+	
+}
+
+
+
+
+
+
+// check if user has auth to enter site
+function check(){
+
+	$sql = "SELECT
+		 		*
+		 FROM 
+				`user` 
+		WHERE 
+				`session_id` = '".DB::escapeQueryString($_COOKIE['sessionid'])."'
+		LIMIT 1
+		";
+
+	$rResult = mysql_query($sql);						// look in db for user with session_id = ...
+	$iCount = mysql_num_rows($rResult);					// count entrys of this query
+	$aResult = mysql_fetch_array($rResult);				// save results of mysql query into array
+	if ($iCount != 1){									// If no User found - bye
+		header("Location:login_false.php");
+		die();
+	}
+	updateCookies($aResult['id']);
+}
+
+function getUserID($cookie)
+{
+	$sql = "SELECT
+		 		*
+		 FROM 
+				`user` 
+		WHERE 
+				`session_id` = '".DB::escapeQueryString($_COOKIE['sessionid'])."'
+		LIMIT 1
+		";
+		$rResult = mysql_query($sql);
+		$aResult = mysql_fetch_array($rResult);
+		return $aResult[0]['id'];
+}
+
+
+
+// get current week
+function get_time_info($week = 0){
+	
+	if(date('D') == 'Mon'){
+		$sUnixThisMonday = strtotime("monday + ".$week."week");
+		$sThisMonday = strtotime("monday +".$week."week");
+	} else {
+		$sUnixThisMonday = strtotime("last monday + ".$week."week");
+		$sThisMonday = strtotime("last monday +".$week."week");
+	}
+	$sThisSunday = strtotime("sunday +".$week."week") + 86399;
+	
+	$aTimeInfo = array(		1 => $sUnixThisMonday,
+							2 => $sThisMonday,
+							3 => $sThisSunday);
+	
+	return $aTimeInfo;
+}
+
+
+
+
+
+//get Entry Infos
+function get_entrys($iFrom, $iTo){
+	$sSql = "
+		SELECT
+			*
+		FROM
+			`entrys`
+		WHERE
+			`from` >= ".DB::escapeQueryString($iFrom)."
+		AND
+			`to` <= ".DB::escapeQueryString($iTo)."
+	";
+	
+	$rResult = mysql_query($sSql);
+	$iCount = mysql_num_rows($rResult);
+	
+	$aResult = array();
+	while($aRow = mysql_fetch_array($rResult)){
+		$aResult[$aRow['from']] = $aRow;
+	}
+	
+	return $aResult;
+}
+
+
+
+
+
+
+// function out by Alexey Schneider
+function __out($mVar = 'EMPTY', $bStopScript = false, $bIsException = false)
+{
+	// Get the file name and line of output	
+	$aDebug	= debug_backtrace();
+	$dLine	= '<span style="color:#FF6600;">'.$aDebug[0]['line'].'</span>';
+	$sFile	= '<span style="color:#FF6600;">/'.str_replace('/var/www/vhosts/', '', $aDebug[0]['file']).'</span>';
+
+	// Format the output
+	if(!(bool)$bIsException)
+	{
+		if(is_string($mVar))
+		{
+			if($mVar === 'EMPTY')
+			{
+				$mVar = "\t<b style=\"color:#CC0000;\">EMPTY</b>\n";
+			}
+			else
+			{
+				$mVar = "\tstring(".strlen($mVar).") => ".($mVar == '' ? $mVar = '\'\'' : $mVar)."\n";
+			}
+		}
+		else if(is_float($mVar))
+		{
+			$mVar = "\tfloat => ".$mVar."\n";
+		}
+		else if(is_int($mVar))
+		{
+			$mVar = "\tint => ".$mVar."\n";
+		}
+		else if(is_null($mVar))
+		{
+			$mVar = "\t<b style=\"color:#CC0000;\">NULL</b>\n";
+		}
+		else if($mVar === true)
+		{
+			$mVar = "\t<b style=\"color:#CC0000;\">TRUE</b>\n";
+		}
+		else if($mVar === false)
+		{
+			$mVar = "\t<b style=\"color:#CC0000;\">FALSE</b>\n";
+		}
+	}
+	else
+	{
+		$mVar = "\t<b style=\"color:#CC0000;\">EXCEPTION:</b> ".$mVar."\n";
+	}
+
+	// Print the output
+	echo '<span style="position:relative; z-index:1000000;">';
+	echo "\n<pre>----------------------------------------------------------------------------------------------------";
+	echo "\n<b>Start of output on line {$dLine} in {$sFile}</b>\n\n";
+	print_r($mVar);
+	echo "\n<b>End of output</b>\n";
+	echo "----------------------------------------------------------------------------------------------------\n";
+
+	// Stop the execution of script if needed
+	if((bool)$bStopScript)
+	{
+		echo "<b style=\"color:#CC0000;\">";
+		echo "<blink>The execution of script was explicitly stopped after this output.</blink></b>\n";
+		echo "----------------------------------------------------------------------------------------------------</pre>";
+		echo "</span>";
+		die();
+	}
+	else
+	{
+		echo "</span></pre>";
+	}
+}
+	
+
+// ============================================================ //
+// Functions END
+// ============================================================ //
+echo Admin_Html::loadAdminFooter()
+
+?>

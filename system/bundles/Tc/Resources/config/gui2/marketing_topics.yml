@@ -1,0 +1,102 @@
+class:
+  wdbasic: Ext_TC_Marketing_Feedback_Topic
+  data: Ext_TC_Marketing_Feedback_Topic_Gui2_Data
+id:
+  column: id
+  alias: tc_ft
+access: 
+  - core_marketing_topics
+  - ""
+bars:
+  - 
+    position: top
+    type: ""
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        column:
+          - name
+        alias:
+          - topics_tc_i18n
+
+  -
+    position: top
+    type: ""
+    elements:
+      -
+        element: icon_new
+        dialog:
+          - Ext_TC_Marketing_Feedback_Topic_Gui2_Data
+          - getDialog
+      -
+        element: icon_edit
+        dialog:
+          - Ext_TC_Marketing_Feedback_Topic_Gui2_Data
+          - getDialog
+      -
+        element: icon
+        label: Löschen
+        action: deleteCheck
+        access:
+          - core_marketing_topics
+          - delete
+        task: openDialog
+        dialog:
+          - Ext_TC_Marketing_Feedback_Topic_Gui2_Data
+          - getDeleteDialog
+        img: 
+          - Ext_TC_Util
+          - getIcon
+          - delete
+
+columns:
+  -
+    visible: true
+    sortable: false
+    title: Name
+    column: name
+    alias: tc_fr
+    width: name
+    resize: true
+    i18n: 
+      ## falls query gui definiert das hier den jointable alias
+      jointable: topics_tc_i18n
+      ## sagt aus ob der letzten methode von dem (index) callpath die sprache übergeben wird
+      pass_language: true
+      ## definiert of die sprach flagge in der spalte angezeigt wird
+      show_flag: true
+      
+default_columns:
+   -
+     title: Ersteller
+     column: creator_id
+     width: user_name
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Erstellt
+     column: created
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true
+   -
+     title: Bearbeiter
+     column: editor_id
+     width: editor_id
+     resize: false
+     format: Ext_Gui2_View_Format_UserName
+     sortable: true
+   -
+     title: Verändert
+     column: changed
+     width: date
+     resize: false
+     format: Ext_TC_Gui2_Format_Date
+     sortable: true
+
+
+  

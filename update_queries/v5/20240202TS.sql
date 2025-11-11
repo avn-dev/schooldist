@@ -1,0 +1,1 @@
+ALTER TABLE `office_forms_tables` ADD `position` INT UNSIGNED NULL DEFAULT NULL AFTER `decimal_places`;

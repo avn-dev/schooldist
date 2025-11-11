@@ -1,0 +1,218 @@
+hash: 12ee4fb1411b418401d73a3b6d0e3236
+class:
+  wdbasic: Ext_Thebing_Tuition_Course
+  data: Ext_Thebing_Tuition_Course_Gui2
+  js: Courses
+js:
+  - [tuition/js/courses.js, thebing]
+  - [tuition/js/courses/availability.js, thebing]
+access: thebing_tuition_resources_courses
+sortable: true
+include_tagsinput: true
+only_pagecount: true
+id:
+  column: id
+  alias: ktc
+orderby:
+  - Ext_Thebing_Tuition_Course_Gui2
+  - getOrderby
+where:
+  - Ext_Thebing_Tuition_Course_Gui2
+  - getWhere
+bars:
+  -
+    position: top
+    elements:
+     -
+        element: inputfilter
+        label: Suche
+        alias: 
+          - ktc
+          - ktc
+          - ktc
+        searchtype: LIKE
+        call:
+          - Ext_Thebing_Tuition_Course_Gui2
+          - manipulateSearchFilter
+     -
+        element: seperator
+     -
+        element: selectfilter
+        label: Unterrichtsform
+        label_as_null_item: true
+        alias:
+          - ktc
+        column:
+          - online
+        id: online_filter
+        value: xNullx
+        searchempty: true
+        entries:
+          - Ext_Thebing_Tuition_Course_Gui2
+          - getOnlineOptions
+     -
+        element: selectfilter
+        label: Nicht separat buchbar
+        label_as_item: true
+        alias:
+          - ktc
+        column:
+          - only_for_combination_courses
+        id: only_for_combination_courses
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: ' `ktc`.`only_for_combination_courses` = 1 '
+          no: ' `ktc`.`only_for_combination_courses` = 0 '
+     -
+        element: selectfilter
+        label: Kurskategorie
+        value: ''
+        column: category_id
+        alias: ktc
+        entries:
+          - Ext_Thebing_Inquiry_Certificates_Gui2
+          - getCategories
+        label_as_item: true
+     -
+       element: selectfilter
+       label: Sprachen
+       value: ''
+       column: courselanguage_id
+       alias: ts_tctc
+       entries:
+         - Ext_Thebing_Tuition_LevelGroup
+         - getSelectOptions
+       label_as_item: true
+     -
+       element: selectfilter
+       label: Typ
+       column: per_unit
+       entries:
+         - Ext_Thebing_Tuition_Course_Gui2
+         - getFormatPerUnitColumn
+       label_as_item: true
+     -
+        element: seperator
+     -
+        element: validfilter
+        label: Gültigkeit          
+  -
+    position: top
+    elements:
+     -
+        element: icon_new
+        dialog:
+          - Ext_Thebing_Tuition_Course_Gui2
+          - getDialog
+     -
+        element: icon_edit
+        dialog:
+          - Ext_Thebing_Tuition_Course_Gui2
+          - getDialog
+     -
+        element: icon_delete
+     - 
+        element: icon_deactivate
+        alias:
+          - ktc
+        access: thebing_tuition_resources_courses_deactivate
+     - 
+        element: icon_file_manager 
+columns:
+  - 
+    title: ID
+    column: id
+    width: id
+    default: false
+  - 
+    title: Name
+    column: name
+    width: name
+    resize: true
+    alias:
+      - ktc
+    i18n: 
+      pass_language: true
+      interface: frontend
+  - 
+    title: Unterrichtsform
+    column: online
+    width: name
+    alias:
+      - kc
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [ Ext_Thebing_Tuition_Course_Gui2, getOnlineOptions ]
+    resize: false
+    inplace_editor: 0
+  - 
+    title: Nur für Kombinationskurs nutzbar
+    column: only_for_combination_courses
+    width: yes_no
+    alias:
+      - kc
+    format: Ext_Gui2_View_Format_YesNo
+    small: true
+  - 
+    title: Unterrichtsstunden
+    column: lessons
+    width: 200
+    resize: false
+    small: true
+    alias:
+      - ktc
+    format: \TsTuition\Gui2\Format\Course\Lessons
+  - 
+    title: Anzahl der Schüler	
+    column: maximum_students
+    width: 80
+    format: Ext_Thebing_Gui2_Format_Int
+    resize: false
+    small: true
+  - 
+    title: Typ	
+    column: per_unit 
+    width: name
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Tuition_Course_Gui2, getFormatPerUnitColumn]
+  - 
+    title: Kategorie	
+    column: category_name
+    alias: ktcc
+    width: name
+    resize: false
+  - 
+    title: Kürzel	
+    column: name_short  
+    width: short_name
+    alias:
+      - ktc
+    resize: false
+  - 
+    title: Kurssprachen	
+    column: course_languages  
+    width: name
+    sortable: false
+    default: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [Ext_Thebing_Tuition_Course_Gui2, getFormatCourseLanguagesColumn1, getFormatCourseLanguagesColumn2]
+  - 
+    title: Übergeordneter Kurs	
+    column: superordinate_course_id  
+    width: name
+    sortable: false
+    default: false
+    format: Ext_Gui2_View_Format_Selection
+    format_params:
+      - [Ext_Thebing_Tuition_Course_Gui2, getFormatSuperordinateCourseIdColumn]
+  -
+    title: Gültig bis	
+    column: valid_until  
+    width: date
+    default: false
+    format: Ext_TC_Gui2_Format_Date

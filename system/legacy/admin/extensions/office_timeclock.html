@@ -1,0 +1,162 @@
+<?php
+
+include_once(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess('office_timeclock');
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'accept_change_wish')
+{
+	$oTimeclock = new Ext_Office_Timeclock('office_timeclock', (int)$_VARS['tc_id']);
+
+	switch($_VARS['wish'])
+	{
+		case 'new':
+		{
+			$oTimeclock->action = 'accepted';
+			break;
+		}
+		case 'delete':
+		{
+			$oTimeclock->active = 0;
+			break;
+		}
+		case 'change':
+		{
+			$aChanges = unserialize($oTimeclock->change);
+
+			if($aChanges['p2e_id']) {
+				$oTimeclock->p2e_id = $aChanges['p2e_id'];
+			}
+			if($aChanges['p2p_id']) {
+				$oTimeclock->p2p_id = $aChanges['p2p_id'];
+			}
+			if($aChanges['start']) {
+				$oTimeclock->start = $aChanges['start'];
+			}
+			if($aChanges['end']) {
+				$oTimeclock->end = $aChanges['end'];
+			}
+			if($aChanges['salary']) {
+				$oTimeclock->salary = $aChanges['salary'];
+			}
+			$oTimeclock->action = 'accepted';
+			$oTimeclock->change = '';
+			break;
+		}
+	}
+
+	$oTimeclock->save();
+}
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'decline_change_wish')
+{
+	$oTimeclock = new Ext_Office_Timeclock('office_timeclock', (int)$_VARS['tc_id']);
+	$oTimeclock->action = 'declined';
+
+	if($_VARS['wish'] == 'new')
+	{
+		$oTimeclock->cleared = 9;
+	}
+
+	$oTimeclock->save();
+}
+
+/* ==================================================================================================== */
+
+// Get all change wishes
+$oTimeclock = new Ext_Office_Timeclock('office_timeclock');
+$aChangeWishes = $oTimeclock->getChangeWishes();
+
+/* ==================================================================================================== */
+
+if(isset($_VARS['action']))
+{
+	header('Location: '.$_SERVER['PHP_SELF']);
+	exit();
+}
+
+/* ==================================================================================================== */
+
+echo Admin_Html::loadAdminHeader(array('additional' => '<link rel="stylesheet" href="/admin/extensions/office/office.css" />'));
+
+?>
+
+<div class="divHeader">
+	<h1><?=L10N::t('Office', 'Office')?> &raquo; <?=L10N::t('Zeiterfassung', 'Office')?></h1>
+</div>
+
+<table width="100%" cellpadding="30" cellspacing="0" border="0"><tr><td>
+
+	<h2>Änderungsanfragen</h2>
+	<form method="post" action="<?=$_SERVER['PHP_SELF']?>">
+		<table class="table" cellpadding="4" cellspacing="0" style="width:100%;">
+			<tr>
+				<th>Aktion</th>
+				<th>Mitarbeiter</th>
+				<th>Projekt</th>
+				<th>Tätigkeit</th>
+				<th>Start</th>
+				<th>Ende</th>
+				<th>Kommentar</th>
+				<th style="width:45px;">&nbsp;</th>
+			</tr>
+			<? if(count($aChangeWishes) == 0) { ?>
+				<tr>
+					<td colspan="7" style="text-align:center;">
+						<b>Zur Zeit keine neue Änderungsanfragen vorhanden.</b>
+					</td>
+				</tr>
+			<? } ?>
+			<? foreach((array)$aChangeWishes as $iKey => $aValue) { ?>
+				<tr>
+					<td>
+						<? if($aValue['action'] == 'new') { ?>
+							neu
+						<? } if($aValue['action'] == 'change') { $aValue['change'] = unserialize($aValue['change']); ?>
+							ändern
+						<? } if($aValue['action'] == 'delete') { ?>
+							löschen
+						<? } ?>
+					</td>
+					<td style="white-space:nowrap;"><?=$aValue['firstname']?> <?=$aValue['lastname']?></td>
+					<td><?=$aValue['project']?></td>
+					<td><?=$aValue['title']?></td>
+					<td style="white-space:nowrap;">
+						<?=date('d.m.Y, H:i', $aValue['start'])?>
+						<? if($aValue['action'] == 'change') { ?>
+							<br />Neu: <?=date('d.m.Y, H:i', $aValue['change']['start'])?>
+						<? } ?>
+					</td>
+					<td style="white-space:nowrap;">
+						<?=date('d.m.Y, H:i', $aValue['end'])?>
+						<? if($aValue['action'] == 'change') { ?>
+							<br />Neu: <?=date('d.m.Y, H:i', $aValue['change']['end'])?>
+						<? } ?>
+					</td>
+					<td>
+						<?=$aValue['comment']?><br>
+						<?php
+						if(!empty($aValue['change']['comment'])) {
+							echo 'Änderung: '.$aValue['change']['comment'];
+						}
+						?>
+					</td>
+					<td style="text-align:center;">
+						<a href="?action=accept_change_wish&amp;tc_id=<?=$aValue['id']?>&amp;wish=<?=$aValue['action']?>">
+							<img src="/admin/media/accept.png" alt="Akzeptieren" title="Akzeptieren" style="border:0;" /></a>
+						&nbsp;
+						<a href="?action=decline_change_wish&amp;tc_id=<?=$aValue['id']?>&amp;wish=<?=$aValue['action']?>">
+							<img src="/admin/media/stop.png" alt="Ablehnen" title="Ablehnen" style="border:0;" /></a>
+					</td>
+				</tr>
+			<? } ?>
+		</table>
+	</form>
+
+</td></tr></table>
+
+<?=Admin_Html::loadAdminFooter()?>

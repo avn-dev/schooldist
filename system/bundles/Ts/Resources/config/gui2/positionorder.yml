@@ -1,0 +1,41 @@
+hash: fe2d039a6519b74338b1a25759bb6f04
+class:
+  wdbasic: Ext_Thebing_School_Positions
+  data: Ext_Thebing_Marketing_Gui2_Position
+  js: Positions
+js:
+  - [gui2/util.js, thebing]
+  - [marketing/js/positions.js, thebing]
+access:
+  - thebing_marketing_position_order
+where:
+  - Ext_Thebing_Marketing_Gui2_Position
+  - getWhere
+sortable: true
+id:
+  column: id
+  alias: kpo
+export: false
+pagination: false
+bars:
+  -
+    position: top
+columns:
+  -
+    title: Position
+    column: position_key
+    width: name
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Position_Position
+  -
+    title: Beschreibung
+    column: title
+    width: name
+    resize: true
+    inplace_editor: 1
+  -
+    title: Platzhalter
+    column: position_placeholder
+    width: 225
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Position_Placeholder

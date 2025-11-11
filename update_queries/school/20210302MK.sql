@@ -1,0 +1,1 @@
+ALTER TABLE `ts_booking_stacks` ADD `invoice_document_number` VARCHAR(255) NOT NULL;

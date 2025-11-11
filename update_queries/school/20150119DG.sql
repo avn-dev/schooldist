@@ -1,0 +1,1 @@
+ALTER TABLE `kolumbus_statistic_statistics` ADD `customer_invoice_filter` VARCHAR(255) NOT NULL DEFAULT 'all' ;

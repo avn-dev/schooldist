@@ -1,0 +1,15 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+$oGui = Factory::executeStatic(\Ext_TC_User_Gui2::class, 'createGui');
+
+$aOptionalInfo = [
+	'js' => [
+		'/admin/extensions/tc/admin/js/user.js',
+		'/admin/assets/js/lib.js',
+		'/admin/assets/js/zxcvbn.js'
+	]
+];
+
+$oGui->display($aOptionalInfo);

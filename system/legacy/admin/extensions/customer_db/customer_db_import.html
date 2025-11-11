@@ -1,0 +1,531 @@
+<?php
+
+
+
+// TODO - 20.02.2008: Lokalisierung
+
+
+
+// ========== Header ==========
+
+$_GET['rs'] = 1;
+
+include("../includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+getExtensionTranslations('customer_db');
+
+$aDatabaseData = array();
+if (array_key_exists('idDatabase', $_VARS)) {
+	$sSelectedTable = "customer_db_".intval($_VARS['idDatabase']);
+	$aDatabaseData  = get_data(db_query($db_data['module'], "SELECT `db_name`, `db_encode_pw` FROM `customer_db_config` WHERE `id` = '".intval($_VARS['idDatabase'])."'"));
+}
+if (count($aDatabaseData) < 1) {
+	die('Datenbank nicht gefunden!');
+}
+
+
+function parse_csv_string(&$sInputString, $sSeparator) {
+	if (mb_substr($sInputString, 0, 1) != $sSeparator) {
+		return;
+	}
+	$sInputString = mb_substr($sInputString, 1);
+	$sReturn = '';
+	while (false !== $iSeparatorPos = mb_strpos($sInputString, $sSeparator)) {
+		$sReturn .= mb_substr($sInputString, 0, $iSeparatorPos);
+		$sInputString = mb_substr($sInputString, $iSeparatorPos);
+		if (mb_substr($sInputString, 1, 1) == $sSeparator) {
+			$sReturn .= $sSeparator;
+			$sInputString = mb_substr($sInputString, 2);
+			continue;
+		}
+		$sInputString = mb_substr($sInputString, 1);
+		break;
+	}
+	return $sReturn;
+}
+
+
+function parse_csv_field(&$sInputString, $sSeparator) {
+	$iSeparatorPos = mb_strpos($sInputString, $sSeparator);
+	$iNewlinePos = mb_strpos($sInputString, "\n");
+	if ($iNewlinePos < $iSeparatorPos && $iNewlinePos !== false) {
+		$sReturn = mb_substr($sInputString, 0, $iNewlinePos);
+		$sInputString = mb_substr($sInputString, $iNewlinePos);
+	} elseif ($iSeparatorPos !== false) {
+		$sReturn = mb_substr($sInputString, 0, $iSeparatorPos);
+		$sInputString = mb_substr($sInputString, $iSeparatorPos);
+	} else {
+		$sReturn = $sInputString;
+		$sInputString = "";
+	}
+	return $sReturn;
+}
+
+
+echo Admin_Html::loadAdminHeader();
+
+
+$sOldMbEncoding = mb_internal_encoding();
+mb_internal_encoding('UTF-8');
+
+
+?><table cellpadding="0" cellspacing="30" border="0" width="100%" height="100%">
+    <tr>
+        <td valign="top">
+        	<form action="<?=$_SERVER['PHP_SELF']?>" method="post" target="_self" name="main_form" enctype="multipart/form-data">
+        		<input type="hidden" name="idDatabase" value="<?=intval($_VARS['idDatabase'])?>" />
+        		<input type="hidden" name="importConfirm" value="" />
+				<h1><?=$LANGUAGE_DATA['customer_db']?> &raquo; <?=$LANGUAGE_DATA['administration']?></h1><br />
+				<h2><?=$LANGUAGE_DATA['import_data_records_for_table']?>: "<?=$aDatabaseData['db_name']?>"</h2>
+<?php
+
+
+// ========== Script ==========
+
+
+
+
+
+// default values
+$sImportIgnoreFirstLine = 'checked="checked" ';
+$sImportSkipId = '';
+$sImportIgnoreMissingCols = '';
+$sImportFieldSeparator = \Util::convertHtmlEntities(';');
+$sImportStringSeparator = \Util::convertHtmlEntities('"');
+
+
+// get the list of database fields
+$rResult = db_query($db_data['module'], "
+	SELECT
+		*
+	FROM
+		`customer_db_definition`
+	WHERE
+		`db_nr` = '".intval($_VARS['idDatabase'])."' AND
+		`active` = '1'
+	ORDER BY
+		`field_nr`,
+		`id`
+");
+$aFields = array();
+$aExistingFields = array();
+$aImportUseFields = (array)$_VARS['importUseFields'];
+
+$aFields[] = array(
+	'name' => 'id',
+	'title' => 'ID'
+);
+
+$aFields[] = array(
+	'name' => 'nickname',
+	'title' => 'Nickname'
+);
+
+$aFields[] = array(
+	'name' => 'email',
+	'title' => 'E-Mail'
+);
+
+$aFields[] = array(
+	'name' => 'password',
+	'title' => 'Passwort'
+);
+
+$aFields[] = array(
+	'name' => 'created',
+	'title' => 'Erstellt'
+);
+
+$aFields[] = array(
+	'name' => 'groups',
+	'title' => 'Gruppen'
+);
+
+$aFields[] = array(
+	'name' => 'access_code',
+	'title' => 'Zugriffscode'
+);
+
+$aExistingFields = $aFields;
+unset($aExistingFields[0]);
+
+while ($aRow = get_data($rResult)) {
+
+	$sFieldName = '';
+	$sFieldTitle = '';
+
+	if ($aRow['field_nr'] != '0') {
+
+		$sFieldName = 'ext_'.$aRow['field_nr'];
+		$sFieldTitle = $aRow['name'];
+
+	}
+
+	if (strlen($sFieldName) < 1 || strlen($sFieldTitle) < 1) {
+		continue;
+	}
+
+	if (in_array('IGNORE_FIELD_LIST', $aImportUseFields) || in_array($sFieldName, $aImportUseFields)) {
+
+		$aFields[] = array(
+			'name' => $sFieldName,
+			'title' => $sFieldTitle
+		);
+
+	}
+
+	$aExistingFields[] = array(
+		'name' => $sFieldName,
+		'title' => $sFieldTitle
+	);
+
+}
+
+// remove the not selected static fields from the field list
+if (count($aImportUseFields) > 0) {
+	if (!in_array('IGNORE_FIELD_LIST', $aImportUseFields) && !in_array('nickname', $aImportUseFields)) {
+		unset($aFields[1]);
+	}
+	if (!in_array('IGNORE_FIELD_LIST', $aImportUseFields) && !in_array('email', $aImportUseFields)) {
+		unset($aFields[2]);
+	}
+	if (!in_array('IGNORE_FIELD_LIST', $aImportUseFields) && !in_array('password', $aImportUseFields)) {
+		unset($aFields[3]);
+	}
+	if (!in_array('IGNORE_FIELD_LIST', $aImportUseFields) && !in_array('created', $aImportUseFields)) {
+		unset($aFields[4]);
+	}
+	if (!in_array('IGNORE_FIELD_LIST', $aImportUseFields) && !in_array('groups', $aImportUseFields)) {
+		unset($aFields[5]);
+	}
+	if (!in_array('IGNORE_FIELD_LIST', $aImportUseFields) && !in_array('access_code', $aImportUseFields)) {
+		unset($aFields[5]);
+	}
+}
+
+
+// process selected file
+if (array_key_exists('importConfirm', $_VARS) && ($_VARS['importConfirm'] == 'confirm' || $_VARS['importConfirm'] == 'format')) {
+
+	set_time_limit(3600);
+	ini_set("memory_limit", "2G");
+
+	// set form values
+	$sImportIgnoreFirstLine   = ($_VARS['importIgnoreFirstLine'] == '1') ? 'checked="checked" ' : '';
+	$sImportSkipId            = ($_VARS['importSkipId'] == '1') ? 'checked="checked" ' : '';
+	$sImportIgnoreMissingCols = ($_VARS['importIgnoreMissingCols'] == '1') ? 'checked="checked" ' : '';
+	$sImportFieldSeparator    = \Util::convertHtmlEntities($_VARS['importFieldSeparator']);
+	$sImportStringSeparator   = \Util::convertHtmlEntities($_VARS['importStringSeparator']);
+
+
+	// set the config values
+	$bImportIgnoreFirstLine     = ($_VARS['importIgnoreFirstLine'] == '1') ? true : false;
+	$bImportSkipId              = ($_VARS['importSkipId'] == '1') ? true : false;
+	$bImportIgnoreMissingCols   = ($_VARS['importIgnoreMissingCols'] == '1') ? true : false;
+	$sImportCharset  			= $_VARS['importCharset'];
+	$sImportFieldSeparatorReal  = $_VARS['importFieldSeparator'];
+	$sImportStringSeparatorReal = $_VARS['importStringSeparator'];
+	$bImportError               = false;
+
+
+	// remove the id field from the list if required
+	if ($bImportSkipId == true) {
+		unset($aFields[0]);
+	}
+
+	// process import
+	if ($_VARS['importConfirm'] == 'confirm') {
+
+
+		// the nickname or the id field must be selected
+		$bIndexFieldFound = false;
+		foreach ($aFields as $aField) {
+
+			if ($aField['name'] == 'id' || $aField['name'] == 'nickname') {
+				$bIndexFieldFound = true;
+				break;
+			}
+
+		} 
+		if ($bIndexFieldFound != true) {
+
+			?><p>
+				<span class="error">Das Feld <b>ID</b> oder das Feld <b>Nickname</b> müssen in der Datei enthalten sein.</span>
+			</p><?php
+			$bImportError = true;
+
+		}
+
+
+		// get the data of the uploaded file
+		if ($bImportError != true) {
+			$sImportTmpFile = '';
+			$sImportFileName = '';
+			if (is_array($_FILES['importFile']) && strlen($_FILES['importFile']['name']) > 0 && strlen($_FILES['importFile']['tmp_name']) > 0) {
+
+				$sImportFileName = \Util::convertHtmlEntities($_FILES['importFile']['name']);
+				$sImportTmpFile = $_FILES['importFile']['tmp_name'];
+
+			} else {
+
+				?><p>
+					<span class="error">Es wurde keine Datei f&uuml;r den Import angegeben.</span>
+				</p><?php
+				$bImportError = true;
+
+			}
+		}
+
+
+		// open the tmp file
+		if ($bImportError != true) {
+			$sImportFileContents = @file_get_contents($sImportTmpFile);
+			if ($sImportFileContents === false) {
+
+				?><p>
+					<span class="error">Die gesendete Datei konnte nicht ge&ouml;ffnet werden.</span>
+				</p><?php
+				$bImportError = true;
+
+			}
+			
+		}
+
+		// parse the uploaded file
+		if ($bImportError != true) {
+
+			$row = 1;
+			$aImportRows = array();
+			if (($handle = fopen($sImportTmpFile, "r")) !== false) {
+				while (($aImportRow = fgetcsv($handle, 0, $sImportFieldSeparator, $sImportStringSeparator)) !== false) {
+					array_map(function($sCell) use($sImportCharset) {
+						return iconv($sImportCharset, "UTF-8", $sCell);
+					}, $aImportRow);
+					$aImportRows[] = $aImportRow;
+				}
+				fclose($handle);
+			}
+
+			if($bImportIgnoreFirstLine) {
+				array_shift($aImportRows);
+			}
+
+			if ($bImportError != true) {
+				$iCurrentRow = 1;
+				foreach ($aImportRows as $aCurrentRow) {
+
+					if (count($aCurrentRow) < count($aFields) && $bImportIgnoreMissingCols != true) {
+						?><p>
+							<span class="error">Zu wenig Spalten in der Zeile: <?=$iCurrentRow?></span>
+						</p><?php
+						$bImportError = true;
+						break;
+					}
+
+					if (count($aCurrentRow) > count($aFields) && $bImportIgnoreMissingCols != true) {
+						?><p>
+							<span class="error">Zu viele Spalten in der Zeile: <?=$iCurrentRow?></span>
+						</p><?php
+						$bImportError = true;
+						break;
+					}
+
+					$iCurrentRow++;
+
+				}
+			}
+
+		}
+
+		// insert or update the records
+		$iUpdatedRows = 0;
+		$iCreatedRows = 0;
+		if ($bImportError != true) {
+
+			foreach ($aImportRows as $aCurrentRow) {
+
+				$sIdField = '';
+				$sIdValue = '';
+
+				$aQueryFieldList = array();
+
+				$sQueryValueList = '';
+				$iFieldCounter = 0;
+				$bFirstField = true;
+				foreach ($aFields as $aField) {
+
+					if ($bFirstField == true) {
+						$sIdField = $aField['name'];
+						$sIdValue = $aCurrentRow[$iFieldCounter];
+						$bFirstField = false;
+					}
+
+					if ($iFieldCounter >= count($aCurrentRow)) {
+						break;
+					}
+
+					if (strlen($sQueryValueList) > 0) {
+						$sQueryValueList .= ', ';
+					}
+					$sQueryValueList .= " `".$aField['name']."` = '".\DB::escapeQueryString($aCurrentRow[$iFieldCounter])."'";
+
+					$iFieldCounter++;
+
+				}
+ 
+				$sQuery = "
+					SELECT
+						`id`
+					FROM
+						`customer_db_".intval($_VARS['idDatabase'])."`
+					WHERE
+						`".$sIdField."` = '".\DB::escapeQueryString($sIdValue)."'
+				";
+				$rResult = db_query($sQuery);
+
+				if (db_num_rows($rResult) > 0) {
+
+					$sQuery = "
+						UPDATE
+							`customer_db_".intval($_VARS['idDatabase'])."`
+						SET
+							".$sQueryValueList."
+						WHERE
+							`".$sIdField."` = '".\DB::escapeQueryString($sIdValue)."'
+					";
+
+					$iUpdatedRows++;
+
+				} else {
+
+					$sQueryValueList .= ", `active` = 1 ";
+
+					$sQuery = "
+						INSERT INTO
+							`customer_db_".intval($_VARS['idDatabase'])."`
+						SET
+							".$sQueryValueList."
+					";
+
+					$iCreatedRows++;
+
+				}
+
+				db_query($sQuery);
+
+			}
+
+		}
+
+
+		// show the confirmation message
+		if ($bImportError == false) {
+
+			?><p>
+				Es wurden <b><?=count($aImportRows)?></b> Datens&auml;tze aus der Datei <b><?=$sImportFileName?></b> importiert (Ersetzt: <?=$iUpdatedRows?>, Erstellt: <?=$iCreatedRows?>).
+			</p><?php
+
+		}
+
+
+	}
+
+
+	// show the list of database fields
+	if ($_VARS['importConfirm'] == 'format') {
+
+
+		?><p>Die Felder m&uuml;ssen in folgender Reihenfolge in der Datei vorhanden sein:<ul><?php
+
+			foreach ($aFields as $aField) {
+
+				?><li><?=\Util::convertHtmlEntities($aField['title'])?></li><?php
+
+			}
+
+		?></ul></p><?php
+
+
+	}
+
+
+}
+
+
+$aCharsets = array();
+$aCharsets['cp1252'] 		= "CP1252";
+$aCharsets['ISO-8859-1'] 	= "ISO-8859-1";
+$aCharsets['UTF-8'] 		= "UTF-8";
+
+// input fields
+echo printTableStart();
+
+?>
+	<tr>
+		<th>Datei (.csv-Format)</th>
+		<td><input type="file" class="txt" name="importFile" value="" /></td>
+	</tr>
+	<?=printFormSelect("Zeichensatz", "importCharset", $aCharsets, $sImportCharset)?>
+	<tr>
+		<th>Erste Zeile ignorieren</th>
+		<td><input type="checkbox" name="importIgnoreFirstLine" value="1" <?=$sImportIgnoreFirstLine?>/></td>
+	</tr>
+	<tr>
+		<th>Datensatz ID nicht vorhanden (Nickname ist der Prim&auml;rschl&uuml;ssel)</th>
+		<td><input type="checkbox" name="importSkipId" value="1" <?=$sImportSkipId?>/></td>
+	</tr>
+	<tr>
+		<th>Fehlende Spalten ignorieren</th>
+		<td><input type="checkbox" name="importIgnoreMissingCols" value="1" <?=$sImportIgnoreMissingCols?> /></td>
+	</tr>
+	<tr>
+		<th>Feldtrennzeichen</th>
+		<td><input type="text" class="txt" name="importFieldSeparator" value="<?=$sImportFieldSeparator?>" /></td>
+	</tr>
+	<tr>
+		<th>Zeichenkettenbegrenzer</th>
+		<td><input type="text" class="txt" name="importStringSeparator" value="<?=$sImportStringSeparator?>" /></td>
+	</tr>
+	<tr>
+		<th>Felderauswahl</th>
+		<td><select name="importUseFields[]" class="txt" size="10" multiple="multiple">
+			<option value="IGNORE_FIELD_LIST"<?php if (in_array('IGNORE_FIELD_LIST', $aImportUseFields)) { ?> selected<?php } ?>>-- alle Felder verwenden --</option><?php
+				foreach ($aExistingFields as $aField) { ?>
+					<option value="<?=\Util::convertHtmlEntities($aField['name'])?>"<?php if (in_array($aField['name'], $aImportUseFields)) { ?> selected<?php } ?>><?=\Util::convertHtmlEntities($aField['title'])?></option><?php
+				}
+			?>
+		</select></td>
+	</tr>
+<?php
+echo printTableEnd();
+
+
+// buttons
+?><p align="right">
+	<input type="button" class="btn" value="Format anzeigen" onclick="document.forms['main_form'].importConfirm.value='format'; document.forms['main_form'].submit(); return false;" />
+	&nbsp;
+	<input type="button" class="btn" value="<?=$LANGUAGE_DATA['import_data_records_start']?>" onclick="document.forms['main_form'].importConfirm.value='confirm'; document.forms['main_form'].submit(); return false;" />
+	&nbsp;
+	<input type="button" class="btn" value="<?=$LANGUAGE_DATA['cancel']?>" onclick="document.forms['main_form'].action='/admin/extensions/customer_db_admin.html'; document.forms['main_form'].importFile.value=''; document.forms['main_form'].submit(); return false;" />
+</p><?php
+
+
+
+
+
+// ========== Header ==========
+
+
+?>
+			</form>
+		</td>
+	</tr>
+</table><?php
+
+
+mb_internal_encoding($sOldMbEncoding);
+
+
+echo Admin_Html::loadAdminFooter();

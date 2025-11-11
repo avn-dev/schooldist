@@ -1,0 +1,120 @@
+div.calendar_container {
+	line-height: 1px;
+}
+
+div.calendar_container IMG {
+	float: left;
+	margin-left: 5px;
+}
+
+div.calendar_container INPUT {
+	float: left;
+}
+
+div.calendar
+{
+  font-size: 10px;
+  color: #000;
+  z-index:99999;
+}
+
+div.calendar.popup
+{
+  margin-left: -40px;
+  margin-top: -100px;
+}
+
+div.calendar table
+{
+  background-color: #eee;
+  border: 1px solid #aaa;
+  border-collapse: collapse;
+}
+
+div.calendar thead {
+  background-color: white;
+  font-size: 11px;
+}
+
+div.calendar td,
+div.calendar th
+{
+  padding: 3px;
+  text-align: center;
+  font-size: 10px;
+}
+
+div.calendar td.title
+{
+  font-weight: bold;
+}
+
+div.calendar th
+{
+  background: #ddd;
+  border-bottom: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  font-weight: bold;
+  color: #555;
+}
+
+div.calendar tr.days td {
+  width: 16px;
+  color: #555;
+  text-align: center;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+div.calendar tr.days td,
+div.calendar td.button
+{
+  cursor: pointer;
+}
+
+div.calendar tr.days td:active
+div.calendar td.button:active
+{
+  background-color: #cde;
+}
+
+div.calendar td.selected
+{
+  font-weight: bold;
+  color: #000;
+}
+
+div.calendar td.today
+{
+  font-weight: bold!important;
+  color: #D50000!important;
+}
+
+div.calendar td.otherDay
+{
+  color: #bbb;
+}
+
+div.calendar td.weekend
+{
+  background-color: #e3e3e3;
+}
+
+div.calendar td.inactive
+{
+  cursor: default!important;
+  color: #bbb!important;
+}
+
+div.calendar tr.days td:hover,
+div.calendar td.button:hover,
+div.calendar td.weekend:hover,
+div.calendar td.today:hover
+{
+  background-color: #34ABFA;
+}
+
+div.calendar td.inactive:hover
+{
+  background-color: transparent!important;
+}

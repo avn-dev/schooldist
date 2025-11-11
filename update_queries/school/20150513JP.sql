@@ -1,0 +1,1 @@
+ALTER TABLE `customer_db_2` ADD `net_email_warning` ENUM('always','never','main_reception_field') NOT NULL DEFAULT 'always';

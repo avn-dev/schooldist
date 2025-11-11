@@ -1,0 +1,211 @@
+<?php
+
+include(\Util::getDocumentRoot().'system/legacy/admin/includes/main.inc.php');
+
+Access_Backend::checkAccess("page_admin");
+
+/**
+ * Fetch data
+ */
+$aHttpStatuscodes = \Cms\Entity\Redirection::getHttpStatuscodes();
+
+$objWebDynamicsDAO = new \Cms\Helper\Data;
+
+$aSites = $objWebDynamicsDAO->getSites();
+foreach($aSites as &$mSite) {
+	$mSite = $mSite['name'];
+}
+
+/**
+ * Start Gui2 initialisation
+ */
+$oGui = new Ext_Gui2(md5('redirections'));
+
+$oGui->setWDBasic('\Cms\Entity\Redirection');
+$oGui->setTableData('limit', 30);
+$oGui->setTableData('orderby', array('name' => 'ASC'));
+
+// Listen Optionen
+$oGui->gui_description 		= 'CMS';
+$oGui->gui_title 			= $oGui->t('CMS » Weiterleitungen');
+
+/**
+ * Dialog 
+ */
+$oDialog = $oGui->createDialog($oGui->t('Weiterleitung "{name}" editieren'), $oGui->t('Neue Weiterleitung anlegen'));
+$oDialog->width = 900;
+$oDialog->height = 600;
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Internetauftritt'), 
+		'select', 
+		array(
+			'db_alias' => 'cms_r', 
+			'db_column' => 'site_id',
+			'required' => true,
+			'select_options' => $aSites
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Name'), 
+		'input', 
+		array(
+			'db_alias' => 'cms_r', 
+			'db_column' => 'name',
+			'required' => true
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('URL (z.B. /company/redirect.html)'), 
+		'input', 
+		array(
+			'db_alias' => 'cms_r', 
+			'db_column' => 'url',
+			'required' => true
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('HTTP-Statuscode'), 
+		'select', 
+		array(
+			'db_alias' => 'cms_r', 
+			'db_column' => 'return_code',
+			'select_options' => $aHttpStatuscodes,
+			'required' => true
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Ziel (z.B. /aboutus/index.html)'), 
+		'input', 
+		array(
+			'db_alias' => 'cms_r', 
+			'db_column' => 'target',
+			'required' => true
+		)
+	)
+);
+
+$oDialog->setElement(
+	$oDialog->createRow(
+		$oGui->t('Query-String anhängen (QSA)'), 
+		'checkbox', 
+		array(
+			'db_alias' => 'cms_r', 
+			'db_column' => 'qsa',
+			'value' => 1
+		)
+	)
+);
+
+/**
+ * Bars 
+ */
+$oBar = $oGui->createBar();
+
+$oFilter = $oBar->createFilter();
+$oFilter->db_column = array('name', 'url', 'target');
+$oFilter->db_alias = array('cms_r', 'cms_r', 'cms_r');
+$oFilter->placeholder = $oGui->t('Suche').'…';
+$oFilter->id = 'search';
+$oBar ->setElement($oFilter);
+
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+
+
+$oIcon = $oBar->createNewIcon(
+			$oGui->t('Neuer Eintrag'),
+			$oDialog,
+			$oGui->t('Neuer Eintrag')
+		);
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createEditIcon(
+			$oGui->t('Editieren'),
+			$oDialog,
+			$oGui->t('Editieren')
+		);
+$oBar ->setElement($oIcon);
+
+$oIcon = $oBar->createDeleteIcon($oGui->t('Löschen'), $oGui->t('Löschen'));
+$oBar->setElement($oIcon);
+
+$oGui->setBar($oBar);
+
+$oBar = $oGui->createBar();
+
+$oPagination = $oBar->createPagination(false, true);
+$oBar ->setElement($oPagination);
+
+$oLoading = $oBar->createLoadingIndicator();
+$oBar->setElement($oLoading);
+
+$oGui->setBar($oBar);
+
+/**
+ * Spalten 
+ */
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'site_id';
+$oColumn->db_alias = 'cms_r';
+$oColumn->title = $oGui->t('Internetauftritt');
+$oColumn->width = 200;
+$oColumn->format = new Ext_Gui2_View_Format_Selection($aSites);
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'name';
+$oColumn->db_alias = 'cms_r';
+$oColumn->title = $oGui->t('Name');
+$oColumn->width = 200;
+$oColumn->width_resize = true;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'url';
+$oColumn->db_alias = 'cms_r';
+$oColumn->title = $oGui->t('URL');
+$oColumn->width = 350;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'target';
+$oColumn->db_alias = 'cms_r';
+$oColumn->title = $oGui->t('Ziel');
+$oColumn->width = 350;
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'changed';
+$oColumn->db_alias = 'cms_r';
+$oColumn->title = $oGui->t('Verändert');
+$oColumn->width = 140;
+$oColumn->format = 'Date_Time';
+$oGui->setColumn($oColumn);
+
+$oColumn = $oGui->createColumn();
+$oColumn->db_column = 'created';
+$oColumn->db_alias = 'cms_r';
+$oColumn->title = $oGui->t('Erstellt');
+$oColumn->width = 140;
+$oColumn->format = 'Date_Time';
+$oGui->setColumn($oColumn);
+
+/**
+ * GUI anzeigen 
+ */
+$oGui->display();

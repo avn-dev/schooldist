@@ -1,0 +1,1 @@
+INSERT INTO `kolumbus_currency` (`id`, `name`, `iso4217`, `iso4217_num`, `sign`, `changed`, `created`) VALUES ('41', 'Kuwaiti dinar', 'KWD', '414', 'KD‎', current_timestamp(), '0000-00-00 00:00:00.000000');

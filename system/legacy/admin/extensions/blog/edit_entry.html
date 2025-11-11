@@ -1,0 +1,136 @@
+<?php
+
+// =============== Header ===============
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+include_once(\Util::getDocumentRoot()."system/includes/gui/gui.php");
+
+
+
+include_once(\Util::getDocumentRoot()."system/includes/class.pagetemplate.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+
+
+$objPage = new GUI_Page();
+
+if(isset($_VARS['entry_id'])) {
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Eintrag bearbeiten', 'type' => '1')));
+} else {
+	$objPage->appendElement(new GUI_Headline(array('text' => 'Eintrag hinzufügen', 'type' => '1')));
+}
+
+if(isset($_VARS['submit']))
+{
+	// New entry
+	if(!isset($_VARS['edit_id']))
+	{
+		$oEntry = new Ext_Blog_BlogEntry($_VARS['blog_id']);
+		$oEntry->__set('title', $_VARS['title']);
+		$oEntry->__set('text', $_VARS['text']);
+		$oEntry->__set('blog_id', $_VARS['blog_id']);
+		$oEntry->__set('user_id', $user_data['id']);
+
+		if(!isset($_VARS['active']))
+		{
+			$oEntry->__set('active', 0);
+		}
+
+		$oEntry->saveData();
+	}
+	// Edit entry
+	else
+	{
+		$oEntry = new Ext_Blog_BlogEntry($_VARS['blog_id'], $_VARS['edit_id']);
+		$oEntry->__set('title', $_VARS['title']);
+		$oEntry->__set('text', $_VARS['text']);
+
+		if(!isset($_VARS['active'])) {
+			$oEntry->__set('active', 0);
+		} else {
+			$oEntry->__set('active', 1);
+		}
+
+		$oEntry->saveData();
+	}
+	header('Location: ../blog/entries.html?blog_id='.$_VARS['blog_id']);
+	exit;
+}
+
+$oForm = new GUI_form(array('method' => 'post', 'action' => 'edit_entry.html?blog_id='.$_VARS['blog_id']));
+
+$aTable = array(
+			'showth'	=> false,
+			'cols'		=> array(
+								array('text' => '', 'style' => 'width: 10%;'),
+								array('text' => '', 'style' => 'width: 90%;')
+							)
+		);
+$oTable = new GUI_Table($aTable);
+
+// New entry
+if(!isset($_VARS['entry_id'])) {
+	$oInputTitle = new GUI_FormText(array('name' => 'title', 'value' => '', 'style' => 'width:500px;'));
+	$oInputText = new GUI_FormTextarea(array('name' => 'text', 'value' => '', 'style' => 'width:500px; height:300px;'));
+	$oCheckBox = new GUI_FormCheckbox(array('name' => 'active', 'checked' => true));
+}
+// Edit entry
+else {
+	$oEntry = new Ext_Blog_BlogEntry($_VARS['blog_id'], $_VARS['entry_id']);
+	$oInputTitle = new GUI_FormText(array('name' => 'title', 'value' => $oEntry->__get('title'), 'style' => 'width:500px;'));
+	$oInputText = new GUI_FormTextarea(array('name' => 'text', 'value' => $oEntry->__get('text'), 'style' => 'width:500px; height:300px;'));
+	$oCheckBox = new GUI_FormCheckbox(array('name' => 'active', 'checked' => $oEntry->__get('active') == 1 ? true : false));
+	$oHidden = new GUI_FormHidden(array('name' => 'edit_id', 'value' => $oEntry->__get('id')));
+	$oForm->appendElement($oHidden);
+}
+
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Titel'
+								),
+								array(
+									'forceTh' => false,
+									'text' => $oInputTitle
+								)
+							)
+						)
+					);
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Aktiv'
+								),
+								array(
+									'forceTh' => false,
+									'text' => $oCheckBox
+								)
+							)
+						)
+					);
+$oTable->appendRow(array(
+					'cols' => array(
+								array(
+									'forceTh' => true,
+									'text' => 'Text'
+								),
+								array(
+									'forceTh' => false,
+									'text' => $oInputText
+								)
+							)
+						)
+					);
+
+$oForm->appendElement($oTable);
+
+// "Save" button
+$oButton = new GUI_FormSubmit(array('name' => 'submit', 'value' => 'Speichern', 'style' => 'float:right;'));
+$oForm->appendElement($oButton);
+
+$objPage->appendElement($oForm);
+echo $objPage->generateHTML();
+
+?>

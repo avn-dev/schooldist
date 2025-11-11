@@ -1,0 +1,1 @@
+ALTER TABLE `ts_inquiries` ADD `unique_key` VARCHAR(16) NULL DEFAULT NULL;

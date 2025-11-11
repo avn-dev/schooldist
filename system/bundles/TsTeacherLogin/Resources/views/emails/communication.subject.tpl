@@ -1,0 +1,1 @@
+{'Message from your teacher:'|L10N} {$sSubject}

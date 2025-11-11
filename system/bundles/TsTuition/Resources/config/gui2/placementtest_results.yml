@@ -1,0 +1,442 @@
+hash: b13ddfe2f7c27a8e66cf08a1722dbab4
+class:
+  wdbasic: Ext_Thebing_Placementtests_Results
+  data: Ext_Thebing_Placementtests_Results_Gui2
+  icon_status: Ext_Thebing_Gui2_Icon_Placementtest_Result
+default_columns: []
+access: thebing_tuition_placement_test
+orderby:
+  - Ext_Thebing_Placementtests_Results_Gui2
+  - getOrderby
+designer:
+  additional_flex:
+    - section: placementtests_results
+      primary_key: placementtest_result_id
+id:
+  column: inquiry_id
+  alias: ''
+encode_data_id_field: placementtest_result_id
+encode_data:
+  - courselanguage_id
+  - placementtest_result_id
+  - inquiry_id
+options:
+  decode_inquiry_id_additional_documents: inquiry_id
+  only_documents_from_same_gui: true
+limit: 30
+multiple_selection: true
+bars:
+  -
+    position: top
+    elements:
+      -
+        element: inputfilter
+        label: Suche
+        searchtype: LIKE
+        alias:
+          - kg
+          - kg
+          - cdb1
+          - cdb1
+          - tc_c_n
+        column:
+          - name
+          - short
+          - lastname
+          - firstname
+          - number
+      -
+        element: seperator
+      -
+        element: timefilter
+        format: Ext_Thebing_Gui2_Format_Date
+        from:
+          alias:
+            - kic
+          column:
+            - from
+          default:
+            - Ext_Thebing_Placementtests_Results_Gui2
+            - getDefaultFilterFrom
+        until:
+          alias:
+            - kic
+          column:
+            - from
+          default:
+            - Ext_Thebing_Placementtests_Results_Gui2
+            - getDefaultFilterUntil
+        searchtype: between
+        text_after: basierend auf Kursstart
+      -
+        element: seperator
+      -
+        element: selectfilter
+        label: Einstufungstest
+        label_as_item: true
+        value: ''
+        filter_query:
+          result_exists: " `ptr`.`answered` != '0000-00-00' OR `ptr`.`placementtest_date` != '0000-00-00' OR `ptr`.`placementtest_result_date` != '0000-00-00'"
+          result_not_exists: " `ptr`.`id` IS NULL OR (`ptr`.`answered` = '0000-00-00' AND `ptr`.`placementtest_date` = '0000-00-00' AND `ptr`.`placementtest_result_date` = '0000-00-00' )"
+        entries:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getResultExistsFilter
+      -
+        element: selectfilter
+        label: Bewertung
+        id: has_level_filter
+        value: ''
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getHasLevelOptions
+        filter_query: "IF({value}='no_level_yet', ktul_ptr.id IS NULL, ktul_ptr.id IS NOT NULL)"
+      -
+        element: selectfilter
+        label: Buchungen/Anfragen
+        id: inquiry_type_filter
+        value: 'inquiry'
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getInquiryTypeOptions
+        filter_query:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getInquiryTypeOptionsQueries
+      -
+        element: selectfilter
+        id: inbox_filter
+        label: Inbox
+        label_as_item: true
+        alias:
+          - ki
+        column:
+          - inbox
+        entries:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getInboxColumnandInboxFilterValues
+      -
+        element: selectfilter
+        id: group_filter
+        label: Gruppe
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: ' `ki`.`group_id` != 0 '
+          no: ' `ki`.`group_id` = 0 '
+      -
+        element: selectfilter
+        label: Kurs
+        column: id
+        alias: ktc
+        entries:
+          - Ext_Thebing_Tuition_Gui2_Attendance
+          - getCourses
+          - false
+        label_as_item: true
+      -
+        element: selectfilter
+        label: Kurskategorie
+        column: category_id
+        alias: ktc
+        entries:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getSelectFilterEntriesCourseCategories
+        label_as_item: true
+      -
+        element: selectfilter
+        id: confirmed_filter
+        label: Bestätigt
+        label_as_item: true
+        entries:
+          - Ext_Thebing_Util
+          - getYesNoArray
+          - false
+        filter_query:
+          yes: ' `ki`.`confirmed` > 0 '
+          no: ' `ki`.`confirmed` = 0 '
+  -
+    position: top
+    elements:
+      -
+        element: icon
+        label: Testergebnisse eintragen
+        task: openDialog
+        action: edit
+        img: fa-pencil
+        dialog:
+          - Ext_Thebing_Placementtests_Results_Gui2
+          - getDialog
+        dbl_click_element: 1
+      -
+        element: icon
+        label: Testergebnisse löschen
+        img: fa-minus-circle
+        task: deleteRow
+      -
+        element: labelgroup
+        label: Kommunikation
+        access: thebing_tuition_placement_test_communication
+      -
+        element: icon_communication
+        access: thebing_tuition_placement_test_communication
+        label: Kunde informieren
+        application: placement_test
+columns:
+#  -
+#    title: PTR-ID
+#    column: placementtest_result_id
+#    width: id
+#    resize: false
+  -
+    title: Inbox
+    group: Kundendaten
+    column: inbox
+    alias: ki
+    width: name
+    small: true
+    default: false
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Select
+    format_params:
+      - [Ext_Thebing_Placementtests_Results_Gui2, getInboxColumnandInboxFilterValues]
+  -
+    title: [Ext_Thebing_Gui2_Data, getGroupColumnTitle]
+    group: Kundendaten
+    column: short
+    alias: kg
+    data: group_short
+    width: group_short
+    resize: false
+  -
+    title: Re.Nr.
+    group: Kundendaten
+    column: documents
+    width: document_number
+    resize: false
+  -
+    title: K.Nr.
+    group: Kundendaten
+    column: customerNumber
+    sortable: true
+    width: customer_number
+    resize: false
+  -
+    title: Name
+    group: Kundendaten
+    column: lastname
+    alias: cdb1
+    format: Ext_Thebing_Gui2_Format_CustomerName
+    width: name
+    resize: true
+  -
+    title: E-Mail
+    group: Kundendaten
+    column: email
+    alias: tc_e
+    width: email
+    format: Ext_Gui2_View_Format_ToolTip
+    format_params:
+      - 'email'
+      - true
+    resize: false
+  -
+    group: Kundendaten
+    title: Nationalität
+    column: nationality
+    width: name
+    format: Ext_Thebing_Gui2_Format_Nationality
+    default: false
+
+  -
+    title: Alter
+    group: Kundendaten
+    column: customer_age
+    width: age
+    resize: false
+  -
+    title: Agentur
+    column: agency_name
+    group: Agentur
+    width: agency_name
+    resize: false
+    # Wenn die auskommentierten Spalten gelöscht werden, dann auch die entsprechenden Queries und Format-Klassen
+    # (auskommentiert, falls sie doch vermisst werden)
+#  -
+#    title: Erster Kurs
+#    group: Kurs
+#    column: first_course
+#    format: Ext_Thebing_Placementtests_Gui2_Format_FirstCourse
+#    sortable: false
+#    width: name
+#    resize: false
+#  -
+#    title: Erster Kursstart
+#    column: first_course_start
+#    group: Kurs
+#    format: Ext_Thebing_Placementtests_Gui2_Format_FirstCourse
+#    sortable: false
+#    width: date
+#    resize: false
+  -
+    title: Kurssprache
+    column: courselanguage_id
+    alias: kic
+    group: Kurs
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [ Ext_Thebing_Tuition_LevelGroup, getSelectOptions ]
+    width: description
+    resize: false
+  -
+    # 2-Mal der gleiche Kurs wird nur einmal angezeigt, durch die Formatklasse
+    title: Kurse
+    column: courses
+    alias: ktc
+    sortable: false
+    group: Kurs
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [ Ext_Thebing_Tuition_Gui2_Attendance, getCourses, true ]
+    width: description
+    resize: false
+#  -
+#    title: Kurs Kommentar
+#    group: Kurs
+#    alias: kic
+#    column: comment
+#    data: comments
+#    format: Ext_Thebing_Gui2_Format_ConcatComments
+#    format_params:
+#      - 'comments'
+#      - true
+#      - 80
+#    width: comment
+#    resize: false
+  -
+    title: Kursstart
+    group: Kurs
+    alias: kic
+    column: from
+    data: course_start
+    format: Ext_Thebing_Gui2_Format_Date_List
+    width: date
+    resize: false
+  -
+    title: Kursende
+    group: Kurs
+    column: until
+    alias: kic
+    data: course_end
+    width: date
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_List
+  -
+    title: Kurskategorien
+    group: Kurs
+    column: category_id
+    alias: ktc
+    width: description
+    resize: false
+    format: Ext_TC_Gui2_Format_Multiselect
+    format_params:
+      - [ Ext_Thebing_Placementtests_Results_Gui2, getSelectFilterEntriesCourseCategories ]
+  -
+    title: normales Level
+    group: Kurs
+    column: name
+    data: normal_level
+    alias: ktul
+    width: name
+    i18n:
+      pass_language: true
+      interface: frontend
+    resize: false
+  -
+    title: internes Level
+    group: Einstufungstest
+    column: internal_level
+    width: name
+    resize: false
+  -
+    title: Score
+    group: Einstufungstest
+    column: score
+    width: name
+    resize: false
+  -
+    title: Insgesamt korrekte Antworten
+    group: Einstufungstest
+    column: total_correct_answers
+    width: name
+    resize: false
+    sortable: false
+    format: \Ts\Gui2\Format\TotalCorrectAnswers # Wert kommt über die Formatklasse
+  -
+    title: Note
+    group: Einstufungstest
+    column: mark
+    width: id
+    sortable: true
+  -
+    title: Bemerkung
+    group: Einstufungstest
+    column: placementtest_result_comment
+    width: comment
+    resize: false
+    format: Ext_Thebing_Gui2_Format_ColumnTitle
+    format_params:
+      - 'placementtest_result_comment'
+      - true
+      - 40
+  -
+    title: Datum des Tests
+    group: Einstufungstest
+    column: placementtest_date
+    width: date_time
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Datum der Bewertung
+    group: Einstufungstest
+    column: placementtest_result_date
+    width: date_time
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Eingeladen
+    group: Einstufungstest
+    column: invited
+    width: date_time
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Gestartet
+    group: Einstufungstest
+    column: started
+    width: date_time
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_Time
+  -
+    title: Beantwortet
+    group: Einstufungstest
+    column: answered
+    width: date_time
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date_Time
+  -
+    title: Bearbeitet
+    column: changed
+    width: date_time
+    resize: false
+    format: Ext_Thebing_Gui2_Format_Date
+  -
+    title: Bearbeiter
+    column: editor_id
+    width: name
+    format: Ext_Gui2_View_Format_UserName
+    format_params:
+      - true

@@ -1,0 +1,2 @@
+ALTER TABLE `ts_activities_providers` CHANGE `changed` `changed` TIMESTAMP on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE `ts_activities_providers` CHANGE `created` `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;

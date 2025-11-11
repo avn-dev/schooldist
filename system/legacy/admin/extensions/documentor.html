@@ -1,0 +1,52 @@
+<?php
+
+require_once(Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+// Check the access
+Access_Backend::checkAccess("modules_admin");
+
+// Define extensions directory
+define('EXT_DIR', \Util::getDocumentRoot().'system/extensions/');
+
+// Get all extensions
+$sSQL = "SELECT `file`, `title`, `category` FROM `system_elements` WHERE `element` = 'modul' AND `active` = 1 ORDER BY `category`, `title`";
+$aExtensions = DB::getQueryData($sSQL);
+
+/* ================================================== */
+
+$aOptions['additional'] = '<script type="text/javascript" src="/admin/js/prototype/prototype.js"></script>';
+$aOptions['additional'] .= '<link rel="stylesheet" href="/admin/css/admin.css" />';
+Admin_Html::loadAdminHeader($aOptions);
+
+/* ================================================== */
+
+foreach($aExtensions as $iKey => $aValue)
+{
+	if(!is_dir(EXT_DIR.$aValue['file']))
+	{
+		unset($aExtensions[$iKey]);
+		continue;
+	}
+	$aExtensions[$iKey]['output'] = $aValue['category'] . ' &raquo; ' . $aValue['title'];
+}
+
+/* ================================================== */
+
+if(isset($_VARS['action']) && $_VARS['action'] == 'show_docu')
+{
+	$oParser = new Ext_Documentor_Documentor($_VARS['dir']);
+	$aOutput = $oParser->output;
+	$sSelected = $_VARS['dir'];
+}
+
+/* ================================================== */
+
+$oSmarty = new SmartyWrapper();
+
+$oSmarty->assign('aExtensions', $aExtensions);
+$oSmarty->assign('aOutput', $aOutput);
+$oSmarty->assign('sSelected', $sSelected);
+
+$oSmarty->display(\Util::getDocumentRoot().'system/extensions/documentor/documentor.tpl');
+
+?>

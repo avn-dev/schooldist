@@ -1,0 +1,78 @@
+class:
+  wdbasic: Ext_TC_Gui2_Filterset
+  date_format: Ext_TC_Gui2_Format_Date 
+orderby : 
+  - Ext_TC_Gui2_Filterset_Gui2
+  - getOrderby
+access:
+  - core_gui2_designer
+  - ""
+bars:
+    - 
+      position: top
+      type: ""
+      elements:
+        -
+          element: icon_new
+          dialog:
+            - Ext_TC_Gui2_Filterset
+            - getDialog
+        - 
+          element: icon_edit
+          dialog:
+            - Ext_TC_Gui2_Filterset
+            - getDialog
+        - 
+          element: icon_delete
+        - 
+          element: icon_duplicate
+columns:
+  -
+    title: Name
+    column: name
+    alias: tc_gf
+    width: name
+    resize: true
+  -
+    title: Verwendung
+    column: application
+    alias: tc_gf
+    width: name
+    resize: false
+    sortable: false
+    format: Ext_TC_Gui2_Filterset_Format_Application 
+    
+default_columns:
+  -
+    visible: true
+    set: []
+    title: Ersteller
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: creator_id
+    alias: tc_gf
+    width: user_name
+  -
+    visible: true
+    set: []
+    title: Erstellt
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: created
+    alias: tc_gf
+    width: date
+  -
+    visible: true
+    set: []
+    title: Bearbeiter
+    format: Ext_Gui2_View_Format_UserName
+    format_params: true
+    column: editor_id
+    alias: tc_gf
+    width: user_name
+  -
+    visible: true
+    title: Bearbeitet
+    format: Ext_TC_Gui2_Format_Date_DateTime
+    column: changed
+    alias: tc_gf
+    width: date

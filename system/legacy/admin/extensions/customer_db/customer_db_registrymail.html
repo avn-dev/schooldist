@@ -1,0 +1,143 @@
+<?
+include(\Util::getDocumentRoot()."system/legacy/admin/includes/main.inc.php");
+
+Access_Backend::checkAccess("modules_admin");
+
+/////////////////////////////////////////////////////
+//// Moduladministration registry-Mail ////
+/////////////////////////////////////////////////////
+
+// Dieses Script administriert das registry-mail Modul
+// Jedes DB-Feld, das in die Mail eingebaut werden soll,
+// muss mittels <#wd:FELDNAME#> in den eigentlichen 
+// Text eingebunden werden.
+
+///////////////////////////////////////////////
+
+
+
+include(\Util::getDocumentRoot()."system/legacy/admin/extensions/customer_db/customer_db_class.inc.php");
+
+global $db_data;
+
+$identifier="customer_db_";
+$definition_table=$identifier."definition";
+$value_table=$identifier."values";
+$SQL_handler = new customer_db;
+
+$my_parent = get_data(db_query($db_data['system'],"SELECT * FROM cms_content WHERE page_id = '".$_VARS['page_id']."' AND content LIKE '%<#content".(str_pad($_VARS['element_id'], 3, "0", STR_PAD_LEFT))."#>%'"));
+
+$aParent = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+// Initialisieren der Klasseninstanz
+$config = new \Cms\Helper\ExtensionConfig($_VARS['page_id'], $_VARS['element_id'], $_VARS['content_id'], $_VARS['language']);
+
+// Abspeichern der eingegebenen Daten
+if ( $form_action=="save" && $page_id > 0 && $element_id > 0) 
+{
+    $config->from                       = $from;
+    $config->body                       = $body;
+    $config->subject                    = $subject;
+
+    $config->save_config($page_id, $element_id);
+}  
+
+// Laden der vorhandenen Daten
+$config->config_class($page_id, $element_id);
+$default_value = $config->default_value;
+
+////////////////////////////////////////////////
+
+
+?> 
+
+<?=Admin_Html::loadAdminHeader()?>
+<table class=table border=0 cellpadding="4" cellspacing=0 >
+<tr>
+<td>
+<h1>Konfiguration Registrierungs-Mail</h1>
+</td>
+</tr>
+<tr>
+<td>
+<form name="formular1" method=get enctype="multipart/form-data" action="<?=$PHP_SELF?>?form_action='Speichern'">
+<input type='hidden' name="form_action" value="">
+<input type='hidden' name="page_id" value=<?=$page_id?>>
+<input type='hidden' name="element_id" value=<?=$element_id?>>
+<input type='hidden' name="field_name" value=<?=$field_name?>>
+
+<table class=table border=0 style="width:100%" cellpadding="4" cellspacing=0 >
+
+<tr> 
+<td> 
+Absende-Adresse:
+</td> 
+<td> 
+<input type=text name=from value='<?=$config->from?>'>
+</td> 
+</tr> 
+
+
+<tr> 
+<td> 
+Betreff:
+</td> 
+<td> 
+<input type=text name=subject value='<?=$config->subject?>'>
+</td> 
+</tr> 
+
+
+
+<tr> 
+<td colspan=2> 
+Text:
+</td> 
+</tr> 
+
+<tr> 
+<td colspan=2> 
+<textarea  cols="50" rows="10" name=body>
+<?=$config->body?>
+</textarea>
+</td> 
+</tr> 
+ 
+
+ 
+<tr> 
+<td colspan=2> 
+Im Text können mittels <#FELDNAME:#> Datenbankfelder eingebaut werden, <br>zB. "Sehr geehrte(r) <#Anrede#> <#Nachname#>".
+</td> 
+</tr> 
+  
+ 
+ 
+ 
+ 
+ 
+<tr>
+<td align=left>
+<?
+
+// speichern
+echo "<input type=button value=\"speichern\" class=\"btn\" style=\"width:150\" OnClick='document.formular1.form_action.value=\"save\";document.formular1.submit();'>&nbsp;&nbsp;&nbsp;";
+?>
+</td>
+<td align=left>
+<input class=btn type=button value="Fenster schliessen" style="width:150" OnClick='top.close();'>
+</td>
+</tr>
+
+
+</table>
+
+</td>
+</tr>
+
+
+</table>
+
+
+
+<?=Admin_Html::loadAdminFooter()?>

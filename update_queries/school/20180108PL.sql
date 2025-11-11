@@ -1,0 +1,3 @@
+ALTER TABLE `kolumbus_kontakt` ADD `nickname` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL AFTER `skype`;
+ALTER TABLE `kolumbus_kontakt` ADD `password` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL AFTER `nickname`;
+UPDATE `customer_db_config` SET `id` = 13,`db_name` = 'Agencies',`db_encode_pw` = 1,`multi_login` = 1,`allow_accesscode` = 0,`external_table` = 'kolumbus_kontakt',`external_table_accesscode` = '',`external_table_groups` = '',`external_table_pk` = 'id',`external_table_email` = 'email',`external_table_user` = 'nickname',`external_table_pass` = 'password',`external_table_active` = 'active',`active` = 1 WHERE `customer_db_config`.`id` = 13;

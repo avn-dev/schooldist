@@ -1,0 +1,8 @@
+{
+  "name": "fidelo-bundle/cms",
+  "version": "1.0.1",
+  "require": {
+    "maximebf/debugbar": "2.2.*",
+    "thepixeldeveloper/sitemap": "5.1.*"
+  }
+}

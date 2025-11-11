@@ -1,0 +1,21 @@
+// Copied from node_modules/bootstrap/scss/_reboot.scss to apply reboot styles to root container element (selector .fidelo-xxx html does not work)
+
+// Document
+& {
+	font-family: sans-serif;
+	line-height: 1.15;
+	-webkit-text-size-adjust: 100%;
+	-webkit-tap-highlight-color: rgba($black, 0);
+}
+
+// Body
+& {
+	margin: 0; // 1
+	font-family: $font-family-base;
+	@include font-size($font-size-base);
+	font-weight: $font-weight-base;
+	line-height: $line-height-base;
+	color: $body-color;
+	text-align: left;
+	background-color: $body-bg;
+}
